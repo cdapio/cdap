@@ -32,6 +32,7 @@ import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.security.spi.encryption.CipherException;
+import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -65,6 +66,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * Tests {@link RemoteTaskExecutor} routing with the task worker proxy. The stub worker is registered
@@ -485,6 +487,124 @@ public class RemoteTaskExecutorRbacProxyTest {
     Assert.assertSame(original, SecurityRequestContext.getUserCredential());
   }
 
+  @Test
+  public void testProxyConnectTimeoutIsRetried() throws Exception {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    CConfiguration cConf = proxyEnabledConf();
+    AtomicInteger executeCalls = new AtomicInteger();
+    Credential original = new Credential(PLAIN_TOKEN, Credential.CredentialType.EXTERNAL);
+    SecurityRequestContext.setUserCredential(original);
+    RecordingAeadCipher cipher = new RecordingAeadCipher();
+
+    byte[] result = newExecutor(cConf, cipher, failingClientFactory(cConf,
+        new SocketTimeoutException("connect timed out"), 1, executeCalls, new ArrayList<>()))
+        .runTask(taskRequest(TENANT_NAMESPACE));
+
+    Assert.assertEquals(TASK_RESULT, new String(result, StandardCharsets.UTF_8));
+    Assert.assertEquals(2, executeCalls.get());
+    // The failed attempt never connected, so only the retry reached the worker.
+    Assert.assertEquals(1, workerHandler.getRequestCount());
+    Assert.assertEquals(Arrays.asList(PLAIN_TOKEN, PLAIN_TOKEN), cipher.getEncryptedValues());
+    Assert.assertSame(original, SecurityRequestContext.getUserCredential());
+  }
+
+  @Test
+  public void testConnectTimeoutIsNotRetriedWhenProxyDisabled() {
+    CConfiguration cConf = proxyEnabledConf();
+    cConf.setBoolean(featureFlagKey(), false);
+    register(Constants.Service.TASK_WORKER);
+    AtomicInteger executeCalls = new AtomicInteger();
+
+    try {
+      newExecutor(cConf, mockAeadCipher, failingClientFactory(cConf,
+          new SocketTimeoutException("connect timed out"), Integer.MAX_VALUE, executeCalls,
+          new ArrayList<>())).runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected the connect timeout to surface");
+    } catch (Exception e) {
+      // Same as before the proxy existed: a direct task worker call fails on the first timeout.
+      Assert.assertTrue("Expected SocketTimeoutException but got " + e.getClass(),
+          e instanceof SocketTimeoutException);
+    }
+    Assert.assertEquals(1, executeCalls.get());
+  }
+
+  @Test
+  public void testProxyConnectTimeoutFailsAsUnreachableOnceRetriesRunOut() {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    CConfiguration cConf = proxyEnabledConf();
+    AtomicInteger executeCalls = new AtomicInteger();
+
+    try {
+      newExecutor(cConf, mockAeadCipher, failingClientFactory(cConf,
+          new SocketTimeoutException("connect timed out"), Integer.MAX_VALUE, executeCalls,
+          new ArrayList<>())).runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected the run to fail once the retry budget was exhausted");
+    } catch (ServiceException e) {
+      Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(), e.getStatusCode());
+      Assert.assertTrue(e.getMessage(), e.getMessage().startsWith(
+          "Could not reach the " + Constants.Service.TASK_WORKER_MANAGER + " proxy"));
+    } catch (Exception e) {
+      Assert.fail("Expected ServiceException but got " + e);
+    }
+    Assert.assertTrue("Expected retries, got " + executeCalls.get(), executeCalls.get() > 1);
+    Assert.assertEquals(0, workerHandler.getRequestCount());
+  }
+
+  @Test
+  public void testProxyConnectTimeoutIsCappedOnlyWhenProxyEnabled() throws Exception {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    register(Constants.Service.TASK_WORKER);
+    HttpRequestConfig callerConfig = new HttpRequestConfig(60000, 120000, false, 1024);
+
+    CConfiguration proxyConf = proxyEnabledConf();
+    proxyConf.setInt(Constants.TaskWorkerManager.CLIENT_CONNECT_TIMEOUT_MS, 5000);
+    List<HttpRequestConfig> proxyConfigs = new ArrayList<>();
+    new RemoteTaskExecutor(proxyConf, new NoOpMetricsCollectionService(),
+        failingClientFactory(proxyConf, null, 0, new AtomicInteger(), proxyConfigs),
+        RemoteTaskExecutor.Type.TASK_WORKER, callerConfig, mockAeadCipher);
+    HttpRequestConfig capped = proxyConfigs.get(0);
+    Assert.assertEquals(5000, capped.getConnectTimeout());
+    Assert.assertEquals(120000, capped.getReadTimeout());
+    Assert.assertEquals(1024, capped.getFixedLengthStreamingThreshold());
+
+    CConfiguration directConf = proxyEnabledConf();
+    directConf.setBoolean(featureFlagKey(), false);
+    List<HttpRequestConfig> directConfigs = new ArrayList<>();
+    new RemoteTaskExecutor(directConf, new NoOpMetricsCollectionService(),
+        failingClientFactory(directConf, null, 0, new AtomicInteger(), directConfigs),
+        RemoteTaskExecutor.Type.TASK_WORKER, callerConfig, mockAeadCipher);
+    Assert.assertSame(callerConfig, directConfigs.get(0));
+  }
+
+  @Test
+  public void testCapConnectTimeout() {
+    HttpRequestConfig shortConfig = new HttpRequestConfig(2000, 120000, true, 512);
+    Assert.assertSame(shortConfig, RemoteTaskExecutor.capConnectTimeout(shortConfig, 5000));
+
+    HttpRequestConfig longConfig = new HttpRequestConfig(60000, 120000, true, 512);
+    HttpRequestConfig capped = RemoteTaskExecutor.capConnectTimeout(longConfig, 5000);
+    Assert.assertEquals(5000, capped.getConnectTimeout());
+    Assert.assertEquals(120000, capped.getReadTimeout());
+    Assert.assertTrue(capped.isVerifySSLCert());
+    Assert.assertEquals(512, capped.getFixedLengthStreamingThreshold());
+
+    // 0 means wait forever, so it is capped as well.
+    HttpRequestConfig unbounded = new HttpRequestConfig(0, 120000, true, 512);
+    Assert.assertEquals(5000,
+        RemoteTaskExecutor.capConnectTimeout(unbounded, 5000).getConnectTimeout());
+  }
+
+  @Test
+  public void testIsConnectTimeout() {
+    Assert.assertTrue(RemoteTaskExecutor.isConnectTimeout(
+        new SocketTimeoutException("connect timed out")));
+    Assert.assertTrue(RemoteTaskExecutor.isConnectTimeout(
+        new SocketTimeoutException("Connect timed out")));
+    Assert.assertFalse(RemoteTaskExecutor.isConnectTimeout(
+        new SocketTimeoutException("Read timed out")));
+    Assert.assertFalse(RemoteTaskExecutor.isConnectTimeout(new SocketTimeoutException()));
+  }
+
   /** Asserts the executor talks to {@code task.worker}, not {@code task.worker.manager}. */
   private void assertTargetsTaskWorkerOnly(CConfiguration cConf) throws Exception {
     register(Constants.Service.TASK_WORKER);
@@ -534,6 +654,35 @@ public class RemoteTaskExecutorRbacProxyTest {
 
   private RemoteTaskExecutor newExecutor(CConfiguration cConf) {
     return newExecutor(cConf, mockAeadCipher);
+  }
+
+  private RemoteTaskExecutor newExecutor(CConfiguration cConf, AeadCipher aeadCipher,
+      RemoteClientFactory clientFactory) {
+    return new RemoteTaskExecutor(cConf, new NoOpMetricsCollectionService(), clientFactory,
+        RemoteTaskExecutor.Type.TASK_WORKER, aeadCipher);
+  }
+
+  /**
+   * A client factory whose clients throw {@code failure} on the first {@code failures} calls to
+   * {@link RemoteClient#execute(HttpRequest)} and behave normally after that. Counts the calls in
+   * {@code executeCalls} and records each requested {@link HttpRequestConfig} in {@code configs}.
+   */
+  private RemoteClientFactory failingClientFactory(CConfiguration cConf, IOException failure,
+      int failures, AtomicInteger executeCalls, List<HttpRequestConfig> configs) {
+    RemoteClientFactory factory = Mockito.spy(newClientFactory(cConf));
+    Mockito.doAnswer(createCall -> {
+      configs.add(createCall.getArgument(1));
+      RemoteClient client = Mockito.spy((RemoteClient) createCall.callRealMethod());
+      Mockito.doAnswer(executeCall -> {
+        if (executeCalls.getAndIncrement() < failures) {
+          throw failure;
+        }
+        return executeCall.callRealMethod();
+      }).when(client).execute(Mockito.any(HttpRequest.class));
+      return client;
+    }).when(factory).createRemoteClient(Mockito.anyString(), Mockito.any(HttpRequestConfig.class),
+        Mockito.anyString());
+    return factory;
   }
 
   private RemoteTaskExecutor newExecutor(CConfiguration cConf, AeadCipher aeadCipher) {

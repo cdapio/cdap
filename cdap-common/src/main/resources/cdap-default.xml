@@ -5693,6 +5693,17 @@
   </property>
 
   <property>
+    <name>task.worker.manager.client.connect.timeout.ms</name>
+    <value>5000</value>
+    <description>
+      Upper bound, in milliseconds, on how long App Fabric waits to connect to the task worker
+      manager proxy. A connect timeout means the request was never sent, so it is retried within
+      the task worker retry policy; a short timeout lets a restarting proxy cost seconds rather
+      than the caller's full connect timeout. Applies only when the proxy is enabled.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.manager.container.num.cores</name>
     <value>2</value>
     <description>

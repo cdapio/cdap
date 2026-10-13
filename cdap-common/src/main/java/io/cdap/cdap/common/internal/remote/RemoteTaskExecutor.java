@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
@@ -58,6 +59,7 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -126,8 +128,14 @@ public class RemoteTaskExecutor {
     LOG.debug("RemoteTaskExecutor routing {} traffic to service {} (rbacProxyEnabled={})",
         workerType, serviceName, rbacProxyEnabled);
 
+    // A connect timeout to the proxy is retried (see runTask), so keep each attempt short: a
+    // restarting proxy then costs seconds rather than the caller's full connect timeout.
+    HttpRequestConfig clientConfig = rbacProxyEnabled
+        ? capConnectTimeout(httpRequestConfig,
+            cConf.getInt(Constants.TaskWorkerManager.CLIENT_CONNECT_TIMEOUT_MS))
+        : httpRequestConfig;
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
-        httpRequestConfig,
+        clientConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
 
     this.metricsCollectionService = metricsCollectionService;
@@ -196,6 +204,13 @@ public class RemoteTaskExecutor {
           HttpResponse httpResponse;
           try {
             httpResponse = remoteClient.execute(httpRequest);
+          } catch (SocketTimeoutException e) {
+            // Not connected means not sent, so a retry can't run the task twice; treat it like a
+            // refused connection. A read timeout stays fatal: the worker may be running the task.
+            if (rbacProxyEnabled && isConnectTimeout(e)) {
+              throw new ServiceUnavailableException(Constants.Service.TASK_WORKER_MANAGER, e);
+            }
+            throw e;
           } finally {
             // Restore even on failure, or the next retry would re-encrypt the ciphertext and the
             // worker would reject it with "decryption failed". Behind the Task Worker Manager proxy
@@ -259,6 +274,31 @@ public class RemoteTaskExecutor {
       }
       throw e;
     }
+  }
+
+  /**
+   * Returns {@code config} with its connect timeout lowered to {@code maxConnectTimeoutMs}, keeping
+   * every other setting. A connect timeout of 0 means "wait forever", so it is capped too.
+   */
+  @VisibleForTesting
+  static HttpRequestConfig capConnectTimeout(HttpRequestConfig config, int maxConnectTimeoutMs) {
+    int connectTimeout = config.getConnectTimeout();
+    if (connectTimeout > 0 && connectTimeout <= maxConnectTimeoutMs) {
+      return config;
+    }
+    return new HttpRequestConfig(maxConnectTimeoutMs, config.getReadTimeout(),
+        config.isVerifySSLCert(), config.getFixedLengthStreamingThreshold());
+  }
+
+  /**
+   * Whether {@code e} was raised while connecting rather than while waiting for the response.
+   * {@code HttpURLConnection} reports both as {@link SocketTimeoutException}, told apart only by the
+   * message: "connect timed out" up to JDK 11, "Connect timed out" from JDK 13.
+   */
+  @VisibleForTesting
+  static boolean isConnectTimeout(SocketTimeoutException e) {
+    String message = e.getMessage();
+    return message != null && message.toLowerCase(Locale.ROOT).contains("connect timed out");
   }
 
   /**
