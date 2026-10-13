@@ -134,12 +134,12 @@ public class LocalLogAppenderResilientTest {
         });
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     DatasetOpExecutorService opExecutorService = injector
         .getInstance(DatasetOpExecutorService.class);
-    opExecutorService.startAndWait();
+    opExecutorService.startAsync().awaitRunning();
 
     // Start the logging before starting the service.
     LoggingContextAccessor
@@ -187,7 +187,7 @@ public class LocalLogAppenderResilientTest {
 
     // Start dataset service, wait for it to be discoverable
     DatasetService dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
+    dsService.startAsync().awaitRunning();
 
     final CountDownLatch startLatch = new CountDownLatch(1);
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

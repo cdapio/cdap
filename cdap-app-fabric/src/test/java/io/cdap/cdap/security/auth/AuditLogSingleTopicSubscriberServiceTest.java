@@ -17,7 +17,6 @@
 package io.cdap.cdap.security.auth;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -94,7 +93,13 @@ public class AuditLogSingleTopicSubscriberServiceTest {
 
   @AfterClass
   public static void afterClass() {
-    Closeables.closeQuietly(pg);
+    try {
+
+      pg.close();
+
+    } catch (Exception ignored) {
+
+    }
   }
 
 

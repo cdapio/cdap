@@ -18,8 +18,7 @@ package io.cdap.cdap.common.service;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
@@ -68,12 +67,10 @@ public class RetryOnStartFailureService extends AbstractService {
 
         while (!stopped) {
           try {
-            currentDelegate.start().get();
+            currentDelegate.startAsync().awaitRunning();
             // Only assigned the delegate if and only if the delegate service started successfully
             startedService = currentDelegate;
             break;
-          } catch (InterruptedException e) {
-            // This thread will be interrupted from the doStop() method. Don't reset the interrupt flag.
           } catch (Throwable t) {
             LOG.debug("Exception raised when starting service {}", delegateServiceName, t);
 
@@ -112,25 +109,62 @@ public class RetryOnStartFailureService extends AbstractService {
     // the setting of the startedService field. When that happens, the stop failure state is not propagated.
     // Nevertheless, there won't be any service left behind without stopping.
     if (startedService != null) {
-      Futures.addCallback(startedService.stop(), new FutureCallback<State>() {
+      startedService.addListener(new Service.Listener() {
         @Override
-        public void onSuccess(State result) {
+        public void starting() {}
+
+        @Override
+        public void running() {}
+
+        @Override
+        public void stopping(State from) {}
+
+        @Override
+        public void terminated(State from) {
           notifyStopped();
         }
 
         @Override
-        public void onFailure(Throwable t) {
-          notifyFailed(t);
+        public void failed(State from, Throwable failure) {
+          notifyFailed(failure);
         }
-      }, Threads.SAME_THREAD_EXECUTOR);
+      }, MoreExecutors.directExecutor());
+      startedService.stopAsync();
       return;
     }
 
-    // If there is no started service, stop the current delete, but no need to propagate the stop state
+    // If there is no started service, stop the current delegate, but no need to propagate the stop state
     // because if the underlying service is not yet started due to failure, it shouldn't affect the stop state
     // of this retrying service.
     if (currentDelegate != null) {
-      currentDelegate.stop().addListener(this::notifyStopped, Threads.SAME_THREAD_EXECUTOR);
+      // If the delegate is already in a terminal state (FAILED or TERMINATED), stopAsync() won't
+      // trigger any listener callbacks, so we need to notify directly.
+      State delegateState = currentDelegate.state();
+      if (delegateState == State.TERMINATED || delegateState == State.FAILED) {
+        notifyStopped();
+        return;
+      }
+      currentDelegate.addListener(new Service.Listener() {
+        @Override
+        public void starting() {}
+
+        @Override
+        public void running() {}
+
+        @Override
+        public void stopping(State from) {}
+
+        @Override
+        public void terminated(State from) {
+          notifyStopped();
+        }
+
+        @Override
+        public void failed(State from, Throwable failure) {
+          notifyStopped();
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+      currentDelegate.stopAsync();
       return;
     }
 

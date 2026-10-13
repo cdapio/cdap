@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.auth.context;
 
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
@@ -80,7 +79,7 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     try {
       userId = UserGroupInformation.getCurrentUser().getShortUserName();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     long currentTimestamp = System.currentTimeMillis();
     UserIdentity identity = new UserIdentity(userId, UserIdentity.IdentifierType.INTERNAL,

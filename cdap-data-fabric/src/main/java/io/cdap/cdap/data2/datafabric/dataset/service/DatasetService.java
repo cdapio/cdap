@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -142,7 +142,7 @@ public class DatasetService extends AbstractService {
   private void startUp() {
     try {
       LOG.info("Starting DatasetService...");
-      typeService.startAndWait();
+      typeService.startAsync().awaitRunning();
       httpService.start();
 
       // setting watch for ops executor service that we need to be running to operate correctly
@@ -155,10 +155,10 @@ public class DatasetService extends AbstractService {
               LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
               opExecutorDiscovered.set(serviceDiscovered);
             }
-          }, MoreExecutors.sameThreadExecutor());
+          }, MoreExecutors.directExecutor());
 
       for (DatasetMetricsReporter metricsReporter : metricReporters) {
-        metricsReporter.start();
+        metricsReporter.startAsync();
       }
     } catch (Throwable t) {
       notifyFailed(t);
@@ -234,14 +234,14 @@ public class DatasetService extends AbstractService {
     }
 
     for (DatasetMetricsReporter metricsReporter : metricReporters) {
-      metricsReporter.stop();
+      metricsReporter.stopAsync();
     }
 
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
     }
 
-    typeService.stopAndWait();
+    typeService.stopAsync().awaitTerminated();
 
     // Wait for a few seconds for requests to stop
     httpService.stop();
@@ -250,7 +250,7 @@ public class DatasetService extends AbstractService {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("bindAddress", httpService.getBindAddress())
         .toString();
   }

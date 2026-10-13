@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.gateway.handlers.util;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -49,7 +48,7 @@ public class NamespaceHelper {
       // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
       // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
       // Hence, this should never happen.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return namespaceId;
   }

@@ -77,12 +77,12 @@ public class SystemMetadataWriterStageTest {
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataServiceClient = injector.getInstance(MetadataServiceClient.class);
     metadataSubscriber = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriber.startAndWait();
+    metadataSubscriber.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void stop() {
-    metadataSubscriber.stopAndWait();
+    metadataSubscriber.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

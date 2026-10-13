@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import java.io.File;
 import java.net.URI;
 
@@ -51,7 +51,7 @@ public final class LocalizeResource {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("archive", archive)
         .add("uri", uri)
         .toString();

@@ -50,7 +50,7 @@ public class EventSubscriberManager extends AbstractIdleService {
       // Initialize the event subscribers with all the event readers provided by provider
       try {
         eventSubscriber.initialize();
-        eventSubscriber.startAndWait();
+        eventSubscriber.startAsync().awaitRunning();
         LOG.info("Successfully initialized eventSubscriber: {}",
             eventSubscriber);
       } catch (Exception e) {
@@ -67,7 +67,7 @@ public class EventSubscriberManager extends AbstractIdleService {
     }
     eventSubscribers.forEach(eventSubscriber -> {
       try {
-        eventSubscriber.stopAndWait();
+        eventSubscriber.stopAsync().awaitTerminated();
       } catch (Exception e) {
         LOG.error("Failed to stop subscriber", e);
       }

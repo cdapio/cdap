@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.gateway.handlers;
 
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -115,16 +114,28 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
         @Override
         public void finished() throws Exception {
-          Closeables.closeQuietly(in);
+          try {
+            in.close();
+          } catch (Exception ignored) {
+            // Ignored because we are performing resource cleanup after sending content.
+          }
         }
 
         @Override
         public void handleError(@Nullable Throwable cause) {
-          Closeables.closeQuietly(in);
+          try {
+            in.close();
+          } catch (Exception ignored) {
+            // Ignored because we are performing resource cleanup after error handling.
+          }
         }
       }, EmptyHttpHeaders.INSTANCE);
     } catch (Exception e) {
-      Closeables.closeQuietly(in);
+      try {
+        in.close();
+      } catch (Exception ignored) {
+        // Ignored because we are performing resource cleanup on exception.
+      }
       throw e;
     }
   }

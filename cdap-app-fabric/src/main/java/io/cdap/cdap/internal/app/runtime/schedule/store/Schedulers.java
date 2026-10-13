@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.schedule.store;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramStatus;
@@ -84,7 +83,7 @@ public class Schedulers {
           context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_TRIGGER_TABLE)
       );
     } catch (TableNotFoundException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

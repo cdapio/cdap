@@ -27,6 +27,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
@@ -107,12 +108,12 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
                   new RouterPathLookup()),
               new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
               new NoOpAeadCipher());
-      router.startAndWait();
+      Services.startAndWait(router);
     }
 
     @Override
     protected void shutDown() {
-      router.stopAndWait();
+      Services.stopAndWait(router);
     }
 
     public InetSocketAddress getRouterAddress() {

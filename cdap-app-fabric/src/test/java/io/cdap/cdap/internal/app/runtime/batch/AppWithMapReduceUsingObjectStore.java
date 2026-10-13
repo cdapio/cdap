@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Input;
@@ -44,7 +43,7 @@ public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
       ObjectStores.createObjectStore(getConfigurer(), "keys", String.class);
       addMapReduce(new ComputeCounts());
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 

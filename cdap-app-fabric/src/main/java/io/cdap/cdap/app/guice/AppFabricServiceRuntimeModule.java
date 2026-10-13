@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.guice;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
@@ -609,7 +608,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             }
             return scheduler;
           } catch (Exception e) {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         }
       };

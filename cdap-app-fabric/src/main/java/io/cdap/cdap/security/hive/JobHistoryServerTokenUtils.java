@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.hive;
 
-import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import io.cdap.cdap.common.security.YarnTokenUtils;
 import java.io.IOException;
@@ -65,7 +64,7 @@ public final class JobHistoryServerTokenUtils {
       GetDelegationTokenRequest request = new GetDelegationTokenRequestPBImpl();
       request.setRenewer(YarnUtils.getYarnTokenRenewer(configuration));
 
-      InetSocketAddress address = new InetSocketAddress(hostAndPort.getHostText(),
+      InetSocketAddress address = new InetSocketAddress(hostAndPort.getHost(),
           hostAndPort.getPort());
       Token<TokenIdentifier> token =
           ConverterUtils.convertFromYarn(hsProxy.getDelegationToken(request).getDelegationToken(),
@@ -75,7 +74,7 @@ public final class JobHistoryServerTokenUtils {
       LOG.debug("Adding JobHistoryServer delegation token {}.", token);
       return credentials;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

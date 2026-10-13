@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -103,7 +104,7 @@ public class AuditLogTest {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router.startAndWait();
+    Services.startAndWait(router);
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new TestHandler()).build();
     httpService.start();
@@ -119,7 +120,7 @@ public class AuditLogTest {
   public static void finish() throws Exception {
     cancelDiscovery.cancel();
     httpService.stop();
-    router.stopAndWait();
+    Services.stopAndWait(router);
   }
 
   @Test

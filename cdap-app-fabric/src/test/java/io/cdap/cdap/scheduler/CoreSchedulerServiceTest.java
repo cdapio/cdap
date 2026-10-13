@@ -146,7 +146,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     cConf = getInjector().getInstance(CConfiguration.class);
     scheduler = getInjector().getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
+      ((Service) scheduler).startAsync().awaitRunning();
     }
     messagingService = getInjector().getInstance(MessagingService.class);
     store = getInjector().getInstance(Store.class);
@@ -156,7 +156,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @AfterClass
   public static void tearDown() {
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
+      ((Service) scheduler).stopAsync().awaitTerminated();
     }
   }
 
