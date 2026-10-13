@@ -21,12 +21,21 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
@@ -48,6 +57,13 @@ import javax.ws.rs.PathParam;
 
 /**
  * A netty http handler for metadata REST API for the messaging system.
+ *
+ * <p>Every endpoint first authorizes the caller on the namespace it addresses, before anything
+ * else about the request is looked at: {@link StandardPermission#UPDATE} is needed to create,
+ * update or delete a topic and {@link StandardPermission#GET} to read or list topics. Topics are
+ * authorized through their namespace because authorization does not support topics as entities.
+ * When internal authentication is enabled, only internal callers can access the topics of the
+ * system namespace.
  */
 @Path("/v1/namespaces/{namespace}")
 public final class MetadataHandler extends AbstractHttpHandler {
@@ -64,11 +80,18 @@ public final class MetadataHandler extends AbstractHttpHandler {
     }
   };
 
+  private final boolean internalAuthEnabled;
   private final MessagingService messagingService;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  MetadataHandler(MessagingService messagingService) {
+  MetadataHandler(CConfiguration cConf, MessagingService messagingService,
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
+    this.internalAuthEnabled = cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
     this.messagingService = messagingService;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @PUT
@@ -76,7 +99,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void createTopic(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorize(namespace, StandardPermission.UPDATE).topic(topic);
     messagingService.createTopic(
         new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -87,7 +110,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void updateTopic(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorize(namespace, StandardPermission.UPDATE).topic(topic);
     messagingService.updateTopic(
         new DefaultTopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -98,7 +121,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void getTopic(HttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorize(namespace, StandardPermission.GET).topic(topic);
     TopicMetadata metadata =
         new DefaultTopicMetadata(topicId, messagingService.getTopicMetadataProperties(topicId));
     responder.sendJson(HttpResponseStatus.OK,
@@ -109,9 +132,10 @@ public final class MetadataHandler extends AbstractHttpHandler {
   @Path("/topics")
   public void listTopics(HttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace) throws Exception {
+    NamespaceId namespaceId = authorize(namespace, StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(
-            Lists.transform(messagingService.listTopics(new NamespaceId(namespace)), TOPIC_TO_NAME),
+            Lists.transform(messagingService.listTopics(namespaceId), TOPIC_TO_NAME),
             TOPIC_LIST_TYPE));
   }
 
@@ -120,9 +144,37 @@ public final class MetadataHandler extends AbstractHttpHandler {
   public void deleteTopic(HttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorize(namespace, StandardPermission.UPDATE).topic(topic);
     messagingService.deleteTopic(topicId);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
+   * Authorizes the caller to perform the given permission on the topics of a namespace.
+   *
+   * <p>Every endpoint calls this first, so that a caller without permission gets the same answer
+   * whether or not the topic exists and whether or not the rest of its request is valid.
+   *
+   * @return the id of the namespace
+   * @throws IllegalArgumentException if the namespace name is invalid
+   * @throws UnauthorizedException if the caller is not allowed to perform the permission
+   */
+  private NamespaceId authorize(String namespace, StandardPermission permission)
+      throws AccessException {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    Principal principal = authenticationContext.getPrincipal();
+    if (internalAuthEnabled && NamespaceId.SYSTEM.equals(namespaceId)
+        && !hasInternalCredential(principal)) {
+      throw new UnauthorizedException(
+          "Only internal services can access topics of the system namespace.");
+    }
+    accessEnforcer.enforce(namespaceId, principal, permission);
+    return namespaceId;
+  }
+
+  private static boolean hasInternalCredential(Principal principal) {
+    Credential credential = principal.getFullCredential();
+    return credential != null && credential.getType() == Credential.CredentialType.INTERNAL;
   }
 
   /**
