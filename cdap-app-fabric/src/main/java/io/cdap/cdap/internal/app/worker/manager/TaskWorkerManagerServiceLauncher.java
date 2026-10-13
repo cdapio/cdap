@@ -182,6 +182,14 @@ public class TaskWorkerManagerServiceLauncher extends AbstractScheduledService {
             twillPreparer = ((ExtendedTwillPreparer) twillPreparer).withRecreateStrategy();
           }
 
+          // Readiness only, so the Service routes to a new proxy once it answers GET /ping.
+          if (cConf.getBoolean(Constants.TaskWorkerManager.PROBE_ENABLED)
+              && twillPreparer instanceof ExtendedTwillPreparer) {
+            twillPreparer = ((ExtendedTwillPreparer) twillPreparer).addProbes(
+                TaskWorkerManagerTwillRunnable.class.getSimpleName(),
+                cConf.getPropsWithPrefix(Constants.TaskWorkerManager.PROBE_PREFIX));
+          }
+
           // No SecurityContext: the proxy needs App Fabric's system service account to watch
           // Kubernetes endpoints.
 

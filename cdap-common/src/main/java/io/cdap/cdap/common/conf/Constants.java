@@ -584,6 +584,9 @@ public final class Constants {
     // Upper bound on the connect timeout of App Fabric's calls to the proxy.
     public static final String CLIENT_CONNECT_TIMEOUT_MS =
         "task.worker.manager.client.connect.timeout.ms";
+    // Kubernetes probes for the proxy pod; see io.cdap.cdap.k8s.util.ProbeFactory for the keys.
+    public static final String PROBE_ENABLED = "task.worker.manager.probe.enabled";
+    public static final String PROBE_PREFIX = "task.worker.manager.probe.";
     // Read by KubeMasterEnvironment (added in #16226), which can't depend on cdap-common; keep the
     // two keys in sync.
     public static final String ENDPOINTS_SERVICES = "master.environment.k8s.endpoints.services";

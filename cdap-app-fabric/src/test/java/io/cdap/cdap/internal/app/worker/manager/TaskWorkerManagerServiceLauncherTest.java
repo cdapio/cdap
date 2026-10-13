@@ -18,6 +18,9 @@ package io.cdap.cdap.internal.app.worker.manager;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,6 +33,7 @@ import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillApplication;
@@ -83,6 +87,47 @@ public class TaskWorkerManagerServiceLauncherTest {
     InOrder inOrder = Mockito.inOrder(preparer);
     inOrder.verify(preparer).withRecreateStrategy();
     inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+  }
+
+  /**
+   * The default readiness probe targets the proxy's own /ping on its bind port, over plain HTTP.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testLaunchAddsReadinessProbe() {
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    ArgumentCaptor<Map<String, String>> probeConf = ArgumentCaptor.forClass(Map.class);
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).addProbes(
+        eq(TaskWorkerManagerTwillRunnable.class.getSimpleName()), probeConf.capture());
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+    Map<String, String> conf = probeConf.getValue();
+    Assert.assertEquals("readiness", conf.get("k8s.names"));
+    Assert.assertEquals("httpget", conf.get("k8s.readiness.type"));
+    Assert.assertEquals("/ping", conf.get("k8s.readiness.http.path"));
+    Assert.assertEquals("HTTP", conf.get("k8s.readiness.http.scheme"));
+    Assert.assertEquals(cConf.get(Constants.TaskWorkerManager.PORT),
+        conf.get("k8s.readiness.http.port"));
+  }
+
+  @Test
+  public void testLaunchWithoutProbes() {
+    cConf.setBoolean(Constants.TaskWorkerManager.PROBE_ENABLED, false);
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    verify(preparer, never()).addProbes(anyString(), anyMap());
+    verify(preparer).start(anyLong(), any(TimeUnit.class));
   }
 
   /**

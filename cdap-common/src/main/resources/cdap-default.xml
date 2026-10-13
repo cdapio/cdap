@@ -5704,6 +5704,90 @@
   </property>
 
   <property>
+    <name>task.worker.manager.probe.enabled</name>
+    <value>true</value>
+    <description>
+      Whether the task worker manager proxy pod gets the Kubernetes probes configured
+      under task.worker.manager.probe.k8s.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.names</name>
+    <value>readiness</value>
+    <description>
+      Probes for the proxy pod. Readiness only: Kubernetes routes to a new proxy pod only once
+      it answers GET /ping. There is deliberately no liveness probe, since restarting the proxy
+      would cut every in-flight task.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.type</name>
+    <value>httpget</value>
+    <description>
+      Action type of the proxy readiness probe.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.http.path</name>
+    <value>/ping</value>
+    <description>
+      Path of the proxy readiness probe, answered by the proxy itself.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.http.port</name>
+    <value>${task.worker.manager.bind.port}</value>
+    <description>
+      Port of the proxy readiness probe.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.http.scheme</name>
+    <value>HTTP</value>
+    <description>
+      Scheme of the proxy readiness probe. The proxy listens on plain HTTP.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.period.seconds</name>
+    <value>2</value>
+    <description>
+      How often, in seconds, Kubernetes runs the proxy readiness probe.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.timeout.seconds</name>
+    <value>2</value>
+    <description>
+      Seconds after which a proxy readiness probe attempt counts as failed.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.failure.threshold</name>
+    <value>3</value>
+    <description>
+      Consecutive failures before the proxy pod is taken out of the service. Above 1 so a
+      single slow answer under load doesn't stop routing to a healthy proxy.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.success.threshold</name>
+    <value>1</value>
+    <description>
+      Consecutive successes before the proxy pod is put back into the service.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.manager.container.num.cores</name>
     <value>2</value>
     <description>
