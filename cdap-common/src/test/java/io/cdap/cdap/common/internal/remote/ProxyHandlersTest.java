@@ -338,6 +338,53 @@ public class ProxyHandlersTest {
     }
 
     @Test
+    public void testPingIsAnsweredWithoutLeasing() {
+        DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+        PodState freshPod = new PodState(null, 0);
+        podLeaseManager.getRegistry().put("10.0.0.1:11015", freshPod);
+
+        EmbeddedChannel channel = new EmbeddedChannel(
+            new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+        // The readiness probe sends no namespace header; a query string must not defeat the match.
+        channel.writeInbound(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+            ProxyFrontendHandler.PING_PATH + "?probe=readiness"));
+
+        FullHttpResponse response = channel.readOutbound();
+        assertEquals(HttpResponseStatus.OK, response.status());
+        assertEquals(0, response.content().readableBytes());
+        response.release();
+
+        // Answered by the proxy itself: nothing leased and discovery never consulted.
+        assertNull(freshPod.getLeasedNamespace());
+        assertEquals(0, freshPod.getInflightRequests());
+        Mockito.verify(mockDiscovery, Mockito.never()).discover(Mockito.anyString());
+
+        channel.writeInbound(new DefaultLastHttpContent());
+        assertFalse(channel.isActive());
+    }
+
+    @Test
+    public void testOnlyGetPingSkipsTheNamespaceCheck() {
+        DiscoveryServiceClient mockDiscovery = mock(DiscoveryServiceClient.class);
+        PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
+
+        EmbeddedChannel channel = new EmbeddedChannel(
+            new ProxyFrontendHandler(podLeaseManager, mockDiscovery));
+        channel.writeInbound(new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+            ProxyFrontendHandler.PING_PATH));
+
+        // A task request to the same path still needs a namespace.
+        FullHttpResponse response = channel.readOutbound();
+        assertEquals(HttpResponseStatus.BAD_REQUEST, response.status());
+        response.release();
+        Mockito.verify(mockDiscovery, Mockito.never()).discover(Mockito.anyString());
+
+        channel.writeInbound(new DefaultLastHttpContent());
+        assertFalse(channel.isActive());
+    }
+
+    @Test
     public void testSyncDiscoveryRecordsNodeName() {
         PodLeaseManager podLeaseManager = new PodLeaseManager(CConfiguration.create());
 

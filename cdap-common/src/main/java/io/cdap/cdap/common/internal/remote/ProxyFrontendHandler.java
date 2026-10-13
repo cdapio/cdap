@@ -35,11 +35,13 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.ReferenceCountUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -76,6 +78,12 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
     static final String WORKER_UNREACHABLE_BODY =
         "The task worker could not be reached; the request was not forwarded.";
 
+    /**
+     * Answered by the proxy itself, for the Kubernetes readiness probe: proves the proxy is
+     * serving without needing a namespace, leasing a pod or reaching a task worker.
+     */
+    static final String PING_PATH = "/ping";
+
     /** Sent by {@link ProxyBackendHandler} to the caller's pipeline when the worker's TLS fails. */
     enum WorkerUnreachableEvent {
         INSTANCE
@@ -103,13 +111,20 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof HttpRequest) {
             HttpRequest req = (HttpRequest) msg;
 
+            // STEP 0: Readiness probe. Checked before the namespace, since the probe sends none.
+            if (HttpMethod.GET.equals(req.method())
+                    && PING_PATH.equals(new QueryStringDecoder(req.uri()).path())) {
+                respondAndClose(ctx, msg, HttpResponseStatus.OK);
+                return;
+            }
+
             // STEP 1: Resolve the Target Namespace
             // The namespace is the lease key, so reject requests without one before leasing.
             String targetNamespace = req.headers().get(Constants.Gateway.HEADER_CDAP_NAMESPACE);
             if (targetNamespace == null || targetNamespace.trim().isEmpty()) {
                 LOG.warn("Rejecting task request {} {} without the {} header.",
                          req.method(), req.uri(), Constants.Gateway.HEADER_CDAP_NAMESPACE);
-                reject(ctx, msg, HttpResponseStatus.BAD_REQUEST);
+                respondAndClose(ctx, msg, HttpResponseStatus.BAD_REQUEST);
                 return;
             }
 
@@ -124,7 +139,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
             if (targetWorkerAddress == null) {
                 LOG.warn("All task worker pods are saturated or leased to other namespaces. "
                          + "Rejecting request for namespace '{}'", targetNamespace);
-                reject(ctx, msg, HttpResponseStatus.TOO_MANY_REQUESTS);
+                respondAndClose(ctx, msg, HttpResponseStatus.TOO_MANY_REQUESTS);
                 return;
             }
 
@@ -138,7 +153,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
                 LOG.error("Task worker address '{}' is not a valid host:port. Rejecting the request.",
                           chosenWorker);
                 podLeaseManager.releaseSlot(chosenWorker);
-                reject(ctx, msg, HttpResponseStatus.BAD_GATEWAY);
+                respondAndClose(ctx, msg, HttpResponseStatus.BAD_GATEWAY);
                 return;
             }
             final String workerHost = chosenWorker.substring(0, portSeparator);
@@ -291,7 +306,7 @@ class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
      * Responds with {@code status} and closes the connection once the request body is drained,
      * so the client isn't reset mid-upload.
      */
-    private void reject(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status) {
+    private void respondAndClose(ChannelHandlerContext ctx, Object msg, HttpResponseStatus status) {
         rejecting = true;
         ctx.writeAndFlush(closingResponse(status, Unpooled.EMPTY_BUFFER));
         ReferenceCountUtil.release(msg);
