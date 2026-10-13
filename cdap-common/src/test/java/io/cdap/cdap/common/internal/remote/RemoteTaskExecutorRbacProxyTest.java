@@ -244,6 +244,36 @@ public class RemoteTaskExecutorRbacProxyTest {
   }
 
   @Test
+  public void testNullNamespaceRequestDoesNotSendNamespaceHeader() throws Exception {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    RunnableTaskRequest requestWithoutNamespace = RunnableTaskRequest.getBuilder("SomeTask")
+        .withParam("param")
+        .build();
+
+    newExecutor(proxyEnabledConf()).runTask(requestWithoutNamespace);
+
+    Assert.assertEquals(Collections.singletonList(null), workerHandler.getNamespaceHeaders());
+  }
+
+  @Test
+  public void testEmptyBodyBadRequestSurfacesStatusInsteadOfNpe() {
+    register(Constants.Service.TASK_WORKER_MANAGER);
+    workerHandler.setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
+
+    try {
+      newExecutor(proxyEnabledConf()).runTask(taskRequest(TENANT_NAMESPACE));
+      Assert.fail("Expected a 400 response to fail the task");
+    } catch (ServiceException e) {
+      Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), e.getStatusCode());
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("400"));
+    } catch (Exception e) {
+      Assert.fail("Expected ServiceException but got " + e);
+    }
+
+    Assert.assertEquals(1, workerHandler.getRequestCount());
+  }
+
+  @Test
   public void testSaturationResponseIsRetriedThenSurfacedAsTooManyRequests() {
     register(Constants.Service.TASK_WORKER_MANAGER);
     workerHandler.setStatusCode(HttpResponseStatus.TOO_MANY_REQUESTS.code());

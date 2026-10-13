@@ -272,6 +272,29 @@ public class TaskWorkerFailureHandlingTest {
     }
   }
 
+  @Test
+  public void testFailedCredentialProvisioningUnwindsLeaseAndSlot() {
+    CConfiguration cConf = newCConf(false);
+    cConf.setBoolean(
+        "feature." + Feature.RBAC_TASK_WORKER_MANAGER.getFeatureFlagString(), true);
+    cConf.setBoolean("security.authorization.enabled", true);
+    cConf.setBoolean(
+        "feature." + Feature.NAMESPACED_SERVICE_ACCOUNTS.getFeatureFlagString(), true);
+    // Point at an closed port so credential provisioning fails with an IOException on admission.
+    cConf.setInt(ArtifactLocalizer.PORT, 1);
+
+    TaskWorkerHttpHandlerInternal handler = newHandler(cConf, () -> { }, className -> { });
+    HttpResponder responder = Mockito.mock(HttpResponder.class);
+
+    handler.run(runRequest(), responder);
+
+    Assert.assertEquals(0, handler.getRunningRequestCount());
+    Assert.assertNull(handler.getStickyLeaseManager().getCurrentLease());
+    Assert.assertEquals(0, handler.getStickyLeaseManager().getActiveTaskCount());
+    Mockito.verify(responder).sendString(Mockito.eq(HttpResponseStatus.INTERNAL_SERVER_ERROR),
+        Mockito.anyString(), Mockito.any(HttpHeaders.class));
+  }
+
   static NettyHttpService startSidecar() throws Exception {
     NettyHttpService sidecar = NettyHttpService.builder("metadata-sidecar")
         .setHost(InetAddress.getLoopbackAddress().getHostName())
