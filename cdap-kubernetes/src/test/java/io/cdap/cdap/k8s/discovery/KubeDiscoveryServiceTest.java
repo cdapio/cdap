@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.DefaultApiClientFactory;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.CoreV1EndpointPort;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
@@ -40,6 +41,8 @@ import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.openapi.models.V1ServiceSpecBuilder;
 import io.kubernetes.client.openapi.models.V1ServiceStatus;
 import io.kubernetes.client.openapi.models.V1ServiceStatusBuilder;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -73,6 +76,9 @@ public class KubeDiscoveryServiceTest {
 
   private static final ApiClientFactory API_CLIENT_FACTORY = new DefaultApiClientFactory(
       10, 300);
+  private static final ApiClientFactory NO_CLUSTER_API_CLIENT_FACTORY = () -> {
+    throw new IOException("No Kubernetes cluster in unit test");
+  };
   private static final String LOAD_BALANCER_SERVICE_NAME = "ilb-service";
   private static final String CLUSTER_IP_SERVICE_NAME = "my-service";
   private static final String LOAD_BALANCER_IP = "10.0.0.10";
@@ -121,13 +127,20 @@ public class KubeDiscoveryServiceTest {
 
   private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
       Map<String, String> podLabels, ImmutableSet<String> endpointsBackedServices) {
+    return createDiscoveryService(namespace, prefix, podLabels, endpointsBackedServices,
+        API_CLIENT_FACTORY);
+  }
+
+  private KubeDiscoveryService createDiscoveryService(String namespace, String prefix,
+      Map<String, String> podLabels, ImmutableSet<String> endpointsBackedServices,
+      ApiClientFactory apiClientFactory) {
     return new KubeDiscoveryService(
         namespace,
         prefix,
         "test-pod",
         podLabels,
         Collections.emptyList(),
-        API_CLIENT_FACTORY,
+        apiClientFactory,
         Collections.emptyList(),
         Collections.emptyMap(),
         endpointsBackedServices);
@@ -627,9 +640,11 @@ public class KubeDiscoveryServiceTest {
   public void testTaskWorkerAddressesComeFromTheEndpointsWatcher() throws Exception {
     try (KubeDiscoveryService service =
         createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
-            ImmutableSet.of(TASK_WORKER))) {
-      service.discover(TASK_WORKER);
+            ImmutableSet.of(TASK_WORKER), NO_CLUSTER_API_CLIENT_FACTORY)) {
+      ServiceDiscovered first = service.discover(TASK_WORKER);
+      ServiceDiscovered second = service.discover(TASK_WORKER);
 
+      Assert.assertSame(first, second);
       Assert.assertEquals(Collections.singleton(NAME_PREFIX + TASK_WORKER),
           service.getEndpointsWatchedServices());
       // An endpoints backed service is registered only with the endpoints watcher, never with the
@@ -642,7 +657,7 @@ public class KubeDiscoveryServiceTest {
   public void testNonEndpointsServicesUseServiceWatcher() throws Exception {
     try (KubeDiscoveryService service =
         createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
-            ImmutableSet.of(TASK_WORKER))) {
+            ImmutableSet.of(TASK_WORKER), NO_CLUSTER_API_CLIENT_FACTORY)) {
       service.discover("metrics");
 
       // Configuring pod level discovery for the task worker must not silently move other
@@ -651,6 +666,52 @@ public class KubeDiscoveryServiceTest {
           service.getWatchedServices());
       Assert.assertTrue(service.getEndpointsWatchedServices().isEmpty());
     }
+  }
+
+  @Test
+  public void testEndpointsWatcherEventsUpdateServiceDiscovered() {
+    try (KubeDiscoveryService service =
+        createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+            ImmutableSet.of(TASK_WORKER), NO_CLUSTER_API_CLIENT_FACTORY)) {
+      ServiceDiscovered discovered = service.discover(TASK_WORKER);
+      KubeDiscoveryService.EndpointsWatcherThread watcher = service.getEndpointsWatcherThread();
+      Assert.assertNotNull(watcher);
+
+      V1Endpoints withTwoPods = new V1Endpoints()
+          .metadata(taskWorkerEndpointsMetadata())
+          .addSubsetsItem(new V1EndpointSubset()
+              .addresses(Arrays.asList(
+                  new V1EndpointAddress().ip("10.0.0.1").nodeName("node-a"),
+                  new V1EndpointAddress().ip("10.0.0.2").nodeName("node-b")))
+              .ports(Collections.singletonList(new CoreV1EndpointPort().port(SERVICE_PORT))));
+      watcher.resourceAdded(withTwoPods);
+
+      Set<String> hosts = StreamSupport.stream(discovered.spliterator(), false)
+          .map(d -> d.getSocketAddress().getHostString())
+          .collect(Collectors.toSet());
+      Assert.assertEquals(ImmutableSet.of("10.0.0.1", "10.0.0.2"), hosts);
+
+      // Dropping all subsets (all backing pods gone) publishes an empty set.
+      watcher.resourceModified(new V1Endpoints().metadata(taskWorkerEndpointsMetadata()));
+      Assert.assertFalse(discovered.iterator().hasNext());
+
+      // Re-adding and then deleting the Endpoints object also clears ServiceDiscovered.
+      watcher.resourceAdded(withTwoPods);
+      Assert.assertTrue(discovered.iterator().hasNext());
+      watcher.resourceDeleted(withTwoPods);
+      Assert.assertFalse(discovered.iterator().hasNext());
+
+      // Forbidden (403) watch failures are handled without throwing.
+      watcher.onWatchFailure(new ApiException(HttpURLConnection.HTTP_FORBIDDEN, "Forbidden"));
+    }
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testDiscoverEndpointsServiceAfterCloseThrows() {
+    KubeDiscoveryService service = createDiscoveryService("default", NAME_PREFIX, POD_LABELS,
+        ImmutableSet.of(TASK_WORKER), NO_CLUSTER_API_CLIENT_FACTORY);
+    service.close();
+    service.discover(TASK_WORKER);
   }
 
   private V1ObjectMeta taskWorkerEndpointsMetadata() {

@@ -289,6 +289,12 @@ public class KubeDiscoveryService implements DiscoveryService,
     return thread == null ? Collections.emptySet() : thread.getServices();
   }
 
+  @VisibleForTesting
+  @Nullable
+  EndpointsWatcherThread getEndpointsWatcherThread() {
+    return endpointsWatcherThread;
+  }
+
   @Override
   public void close() {
     WatcherThread watcherThread;
@@ -797,7 +803,8 @@ public class KubeDiscoveryService implements DiscoveryService,
   /**
    * A {@link Thread} that continuously watches for real-time changes in Kubernetes {@link V1Endpoints}.
    */
-  private final class EndpointsWatcherThread extends AbstractWatcherThread<V1Endpoints> {
+  @VisibleForTesting
+  final class EndpointsWatcherThread extends AbstractWatcherThread<V1Endpoints> {
 
     private final Set<String> services;
 
@@ -823,6 +830,19 @@ public class KubeDiscoveryService implements DiscoveryService,
       options.setLabelSelector(
           String.format("%s in (%s)", SERVICE_LABEL,
               String.join(",", services)));
+    }
+
+    @Override
+    protected void onWatchFailure(Exception e) {
+      if (e instanceof ApiException
+          && ((ApiException) e).getCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        LOG.error("Permission denied (HTTP 403) watching Kubernetes endpoints in namespace '{}' "
+                + "for services {}. Ensure the pod's service account has get, list, and watch "
+                + "permissions on the 'endpoints' resource.",
+            namespace, services, e);
+        return;
+      }
+      super.onWatchFailure(e);
     }
 
     @Override
