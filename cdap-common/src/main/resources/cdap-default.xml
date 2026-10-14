@@ -5693,6 +5693,17 @@
   </property>
 
   <property>
+    <name>task.worker.manager.client.connect.timeout.ms</name>
+    <value>5000</value>
+    <description>
+      Upper bound, in milliseconds, on how long App Fabric waits to connect to the task worker
+      manager proxy. A connect timeout means the request was never sent, so it is retried within
+      the task worker retry policy; a short timeout lets a restarting proxy cost seconds rather
+      than the caller's full connect timeout. Applies only when the proxy is enabled.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.manager.container.num.cores</name>
     <value>2</value>
     <description>
@@ -6496,6 +6507,8 @@
     <description>
       If true, task worker requests are routed through the Task Worker Manager netty proxy, which leases a
       task worker pod per namespace so that user code from different namespaces never shares a JVM.
+      When task.worker.container.count is 1 there is no proxy; requests go directly to the task
+      worker, which leases itself to one namespace at a time.
       Only takes effect when security.authorization.enabled is also true; on non-RBAC instances
       requests continue to go directly to a randomly discovered task worker.
     </description>
