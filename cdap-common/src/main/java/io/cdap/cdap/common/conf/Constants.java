@@ -579,6 +579,8 @@ public final class Constants {
     public static final String CONTAINER_CORES = "task.worker.manager.container.num.cores";
     public static final String CONTAINER_JVM_OPTS = "task.worker.manager.container.jvm.opts";
     public static final String POOL_CHECK_INTERVAL = "task.worker.manager.pool.check.interval";
+    // How long a stopping proxy waits for in-flight task responses before closing them.
+    public static final String DRAIN_TIMEOUT_SECS = "task.worker.manager.drain.timeout.secs";
     // Read by KubeMasterEnvironment (added in #16226), which can't depend on cdap-common; keep the
     // two keys in sync.
     public static final String ENDPOINTS_SERVICES = "master.environment.k8s.endpoints.services";
@@ -890,6 +892,8 @@ public final class Constants {
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
     public static final String API_KEY = "X-ApiKey";
     public static final String HEADER_CDAP_NAMESPACE = "X-CDAP-Namespace";
+    public static final String HEADER_LEASED_NAMESPACE = "X-Leased-Namespace";
+    public static final String HEADER_WORKER_DRAINING = "X-Worker-Draining";
     public static final String APP_DEPLOYMENT_SKIPPED_HEADER = "X-CDAP-App-Deployment-Skipped";
 
     /**
