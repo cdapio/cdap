@@ -5641,6 +5641,79 @@
   </property>
 
   <property>
+    <name>task.worker.manager.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for the task worker manager netty proxy service.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.bind.port</name>
+    <value>11025</value>
+    <description>
+      The port to bind the task worker manager netty proxy service to.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss (acceptor) threads for the task worker manager netty proxy.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.worker.threads</name>
+    <value>0</value>
+    <description>
+      The number of worker (I/O) threads for the task worker manager netty proxy. A value of 0 lets Netty
+      pick its default, which is twice the number of available processors.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.pool.check.interval</name>
+    <value>30</value>
+    <description>
+      Interval (in seconds) for ensuring the task worker manager netty proxy is up and running.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.container.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of virtual cores for the task worker manager netty proxy. This is a pre-multiplier baseline:
+      the Kubernetes CPU request is this value scaled by
+      master.environment.k8s.container.cpu.multiplier.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Memory in megabytes for the task worker manager netty proxy. This is a pre-multiplier baseline: the
+      Kubernetes memory request is this value scaled by
+      master.environment.k8s.container.memory.multiplier, so deployments that set a multiplier
+      other than 1.0 are expected to override this value per tier to keep the effective pod memory
+      constant.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for the task worker manager netty proxy container. Deliberately does not set -Xmx: the
+      Kubernetes master environment computes the max heap size from the container memory request
+      and passes it via the JAVA_HEAPMAX environment variable.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.internal.router.enabled</name>
     <value>false</value>
     <description>
@@ -6405,6 +6478,18 @@
       Enables dataplane audit logging for RBAC instances.
     </description>
   </property>
+
+  <property>
+    <name>feature.rbac.task.worker.manager.enabled</name>
+    <value>false</value>
+    <description>
+      If true, task worker requests are routed through the Task Worker Manager netty proxy, which leases a
+      task worker pod per namespace so that user code from different namespaces never shares a JVM.
+      Only takes effect when security.authorization.enabled is also true; on non-RBAC instances
+      requests continue to go directly to a randomly discovered task worker.
+    </description>
+  </property>
+
 
   <property>
     <name>artifact.cache.bind.address</name>
