@@ -49,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -172,7 +173,10 @@ public final class MetadataHandler extends AbstractHttpHandler {
     return namespaceId;
   }
 
-  private static boolean hasInternalCredential(Principal principal) {
+  private static boolean hasInternalCredential(@Nullable Principal principal) {
+    if (principal == null) {
+      return false;
+    }
     Credential credential = principal.getFullCredential();
     return credential != null && credential.getType() == Credential.CredentialType.INTERNAL;
   }

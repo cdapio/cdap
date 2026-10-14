@@ -309,6 +309,18 @@ public class MetadataHandlerAuthorizationTest {
   }
 
   @Test
+  public void testSystemNamespaceRejectsNullPrincipal() throws Exception {
+    startService(true);
+    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
+    currentPrincipal.set(null);
+
+    assertAllEndpoints(403, NamespaceId.SYSTEM);
+
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
+  }
+
+  @Test
   public void testSystemNamespaceRejectsEncodedSpellingOfItsName() throws Exception {
     startService(true);
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
