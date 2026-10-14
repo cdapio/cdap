@@ -24,6 +24,7 @@ import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,11 @@ class SpannerUtil {
   static final String PUBLISH_BATCH_TIMEOUT_MILLIS = "publish.batch.timeout.millis";
   static final String PUBLISH_DELAY_MILLIS = "publish.batch.poll.millis";
   static final String SPANNER_EMULATOR_HOST = "SPANNER_EMULATOR_HOST";
+  // Optional Spanner API endpoint URL, including the scheme, such as
+  // https://spanner.googleapis.com, which is the default. The messaging service context passes the
+  // gcp-spanner storage properties through, so this is data.storage.properties.gcp-spanner.host,
+  // the same property that the Spanner storage provider reads.
+  static final String HOST = "host";
 
   static DatabaseClient getSpannerDbClient(String projectId, String instanceId, String databaseId,
       Spanner spanner) {
@@ -95,14 +101,32 @@ class SpannerUtil {
   }
 
   /**
-   * Obtains a Spanner service client, configuring it for emulator if {@code SPANNER_EMULATOR_HOST}
-   * system property is set.
+   * Obtains a Spanner service client, configuring it for the emulator if the
+   * {@link #SPANNER_EMULATOR_HOST} property or environment variable is set, and otherwise for the
+   * Spanner API endpoint in the {@link #HOST} property, if set.
    */
   public static Spanner getSpannerService(Map<String, String> conf, String projectId,
       @Nullable Credentials credentials) {
+    SpannerOptions options = createSpannerOptionsBuilder(
+        conf, projectId, credentials, System.getenv(SPANNER_EMULATOR_HOST)).build();
+    LOG.info("Spanner messaging service uses endpoint {}", options.getHost());
+    return options.getService();
+  }
+
+  /**
+   * Creates the {@link SpannerOptions.Builder} for the given project from the messaging service
+   * properties. An emulator host, from the {@link #SPANNER_EMULATOR_HOST} property or else
+   * {@code envEmulatorHost}, takes precedence over the configured {@link #HOST}.
+   */
+  @VisibleForTesting
+  static SpannerOptions.Builder createSpannerOptionsBuilder(Map<String, String> conf,
+      String projectId, @Nullable Credentials credentials, @Nullable String envEmulatorHost) {
     SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(projectId);
 
     String emulatorHost = conf.get(SPANNER_EMULATOR_HOST);
+    if (Strings.isNullOrEmpty(emulatorHost)) {
+      emulatorHost = envEmulatorHost;
+    }
     if (!Strings.isNullOrEmpty(emulatorHost)) {
       builder.setEmulatorHost(emulatorHost);
       // CRITICAL: For the emulator, explicitly set credentials to null.
@@ -121,6 +145,12 @@ class SpannerUtil {
           "Connecting to production Spanner instance using Application Default Credentials (or defaults).");
     }
 
-    return builder.build().getService();
+    // The emulator, if set in configuration or environment, takes precedence over the host.
+    String host = conf.get(HOST);
+    if (Strings.isNullOrEmpty(emulatorHost) && !Strings.isNullOrEmpty(host)) {
+      builder.setHost(host);
+      LOG.trace("Using Spanner host {}", host);
+    }
+    return builder;
   }
 }
