@@ -1,0 +1,310 @@
+/*
+ * Copyright © 2026 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.internal.app.worker.manager;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
+
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillPreparer;
+import org.apache.twill.api.TwillRunner;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Answers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
+
+/**
+ * Unit test for {@link TaskWorkerManagerServiceLauncher}.
+ */
+public class TaskWorkerManagerServiceLauncherTest {
+
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private CConfiguration cConf;
+  private TwillRunner twillRunner;
+
+  @Before
+  public void setUp() throws Exception {
+    cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
+
+    twillRunner = mock(TwillRunner.class);
+    when(twillRunner.lookup(TaskWorkerManagerTwillApplication.NAME))
+        .thenReturn(Collections.emptyList());
+  }
+
+  /**
+   * Recreate is what stops a rollout from briefly running two proxies.
+   */
+  @Test
+  public void testLaunchRequestsRecreateStrategy() {
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    // The strategy must be set before the deployment is submitted.
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).withRecreateStrategy();
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+  }
+
+  /**
+   * Kubernetes must not kill the proxy while it drains in-flight requests: the pod's grace period
+   * exceeds the proxy JVM's stop wait, which exceeds the drain timeout.
+   */
+  @Test
+  public void testLaunchOutwaitsTheDrain() throws Exception {
+    cConf.setLong(Constants.TaskWorkerManager.DRAIN_TIMEOUT_SECS, 60);
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    ArgumentCaptor<TwillApplication> appCaptor = ArgumentCaptor.forClass(TwillApplication.class);
+    when(twillRunner.prepare(appCaptor.capture())).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).withTerminationGracePeriod(75L);
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+    TaskWorkerManagerTwillApplication app =
+        (TaskWorkerManagerTwillApplication) appCaptor.getValue();
+    CConfiguration launchedCConf = CConfiguration.create(new File(app.getCConfFileUri()));
+    Assert.assertEquals(70L, launchedCConf.getLong(Constants.Master.RUNNABLE_STOP_TIMEOUT_SECS));
+    // Only the proxy's own copy is changed.
+    Assert.assertEquals(30L, cConf.getLong(Constants.Master.RUNNABLE_STOP_TIMEOUT_SECS));
+  }
+
+  /**
+   * The default readiness probe targets the proxy's own /ping on its bind port, over plain HTTP.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testLaunchAddsReadinessProbe() {
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    ArgumentCaptor<Map<String, String>> probeConf = ArgumentCaptor.forClass(Map.class);
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).addProbes(
+        eq(TaskWorkerManagerTwillRunnable.class.getSimpleName()), probeConf.capture());
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+    Map<String, String> conf = probeConf.getValue();
+    Assert.assertEquals("readiness", conf.get("k8s.names"));
+    Assert.assertEquals("httpget", conf.get("k8s.readiness.type"));
+    Assert.assertEquals("/ping", conf.get("k8s.readiness.http.path"));
+    Assert.assertEquals("HTTP", conf.get("k8s.readiness.http.scheme"));
+    Assert.assertEquals(cConf.get(Constants.TaskWorkerManager.PORT),
+        conf.get("k8s.readiness.http.port"));
+  }
+
+  /**
+   * When internal TLS is enabled, the readiness probe must use HTTPS to match the proxy server.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testLaunchReadinessProbeUsesHttpsWhenInternalSslEnabled() {
+    cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    ArgumentCaptor<Map<String, String>> probeConf = ArgumentCaptor.forClass(Map.class);
+    verify(preparer).addProbes(
+        eq(TaskWorkerManagerTwillRunnable.class.getSimpleName()), probeConf.capture());
+    Assert.assertEquals("HTTPS", probeConf.getValue().get("k8s.readiness.http.scheme"));
+  }
+
+  @Test
+  public void testLaunchSetsSchedulerQueueWhenPriorityClassConfigured() {
+    cConf.set(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME, "high-priority");
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    InOrder inOrder = Mockito.inOrder(preparer);
+    inOrder.verify(preparer).setSchedulerQueue("high-priority");
+    inOrder.verify(preparer).start(anyLong(), any(TimeUnit.class));
+  }
+
+  @Test
+  public void testShutDownTerminatesActiveControllerAndExecutor() throws Exception {
+    TwillController existing = mock(TwillController.class);
+    Mockito.doReturn(com.google.common.util.concurrent.Futures.immediateFuture(existing))
+        .when(existing).terminate();
+    when(twillRunner.lookup(TaskWorkerManagerTwillApplication.NAME))
+        .thenReturn(Collections.singletonList(existing));
+
+    TaskWorkerManagerServiceLauncher launcher =
+        new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner);
+    java.util.concurrent.ScheduledExecutorService executor = launcher.executor();
+    launcher.run();
+    launcher.shutDown();
+
+    verify(existing).terminate();
+    Assert.assertTrue(executor.isShutdown());
+  }
+
+  @Test
+  public void testLaunchWithoutProbes() {
+    cConf.setBoolean(Constants.TaskWorkerManager.PROBE_ENABLED, false);
+    ExtendedTwillPreparer preparer = mockPreparer(ExtendedTwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    verify(preparer, never()).addProbes(anyString(), anyMap());
+    verify(preparer).start(anyLong(), any(TimeUnit.class));
+  }
+
+  /**
+   * Non-Kubernetes preparers don't implement {@link ExtendedTwillPreparer}; launch must still work.
+   */
+  @Test
+  public void testLaunchWithoutExtendedPreparerStillStarts() {
+    TwillPreparer preparer = mockPreparer(TwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    verify(preparer).start(anyLong(), any(TimeUnit.class));
+  }
+
+  /**
+   * Iterations after the first must not launch a second proxy.
+   */
+  @Test
+  public void testExistingControllerIsNotRelaunched() {
+    TwillController existing = mock(TwillController.class);
+    when(twillRunner.lookup(TaskWorkerManagerTwillApplication.NAME))
+        .thenReturn(Collections.singletonList(existing));
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    verify(twillRunner, never()).prepare(any(TwillApplication.class));
+    verify(existing, never()).terminate();
+  }
+
+  /**
+   * Extra proxies left by a previous App Fabric are terminated so exactly one remains.
+   */
+  @Test
+  public void testDuplicateControllersAreTerminated() {
+    TwillController first = mock(TwillController.class);
+    TwillController second = mock(TwillController.class);
+    when(twillRunner.lookup(TaskWorkerManagerTwillApplication.NAME))
+        .thenReturn(Arrays.asList(first, second));
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    // The first controller found is adopted; every other one is surplus.
+    verify(first, never()).terminate();
+    verify(second).terminate();
+    verify(twillRunner, never()).prepare(any(TwillApplication.class));
+  }
+
+  /**
+   * The proxy's cConf discovers task workers via endpoints and drops the unmounted internal cert.
+   */
+  @Test
+  public void testLaunchConfiguresCConfForProxy() throws Exception {
+    cConf.set(Constants.Security.SSL.INTERNAL_CERT_PATH, "/path/to/cert");
+    TwillPreparer preparer = mockPreparer(TwillPreparer.class);
+    TwillController controller = mock(TwillController.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class))).thenReturn(controller);
+    ArgumentCaptor<TwillApplication> appCaptor = ArgumentCaptor.forClass(TwillApplication.class);
+    when(twillRunner.prepare(appCaptor.capture())).thenReturn(preparer);
+
+    new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner).run();
+
+    TaskWorkerManagerTwillApplication app =
+        (TaskWorkerManagerTwillApplication) appCaptor.getValue();
+    CConfiguration launchedCConf = CConfiguration.create(new File(app.getCConfFileUri()));
+
+    Assert.assertEquals(Constants.Service.TASK_WORKER,
+        launchedCConf.get(Constants.TaskWorkerManager.ENDPOINTS_SERVICES));
+    Assert.assertNull(launchedCConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH));
+  }
+
+  /**
+   * A failed launch retries every tick, so it must not leave a run directory behind each time.
+   */
+  @Test
+  public void testStartFailureCleansUpRunDirectory() throws Exception {
+    TwillPreparer preparer = mockPreparer(TwillPreparer.class);
+    when(preparer.start(anyLong(), any(TimeUnit.class)))
+        .thenThrow(new IllegalStateException("simulated launch failure"));
+    when(twillRunner.prepare(any(TwillApplication.class))).thenReturn(preparer);
+
+    TaskWorkerManagerServiceLauncher launcher =
+        new TaskWorkerManagerServiceLauncher(cConf, new Configuration(), twillRunner);
+    launcher.run();
+
+    verify(preparer).start(anyLong(), any(TimeUnit.class));
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+        cConf.get(Constants.AppFabric.TEMP_DIR));
+    Assert.assertTrue("The launcher should have created its temp dir", tmpDir.isDirectory());
+    Assert.assertArrayEquals(new String[0], tmpDir.list());
+  }
+
+  /**
+   * Returns a preparer mock whose fluent setters return the mock itself.
+   */
+  private <T extends TwillPreparer> T mockPreparer(Class<T> preparerClass) {
+    return mock(preparerClass, withSettings().defaultAnswer(Answers.RETURNS_SELF));
+  }
+}
