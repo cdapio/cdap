@@ -80,6 +80,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
+      if (uriParts.length == 0) {
+        return APP_FABRIC_HTTP;
+      }
+
       // This check has to stay ahead of the method parsing below: AllowedMethod.valueOf throws for
       // methods such as PATCH, OPTIONS and HEAD, and the catch block would then route them to app-fabric.
       if (uriParts[0].equals(INTERNAL_API_VERSION_1_TOKEN)) {

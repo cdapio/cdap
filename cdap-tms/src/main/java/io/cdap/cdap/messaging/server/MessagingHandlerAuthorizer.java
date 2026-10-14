@@ -27,6 +27,7 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import javax.annotation.Nullable;
 
 /**
  * Authorizes requests to the messaging HTTP handlers on the namespace of the target topic.
@@ -71,7 +72,10 @@ final class MessagingHandlerAuthorizer {
     return namespaceId;
   }
 
-  private static boolean hasInternalCredential(Principal principal) {
+  private static boolean hasInternalCredential(@Nullable Principal principal) {
+    if (principal == null) {
+      return false;
+    }
     Credential credential = principal.getFullCredential();
     return credential != null && credential.getType() == Credential.CredentialType.INTERNAL;
   }
