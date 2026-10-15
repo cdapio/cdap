@@ -21,6 +21,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ErrorUtils;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -64,6 +69,8 @@ public final class PipelineTriggers {
    * @param triggerInfo {@link ProgramStatusTriggerInfo} with plugin properties
    * @param propertiesMapping  {@link TriggeringPropertyMapping} for using the plugin
    * @param compositeTriggerEnabled  whether the composite trigger is enabled
+   * @throws ProgramFailureException if a plugin property mapping applies to the triggering pipeline but the
+   *     resolved plugin properties of the triggering run are not available
    */
   public static void addSchedulePropertiesMapping(Map<String, String> mappings,
                                                   ProgramStatusTriggerInfo triggerInfo,
@@ -117,6 +124,19 @@ public final class PipelineTriggers {
         LOG.warn("The name of the stage cannot be null in plugin property mapping, "
           + "skip this mapping: '{}'.", mapping);
         continue;
+      }
+      if (resolvedProperties == null) {
+        String errorReason = String.format(
+          "Resolved plugin properties of run '%s' of the triggering pipeline '%s' in namespace '%s' are not "
+            + "available, so plugin property mapping '%s' cannot be applied.",
+          triggerInfo.getRunId(), triggerInfo.getApplicationName(), triggerInfo.getNamespace(), mapping);
+        String errorMessage = String.format(
+          "%s The final workflow token of the triggering run was not committed when this run was launched, or the "
+            + "triggering run failed before writing its resolved plugin properties.",
+          errorReason);
+        throw ErrorUtils.getProgramFailureException(
+          new ErrorCategory(ErrorCategoryEnum.SCHEDULES_AND_TRIGGERS),
+          errorReason, errorMessage, ErrorType.SYSTEM, false, null);
       }
       Map<String, String> pluginProperties = resolvedProperties.get(stageName);
       if (pluginProperties == null) {
