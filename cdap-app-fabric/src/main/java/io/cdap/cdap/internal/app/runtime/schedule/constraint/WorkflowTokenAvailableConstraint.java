@@ -19,10 +19,14 @@ package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -56,9 +60,12 @@ public class WorkflowTokenAvailableConstraint implements CheckableConstraint {
   private static final String REQUIRED_TOKEN_KEY = "resolved.plugin.properties.map";
 
   private final long maxWaitMillis;
+  private final MetricsCollectionService metricsCollectionService;
 
-  public WorkflowTokenAvailableConstraint(long maxWaitMillis) {
+  public WorkflowTokenAvailableConstraint(
+      long maxWaitMillis, MetricsCollectionService metricsCollectionService) {
     this.maxWaitMillis = maxWaitMillis;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -79,6 +86,7 @@ public class WorkflowTokenAvailableConstraint implements CheckableConstraint {
     long effectiveMaxWaitMillis = Math.min(maxWaitMillis, timeUntilJobTimeoutMillis);
 
     List<ProgramRunId> timedOutRuns = new ArrayList<>();
+    boolean checkedWorkflowRun = false;
     for (Notification notification : job.getNotifications()) {
       ProgramRunId programRunId = extractProgramRunId(notification);
       if (programRunId == null
@@ -87,6 +95,7 @@ public class WorkflowTokenAvailableConstraint implements CheckableConstraint {
         continue;
       }
 
+      checkedWorkflowRun = true;
       if (isFinalTokenReady(context.getWorkflowToken(programRunId))) {
         continue;
       }
@@ -100,6 +109,8 @@ public class WorkflowTokenAvailableConstraint implements CheckableConstraint {
             effectiveMaxWaitMillis,
             REQUIRED_TOKEN_KEY,
             programRunId);
+        emitOutcome(
+            schedule, Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_DEFERRED, waitedMillis);
         return new ConstraintResult(
             ConstraintResult.SatisfiedState.NOT_SATISFIED,
             context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(1));
@@ -116,8 +127,22 @@ public class WorkflowTokenAvailableConstraint implements CheckableConstraint {
           REQUIRED_TOKEN_KEY,
           timedOutRuns,
           schedule.getScheduleId());
+      emitOutcome(
+          schedule, Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_TIMEOUT, waitedMillis);
+    } else if (checkedWorkflowRun) {
+      emitOutcome(
+          schedule, Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_SATISFIED, waitedMillis);
     }
     return ConstraintResult.SATISFIED;
+  }
+
+  private void emitOutcome(ProgramSchedule schedule, String counterMetric, long waitedMillis) {
+    MetricsContext collector =
+        metricsCollectionService.getContext(
+            Schedulers.getScheduleJobMetricsTags(
+                schedule.getScheduleId().getApplication(), schedule.getName()));
+    collector.increment(counterMetric, 1L);
+    collector.gauge(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_MS, waitedMillis);
   }
 
   /**

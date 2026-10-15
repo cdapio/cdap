@@ -17,7 +17,6 @@
 package io.cdap.cdap.scheduler;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -43,7 +42,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -51,7 +49,6 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -334,7 +331,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     private void emitScheduleJobSuccessAndLatencyMetric(String application, String schedule,
         long jobCreationTime) {
       MetricsContext collector = metricsCollectionService.getContext(
-          getScheduleJobMetricsContext(application, schedule));
+          Schedulers.getScheduleJobMetricsTags(application, schedule));
       collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_SUCCESS, 1);
 
       long currTime = System.currentTimeMillis();
@@ -344,16 +341,8 @@ class ConstraintCheckerService extends AbstractIdleService {
 
     private void emitScheduleJobFailureMetric(String application, String schedule) {
       MetricsContext collector = metricsCollectionService.getContext(
-          getScheduleJobMetricsContext(application, schedule));
+          Schedulers.getScheduleJobMetricsTags(application, schedule));
       collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_FAILURE, 1);
-    }
-
-    private Map<String, String> getScheduleJobMetricsContext(String application, String schedule) {
-      return ImmutableMap.of(
-          Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-          Constants.Metrics.Tag.APP, application,
-          Constants.Metrics.Tag.COMPONENT, "constraintchecker",
-          Constants.Metrics.Tag.SCHEDULE, schedule);
     }
   }
 }
