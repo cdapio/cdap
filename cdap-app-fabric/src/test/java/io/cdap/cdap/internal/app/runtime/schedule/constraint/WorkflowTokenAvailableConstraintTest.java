@@ -20,8 +20,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
@@ -69,12 +72,17 @@ public class WorkflowTokenAvailableConstraintTest {
           + "\"pluginProperties\":[]}";
 
   private Store store;
+  private MetricsCollectionService metricsService;
+  private MetricsContext metricsContext;
   private WorkflowTokenAvailableConstraint constraint;
 
   @Before
   public void setUp() {
     store = Mockito.mock(Store.class);
-    constraint = new WorkflowTokenAvailableConstraint(MAX_WAIT_MS);
+    metricsService = Mockito.mock(MetricsCollectionService.class);
+    metricsContext = Mockito.mock(MetricsContext.class);
+    Mockito.when(metricsService.getContext(Mockito.anyMap())).thenReturn(metricsContext);
+    constraint = new WorkflowTokenAvailableConstraint(MAX_WAIT_MS, metricsService);
   }
 
   @Test
@@ -386,6 +394,146 @@ public class WorkflowTokenAvailableConstraintTest {
     ConstraintResult result = constraint.check(schedule, new ConstraintContext(job, 1000L, store));
     Assert.assertEquals(ConstraintResult.SatisfiedState.SATISFIED, result.getSatisfiedState());
     Mockito.verifyNoInteractions(store);
+  }
+
+  @Test
+  public void testMetricsEmittedForDeferredSatisfiedAndTimeout() {
+    Map<String, String> expectedTags =
+        ImmutableMap.of(
+            Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+            Constants.Metrics.Tag.APP, DOWNSTREAM_APP.getApplication(),
+            Constants.Metrics.Tag.COMPONENT, "constraintchecker",
+            Constants.Metrics.Tag.SCHEDULE, "sched1");
+    Mockito.reset(metricsService);
+    Mockito.when(metricsService.getContext(expectedTags)).thenReturn(metricsContext);
+
+    ProgramSchedule schedule =
+        scheduleWithProperties(ImmutableMap.of(MAPPING_KEY, PLUGIN_MAPPING_JSON));
+    long creationTime = 1000L;
+    Job job = jobAt(creationTime, ImmutableList.of(statusNotification(UPSTREAM_RUN)));
+
+    // 1. Deferred (token missing required key, before deadline)
+    Mockito.when(store.getWorkflowToken(UPSTREAM_WORKFLOW, UPSTREAM_RUN.getRun()))
+        .thenReturn(new BasicWorkflowToken(0));
+    ConstraintResult deferredResult =
+        constraint.check(schedule, new ConstraintContext(job, creationTime + 2500L, store));
+    Assert.assertEquals(
+        ConstraintResult.SatisfiedState.NOT_SATISFIED, deferredResult.getSatisfiedState());
+    Mockito.verify(metricsContext)
+        .increment(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_DEFERRED, 1L);
+    Mockito.verify(metricsContext)
+        .gauge(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_MS, 2500L);
+
+    // 2. Satisfied (token now contains required key)
+    Mockito.when(store.getWorkflowToken(UPSTREAM_WORKFLOW, UPSTREAM_RUN.getRun()))
+        .thenReturn(tokenWithRequiredKey());
+    ConstraintResult satisfiedResult =
+        constraint.check(schedule, new ConstraintContext(job, creationTime + 4000L, store));
+    Assert.assertEquals(
+        ConstraintResult.SatisfiedState.SATISFIED, satisfiedResult.getSatisfiedState());
+    Mockito.verify(metricsContext)
+        .increment(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_SATISFIED, 1L);
+    Mockito.verify(metricsContext)
+        .gauge(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_MS, 4000L);
+
+    // 3. Timeout (token still missing required key at deadline)
+    Mockito.when(store.getWorkflowToken(UPSTREAM_WORKFLOW, UPSTREAM_RUN.getRun()))
+        .thenReturn(new BasicWorkflowToken(0));
+    ConstraintResult timeoutResult =
+        constraint.check(schedule, new ConstraintContext(job, creationTime + MAX_WAIT_MS, store));
+    Assert.assertEquals(
+        ConstraintResult.SatisfiedState.SATISFIED, timeoutResult.getSatisfiedState());
+    Mockito.verify(metricsContext)
+        .increment(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_TIMEOUT, 1L);
+    Mockito.verify(metricsContext)
+        .gauge(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_MS, MAX_WAIT_MS);
+  }
+
+  @Test
+  public void testCompositeScheduleEmitsDeferredWithoutSatisfiedUntilAllReady() {
+    ApplicationId secondApp = NamespaceId.DEFAULT.app("secondUpstreamPipeline");
+    WorkflowId secondWorkflow = secondApp.workflow("DataPipelineWorkflow");
+    ProgramRunId secondRun = secondWorkflow.run("run-2");
+
+    Mockito.when(store.getWorkflowToken(UPSTREAM_WORKFLOW, UPSTREAM_RUN.getRun()))
+        .thenReturn(tokenWithRequiredKey());
+    Mockito.when(store.getWorkflowToken(secondWorkflow, secondRun.getRun()))
+        .thenReturn(new BasicWorkflowToken(0));
+
+    ProgramSchedule schedule =
+        scheduleWithProperties(ImmutableMap.of(MAPPING_KEY, PLUGIN_MAPPING_JSON));
+    Notification firstNotification = statusNotificationAt(UPSTREAM_RUN, 1000L);
+    Notification secondNotification = statusNotificationAt(secondRun, 100_000L);
+    Job job = jobAt(1000L, ImmutableList.of(firstNotification, secondNotification));
+
+    ConstraintResult deferredResult =
+        constraint.check(schedule, new ConstraintContext(job, 105_000L, store));
+    Assert.assertEquals(
+        ConstraintResult.SatisfiedState.NOT_SATISFIED, deferredResult.getSatisfiedState());
+    Mockito.verify(metricsContext)
+        .increment(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_DEFERRED, 1L);
+    Mockito.verify(metricsContext)
+        .gauge(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_MS, 5000L);
+    Mockito.verify(metricsContext, Mockito.never())
+        .increment(
+            Mockito.eq(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_SATISFIED),
+            Mockito.anyLong());
+
+    Mockito.reset(metricsContext);
+    Mockito.when(store.getWorkflowToken(secondWorkflow, secondRun.getRun()))
+        .thenReturn(tokenWithRequiredKey());
+    ConstraintResult satisfiedResult =
+        constraint.check(schedule, new ConstraintContext(job, 106_000L, store));
+    Assert.assertEquals(
+        ConstraintResult.SatisfiedState.SATISFIED, satisfiedResult.getSatisfiedState());
+    Mockito.verify(metricsContext, Mockito.times(1))
+        .increment(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_SATISFIED, 1L);
+  }
+
+  @Test
+  public void testNoMetricsEmittedWhenScheduleDoesNotRequirePluginProperties() {
+    Mockito.reset(metricsService);
+    ProgramSchedule schedule =
+        scheduleWithProperties(ImmutableMap.of(MAPPING_KEY, ARGUMENT_ONLY_MAPPING_JSON));
+    Job job = jobAt(1000L, ImmutableList.of(statusNotification(UPSTREAM_RUN)));
+
+    ConstraintResult result =
+        constraint.check(schedule, new ConstraintContext(job, 1500L, store));
+    Assert.assertEquals(ConstraintResult.SatisfiedState.SATISFIED, result.getSatisfiedState());
+    Mockito.verifyNoInteractions(metricsService);
+  }
+
+  @Test
+  public void testCompositeTimeoutEmitsSingleTimeoutAndNoDeferred() {
+    ApplicationId secondApp = NamespaceId.DEFAULT.app("secondUpstreamPipeline");
+    WorkflowId secondWorkflow = secondApp.workflow("DataPipelineWorkflow");
+    ProgramRunId secondRun = secondWorkflow.run("run-2");
+    Mockito.when(store.getWorkflowToken(UPSTREAM_WORKFLOW, UPSTREAM_RUN.getRun()))
+        .thenReturn(new BasicWorkflowToken(0));
+    Mockito.when(store.getWorkflowToken(secondWorkflow, secondRun.getRun()))
+        .thenReturn(new BasicWorkflowToken(0));
+
+    ProgramSchedule schedule =
+        scheduleWithProperties(ImmutableMap.of(MAPPING_KEY, PLUGIN_MAPPING_JSON));
+    Job job =
+        jobAt(
+            1000L,
+            ImmutableList.of(
+                statusNotificationAt(UPSTREAM_RUN, 1000L), statusNotificationAt(secondRun, 5000L)));
+
+    ConstraintResult result =
+        constraint.check(schedule, new ConstraintContext(job, 5000L + MAX_WAIT_MS, store));
+    Assert.assertEquals(ConstraintResult.SatisfiedState.SATISFIED, result.getSatisfiedState());
+    Mockito.verify(metricsContext, Mockito.times(1))
+        .increment(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_TIMEOUT, 1L);
+    Mockito.verify(metricsContext, Mockito.never())
+        .increment(
+            Mockito.eq(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_DEFERRED),
+            Mockito.anyLong());
+    Mockito.verify(metricsContext, Mockito.never())
+        .increment(
+            Mockito.eq(Constants.Metrics.ScheduledJob.SCHEDULE_TOKEN_WAIT_SATISFIED),
+            Mockito.anyLong());
   }
 
   private static WorkflowToken tokenWithRequiredKey() {
