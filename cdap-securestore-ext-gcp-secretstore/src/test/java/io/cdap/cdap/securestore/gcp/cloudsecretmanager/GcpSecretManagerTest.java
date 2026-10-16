@@ -267,6 +267,23 @@ public class GcpSecretManagerTest {
     assertFalse(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
   }
 
+  /**
+   * AIP-154 requires services to report a failed ETag check with ABORTED, so losing the race to
+   * acquire the lease must be reported to the caller as {@code false} rather than as an error.
+   */
+  @Test
+  public void testAcquireGcpLeaseEtagMismatchAbortedFailure() throws Exception {
+    SecretMetadata metadata = createMetadata("salesforce");
+    WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(NAMESPACE, metadata);
+    when(client.getSecret(eq(NAMESPACE), eq("salesforce"))).thenReturn(wrappedSecret);
+
+    doThrow(createApiException(Code.ABORTED))
+        .when(client).updateSecretAnnotations(
+        eq(NAMESPACE), eq("salesforce"), ArgumentMatchers.any(), ArgumentMatchers.any());
+
+    assertFalse(secretManager.acquireLease(NAMESPACE, "salesforce", 30000L, "test-lease-holder"));
+  }
+
   private static Secret createSecret(String name) {
     return new Secret(name.getBytes(), createMetadata(name));
   }
