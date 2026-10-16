@@ -18,15 +18,19 @@ package io.cdap.cdap.security.store.secretmanager;
 
 import io.cdap.cdap.securestore.spi.SecretManager;
 import io.cdap.cdap.securestore.spi.SecretManagerContext;
+import io.cdap.cdap.securestore.spi.SecretManagerInfo;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Mock Secret Manager for unit tests.
@@ -35,6 +39,7 @@ public class MockSecretManager implements SecretManager {
   private static final String MOCK_SECRET_MANAGER = "mock_secret_mananger";
   private static final String SEPARATOR = ":";
   private Map<String, Secret> map;
+  private Set<String> leasedKeys;
 
   @Override
   public String getName() {
@@ -44,6 +49,7 @@ public class MockSecretManager implements SecretManager {
   @Override
   public void initialize(SecretManagerContext context) throws IOException {
     map = new HashMap<>();
+    leasedKeys = new HashSet<>();
   }
 
   @Override
@@ -85,6 +91,31 @@ public class MockSecretManager implements SecretManager {
   @Override
   public void destroy(SecretManagerContext context) {
     map.clear();
+    leasedKeys.clear();
+  }
+
+  @Override
+  public SecretManagerInfo getStoreInfo() {
+    return new SecretManagerInfo(EnumSet.of(SecretManagerInfo.Capability.SECRET_LEASING));
+  }
+
+  @Override
+  public boolean acquireLease(String namespace, String key, long timeoutMs, String leaseHolder)
+      throws IOException {
+    String fullKey = getKey(namespace, key);
+    if (!map.containsKey(fullKey)) {
+      throw new IOException("Not found");
+    }
+    return leasedKeys.add(fullKey);
+  }
+
+  @Override
+  public boolean releaseLease(String namespace, String key, String leaseHolder) throws IOException {
+    String fullKey = getKey(namespace, key);
+    if (!map.containsKey(fullKey)) {
+      throw new IOException("Not found");
+    }
+    return leasedKeys.remove(fullKey);
   }
 
   private String getKey(String namespace, String name) {

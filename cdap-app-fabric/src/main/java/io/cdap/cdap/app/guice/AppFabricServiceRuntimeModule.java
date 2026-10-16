@@ -172,6 +172,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
+import io.cdap.cdap.security.store.SecureStoreInternalHandler;
 import io.cdap.cdap.sourcecontrol.guice.SourceControlModule;
 import io.cdap.cdap.spi.events.StartProgramEvent;
 import io.cdap.http.HttpHandler;
@@ -523,6 +524,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
         handlerBinder.addBinding().to(AuthorizationHandler.class);
         handlerBinder.addBinding().to(SecureStoreHandler.class);
+        handlerBinder.addBinding().to(SecureStoreInternalHandler.class);
         handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
         handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
         handlerBinder.addBinding().to(ProfileHttpHandler.class);

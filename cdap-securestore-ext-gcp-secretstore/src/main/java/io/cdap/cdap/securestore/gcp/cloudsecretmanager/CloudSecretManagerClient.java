@@ -176,6 +176,30 @@ public class CloudSecretManagerClient {
   }
 
   /**
+   * Conditionally updates annotations on the specified secret using an ETag for optimistic concurrency control.
+   *
+   * @param namespace CDAP secret namespace
+   * @param name CDAP secret name
+   * @param annotationsToUpdate Map of annotations to update
+   * @param etag The expected ETag of the secret
+   */
+  public void updateSecretAnnotations(String namespace, String name, Map<String, String> annotationsToUpdate,
+      String etag) {
+    String resourceName = getSecretResourceName(namespace, name);
+    Secret.Builder secretBuilder = Secret.newBuilder()
+        .setName(resourceName)
+        .setEtag(etag);
+
+    for (Map.Entry<String, String> entry : annotationsToUpdate.entrySet()) {
+      secretBuilder.putAnnotations(entry.getKey(), entry.getValue());
+    }
+
+    secretManager.updateSecret(
+        secretBuilder.build(),
+        FieldMask.newBuilder().addPaths("annotations").build());
+  }
+
+  /**
    * Deletes the specified secret.
    *
    * @throws ApiException if Google API call fails.
