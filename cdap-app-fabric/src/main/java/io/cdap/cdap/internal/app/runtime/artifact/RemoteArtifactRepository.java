@@ -41,7 +41,10 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Collections;
 import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 
@@ -125,7 +128,57 @@ public class RemoteArtifactRepository implements ArtifactRepository {
       Predicate<ArtifactId> pluginPredicate, int limit,
       ArtifactSortOrder order)
       throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    throw new UnsupportedOperationException();
+    RemoteArtifactRepositoryReader remoteReader = getRemoteReader();
+    List<PluginEntry> pluginEntries =
+        remoteReader.getPlugins(namespace, artifactId, pluginType, pluginName);
+
+    SortedMap<ArtifactDescriptor, PluginClass> plugins =
+        filterAndSortPlugins(pluginEntries, pluginPredicate, order);
+    if (plugins.isEmpty()) {
+      throw new PluginNotExistsException(namespace, pluginType, pluginName);
+    }
+
+    return applyLimit(plugins, limit);
+  }
+
+  private RemoteArtifactRepositoryReader getRemoteReader() {
+    if (!(artifactRepositoryReader instanceof RemoteArtifactRepositoryReader)) {
+      throw new UnsupportedOperationException(
+          "artifactRepositoryReader must be an instance of RemoteArtifactRepositoryReader");
+    }
+    return (RemoteArtifactRepositoryReader) artifactRepositoryReader;
+  }
+
+  private SortedMap<ArtifactDescriptor, PluginClass> filterAndSortPlugins(
+      List<PluginEntry> pluginEntries, Predicate<ArtifactId> pluginPredicate,
+      ArtifactSortOrder order) {
+    return pluginEntries.stream()
+        .filter(entry -> {
+          ArtifactDescriptor desc = entry.getDescriptor();
+          ArtifactId protoId = Artifacts.toProtoArtifactId(
+              new NamespaceId(desc.getNamespace()), desc.getArtifactId());
+          return pluginPredicate.apply(protoId);
+        })
+        .collect(Collectors.toMap(
+            PluginEntry::getDescriptor,
+            PluginEntry::getPluginClass,
+            (existing, replacement) -> existing,
+            () -> order == ArtifactSortOrder.DESC
+                ? new TreeMap<>(Collections.reverseOrder())
+                : new TreeMap<>()
+        ));
+  }
+
+  private SortedMap<ArtifactDescriptor, PluginClass> applyLimit(
+      SortedMap<ArtifactDescriptor, PluginClass> plugins, int limit) {
+    if (limit <= 0) {
+      plugins.clear();
+      return plugins;
+    }
+    while (plugins.size() > limit) {
+      plugins.remove(plugins.lastKey());
+    }
+    return plugins;
   }
 
   @Override
