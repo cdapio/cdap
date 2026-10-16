@@ -21,14 +21,20 @@ import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.InstanceId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import io.cdap.cdap.spi.data.StorageProvider;
 import io.cdap.cdap.spi.data.StorageProviderContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 import java.time.Duration;
+import java.util.Map;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link StorageProvider} implementation that uses Google Cloud Spanner as the storage engine.
@@ -44,14 +50,22 @@ import java.time.Duration;
  * <p>Optional configuration
  * <ul>
  *   <li>data.storage.properties.gcp-spanner.credentials.path: &lt;GCP service account file&gt;</li>
+ *   <li>data.storage.properties.gcp-spanner.host: &lt;Spanner API endpoint URL, including the
+ *   scheme, such as https://spanner.googleapis.com, which is the default&gt;. The Spanner messaging
+ *   service reads the same property.</li>
  * </ul>
  */
 public class SpannerStorageProvider implements StorageProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerStorageProvider.class);
 
   static final String PROJECT = "project";
   static final String INSTANCE = "instance";
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
+  static final String HOST = "host";
+  // Environment variable that points the Spanner client library at the Spanner emulator.
+  static final String SPANNER_EMULATOR_HOST = "SPANNER_EMULATOR_HOST";
   public static final String COMPRESSION_CONFIG = "compression.config";
   static final String NAME = "gcp-spanner";
 
@@ -81,6 +95,26 @@ public class SpannerStorageProvider implements StorageProvider {
       throw new IllegalArgumentException("Missing configuration " + DATABASE);
     }
 
+    SpannerOptions options =
+        createSpannerOptionsBuilder(conf, project, System.getenv(SPANNER_EMULATOR_HOST)).build();
+    DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
+        database);
+    LOG.info("Spanner storage provider uses endpoint {} for database {}", options.getHost(),
+        databaseId);
+
+    this.spanner = options.getService();
+    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
+    this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+  }
+
+  /**
+   * Creates the {@link SpannerOptions.Builder} for the given project from the storage
+   * configuration. When {@code emulatorHost} is set, it takes precedence over the configured
+   * {@link #HOST}.
+   */
+  @VisibleForTesting
+  static SpannerOptions.Builder createSpannerOptionsBuilder(Map<String, String> conf,
+      String project, @Nullable String emulatorHost) throws IOException {
     SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(project);
     Duration partitionedDmlTimeout = DEFAULT_PARTITIONED_DML_TIMEOUT;
     String timeoutStr = conf.get(PARTITIONED_DML_TIMEOUT_HOURS);
@@ -96,13 +130,14 @@ public class SpannerStorageProvider implements StorageProvider {
       }
     }
 
-    SpannerOptions options = builder.build();
-    DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
-        database);
-
-    this.spanner = options.getService();
-    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
-    this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+    // The emulator, if set, takes precedence over the host.
+    String host = conf.get(HOST);
+    if (!Strings.isNullOrEmpty(emulatorHost)) {
+      builder.setEmulatorHost(emulatorHost);
+    } else if (!Strings.isNullOrEmpty(host)) {
+      builder.setHost(host);
+    }
+    return builder;
   }
 
   @Override
