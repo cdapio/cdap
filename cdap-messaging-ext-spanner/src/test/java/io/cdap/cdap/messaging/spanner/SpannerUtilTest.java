@@ -18,6 +18,7 @@ package io.cdap.cdap.messaging.spanner;
 
 import com.google.cloud.NoCredentials;
 import com.google.cloud.spanner.SpannerOptions;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -28,75 +29,52 @@ import org.junit.Test;
  */
 public class SpannerUtilTest {
 
-  private static final String PROJECT = "test-project";
-  private static final String DEFAULT_HOST = "https://spanner.googleapis.com";
-  private static final String PREPROD_HOST = "https://preprod-spanner.sandbox.googleapis.com";
-  // Both differ from the localhost:9010 that CI exports as SPANNER_EMULATOR_HOST, which
-  // SpannerOptions.Builder reads by default, so a passing test cannot come from the environment.
-  private static final String CONF_EMULATOR_HOST = "localhost:9998";
-  private static final String ENV_EMULATOR_HOST = "localhost:9999";
+  private static final String ENDPOINT = "https://spanner.example.com";
+  private static final String EMULATOR_HOST = "localhost:9999";
+  private static final Map<String, String> ENDPOINT_CONF =
+      Collections.singletonMap("endpoint", ENDPOINT);
 
   @Test
-  public void testHostIsSetWhenConfigured() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(SpannerUtil.HOST, PREPROD_HOST);
-
-    Assert.assertEquals(PREPROD_HOST, buildOptions(conf).getHost());
+  public void testEndpointWhenConfigured() {
+    Assert.assertEquals(ENDPOINT, SpannerUtil.getEndpoint(ENDPOINT_CONF, null));
   }
 
   @Test
-  public void testDefaultHostWhenNotConfigured() {
-    Assert.assertEquals(DEFAULT_HOST, buildOptions(new HashMap<>()).getHost());
+  public void testNoEndpointWhenNotConfigured() {
+    Assert.assertNull(SpannerUtil.getEndpoint(Collections.emptyMap(), null));
   }
 
   @Test
-  public void testDefaultHostWhenEmpty() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(SpannerUtil.HOST, "");
-
-    Assert.assertEquals(DEFAULT_HOST, buildOptions(conf).getHost());
+  public void testNoEndpointWhenEmpty() {
+    Assert.assertNull(SpannerUtil.getEndpoint(Collections.singletonMap("endpoint", ""), null));
   }
 
   @Test
-  public void testEmulatorTakesPrecedenceOverHost() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(SpannerUtil.SPANNER_EMULATOR_HOST, CONF_EMULATOR_HOST);
-    conf.put(SpannerUtil.HOST, PREPROD_HOST);
+  public void testNoEndpointWithEmulatorProperty() {
+    Map<String, String> conf = new HashMap<>(ENDPOINT_CONF);
+    conf.put(SpannerUtil.SPANNER_EMULATOR_HOST, EMULATOR_HOST);
 
-    SpannerOptions options =
-        SpannerUtil.createSpannerOptionsBuilder(conf, PROJECT, null, null).build();
-
-    Assert.assertEquals("http://" + CONF_EMULATOR_HOST, options.getHost());
+    Assert.assertNull(SpannerUtil.getEndpoint(conf, null));
   }
 
   @Test
-  public void testEnvEmulatorTakesPrecedenceOverHost() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(SpannerUtil.HOST, PREPROD_HOST);
-
-    SpannerOptions options =
-        SpannerUtil.createSpannerOptionsBuilder(conf, PROJECT, null, ENV_EMULATOR_HOST).build();
-
-    Assert.assertEquals("http://" + ENV_EMULATOR_HOST, options.getHost());
+  public void testNoEndpointWithEmulatorEnvironmentVariable() {
+    Assert.assertNull(SpannerUtil.getEndpoint(ENDPOINT_CONF, EMULATOR_HOST));
   }
 
+  /**
+   * Pins the client library behavior that getSpannerService works around: setting the host clears
+   * the emulator host, so the endpoint must not be set when an emulator is.
+   */
   @Test
-  public void testEmulatorPropertyTakesPrecedenceOverEnvEmulator() {
-    Map<String, String> conf = new HashMap<>();
-    conf.put(SpannerUtil.SPANNER_EMULATOR_HOST, CONF_EMULATOR_HOST);
-
-    SpannerOptions options =
-        SpannerUtil.createSpannerOptionsBuilder(conf, PROJECT, null, ENV_EMULATOR_HOST).build();
-
-    Assert.assertEquals("http://" + CONF_EMULATOR_HOST, options.getHost());
-  }
-
-  private static SpannerOptions buildOptions(Map<String, String> conf) {
-    // NoCredentials skips the Application Default Credentials lookup, which the host does not
-    // depend on.
-    return SpannerUtil.createSpannerOptionsBuilder(conf, PROJECT, NoCredentials.getInstance(), null)
-        // A SPANNER_EMULATOR_HOST environment variable would replace the host when building.
-        .setEmulatorHost(null)
+  public void testSetHostClearsEmulatorHost() {
+    SpannerOptions options = SpannerOptions.newBuilder()
+        .setProjectId("test-project")
+        .setCredentials(NoCredentials.getInstance())
+        .setEmulatorHost(EMULATOR_HOST)
+        .setHost(ENDPOINT)
         .build();
+
+    Assert.assertEquals(ENDPOINT, options.getHost());
   }
 }
