@@ -17,33 +17,43 @@
 
 package io.cdap.cdap.datapipeline.oauth;
 
+import javax.annotation.Nullable;
+
 /**
  * OAuth REST PUT request body.
  */
 public class PutOAuthProviderRequest {
   private final String loginURL;
   private final String tokenRefreshURL;
+  @Nullable
   private final String clientId;
+  @Nullable
   private final String clientSecret;
+  @Nullable
   private final OAuthProvider.CredentialEncodingStrategy strategy;
+  @Nullable
   private final String userAgent;
+  @Nullable
   private final AuthType authType;
+  @Nullable
+  private final RefreshType refreshType;
 
-  public PutOAuthProviderRequest(
-          String loginURL,
-          String tokenRefreshURL,
-          String clientId,
-          String clientSecret,
-          OAuthProvider.CredentialEncodingStrategy strategy,
-          String userAgent,
-          AuthType authType) {
+  private PutOAuthProviderRequest(String loginURL,
+                                  String tokenRefreshURL,
+                                  @Nullable String clientId,
+                                  @Nullable String clientSecret,
+                                  @Nullable OAuthProvider.CredentialEncodingStrategy strategy,
+                                  @Nullable String userAgent,
+                                  @Nullable AuthType authType,
+                                  @Nullable RefreshType refreshType) {
     this.loginURL = loginURL;
     this.tokenRefreshURL = tokenRefreshURL;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.strategy = strategy;
     this.userAgent = userAgent;
-    this.authType = authType;
+    this.authType = authType != null ? authType : AuthType.STANDARD;
+    this.refreshType = refreshType != null ? refreshType : RefreshType.STANDARD;
   }
 
   public String getLoginURL() {
@@ -54,23 +64,100 @@ public class PutOAuthProviderRequest {
     return tokenRefreshURL;
   }
 
+  @Nullable
   public String getClientId() {
     return clientId;
   }
 
+  @Nullable
   public String getClientSecret() {
     return clientSecret;
   }
 
+  @Nullable
   public OAuthProvider.CredentialEncodingStrategy getCredentialEncodingStrategy() {
     return strategy;
   }
 
+  @Nullable
   public String getUserAgent() {
     return userAgent;
   }
 
   public AuthType getAuthType() {
-    return authType;
+    if (authType != null) {
+      return authType;
+    }
+    return AuthType.STANDARD;
+  }
+
+  public RefreshType getRefreshType() {
+    if (refreshType != null) {
+      return refreshType;
+    }
+    return RefreshType.STANDARD;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Builder for {@link PutOAuthProviderRequest}.
+   */
+  public static class Builder {
+    private String loginURL;
+    private String tokenRefreshURL;
+    private String clientId;
+    private String clientSecret;
+    private OAuthProvider.CredentialEncodingStrategy strategy;
+    private String userAgent;
+    private AuthType authType;
+    private RefreshType refreshType;
+
+    public Builder loginURL(String loginURL) {
+      this.loginURL = loginURL;
+      return this;
+    }
+
+    public Builder tokenRefreshURL(String tokenRefreshURL) {
+      this.tokenRefreshURL = tokenRefreshURL;
+      return this;
+    }
+
+    public Builder clientId(@Nullable String clientId) {
+      this.clientId = clientId;
+      return this;
+    }
+
+    public Builder clientSecret(@Nullable String clientSecret) {
+      this.clientSecret = clientSecret;
+      return this;
+    }
+
+    public Builder strategy(@Nullable OAuthProvider.CredentialEncodingStrategy strategy) {
+      this.strategy = strategy;
+      return this;
+    }
+
+    public Builder userAgent(@Nullable String userAgent) {
+      this.userAgent = userAgent;
+      return this;
+    }
+
+    public Builder authType(@Nullable AuthType authType) {
+      this.authType = authType;
+      return this;
+    }
+
+    public Builder refreshType(@Nullable RefreshType refreshType) {
+      this.refreshType = refreshType;
+      return this;
+    }
+
+    public PutOAuthProviderRequest build() {
+      return new PutOAuthProviderRequest(loginURL, tokenRefreshURL, clientId,
+          clientSecret, strategy, userAgent, authType, refreshType);
+    }
   }
 }
