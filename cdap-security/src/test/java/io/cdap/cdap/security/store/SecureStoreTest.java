@@ -143,6 +143,21 @@ public class SecureStoreTest {
   }
 
   @Test
+  public void testCreateWithTTL() throws Exception {
+    SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
+                                                                               PROPERTIES, 3600L);
+    HttpResponse response = create("key_with_ttl", secureKeyCreateRequest);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    response = get("key_with_ttl");
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals(DATA, response.getResponseBodyAsString());
+
+    response = delete("key_with_ttl");
+    Assert.assertEquals(200, response.getResponseCode());
+  }
+
+  @Test
   public void testList() throws Exception {
     // Test empty list
     HttpResponse response = list();

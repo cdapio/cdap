@@ -79,6 +79,14 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   }
 
   @Override
+  public void put(String namespace, String name, String data,
+      @Nullable String description, Map<String, String> properties, long ttlInSeconds) throws Exception {
+    Retries.runWithRetries(
+        () -> secureStoreManager.put(namespace, name, data, description, properties, ttlInSeconds),
+        retryStrategy);
+  }
+
+  @Override
   public void delete(String namespace, String name) throws Exception {
     Retries.runWithRetries(() -> secureStoreManager.delete(namespace, name), retryStrategy);
   }

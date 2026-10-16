@@ -63,12 +63,17 @@ public class GcpSecretManager implements SecretManager {
 
   @Override
   public void store(String namespace, Secret secret) throws IOException {
+    store(namespace, secret, 0L);
+  }
+
+  @Override
+  public void store(String namespace, Secret secret, long ttlInSeconds) throws IOException {
     WrappedSecret wrappedSecret = WrappedSecret.fromMetadata(namespace, secret.getMetadata());
 
     try {
       Secret existingSecret = get(namespace, secret.getMetadata().getName());
       // 'update' only if 'get' request succeeds, otherwise 'create'.
-      client.updateSecret(wrappedSecret);
+      client.updateSecret(wrappedSecret, ttlInSeconds);
 
       // Add a new secret version only if the secret payload has changed.
       if (!Arrays.equals(existingSecret.getData(), secret.getData())) {
@@ -76,7 +81,7 @@ public class GcpSecretManager implements SecretManager {
       }
     } catch (SecretNotFoundException unused) {
       try {
-        client.createSecret(wrappedSecret);
+        client.createSecret(wrappedSecret, ttlInSeconds);
         client.addSecretVersion(wrappedSecret, secret.getData());
       } catch (ApiException e) {
         throw new IOException("Secret Manager create API call failed", e);
