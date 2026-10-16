@@ -42,6 +42,11 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =
       Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
+  // For dropped (unprocessable) events, log at most once per 60 seconds so that a burst of bad
+  // records cannot flood the log while the drop itself stays visible.
+  private static final Logger DROP_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
+  // Metric name for events that were dropped because they can never be processed.
+  private static final String DROPPED_INVALID_METRIC = "event.dropped.invalid";
   private static final double MIN_FREE_FACTOR = 0.5d;
   private final TimeEventQueue<ILoggingEvent, OFFSET> eventQueue;
   private final LogProcessorPipelineContext context;
@@ -113,6 +118,7 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
         ? (long) (maxBufferSize * MIN_FREE_FACTOR) : Long.MAX_VALUE;
 
     int eventsAppended = 0;
+    int eventsDropped = 0;
     long minDelay = Long.MAX_VALUE;
     long maxDelay = -1;
     Map<Integer, Checkpoint<OFFSET>> metadata = new HashMap<>();
@@ -134,11 +140,29 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
 
       try {
         // Otherwise, append the event
-        ch.qos.logback.classic.Logger effectiveLogger = context.getEffectiveLogger(
-            event.getLoggerName());
+        String loggerName = event.getLoggerName();
+        if (loggerName == null) {
+          // A log event without a logger name cannot be routed to any appender. This happens when
+          // a damaged record is read back from the log buffer (e.g. after a hard node restart).
+          throw new IllegalArgumentException("Log event has no logger name");
+        }
+        ch.qos.logback.classic.Logger effectiveLogger = context.getEffectiveLogger(loggerName);
         if (event.getLevel().isGreaterOrEqual(effectiveLogger.getEffectiveLevel())) {
           effectiveLogger.callAppenders(event);
         }
+      } catch (IllegalArgumentException | NullPointerException e) {
+        // Deterministic failure: retrying the same event can never succeed. Drop it and move on.
+        // Breaking here instead would retry the event forever: the checkpoint never advances and
+        // the queue grows until the JVM runs out of memory.
+        DROP_LOG.warn("Dropping unprocessable log event in log pipeline {} at offset {}",
+            context.getName(), iterator.getOffset(), e);
+        metricsContext.increment(DROPPED_INVALID_METRIC, 1);
+        metadata.put(iterator.getPartition(),
+            new Checkpoint<>(eventQueue.getSmallestOffset(iterator.getPartition()),
+                event.getTimeStamp()));
+        iterator.remove();
+        eventsDropped++;
+        continue;
       } catch (Exception e) {
         OUTAGE_LOG.warn("Failed to append log event in log pipeline {}. Will be retried.",
             context.getName(), e);
@@ -162,8 +186,8 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
     }
     metricsContext.gauge("event.queue.size.bytes", eventQueue.getEventSize());
 
-    // If no event was appended and the buffer is not full, so just return with 0 events appended.
-    if (eventsAppended == 0) {
+    // If no event was appended or dropped, just return with 0 events processed.
+    if (eventsAppended + eventsDropped == 0) {
       // nothing has been appended so there is no metadata associated with those events. So return null.
       return new ProcessedEventMetadata<>(0, null);
     }
@@ -172,7 +196,8 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
     metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_MAX_DELAY, maxDelay);
     metricsContext.increment(Constants.Metrics.Name.Log.PROCESS_MESSAGES_COUNT, eventsAppended);
 
-    return new ProcessedEventMetadata<>(eventsAppended, metadata);
+    // Dropped events count as processed so that the checkpoint moves past them and gets persisted.
+    return new ProcessedEventMetadata<>(eventsAppended + eventsDropped, metadata);
   }
 
   /**
