@@ -28,7 +28,6 @@ import io.cdap.cdap.spi.data.StorageProviderContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Map;
@@ -50,9 +49,9 @@ import org.slf4j.LoggerFactory;
  * <p>Optional configuration
  * <ul>
  *   <li>data.storage.properties.gcp-spanner.credentials.path: &lt;GCP service account file&gt;</li>
- *   <li>data.storage.properties.gcp-spanner.host: &lt;Spanner API endpoint URL, including the
- *   scheme, such as https://spanner.googleapis.com, which is the default&gt;. The Spanner messaging
- *   service reads the same property.</li>
+ *   <li>data.storage.properties.gcp-spanner.endpoint: &lt;Spanner API endpoint URL, including the
+ *   scheme&gt;. If unset, the client library default, https://spanner.googleapis.com, is used. The
+ *   Spanner messaging service reads the same property.</li>
  * </ul>
  */
 public class SpannerStorageProvider implements StorageProvider {
@@ -63,7 +62,7 @@ public class SpannerStorageProvider implements StorageProvider {
   static final String INSTANCE = "instance";
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
-  static final String HOST = "host";
+  static final String ENDPOINT = "endpoint";
   // Environment variable that points the Spanner client library at the Spanner emulator.
   static final String SPANNER_EMULATOR_HOST = "SPANNER_EMULATOR_HOST";
   public static final String COMPRESSION_CONFIG = "compression.config";
@@ -95,26 +94,6 @@ public class SpannerStorageProvider implements StorageProvider {
       throw new IllegalArgumentException("Missing configuration " + DATABASE);
     }
 
-    SpannerOptions options =
-        createSpannerOptionsBuilder(conf, project, System.getenv(SPANNER_EMULATOR_HOST)).build();
-    DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
-        database);
-    LOG.info("Spanner storage provider uses endpoint {} for database {}", options.getHost(),
-        databaseId);
-
-    this.spanner = options.getService();
-    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
-    this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
-  }
-
-  /**
-   * Creates the {@link SpannerOptions.Builder} for the given project from the storage
-   * configuration. When {@code emulatorHost} is set, it takes precedence over the configured
-   * {@link #HOST}.
-   */
-  @VisibleForTesting
-  static SpannerOptions.Builder createSpannerOptionsBuilder(Map<String, String> conf,
-      String project, @Nullable String emulatorHost) throws IOException {
     SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(project);
     Duration partitionedDmlTimeout = DEFAULT_PARTITIONED_DML_TIMEOUT;
     String timeoutStr = conf.get(PARTITIONED_DML_TIMEOUT_HOURS);
@@ -130,14 +109,32 @@ public class SpannerStorageProvider implements StorageProvider {
       }
     }
 
-    // The emulator, if set, takes precedence over the host.
-    String host = conf.get(HOST);
-    if (!Strings.isNullOrEmpty(emulatorHost)) {
-      builder.setEmulatorHost(emulatorHost);
-    } else if (!Strings.isNullOrEmpty(host)) {
-      builder.setHost(host);
+    // SpannerOptions.Builder#setHost clears the emulator host, which the builder reads from the
+    // SPANNER_EMULATOR_HOST environment variable, so the endpoint is only set without an emulator.
+    String endpoint = getEndpoint(conf, System.getenv(SPANNER_EMULATOR_HOST));
+    if (endpoint != null) {
+      builder.setHost(endpoint);
     }
-    return builder;
+
+    SpannerOptions options = builder.build();
+    DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
+        database);
+    LOG.info("Spanner storage provider uses endpoint {} for database {}", options.getHost(),
+        databaseId);
+
+    this.spanner = options.getService();
+    this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
+    this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+  }
+
+  /**
+   * Returns the Spanner API endpoint to set on the client, from the {@link #ENDPOINT} property.
+   * Returns {@code null} if the property is unset or empty, or if {@code emulatorHost} is set.
+   */
+  @VisibleForTesting
+  @Nullable
+  static String getEndpoint(Map<String, String> conf, @Nullable String emulatorHost) {
+    return Strings.isNullOrEmpty(emulatorHost) ? Strings.emptyToNull(conf.get(ENDPOINT)) : null;
   }
 
   @Override
