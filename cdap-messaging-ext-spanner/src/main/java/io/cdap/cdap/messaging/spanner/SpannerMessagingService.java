@@ -120,7 +120,7 @@ public class SpannerMessagingService implements MessagingService {
         cConf.get(SpannerUtil.PUBLISH_BATCH_TIMEOUT_MILLIS));
     this.publishDelayMillis = Integer.parseInt(cConf.get(SpannerUtil.PUBLISH_DELAY_MILLIS));
 
-    Spanner spanner = SpannerUtil.getSpannerService(projectID, credentials);
+    Spanner spanner = SpannerUtil.getSpannerService(cConf, projectID, credentials);
     this.client = SpannerUtil.getSpannerDbClient(projectID, instanceId, databaseId, spanner);
     this.adminClient = SpannerUtil.getSpannerDbAdminClient(spanner);
     LOG.info("Spanner messaging service started.");

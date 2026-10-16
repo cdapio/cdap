@@ -23,16 +23,23 @@ import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for spanner messaging service.
  */
 class SpannerUtil {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerUtil.class);
 
   static final String PROJECT = "project";
   static final String INSTANCE = "instance";
@@ -41,6 +48,13 @@ class SpannerUtil {
   static final String PUBLISH_BATCH_SIZE = "publish.batch.size";
   static final String PUBLISH_BATCH_TIMEOUT_MILLIS = "publish.batch.timeout.millis";
   static final String PUBLISH_DELAY_MILLIS = "publish.batch.poll.millis";
+  // Optional Spanner API endpoint URL, including the scheme. If unset, the client library default,
+  // https://spanner.googleapis.com, is used. The messaging service context passes the gcp-spanner
+  // storage properties through, so this is data.storage.properties.gcp-spanner.endpoint, the same
+  // property that the Spanner storage provider reads.
+  static final String ENDPOINT = "endpoint";
+  // Environment variable that points the Spanner client library at the Spanner emulator.
+  static final String SPANNER_EMULATOR_HOST = "SPANNER_EMULATOR_HOST";
 
   static DatabaseClient getSpannerDbClient(String projectID, String instanceID,
       String databaseID, Spanner spanner) {
@@ -86,12 +100,37 @@ class SpannerUtil {
     return null;
   }
 
-  public static Spanner getSpannerService(String projectID, Credentials credentials) {
+  /**
+   * Obtains a Spanner service client for the Spanner API endpoint in the {@link #ENDPOINT}
+   * property, if set. If the {@code SPANNER_EMULATOR_HOST} environment variable is set, the client
+   * connects to the emulator instead.
+   */
+  public static Spanner getSpannerService(Map<String, String> cConf, String projectID,
+      Credentials credentials) {
     SpannerOptions.Builder builder = SpannerOptions.newBuilder().setProjectId(projectID);
     if (credentials != null) {
       builder.setCredentials(credentials);
     }
 
-    return builder.build().getService();
+    // SpannerOptions.Builder#setHost clears the emulator host, which the builder reads from the
+    // SPANNER_EMULATOR_HOST environment variable, so the endpoint is only set without an emulator.
+    String endpoint = getEndpoint(cConf, System.getenv(SPANNER_EMULATOR_HOST));
+    if (endpoint != null) {
+      builder.setHost(endpoint);
+    }
+
+    SpannerOptions options = builder.build();
+    LOG.info("Spanner messaging service uses endpoint {}", options.getHost());
+    return options.getService();
+  }
+
+  /**
+   * Returns the Spanner API endpoint to set on the client, from the {@link #ENDPOINT} property.
+   * Returns {@code null} if the property is unset or empty, or if {@code emulatorHost} is set.
+   */
+  @VisibleForTesting
+  @Nullable
+  static String getEndpoint(Map<String, String> cConf, @Nullable String emulatorHost) {
+    return Strings.isNullOrEmpty(emulatorHost) ? Strings.emptyToNull(cConf.get(ENDPOINT)) : null;
   }
 }

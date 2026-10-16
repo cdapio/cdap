@@ -1323,6 +1323,17 @@
   </property>
 
   <property>
+    <name>data.storage.properties.gcp-spanner.endpoint</name>
+    <value></value>
+    <description>
+      Optional Cloud Spanner API endpoint URL, including the scheme, used by the Spanner
+      storage provider and the Spanner messaging service. If unset or empty, the Spanner
+      client library default, https://spanner.googleapis.com, is used. Ignored when the
+      Spanner emulator is configured through SPANNER_EMULATOR_HOST.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.enabled</name>
     <value>true</value>
     <description>

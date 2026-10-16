@@ -21,14 +21,19 @@ import com.google.cloud.spanner.DatabaseId;
 import com.google.cloud.spanner.InstanceId;
 import com.google.cloud.spanner.Spanner;
 import com.google.cloud.spanner.SpannerOptions;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import io.cdap.cdap.spi.data.StorageProvider;
 import io.cdap.cdap.spi.data.StorageProviderContext;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Map;
 import java.time.Duration;
+import java.util.Map;
+import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link StorageProvider} implementation that uses Google Cloud Spanner as the storage engine.
@@ -44,14 +49,22 @@ import java.time.Duration;
  * <p>Optional configuration
  * <ul>
  *   <li>data.storage.properties.gcp-spanner.credentials.path: &lt;GCP service account file&gt;</li>
+ *   <li>data.storage.properties.gcp-spanner.endpoint: &lt;Spanner API endpoint URL, including the
+ *   scheme&gt;. If unset, the client library default, https://spanner.googleapis.com, is used. The
+ *   Spanner messaging service reads the same property.</li>
  * </ul>
  */
 public class SpannerStorageProvider implements StorageProvider {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SpannerStorageProvider.class);
 
   static final String PROJECT = "project";
   static final String INSTANCE = "instance";
   static final String DATABASE = "database";
   static final String CREDENTIALS_PATH = "credentials.path";
+  static final String ENDPOINT = "endpoint";
+  // Environment variable that points the Spanner client library at the Spanner emulator.
+  static final String SPANNER_EMULATOR_HOST = "SPANNER_EMULATOR_HOST";
   public static final String COMPRESSION_CONFIG = "compression.config";
   static final String NAME = "gcp-spanner";
 
@@ -96,13 +109,32 @@ public class SpannerStorageProvider implements StorageProvider {
       }
     }
 
+    // SpannerOptions.Builder#setHost clears the emulator host, which the builder reads from the
+    // SPANNER_EMULATOR_HOST environment variable, so the endpoint is only set without an emulator.
+    String endpoint = getEndpoint(conf, System.getenv(SPANNER_EMULATOR_HOST));
+    if (endpoint != null) {
+      builder.setHost(endpoint);
+    }
+
     SpannerOptions options = builder.build();
     DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
         database);
+    LOG.info("Spanner storage provider uses endpoint {} for database {}", options.getHost(),
+        databaseId);
 
     this.spanner = options.getService();
     this.admin = new SpannerStructuredTableAdmin(spanner, databaseId, conf.get(COMPRESSION_CONFIG));
     this.txRunner = new RetryingSpannerTransactionRunner(conf, admin);
+  }
+
+  /**
+   * Returns the Spanner API endpoint to set on the client, from the {@link #ENDPOINT} property.
+   * Returns {@code null} if the property is unset or empty, or if {@code emulatorHost} is set.
+   */
+  @VisibleForTesting
+  @Nullable
+  static String getEndpoint(Map<String, String> conf, @Nullable String emulatorHost) {
+    return Strings.isNullOrEmpty(emulatorHost) ? Strings.emptyToNull(conf.get(ENDPOINT)) : null;
   }
 
   @Override
