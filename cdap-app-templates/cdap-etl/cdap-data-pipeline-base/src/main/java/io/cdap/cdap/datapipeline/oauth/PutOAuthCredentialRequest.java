@@ -17,16 +17,21 @@
 
 package io.cdap.cdap.datapipeline.oauth;
 
+import javax.annotation.Nullable;
+
 /**
  * OAuth credential REST PUT request body.
  */
 public class PutOAuthCredentialRequest {
   private final String oneTimeCode;
   private final String redirectURI;
+  @Nullable
+  private final String state;
 
-  public PutOAuthCredentialRequest(String oneTimeCode, String redirectURI) {
+  public PutOAuthCredentialRequest(String oneTimeCode, String redirectURI, @Nullable String state) {
     this.oneTimeCode = oneTimeCode;
     this.redirectURI = redirectURI;
+    this.state = state;
   }
 
   public String getOneTimeCode() {
@@ -35,5 +40,10 @@ public class PutOAuthCredentialRequest {
 
   public String getRedirectURI() {
     return redirectURI;
+  }
+
+  @Nullable
+  public String getState() {
+    return state;
   }
 }

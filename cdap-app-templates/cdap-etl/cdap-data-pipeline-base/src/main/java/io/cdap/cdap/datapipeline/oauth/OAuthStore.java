@@ -14,6 +14,8 @@
 
 package io.cdap.cdap.datapipeline.oauth;
 
+import static io.cdap.cdap.datapipeline.service.OAuthHandler.PREF_PKCE_CODE_VERIFIER_TTL;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.security.store.SecureStore;
@@ -35,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -46,13 +49,16 @@ public class OAuthStore {
   private static final String TOKEN_REFRESH_URL_COL = "tokenrefreshurl";
   private static final String CREDENTIAL_ENCODING_STRATEGY_COL = "credentialencodingstrategy";
   private static final String USER_AGENT_COL = "useragent";
+  private static final String AUTH_TYPE_COL = "authtype";
   private static final String CLIENT_CREDS_KEY_PREFIX = "oauthclientcreds";
   private static final String ACCESS_TOKEN_KEY_PREFIX = "oauthaccesstoken";
   private static final String REFRESH_TOKEN_KEY_PREFIX = "oauthrefreshtoken";
+  private static final String PKCE_KEY_PREFIX = "oauth-pkce";
   private static final Gson GSON = new Gson();
   private final TransactionRunner transactionRunner;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final long codeVerifierTTL;
 
   public static final StructuredTableId TABLE_ID = new StructuredTableId("oauth");
   public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
@@ -61,17 +67,20 @@ public class OAuthStore {
                   Fields.stringType(LOGIN_URL_COL),
                   Fields.stringType(TOKEN_REFRESH_URL_COL),
                   Fields.stringType(CREDENTIAL_ENCODING_STRATEGY_COL),
-                  Fields.stringType(USER_AGENT_COL))
+                  Fields.stringType(USER_AGENT_COL),
+                  Fields.stringType(AUTH_TYPE_COL))
       .withPrimaryKeys(OAUTH_PROVIDER_COL)
       .build();
 
   public OAuthStore(
       TransactionRunner transactionRunner,
       SecureStore secureStore,
-      SecureStoreManager secureStoreManager) {
+      SecureStoreManager secureStoreManager,
+      Map<String, String> oauthConf) {
     this.transactionRunner = transactionRunner;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.codeVerifierTTL = Long.parseLong(oauthConf.get(PREF_PKCE_CODE_VERIFIER_TTL));
   }
 
   /**
@@ -299,6 +308,10 @@ public class OAuthStore {
     return String.format("%s-%s-%s", ACCESS_TOKEN_KEY_PREFIX, oauthProvider.toLowerCase(), credentialId.toLowerCase());
   }
 
+  private static String getPKCEKey(String oauthProvider, String state) {
+    return String.format("%s-%s-%s", PKCE_KEY_PREFIX, oauthProvider.toLowerCase(), state.toLowerCase());
+  }
+
   private static List<Field<?>> getKey(String name) {
     List<Field<?>> keyFields = new ArrayList<>(1);
     keyFields.add(Fields.stringField(OAUTH_PROVIDER_COL, name));
@@ -311,6 +324,7 @@ public class OAuthStore {
     String tokenRefreshURL = row.getString(TOKEN_REFRESH_URL_COL);
     String credentialEncodingStrategy = row.getString(CREDENTIAL_ENCODING_STRATEGY_COL);
     String userAgent = row.getString(USER_AGENT_COL);
+    String authTypeStr = row.getString(AUTH_TYPE_COL);
 
     return OAuthProvider.newBuilder()
         .withName(name)
@@ -321,6 +335,7 @@ public class OAuthStore {
             Optional.ofNullable(credentialEncodingStrategy)
                 .map(OAuthProvider.CredentialEncodingStrategy::valueOf).orElse(null))
         .withUserAgent(userAgent)
+        .withAuthType(authTypeStr != null ? AuthType.valueOf(authTypeStr) : AuthType.STANDARD)
         .build();
   }
 
@@ -333,6 +348,36 @@ public class OAuthStore {
             CREDENTIAL_ENCODING_STRATEGY_COL,
             oauthProvider.getCredentialEncodingStrategy().toString()));
     fields.add(Fields.stringField(USER_AGENT_COL, oauthProvider.getUserAgent()));
+    fields.add(Fields.stringField(AUTH_TYPE_COL, oauthProvider.getAuthType().toString()));
     return fields;
+  }
+
+  public void writePKCECodeVerifier(String provider, String state, String codeVerifier) throws Exception {
+    String key = getPKCEKey(provider, state);
+    secureStoreManager.put(NamespaceId.SYSTEM.getNamespace(), key, codeVerifier,
+        "PKCE Code Verifier", Collections.emptyMap(), codeVerifierTTL);
+  }
+
+  public String getPKCECodeVerifier(String provider, String state) throws OAuthStoreException {
+    String key = getPKCEKey(provider, state);
+    try {
+      return new String(secureStore.getData(NamespaceId.SYSTEM.getNamespace(), key), StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Failed to read PKCE code verifier from secure storage", e);
+    }
+  }
+
+  public void deletePKCECodeVerifier(String provider, String state) throws OAuthStoreException {
+    String key = getPKCEKey(provider, state);
+    try {
+      secureStoreManager.delete(NamespaceId.SYSTEM.getNamespace(), key);
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to delete PKCE code verifier from secure storage", e);
+    } catch (Exception e) {
+      // Ignore if not found. For any other exception, throw it.
+      if (!e.getClass().getName().contains("NotFoundException")) {
+        throw new OAuthStoreException("Failed to delete PKCE code verifier from secure storage", e);
+      }
+    }
   }
 }

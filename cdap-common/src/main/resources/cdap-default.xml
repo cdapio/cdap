@@ -5185,6 +5185,17 @@
     </description>
   </property>
 
+  <!-- Oauth Configurations -->
+  <property>
+    <name>security.auth.oauth.pkce.code.verifier.ttl.sec</name>
+    <value>900</value>
+    <description>
+      Time-To-Live (TTL) in seconds for the OAuth 2.0 PKCE code verifier stored in the 
+      system secure store. This determines how long a user has to complete the OAuth 
+      consent flow before the authorization attempt expires.
+    </description>
+  </property>
+
   <!-- UI Configuration -->
 
   <property>
