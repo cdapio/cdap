@@ -70,8 +70,8 @@
       </snapshots>
     </repository>
     <repository>
-      <id>sonatype</id>
-      <url>https://central.sonatype.com/repository/maven-snapshots</url>
+      <id>artifact-registry</id>
+      <url>artifactregistry://us-maven.pkg.dev/oss-exit-gate-prod/cloud-data-fusion--mavencentral</url>
       <releases>
         <enabled>false</enabled>
       </releases>
