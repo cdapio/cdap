@@ -21,6 +21,8 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.SparkExecutionContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.FilterClassLoader.Filter;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import org.apache.spark.SparkConf;
@@ -122,11 +124,27 @@ public class SparkClassLoader extends CombineClassLoader {
    * Creates the delegating list of ClassLoader. Used by constructor only.
    */
   private static List<ClassLoader> createDelegateClassLoaders(SparkRuntimeContext context) {
+    FilterClassLoader filteredProgramClassLoader = new FilterClassLoader(
+        context.getProgram().getClassLoader(),
+        new Filter() {
+          @Override
+          public boolean acceptResource(String resource) {
+            return !(resource.contains("org/apache/hadoop/fs/s3a")
+                || resource.contains("org/apache/hadoop/fs/s3native"));
+          }
+
+          @Override
+          public boolean acceptPackage(String packageName) {
+            return !(packageName.contains("org.apache.hadoop.fs.s3a")
+                || packageName.contains("org.apache.hadoop.fs.s3native"));
+          }
+        });
     return Arrays.asList(
-      context.getProgram().getClassLoader(),
-      PluginClassLoaders.createFilteredPluginsClassLoader(context.getApplicationSpecification().getPlugins(),
-                                                          context.getPluginInstantiator()),
-      SparkClassLoader.class.getClassLoader()
+        filteredProgramClassLoader,
+        PluginClassLoaders.createFilteredPluginsClassLoader(
+            context.getApplicationSpecification().getPlugins(),
+            context.getPluginInstantiator()),
+        SparkClassLoader.class.getClassLoader()
     );
   }
 }
