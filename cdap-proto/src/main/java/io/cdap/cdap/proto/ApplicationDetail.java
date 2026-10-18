@@ -202,4 +202,51 @@ public class ApplicationDetail {
         change, sourceControlMeta,
         spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
+
+  public static Builder builder(ApplicationDetail detail) {
+    return new Builder(detail);
+  }
+  
+  /**
+   * Builder for ApplicationDetail.
+   */
+  public static class Builder {
+    private final String name;
+    private final String appVersion;
+    private final String description;
+    @Nullable
+    private final ChangeDetail change;
+    @Nullable
+    private SourceControlMeta sourceControlMeta;
+    private final String configuration;
+    private final List<DatasetDetail> datasets;
+    private final List<ProgramRecord> programs;
+    private final List<PluginDetail> plugins;
+    private final ArtifactSummary artifact;
+    private final String ownerPrincipal;
+
+    private Builder(ApplicationDetail detail) {
+      this.name = detail.getName();
+      this.appVersion = detail.getAppVersion();
+      this.description = detail.getDescription();
+      this.change = detail.getChange();
+      this.sourceControlMeta = detail.getSourceControlMeta();
+      this.configuration = detail.getConfiguration();
+      this.datasets = detail.getDatasets();
+      this.programs = detail.getPrograms();
+      this.plugins = detail.getPlugins();
+      this.artifact = detail.getArtifact();
+      this.ownerPrincipal = detail.getOwnerPrincipal();
+    }
+
+    public Builder setSourceControlMeta(SourceControlMeta sourceControlMeta) {
+      this.sourceControlMeta = sourceControlMeta;
+      return this;
+    }
+
+    public ApplicationDetail build() {
+      return new ApplicationDetail(name, appVersion, description, change, sourceControlMeta,
+          configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+    }
+  }
 }
