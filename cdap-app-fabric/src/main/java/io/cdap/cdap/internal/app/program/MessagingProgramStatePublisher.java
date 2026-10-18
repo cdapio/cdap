@@ -42,6 +42,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -142,9 +143,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
             .build());
         LOG.trace("Published program status notification: {}", programStatusNotification);
         done = true;
-      } catch (IOException | AccessException e) {
-        throw Throwables.propagate(e);
-      } catch (TopicNotFoundException | ServiceUnavailableException e) {
+      } catch (TopicNotFoundException | ServiceUnavailableException | SocketTimeoutException e) {
         // These exceptions are retry-able due to TMS not completely started
         if (startTime < 0) {
           startTime = System.currentTimeMillis();
@@ -164,6 +163,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
           Thread.currentThread().interrupt();
           done = true;
         }
+      } catch (AccessException | IOException e) {
+        throw Throwables.propagate(e);
       }
     }
   }
