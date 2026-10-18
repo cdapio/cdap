@@ -44,6 +44,7 @@ import io.cdap.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.app.upgrade.UpgradeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
@@ -158,7 +159,9 @@ import io.cdap.cdap.internal.tethering.TetheringServerHandler;
 import io.cdap.cdap.messaging.server.FetchHandler;
 import io.cdap.cdap.messaging.server.MetadataHandler;
 import io.cdap.cdap.messaging.server.StoreHandler;
+import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
+import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -240,6 +243,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
+        new UpgradeModule(),
         BootstrapModules.getInMemoryModule(),
         new AbstractModule() {
           @Override
@@ -300,6 +304,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
+        new UpgradeModule(),
         serviceTypes.contains(ServiceType.PROCESSOR) ? BootstrapModules.getFileBasedModule() :
             BootstrapModules.getNoOpModule(),
         new AbstractModule() {
@@ -361,6 +366,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         new MasterCredentialProviderModule(),
         new OperationModule(),
         new DataStorageAeadEncryptionModule(),
+        new UpgradeModule(),
         serviceTypes.contains(ServiceType.PROCESSOR) ? BootstrapModules.getFileBasedModule() :
             BootstrapModules.getNoOpModule(),
         new AbstractModule() {
@@ -375,6 +381,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             bind(StorageProviderNamespaceAdmin.class)
                 .to(DistributedStorageProviderNamespaceAdmin.class);
             bind(UGIProvider.class).toProvider(UgiProviderProvider.class);
+            bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
 
             bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
                 .in(Scopes.SINGLETON);
