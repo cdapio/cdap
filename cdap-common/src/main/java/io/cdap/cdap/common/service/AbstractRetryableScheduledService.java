@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.retry.RetriesExhaustedException;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
@@ -56,7 +57,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    */
   protected AbstractRetryableScheduledService(RetryStrategy retryStrategy) {
     this.retryStrategy = retryStrategy;
-    addListener(new ServiceListenerAdapter() {
+    addListener(new Service.Listener() {
       @Override
       public void failed(State from, Throwable failure) {
         LOG.error("Scheduled service {} terminated due to failure", getServiceName(), failure);

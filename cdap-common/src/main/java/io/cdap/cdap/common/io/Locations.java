@@ -19,10 +19,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
+import com.google.common.io.ByteSink;
+import com.google.common.io.ByteSource;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -33,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,26 +96,33 @@ public final class Locations {
   };
 
   /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given
-   * path.
+   * Creates a new {@link ByteSource} that provides {@link SeekableInputStream} of the given path.
    *
    * @param fs The {@link org.apache.hadoop.fs.FileSystem} for the given path.
-   * @param path The path to create {@link io.cdap.cdap.common.io.SeekableInputStream} when
-   *     requested.
-   * @return A {@link InputSupplier}.
+   * @param path The path to create {@link SeekableInputStream} when requested.
+   * @return A {@link ByteSource}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs,
-      final Path path) {
-    return new InputSupplier<SeekableInputStream>() {
+  public static ByteSource newByteSource(final FileSystem fs, final Path path) {
+    return new ByteSource() {
       @Override
-      public SeekableInputStream getInput() throws IOException {
-        FSDataInputStream input = fs.open(path);
+      public SeekableInputStream openStream() throws IOException {
+        FSDataInputStream input = null;
         try {
+          input = fs.open(path);
           return new DFSSeekableInputStream(input,
               createDFSStreamSizeProvider(fs, false, path, input));
         } catch (Throwable t) {
-          Closeables.closeQuietly(input);
-          Throwables.propagateIfInstanceOf(t, IOException.class);
+          if (input != null) {
+            try {
+              input.close();
+            } catch (IOException e) {
+              t.addSuppressed(e);
+            }
+          }
+          Throwables.throwIfUnchecked(t);
+          if (t instanceof IOException) {
+            throw (IOException) t;
+          }
           throw new IOException(t);
         }
       }
@@ -124,19 +130,18 @@ public final class Locations {
   }
 
   /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the
-   * given location.
+   * Creates a new {@link ByteSource} that provides {@link SeekableInputStream} from the given location.
    *
    * @param location Location for the input stream.
-   * @return A {@link InputSupplier}.
+   * @return A {@link ByteSource}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(
-      final Location location) {
-    return new InputSupplier<SeekableInputStream>() {
+  public static ByteSource newByteSource(final Location location) {
+    return new ByteSource() {
       @Override
-      public SeekableInputStream getInput() throws IOException {
-        InputStream input = location.getInputStream();
+      public SeekableInputStream openStream() throws IOException {
+        InputStream input = null;
         try {
+          input = location.getInputStream();
           if (input instanceof FileInputStream) {
             return new FileSeekableInputStream((FileInputStream) input);
           }
@@ -147,30 +152,31 @@ public final class Locations {
             if (locationFactory instanceof FileContextLocationFactory) {
               final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
               return lf.getFileContext().getUgi()
-                  .doAs(new PrivilegedExceptionAction<SeekableInputStream>() {
-                    @Override
-                    public SeekableInputStream run() throws IOException {
-                      // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
-                      String scheme = lf.getHomeLocation().toURI().getScheme();
-                      Configuration hConf = new Configuration(lf.getConfiguration());
-                      hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
-                      FileSystem fs = FileSystem.get(hConf);
-                      return new DFSSeekableInputStream(dataInput,
-                          createDFSStreamSizeProvider(fs, true,
-                              new Path(location.toURI()), dataInput));
-                    }
+                  .doAs((PrivilegedExceptionAction<SeekableInputStream>) () -> {
+                    String scheme = lf.getHomeLocation().toURI().getScheme();
+                    Configuration hConf = new Configuration(lf.getConfiguration());
+                    hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
+                    FileSystem fs = FileSystem.get(hConf);
+                    return new DFSSeekableInputStream(dataInput,
+                        createDFSStreamSizeProvider(fs, true,
+                            new Path(location.toURI()), dataInput));
                   });
             }
-
-            // This shouldn't happen
-            // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
             return new DFSSeekableInputStream(dataInput, location::length);
           }
-
           throw new IOException("Failed to create SeekableInputStream from location " + location);
         } catch (Throwable t) {
-          Closeables.closeQuietly(input);
-          Throwables.propagateIfInstanceOf(t, IOException.class);
+          if (input != null) {
+            try {
+              input.close();
+            } catch (IOException e) {
+              t.addSuppressed(e);
+            }
+          }
+          Throwables.throwIfUnchecked(t);
+          if (t instanceof IOException) {
+            throw (IOException) t;
+          }
           throw new IOException(t);
         }
       }
@@ -343,7 +349,7 @@ public final class Locations {
         DirUtils.mkdirs(output);
       } else {
         DirUtils.mkdirs(output.getParentFile());
-        ByteStreams.copy(tis, com.google.common.io.Files.newOutputStreamSupplier(output));
+        com.google.common.io.Files.asByteSink(output).writeFrom(tis);
       }
       entry = tis.getNextTarEntry();
     }
@@ -412,14 +418,18 @@ public final class Locations {
   }
 
   /**
-   * Creates a new {@link OutputSupplier} that can provides {@link OutputStream} for the given
-   * location.
+   * Creates a new {@link ByteSink} that provides {@link OutputStream} for the given location.
    *
    * @param location Location for the output.
-   * @return A {@link OutputSupplier}.
+   * @return A {@link ByteSink}.
    */
-  public static OutputSupplier<? extends OutputStream> newOutputSupplier(final Location location) {
-    return location::getOutputStream;
+  public static ByteSink newByteSink(final Location location) {
+    return new ByteSink() {
+      @Override
+      public OutputStream openStream() throws IOException {
+        return location.getOutputStream();
+      }
+    };
   }
 
   /**
@@ -484,7 +494,7 @@ public final class Locations {
       return locationFactory.create(uri);
     } catch (URISyntaxException e) {
       // Should not happen.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -570,7 +580,7 @@ public final class Locations {
           }
           return getFileLengthMethod;
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
     });

@@ -35,7 +35,7 @@ public class TimeBoundIterator<T> extends AbstractIterator<T> {
   private final Stopwatch stopwatch;
 
   public TimeBoundIterator(Iterator<T> delegate, long timeBoundMillis) {
-    this(delegate, timeBoundMillis, new Stopwatch());
+    this(delegate, timeBoundMillis, Stopwatch.createStarted());
   }
 
   public TimeBoundIterator(Iterator<T> delegate, long timeBoundMillis, Stopwatch stopwatch) {
@@ -49,7 +49,7 @@ public class TimeBoundIterator<T> extends AbstractIterator<T> {
 
   @Override
   protected T computeNext() {
-    if (stopwatch.elapsedMillis() < timeBoundMillis && delegate.hasNext()) {
+    if (stopwatch.elapsed().toMillis() < timeBoundMillis && delegate.hasNext()) {
       return delegate.next();
     }
     return endOfData();
