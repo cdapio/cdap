@@ -16,3 +16,5 @@
 
 io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocProvisioner
 io.cdap.cdap.runtime.spi.provisioner.dataproc.ExistingDataprocProvisioner
+io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocServerlessProvisioner
+
