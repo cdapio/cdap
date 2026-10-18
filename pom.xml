@@ -127,7 +127,7 @@
     <guice.version>4.0</guice.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
-    <jackson.version>2.15.1</jackson.version>
+    <jackson.version>2.18.6</jackson.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty9.version>9.4.51.v20230217</jetty9.version>
     <jline.version>2.12</jline.version>
