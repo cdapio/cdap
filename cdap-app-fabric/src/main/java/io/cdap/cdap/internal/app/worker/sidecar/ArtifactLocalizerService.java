@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.utils.SidecarAuthToken;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
@@ -56,6 +57,10 @@ public class ArtifactLocalizerService extends AbstractIdleService {
       RemoteClientFactory remoteClientFactory, RemoteAuthenticator remoteAuthenticator) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
+    // Install a fresh process-local shared token for the sidecar's
+    // context-management endpoints before the HTTP service is built, so
+    // that the handler observes a non-null token for every inbound request.
+    SidecarAuthToken.installIfAbsent();
     this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER, false)
         .setHost(InetAddress.getLoopbackAddress().getHostName())
         .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
