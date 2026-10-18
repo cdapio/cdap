@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.preview;
 
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
@@ -139,7 +138,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     } catch (IOException | UnauthorizedException e) {
       throw e;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

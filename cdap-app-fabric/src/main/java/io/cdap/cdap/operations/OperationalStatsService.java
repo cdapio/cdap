@@ -34,7 +34,6 @@ import javax.annotation.Nullable;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
-import javax.management.MXBean;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import org.apache.thrift.TException;
@@ -137,7 +136,10 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       try {
         stats.collect();
       } catch (Throwable t) {
-        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
+        if (t instanceof InterruptedException) {
+          // Propagate InterruptedException to allow the service run loop to stop properly.
+          throw (InterruptedException) t;
+        }
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ServiceUnavailableException || rootCause instanceof TException) {
           // Required service (for example DatasetService in case of ServiceUnavailableException
@@ -214,7 +216,7 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       return new ObjectName(OperationalStatsUtils.JMX_DOMAIN, properties);
     } catch (MalformedObjectNameException e) {
       // should never happen, since we're constructing a valid domain name, and properties is non-empty
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

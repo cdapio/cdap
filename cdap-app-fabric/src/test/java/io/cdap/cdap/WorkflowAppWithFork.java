@@ -17,7 +17,6 @@
 package io.cdap.cdap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -77,7 +76,7 @@ public class WorkflowAppWithFork extends AbstractApplication {
       try {
         Preconditions.checkArgument(file.createNewFile(), "Failed to create file '%s'", file);
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
       File doneFile = new File(runtimeArguments.get(name + ".donefile"));
       try {

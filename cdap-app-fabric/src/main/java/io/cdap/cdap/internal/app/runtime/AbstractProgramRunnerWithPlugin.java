@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
@@ -25,7 +24,6 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import java.io.Closeable;
 import java.io.File;
 import javax.annotation.Nullable;
-import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
  * Provides method to create {@link PluginInstantiator} for Program Runners
@@ -61,7 +59,7 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    * Creates a service listener to cleanup closeables.
    */
   protected Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
-    return new ServiceListenerAdapter() {
+    return new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         closeAllQuietly(closeables);
@@ -76,7 +74,13 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
 
   protected void closeAllQuietly(Iterable<Closeable> closeables) {
     for (Closeable c : closeables) {
-      Closeables.closeQuietly(c);
+      try {
+
+        c.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 }

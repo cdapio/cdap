@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.data2.dataset2;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.common.Scope;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -300,7 +300,10 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    */
   @Override
   public void close() {
-    Closeables.closeQuietly(instantiator);
+    try {
+      instantiator.close();
+    } catch (Exception ignored) {
+    }
   }
 
   /**
@@ -378,7 +381,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("namespace", namespace)
           .add("name", name)
           .add("arguments", arguments)
@@ -387,4 +390,3 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
     }
   }
 }
-

@@ -187,7 +187,7 @@ public abstract class DatasetServiceTestBase {
     dsFramework = injector.getInstance(RemoteDatasetFramework.class);
     // Tx Manager to support working with datasets
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StoreDefinition.createAllTables(structuredTableAdmin);
 
@@ -206,7 +206,7 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
                                                      discoveryService, commonNettyHttpServiceFactory, handlers);
-    opExecutorService.startAndWait();
+    opExecutorService.startAsync().awaitRunning();
 
     Map<String, DatasetModule> defaultModules =
       injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
@@ -252,7 +252,7 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     waitForService(Constants.Service.DATASET_EXECUTOR);
     waitForService(Constants.Service.DATASET_MANAGER);
     // this usually happens while creating a namespace, however not doing that in data fabric tests

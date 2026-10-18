@@ -20,7 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -213,10 +212,16 @@ public class AppFabricTestHelper {
    * This must be called by all tests that create their injector through this class.
    */
   public static void shutdown() {
-    Closeables.closeQuietly(metadataStorage);
+    try {
+
+      metadataStorage.close();
+
+    } catch (Exception ignored) {
+
+    }
 
     if (services != null) {
-      Lists.reverse(services).forEach(Service::stopAndWait);
+      Lists.reverse(services).forEach(s -> s.stopAsync().awaitTerminated());
     }
 
     InMemoryTableService.reset();
@@ -276,7 +281,7 @@ public class AppFabricTestHelper {
     T instance = injector.getInstance(cls);
     if (instance instanceof Service) {
       services.add((Service) instance);
-      ((Service) instance).startAndWait();
+      ((Service) instance).startAsync().awaitRunning();
     }
     return instance;
   }

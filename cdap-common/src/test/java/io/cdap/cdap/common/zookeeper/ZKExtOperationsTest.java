@@ -59,7 +59,7 @@ public class ZKExtOperationsTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @Test
@@ -68,8 +68,8 @@ public class ZKExtOperationsTest {
     ZKClientService zkClient1 = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
     ZKClientService zkClient2 = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
 
-    zkClient1.startAndWait();
-    zkClient2.startAndWait();
+    zkClient1.startAsync().awaitRunning();
+    zkClient2.startAsync().awaitRunning();
 
     // First a node would get created since no node there.
     ZKExtOperations.updateOrCreate(zkClient1, path, new Function<Integer, Integer>() {
@@ -108,7 +108,8 @@ public class ZKExtOperationsTest {
             return 3;
           }
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
         throw new IllegalStateException("Illegal input " + input);
       }
@@ -134,15 +135,15 @@ public class ZKExtOperationsTest {
 
     Assert.assertNull(result);
 
-    zkClient1.stopAndWait();
-    zkClient2.stopAndWait();
+    zkClient1.stopAsync().awaitTerminated();
+    zkClient2.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testCreateOrSet() throws Exception {
     String path = "/parent/testCreateOrSet";
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     // Create with "1"
     Assert.assertEquals(1, ZKExtOperations.createOrSet(zkClient, path,
@@ -156,14 +157,14 @@ public class ZKExtOperationsTest {
     // Should get "2" back
     Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
 
-    zkClient.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testSetOrCreate() throws Exception {
     String path = "/parent/testSetOrCreate";
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     // Create with "1"
     Assert.assertEquals(1, ZKExtOperations.setOrCreate(zkClient, path,
@@ -177,11 +178,11 @@ public class ZKExtOperationsTest {
     // Should get "2" back
     Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
 
-    zkClient.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 }

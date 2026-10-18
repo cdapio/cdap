@@ -70,14 +70,14 @@ public class SystemMetadataAuditPublishTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
+      ((Service) scheduler).startAsync().awaitRunning();
     }
   }
 
   @AfterClass
   public static void tearDown() {
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
+      ((Service) scheduler).stopAsync().awaitTerminated();
     }
     AppFabricTestHelper.shutdown();
   }

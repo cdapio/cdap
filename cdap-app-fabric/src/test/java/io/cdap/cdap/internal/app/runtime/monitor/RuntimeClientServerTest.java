@@ -146,12 +146,12 @@ public class RuntimeClientServerTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     messagingService.createTopic(new DefaultTopicMetadata(NamespaceId.SYSTEM.topic("topic")));
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    runtimeServer.startAsync().awaitRunning();
 
     runtimeClient = injector.getInstance(RuntimeClient.class);
     locationFactory = injector.getInstance(LocationFactory.class);
@@ -160,9 +160,9 @@ public class RuntimeClientServerTest {
   @After
   public void afterTest() {
     logEntries.clear();
-    runtimeServer.stopAndWait();
+    runtimeServer.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 

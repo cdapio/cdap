@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import io.cdap.cdap.proto.id.ScheduleId;
 
@@ -68,7 +69,7 @@ public class JobKey {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("scheduleId", scheduleId)
         .add("generationId", generationId)
         .toString();
