@@ -370,7 +370,10 @@ public class StandaloneMain {
       }
 
       // TODO: CDAP-7688, remove next line after the issue is resolved
-      injector.getInstance(MessagingHttpService.class).startAsync().awaitRunning();
+      MessagingHttpService messagingHttpService = injector.getInstance(MessagingHttpService.class);
+      if (messagingHttpService.state() == Service.State.NEW) {
+        messagingHttpService.startAsync().awaitRunning();
+      }
       if (messagingService instanceof Service) {
         ((Service) messagingService).stopAsync().awaitTerminated();
       }

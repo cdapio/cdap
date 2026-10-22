@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.internal;
 
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.common.BadRequestException;
@@ -107,6 +108,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       return appFabricClient.getPlugins(application);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -129,6 +131,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     } catch (NamespaceNotFoundException e) {
       // This can be safely ignore if the unit-test already deleted the namespace
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -142,6 +145,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
           programName, programId.getType());
       waitForStopped(programId);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -152,6 +156,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
       appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
           application.getVersion(), programId.getProgram(), programId.getType(), arguments);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -173,6 +178,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
           programId.getVersion(), programId.getProgram(), programId.getType());
       return status.name().equals(actual);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -182,6 +188,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       return appFabricClient.getHistory(programId, status);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

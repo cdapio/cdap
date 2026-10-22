@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
@@ -67,7 +68,14 @@ public class RetryOnStartFailureService extends AbstractService {
 
         while (!stopped) {
           try {
-            currentDelegate.startAsync().awaitRunning();
+            try {
+              currentDelegate.startAsync().awaitRunning();
+            } catch (IllegalStateException e) {
+              Service.State state = currentDelegate.state();
+              if (state != Service.State.STOPPING && state != Service.State.TERMINATED) {
+                throw e;
+              }
+            }
             // Only assigned the delegate if and only if the delegate service started successfully
             startedService = currentDelegate;
             break;
@@ -109,6 +117,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // the setting of the startedService field. When that happens, the stop failure state is not propagated.
     // Nevertheless, there won't be any service left behind without stopping.
     if (startedService != null) {
+      AtomicBoolean notified = new AtomicBoolean(false);
       startedService.addListener(new Service.Listener() {
         @Override
         public void starting() {}
@@ -121,15 +130,25 @@ public class RetryOnStartFailureService extends AbstractService {
 
         @Override
         public void terminated(State from) {
-          notifyStopped();
+          if (notified.compareAndSet(false, true)) {
+            notifyStopped();
+          }
         }
 
         @Override
         public void failed(State from, Throwable failure) {
-          notifyFailed(failure);
+          if (notified.compareAndSet(false, true)) {
+            notifyFailed(failure);
+          }
         }
       }, MoreExecutors.directExecutor());
       startedService.stopAsync();
+      State delegateState = startedService.state();
+      if (delegateState == State.TERMINATED && notified.compareAndSet(false, true)) {
+        notifyStopped();
+      } else if (delegateState == State.FAILED && notified.compareAndSet(false, true)) {
+        notifyFailed(startedService.failureCause());
+      }
       return;
     }
 

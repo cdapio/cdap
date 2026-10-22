@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.appender.tms;
 
-import java.nio.charset.StandardCharsets;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
@@ -96,7 +95,7 @@ public class TMSLogAppender extends LogAppender {
   // in Standalone
   @VisibleForTesting
   static int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString(), StandardCharsets.UTF_8).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashUnencodedChars(key.toString()).asInt()) % numPartitions;
   }
 
   /**

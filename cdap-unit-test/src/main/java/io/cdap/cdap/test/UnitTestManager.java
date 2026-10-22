@@ -18,6 +18,7 @@ package io.cdap.cdap.test;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -189,6 +190,7 @@ public class UnitTestManager extends AbstractTestManager {
     } catch (AccessException e) {
       throw e;
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -297,6 +299,7 @@ public class UnitTestManager extends AbstractTestManager {
     try {
       appFabricClient.reset();
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } finally {
       metricsManager.resetAll();
@@ -337,6 +340,7 @@ public class UnitTestManager extends AbstractTestManager {
       }
       return new UnitTestDatasetManager<>(dataSet, txContext);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

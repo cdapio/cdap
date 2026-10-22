@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.store.remote;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -63,9 +64,13 @@ public class RemoteNamespaceQueryTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAsync().awaitRunning();
+    if (txManager.state() == Service.State.NEW) {
+      txManager.startAsync().awaitRunning();
+    }
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAsync().awaitRunning();
+    if (datasetService.state() == Service.State.NEW) {
+      datasetService.startAsync().awaitRunning();
+    }
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAsync().awaitRunning();
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);

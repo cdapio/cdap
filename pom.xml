@@ -76,9 +76,7 @@
         <enabled>false</enabled>
       </releases>
       <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-        <checksumPolicy>fail</checksumPolicy>
+        <enabled>false</enabled>
       </snapshots>
     </repository>
     <repository>
@@ -88,9 +86,7 @@
         <enabled>false</enabled>
       </releases>
       <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-        <checksumPolicy>fail</checksumPolicy>
+        <enabled>false</enabled>
       </snapshots>
     </repository>
   </repositories>

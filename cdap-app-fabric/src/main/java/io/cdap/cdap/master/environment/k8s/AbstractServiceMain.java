@@ -226,10 +226,17 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     LOG.info("Starting all services for {}", getClass().getName());
     for (Service service : services) {
       LOG.info("Starting service {} for {}", service, getClass().getName());
-      if (service.state() == Service.State.NEW) {
-        service.startAsync().awaitRunning();
-      } else {
-        service.awaitRunning();
+      try {
+        if (service.state() == Service.State.NEW) {
+          service.startAsync().awaitRunning();
+        } else {
+          service.awaitRunning();
+        }
+      } catch (IllegalStateException e) {
+        if (service.state() != Service.State.STOPPING
+            && service.state() != Service.State.TERMINATED) {
+          throw e;
+        }
       }
     }
     LOG.info("All services for {} started", getClass().getName());

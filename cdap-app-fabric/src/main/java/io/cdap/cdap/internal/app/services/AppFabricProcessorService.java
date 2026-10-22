@@ -147,21 +147,21 @@ public class AppFabricProcessorService extends AbstractIdleService {
     // Only for RBAC instances
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
-      auditLogSubscriberService.startAsync();
+      startIfNotRunning(auditLogSubscriberService);
     }
 
-    provisioningService.startAsync();
-    applicationLifecycleService.startAsync();
-    bootstrapService.startAsync();
-    programRuntimeService.startAsync();
-    programNotificationSubscriberService.startAsync();
-    programStopSubscriberService.startAsync();
-    runRecordCorrectorService.startAsync();
-    programRunStatusMonitorService.startAsync();
-    coreSchedulerService.startAsync();
-    runRecordCounterService.startAsync();
-    runDataTimeToLiveService.startAsync();
-    operationNotificationSubscriberService.startAsync();
+    startIfNotRunning(provisioningService);
+    startIfNotRunning(applicationLifecycleService);
+    startIfNotRunning(bootstrapService);
+    startIfNotRunning(programRuntimeService);
+    startIfNotRunning(programNotificationSubscriberService);
+    startIfNotRunning(programStopSubscriberService);
+    startIfNotRunning(runRecordCorrectorService);
+    startIfNotRunning(programRunStatusMonitorService);
+    startIfNotRunning(coreSchedulerService);
+    startIfNotRunning(runRecordCounterService);
+    startIfNotRunning(runDataTimeToLiveService);
+    startIfNotRunning(operationNotificationSubscriberService);
 
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
@@ -259,5 +259,11 @@ public class AppFabricProcessorService extends AbstractIdleService {
 
       LOG.info("AppFabric Processor HTTP service stopped.");
     };
+  }
+
+  private void startIfNotRunning(com.google.common.util.concurrent.Service service) {
+    if (service.state() == State.NEW) {
+      service.startAsync();
+    }
   }
 }
