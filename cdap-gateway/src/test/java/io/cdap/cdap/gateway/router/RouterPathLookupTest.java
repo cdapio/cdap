@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.util.EnumSet;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,6 +38,10 @@ public class RouterPathLookupTest {
   private static RouterPathLookup pathLookup;
   private static final HttpVersion VERSION = HttpVersion.HTTP_1_1;
   private static final String API_KEY = "SampleTestApiKey";
+  // Every method netty knows. Only four of them are in RouterPathLookup's AllowedMethod enum.
+  private static final List<HttpMethod> ALL_HTTP_METHODS = ImmutableList.of(
+      HttpMethod.GET, HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE, HttpMethod.PATCH,
+      HttpMethod.OPTIONS, HttpMethod.HEAD, HttpMethod.TRACE, HttpMethod.CONNECT);
 
   @BeforeClass
   public static void init() {
@@ -360,6 +365,61 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testInternalMessagingPathsAreNotRouted() {
+    // MetadataHandler: topic administration
+    assertRoutingForAllMethods("/v1/namespaces/system/topics", RouterPathLookup.DONT_ROUTE);
+    assertRoutingForAllMethods("/v1/namespaces/system/topics/t", RouterPathLookup.DONT_ROUTE);
+    assertRoutingForAllMethods("/v1/namespaces/system/topics/t/properties", RouterPathLookup.DONT_ROUTE);
+    // StoreHandler and FetchHandler: publish and fetch
+    for (String action : ImmutableList.of("publish", "store", "rollback", "poll")) {
+      assertRoutingForAllMethods("/v1/namespaces/system/topics/t/" + action, RouterPathLookup.DONT_ROUTE);
+    }
+  }
+
+  @Test
+  public void testInternalRemoteOpsAndImpersonationPathsAreNotRouted() {
+    assertRoutingForAllMethods("/v1/execute/grant", RouterPathLookup.DONT_ROUTE);
+    assertRoutingForAllMethods("/v1/execute/listPrivileges", RouterPathLookup.DONT_ROUTE);
+    assertRoutingForAllMethods("/v1/impersonation/credentials", RouterPathLookup.DONT_ROUTE);
+  }
+
+  @Test
+  public void testInternalApiVersionIsNotRoutedWhateverTheSpelling() {
+    // The first non-empty path segment decides, the same way it does for /v3.
+    for (String path : ImmutableList.of("/v1", "/v1/", "v1/namespaces/n", "//v1/namespaces/n", "/v1//topics")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
+    }
+  }
+
+  @Test
+  public void testPathsThatOnlyContainV1AreStillRouted() {
+    // The internal API version is matched as a whole, case-sensitive, first path segment.
+    for (String path : ImmutableList.of("/v1x/a", "/V1/a", "/v10/a", "/x/v1/a", "/a/v1")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.APP_FABRIC_HTTP);
+    }
+  }
+
+  @Test
+  public void testV1SegmentInUserServiceMethodPathIsStillRouted() {
+    // The pipeline services serve paths such as v1/contexts/{context}/connections below /methods/
+    String path = "/v3/namespaces/n/apps/a/services/s/methods/v1/contexts/c/connections";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, HttpMethod.GET, path);
+    RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
+    Assert.assertEquals(ServiceDiscoverable.getName("n", "a", ProgramType.SERVICE, "s"), result.getServiceName());
+  }
+
+  @Test
+  public void testInternalV3PathsAreStillRouted() {
+    assertRoutingForAllMethods("/v3Internal/namespaces/n/apps/a/states/s", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
+  public void testEmptyPathFallsBackToAppFabric() {
+    assertRoutingForAllMethods("", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRoutingForAllMethods("/", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
   public void testServiceProviderStatsPaths() {
     assertRouting("/v3/system/////serviceproviders", RouterPathLookup.APP_FABRIC_HTTP);
   }
@@ -525,6 +585,17 @@ public class RouterPathLookupTest {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
       RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
       Assert.assertEquals(destination,  result);
+    }
+  }
+
+  /**
+   * Same as {@link #assertRouting}, but for every HTTP method instead of GET, POST and DELETE only.
+   */
+  private void assertRoutingForAllMethods(String path, RouteDestination destination) {
+    for (HttpMethod method : ALL_HTTP_METHODS) {
+      HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
+      RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
+      Assert.assertEquals(method + " '" + path + "'", destination, result);
     }
   }
 }

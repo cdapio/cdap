@@ -46,6 +46,7 @@ import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.test.SlowTests;
@@ -94,6 +95,7 @@ public class TestTMSLogging {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new NoOpAuditLogModule(),
