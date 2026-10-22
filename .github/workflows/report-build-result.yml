@@ -20,6 +20,9 @@ on:
       - 'release/**'
       - 'develop'
 
+# Least privilege: this workflow only runs `bq insert`; it needs no GITHUB_TOKEN scopes.
+permissions: {}
+
 jobs:
 
   report:
