@@ -106,7 +106,7 @@ curl -L -o ${__tmpdir}/install.sh https://www.chef.io/chef/install.sh && sudo ba
 
 # Clone CDAP repo
 echo "INFO: Checking out CDAP_BRANCH ${CDAP_BRANCH}"
-git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
+git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/cdapio/cdap.git ${__gitdir}
 
 # Check out to specific tag if specified
 if [ -n "${CDAP_TAG}" ]; then

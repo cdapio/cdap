@@ -23,7 +23,7 @@ die() { echo $*; exit 1; }
 export GIT_MERGE_AUTOEDIT=no
 
 # Grab cookbooks using knife
-# Due to https://issues.cask.co/browse/CDAP-13308, we can no longer use knife cookbook site install
+# Due to https://cdap.atlassian.net/browse/CDAP-13308, we can no longer use knife cookbook site install
 # for cb in cdap idea maven openssh; do
 #   knife cookbook site install $cb || die "Cannot fetch cookbook $cb"
 # done

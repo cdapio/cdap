@@ -275,7 +275,7 @@ public class ProgramScheduleStoreDataset {
    * @param appId the application id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
-  // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
+  // TODO: fix the bug that this method will return fake schedule id https://cdap.atlassian.net/browse/CDAP-13626
   public List<ScheduleId> deleteSchedules(ApplicationId appId, long deleteTime) throws IOException {
     List<ScheduleId> deleted = new ArrayList<>();
     Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(appId);
@@ -301,7 +301,7 @@ public class ProgramScheduleStoreDataset {
    * @param programId the program id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
-  // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
+  // TODO: fix the bug that this method will return fake schedule id https://cdap.atlassian.net/browse/CDAP-13626
   public List<ScheduleId> deleteSchedules(ProgramId programId, long deleteTime) throws IOException {
     List<ScheduleId> deleted = new ArrayList<>();
     Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(programId.getParent());
