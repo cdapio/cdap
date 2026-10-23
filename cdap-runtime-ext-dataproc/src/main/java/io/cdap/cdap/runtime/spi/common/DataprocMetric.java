@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.common;
 
+import com.google.api.gax.rpc.StatusCode;
 import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import javax.annotation.Nullable;
@@ -32,14 +33,21 @@ public class DataprocMetric {
   private final LaunchMode launchMode;
   @Nullable
   private final String imageVersion;
+  @Nullable
+  private final String method;
+  @Nullable
+  private final StatusCode.Code statusCode;
 
   private DataprocMetric(String metricName, String region, @Nullable Exception exception,
-      @Nullable LaunchMode launchMode, @Nullable String imageVersion) {
+      @Nullable LaunchMode launchMode, @Nullable String imageVersion, @Nullable String method,
+                         @Nullable StatusCode.Code statusCode) {
     this.metricName = metricName;
     this.region = region;
     this.exception = exception;
     this.launchMode = launchMode;
     this.imageVersion = imageVersion;
+    this.method = method;
+    this.statusCode = statusCode;
   }
 
   public String getMetricName() {
@@ -72,6 +80,16 @@ public class DataprocMetric {
     return launchMode;
   }
 
+  @Nullable
+  public StatusCode.Code  getStatusCode() {
+    return statusCode;
+  }
+
+  @Nullable
+  public String getMethod() {
+    return method;
+  }
+
   /**
    * Returns a builder to create a DataprocMetric.
    *
@@ -93,6 +111,10 @@ public class DataprocMetric {
     private Exception exception;
     @Nullable
     private LaunchMode launchMode;
+    @Nullable
+    private String method;
+    @Nullable
+    private StatusCode.Code statusCode;
 
     private Builder(String metricName) {
       this.metricName = metricName;
@@ -113,8 +135,18 @@ public class DataprocMetric {
       return this;
     }
 
+    public Builder setStatusCode(@Nullable StatusCode.Code statusCode) {
+      this.statusCode = statusCode;
+      return this;
+    }
+
     public Builder setImageVersion(String imageVersion) {
       this.imageVersion = imageVersion;
+      return this;
+    }
+
+    public Builder setMethod(@Nullable String method) {
+      this.method = method;
       return this;
     }
 
@@ -128,7 +160,7 @@ public class DataprocMetric {
         // region should always be set unless there is a bug in the code
         throw new IllegalStateException("Dataproc metric is missing the region");
       }
-      return new DataprocMetric(metricName, region, exception, launchMode, imageVersion);
+      return new DataprocMetric(metricName, region, exception, launchMode, imageVersion, method, statusCode);
     }
   }
 }
