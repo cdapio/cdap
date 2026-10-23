@@ -375,6 +375,19 @@ public final class DataprocUtils {
    * Emit a dataproc metric.
    **/
   public static void emitMetric(ProvisionerContext context, DataprocMetric dataprocMetric) {
+    getProvisionerMetrics(context, dataprocMetric).count(dataprocMetric.getMetricName(), 1);
+  }
+
+  /**
+   * Emits a dataproc gauge metric with a given value.
+   */
+  public static void emitMetric(ProvisionerContext context, DataprocMetric dataprocMetric,
+      long value) {
+    getProvisionerMetrics(context, dataprocMetric).gauge(dataprocMetric.getMetricName(), value);
+  }
+
+  private static ProvisionerMetrics getProvisionerMetrics(ProvisionerContext context,
+      DataprocMetric dataprocMetric) {
     StatusCode.Code statusCode = getCode(dataprocMetric);
     ImmutableMap.Builder<String, String> tags = ImmutableMap.<String, String>builder()
         .put("reg", dataprocMetric.getRegion())
@@ -388,8 +401,7 @@ public final class DataprocUtils {
     if (!Strings.isNullOrEmpty(dataprocMetric.getMethod())) {
       tags.put("method", dataprocMetric.getMethod());
     }
-    ProvisionerMetrics metrics = context.getMetrics(tags.build());
-    metrics.count(dataprocMetric.getMetricName(), 1);
+    return context.getMetrics(tags.build());
   }
 
   private static StatusCode.Code getCode(DataprocMetric dataprocMetric) {
