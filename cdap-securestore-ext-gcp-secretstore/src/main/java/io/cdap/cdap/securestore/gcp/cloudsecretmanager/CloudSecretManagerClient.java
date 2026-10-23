@@ -18,7 +18,10 @@ package io.cdap.cdap.securestore.gcp.cloudsecretmanager;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.retrying.RetrySettings;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
+import com.google.api.gax.rpc.UnaryCallSettings;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.ServiceOptions;
 import com.google.cloud.secretmanager.v1.AddSecretVersionRequest;
@@ -30,10 +33,12 @@ import com.google.cloud.secretmanager.v1.SecretManagerServiceClient.ListSecretsP
 import com.google.cloud.secretmanager.v1.SecretManagerServiceSettings;
 import com.google.cloud.secretmanager.v1.SecretPayload;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.FieldMask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.threeten.bp.Duration;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,6 +47,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** Client for <a href="https://cloud.google.com/secret-manager">Google Cloud Secret Manager</a> */
 public class CloudSecretManagerClient {
@@ -56,6 +62,22 @@ public class CloudSecretManagerClient {
    * (see https://github.com/googleapis/google-cloud-java#authentication for default behavior)
    */
   private static final String SERVICE_ACCOUNT_FILE = "service.account.file";
+  private static final String RETRY_MAX_ATTEMPTS = "retry.max.attempts";
+  private static final String RETRY_INITIAL_DELAY_MS = "retry.initial.delay.ms";
+  private static final String RETRY_MAX_DELAY_MS = "retry.max.delay.ms";
+  private static final String RETRY_TOTAL_TIMEOUT_MS = "retry.total.timeout.ms";
+
+  /**
+   * Status codes that indicate a transient failure worth retrying. Includes rate limiting
+   * (RESOURCE_EXHAUSTED / 429) and transient 5XX server errors (INTERNAL / 500, UNKNOWN / 500,
+   * UNAVAILABLE / 503, DEADLINE_EXCEEDED / 504).
+   */
+  private static final Set<StatusCode.Code> RETRYABLE_CODES = ImmutableSet.of(
+      StatusCode.Code.RESOURCE_EXHAUSTED,
+      StatusCode.Code.INTERNAL,
+      StatusCode.Code.UNKNOWN,
+      StatusCode.Code.UNAVAILABLE,
+      StatusCode.Code.DEADLINE_EXCEEDED);
 
   private final SecretManagerServiceClient secretManager;
   // GCP project resource name e.g. "project/my-project-id".
@@ -260,7 +282,50 @@ public class CloudSecretManagerClient {
         (credentials) -> {
           settings.setCredentialsProvider(credentials);
         });
+    configureRetries(settings, properties);
     return SecretManagerServiceClient.create(settings.build());
+  }
+
+  /**
+   * Enables retries for the calls that Secret Manager is most likely to throttle.
+   *
+   * <p>The generated client ships with retries disabled for every mutating method, so a rate
+   * limited {@code updateSecret} or {@code addSecretVersion} fails on its first attempt:
+   *
+   * <ul>
+   *   <li>{@code updateSecret} rewrites the annotations field wholesale, so repeating it converges
+   *       on the same result.
+   *   <li>{@code getSecret} is read-only, and reads share a much smaller per-project quota than
+   *       payload accesses do.
+   *   <li>{@code addSecretVersion} appends the secret payload as a new version; reads always target
+   *       {@code versions/latest}, so repeating a write with the same payload is safe.
+   * </ul>
+   */
+  private static void configureRetries(SecretManagerServiceSettings.Builder settings,
+                                       Map<String, String> properties) {
+    RetrySettings retrySettings = createRetrySettings(
+        settings.accessSecretVersionSettings().getRetrySettings(), properties);
+
+    for (UnaryCallSettings.Builder<?, ?> method : ImmutableList.of(
+        settings.updateSecretSettings(),
+        settings.getSecretSettings(),
+        settings.addSecretVersionSettings())) {
+      method.setRetryableCodes(RETRYABLE_CODES)
+          .setRetrySettings(retrySettings);
+    }
+  }
+
+  private static RetrySettings createRetrySettings(RetrySettings defaults,
+                                                   Map<String, String> properties) {
+    return defaults.toBuilder()
+        .setMaxAttempts(Integer.parseInt(properties.getOrDefault(RETRY_MAX_ATTEMPTS, "5")))
+        .setInitialRetryDelay(Duration.ofMillis(
+            Long.parseLong(properties.getOrDefault(RETRY_INITIAL_DELAY_MS, "200"))))
+        .setMaxRetryDelay(Duration.ofMillis(
+            Long.parseLong(properties.getOrDefault(RETRY_MAX_DELAY_MS, "5000"))))
+        .setTotalTimeout(Duration.ofMillis(
+            Long.parseLong(properties.getOrDefault(RETRY_TOTAL_TIMEOUT_MS, "60000"))))
+        .build();
   }
 
   /**
