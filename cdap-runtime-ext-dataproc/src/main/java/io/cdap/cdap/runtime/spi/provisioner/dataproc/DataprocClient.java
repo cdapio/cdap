@@ -891,7 +891,11 @@ abstract class DataprocClient implements AutoCloseable {
   public Optional<Operation> getLatestOperation(String clusterName, String operationType)
     throws RetryableProvisionException {
     String operationName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(), conf.getRegion());
-    String filter = String.format("clusterName=\"%s\" AND operationType=\"%s\"", clusterName, operationType);
+    String clusterFilterKey = "DELETE".equals(operationType)
+        ? "labels.goog-dataproc-cluster-name"
+        : "clusterName";
+    String filter = String.format("%s=\"%s\" AND operationType=\"%s\"",
+        clusterFilterKey, clusterName, operationType);
 
     try {
       OperationsClient.ListOperationsPagedResponse response =
