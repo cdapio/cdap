@@ -16,14 +16,17 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
+import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Context object, exposing information that may be useful during checking constraints.
@@ -56,5 +59,26 @@ public final class ConstraintContext {
 
   public Job getJob() {
     return job;
+  }
+
+  /**
+   * Returns the workflow token if the specified program run is a workflow run, {@code null} otherwise.
+   * This mirrors {@link io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext#getWorkflowToken}
+   * so that constraint checks observe the same read path as schedule launch.
+   *
+   * <p>Note that for a workflow run, {@link Store#getWorkflowToken} returns an empty token rather than
+   * {@code null} when no token has been persisted for the run yet.
+   *
+   * @param programRunId the program run whose workflow token to fetch
+   * @return the workflow token of the run, or {@code null} if the run is not a workflow run
+   */
+  @Nullable
+  public WorkflowToken getWorkflowToken(ProgramRunId programRunId) {
+    ProgramId programId = programRunId.getParent();
+    if (programId.getType() != ProgramType.WORKFLOW) {
+      return null;
+    }
+    return store.getWorkflowToken(programId.getParent().workflow(programId.getProgram()),
+        programRunId.getRun());
   }
 }

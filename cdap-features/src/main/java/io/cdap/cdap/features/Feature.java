@@ -52,6 +52,7 @@ public enum Feature {
   WRANGLER_KRYO_SERIALIZATION("6.10.1"),
   SOURCE_CONTROL_MANAGEMENT_GITLAB_BITBUCKET("6.10.1"),
   DATAPLANE_AUDIT_LOGGING("6.10.1"),
+  WORKFLOW_TOKEN_CONSTRAINT("6.11.1", false),
   WRANGLER_JEXL_ALLOWLIST("6.12.0", false);
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
