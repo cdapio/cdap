@@ -39,6 +39,7 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   private final Map<String, String> properties;
   private final Map<String, Integer> metricCounts = new ConcurrentHashMap<>();
+  private final Map<String, Long> metricGauges = new ConcurrentHashMap<>();
   private ProgramRunInfo programRunInfo;
   private SparkCompat sparkCompat;
   private VersionInfo appCDAPVersionInfo;
@@ -147,6 +148,10 @@ public class MockProvisionerContext implements ProvisionerContext {
     return metricCounts;
   }
 
+  public Map<String, Long> getMetricGauges() {
+    return metricGauges;
+  }
+
   @Override
   public ProvisionerMetrics getMetrics(Map<String, String> context) {
     return new ProvisionerMetrics() {
@@ -156,7 +161,9 @@ public class MockProvisionerContext implements ProvisionerContext {
       }
 
       @Override
-      public void gauge(String metricName, long value) {}
+      public void gauge(String metricName, long value) {
+        metricGauges.put(metricName, value);
+      }
     };
   }
 
