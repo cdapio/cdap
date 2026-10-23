@@ -178,7 +178,9 @@ public class DataprocRuntimeJobManagerTest {
   @Test
   public void uploadFileTest() throws Exception {
     final String bucketName = "bucket";
-    GoogleCredentials credentials = Mockito.mock(GoogleCredentials.class);
+    // jspecify is excluded from the classpath, so its annotations cannot be read.
+    GoogleCredentials credentials =
+        Mockito.mock(GoogleCredentials.class, Mockito.withSettings().withoutAnnotations());
     Mockito.doReturn(true).when(credentials).createScopedRequired();
     DataprocRuntimeJobManager dataprocRuntimeJobManager = new DataprocRuntimeJobManager(
       new DataprocClusterInfo(new MockProvisionerContext(), "test-cluster", credentials,
