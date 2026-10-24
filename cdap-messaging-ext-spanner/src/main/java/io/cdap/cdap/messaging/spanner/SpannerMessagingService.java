@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.messaging.spanner;
 
 import com.google.api.gax.longrunning.OperationFuture;
@@ -66,6 +67,9 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link MessagingService} implementation that uses Google Cloud Spanner.
+ */
 public class SpannerMessagingService implements MessagingService {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpannerMessagingService.class);
@@ -109,19 +113,18 @@ public class SpannerMessagingService implements MessagingService {
 
   @Override
   public void initialize(MessagingServiceContext context) throws IOException {
-    Map<String, String> cConf = context.getProperties();
-    this.databaseId = SpannerUtil.getDatabaseID(cConf);
-    this.instanceId = SpannerUtil.getInstanceID(cConf);
-    String projectID = SpannerUtil.getProjectID(cConf);
-    Credentials credentials = SpannerUtil.getCredentials(cConf);
-
-    this.publishBatchSize = Integer.parseInt(cConf.get(SpannerUtil.PUBLISH_BATCH_SIZE));
+    Map<String, String> conf = context.getProperties();
+    this.databaseId = SpannerUtil.getDatabaseId(conf);
+    this.instanceId = SpannerUtil.getInstanceId(conf);
+    this.publishBatchSize = Integer.parseInt(conf.get(SpannerUtil.PUBLISH_BATCH_SIZE));
     this.publishBatchTimeoutMillis = Integer.parseInt(
-        cConf.get(SpannerUtil.PUBLISH_BATCH_TIMEOUT_MILLIS));
-    this.publishDelayMillis = Integer.parseInt(cConf.get(SpannerUtil.PUBLISH_DELAY_MILLIS));
+        conf.get(SpannerUtil.PUBLISH_BATCH_TIMEOUT_MILLIS));
+    this.publishDelayMillis = Integer.parseInt(conf.get(SpannerUtil.PUBLISH_DELAY_MILLIS));
 
-    Spanner spanner = SpannerUtil.getSpannerService(projectID, credentials);
-    this.client = SpannerUtil.getSpannerDbClient(projectID, instanceId, databaseId, spanner);
+    String projectId = SpannerUtil.getProjectId(conf);
+    Credentials credentials = SpannerUtil.getCredentials(conf);
+    Spanner spanner = SpannerUtil.getSpannerService(conf, projectId, credentials);
+    this.client = SpannerUtil.getSpannerDbClient(projectId, instanceId, databaseId, spanner);
     this.adminClient = SpannerUtil.getSpannerDbAdminClient(spanner);
     LOG.info("Spanner messaging service started.");
 
@@ -146,17 +149,17 @@ public class SpannerMessagingService implements MessagingService {
       return;
     }
     List<String> ddlStatements = new ArrayList<>();
-    ddlStatements.add(getCreateTopicMetadataDDLStatement());
+    ddlStatements.add(getCreateTopicMetadataDdlStatement());
     for (TopicMetadata topic : topics) {
       LOG.info("Creating topic : {}", topic.getTopicId().getTopic());
-      ddlStatements.add(getCreateTopicDDLStatement(topic.getTopicId()));
+      ddlStatements.add(getCreateTopicDdlStatement(topic.getTopicId()));
     }
-    executeCreateDDLStatements(ddlStatements);
+    executeCreateDdlStatements(ddlStatements);
     updateTopicMetadataTable(topics);
     LOG.info("Created all system topics.");
   }
 
-  private String getCreateTopicMetadataDDLStatement() {
+  private String getCreateTopicMetadataDdlStatement() {
     return String.format(
         "CREATE TABLE IF NOT EXISTS %s ( %s STRING(MAX) NOT NULL, %s STRING(MAX), %s JSON ) PRIMARY KEY(%s)",
         TOPIC_METADATA_TABLE, TOPIC_ID_FIELD, NAMESPACE_FIELD, PROPERTIES_FIELD, TOPIC_ID_FIELD);
@@ -189,7 +192,7 @@ public class SpannerMessagingService implements MessagingService {
    *     </ul>
    * </p>
    */
-  private String getCreateTopicDDLStatement(TopicId topicId) {
+  private String getCreateTopicDdlStatement(TopicId topicId) {
     return String.format(
         "CREATE TABLE IF NOT EXISTS %s ( %s TIMESTAMP NOT NULL OPTIONS (allow_commit_timestamp=true),"
             + " %s INT64, %s INT64, %s INT64, %s BYTES(MAX) )"
@@ -219,7 +222,7 @@ public class SpannerMessagingService implements MessagingService {
     }
   }
 
-  private void executeCreateDDLStatements(List<String> ddlStatements) throws IOException {
+  private void executeCreateDdlStatements(List<String> ddlStatements) throws IOException {
     try {
       OperationFuture<Void, UpdateDatabaseDdlMetadata> future = adminClient.updateDatabaseDdl(
           this.instanceId, this.databaseId, ddlStatements, null);
@@ -244,9 +247,9 @@ public class SpannerMessagingService implements MessagingService {
       throws TopicNotFoundException, IOException, UnauthorizedException {
     try {
       String topicTableName = getTableName(topicId);
-      String deleteTopicTableSQL = String.format("DROP TABLE IF EXISTS %s", topicTableName);
+      String deleteTopicTableSql = String.format("DROP TABLE IF EXISTS %s", topicTableName);
       OperationFuture<Void, UpdateDatabaseDdlMetadata> future = adminClient.updateDatabaseDdl(
-          this.instanceId, this.databaseId, Collections.singleton(deleteTopicTableSQL), null);
+          this.instanceId, this.databaseId, Collections.singleton(deleteTopicTableSql), null);
       future.get();
     } catch (InterruptedException | ExecutionException e) {
       throw new IOException(e);
@@ -284,10 +287,10 @@ public class SpannerMessagingService implements MessagingService {
 
     List<TopicId> topics = new ArrayList<>();
     String namespace = namespaceId.getNamespace();
-    String topicSQL = String.format("SELECT %s FROM %s WHERE %s = '%s'", TOPIC_ID_FIELD,
+    String topicSql = String.format("SELECT %s FROM %s WHERE %s = '%s'", TOPIC_ID_FIELD,
         TOPIC_METADATA_TABLE, NAMESPACE_FIELD, namespace);
 
-    try (ResultSet resultSet = client.singleUse().executeQuery(Statement.of(topicSQL))) {
+    try (ResultSet resultSet = client.singleUse().executeQuery(Statement.of(topicSql))) {
       while (resultSet.next()) {
         String topicId = resultSet.getString(TOPIC_ID_FIELD);
         topics.add(new TopicId(namespace, topicId));
@@ -297,7 +300,7 @@ public class SpannerMessagingService implements MessagingService {
   }
 
   /**
-   * Please refer {@link #getCreateTopicDDLStatement(TopicId)} for schema details. Following table
+   * Please refer {@link #getCreateTopicDdlStatement(TopicId)} for schema details. Following table
    * shows how messages would be persisted in the topic tables.
    *
    * <pre>
@@ -525,6 +528,10 @@ public class SpannerMessagingService implements MessagingService {
     }
   }
 
+  /**
+   * A {@link CloseableIterator} of {@link io.cdap.cdap.messaging.spi.RawMessage} implementation
+   * that contains the message fetching logic from Cloud Spanner messaging tables.
+   */
   public static class SpannerResultSetClosableIterator<RawMessage> extends
       AbstractCloseableIterator<io.cdap.cdap.messaging.spi.RawMessage> {
 
