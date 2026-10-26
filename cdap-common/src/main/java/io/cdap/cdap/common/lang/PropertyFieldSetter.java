@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.common.lang;
 
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Property;
 import io.cdap.cdap.internal.lang.FieldVisitor;
@@ -79,10 +78,10 @@ public final class PropertyFieldSetter extends FieldVisitor {
       field.set(instance, fieldType.getMethod("valueOf", String.class).invoke(null, value));
     } catch (NoSuchMethodException e) {
       // Should never happen, as boxed type always have the valueOf(String) method.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } catch (InvocationTargetException e) {
       // Also should never happen, as calling method on Java bootstrap classes should always succeed.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

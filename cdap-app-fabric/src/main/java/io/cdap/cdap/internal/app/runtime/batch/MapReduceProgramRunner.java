@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -173,7 +172,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           TypeToken.of(program.<MapReduce>getMainClass())).create();
     } catch (Exception e) {
       LOG.error("Failed to instantiate MapReduce class for {}", spec.getClassName(), e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     // List of all Closeable resources that needs to be cleanup
@@ -231,14 +230,14 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       // tries to access cdap data. For example, writing to a FileSet will fail, as the yarn user will
       // be running the job, but the data directory will be owned by cdap.
       if (MapReduceTaskContextProvider.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
-        mapReduceRuntimeService.start();
+        mapReduceRuntimeService.startAsync();
       } else {
         ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), mapReduceRuntimeService);
       }
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

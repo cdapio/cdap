@@ -191,7 +191,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
     StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class));
-    metricsCollectionService.start();
+    if (metricsCollectionService.state() == State.NEW) {
+      metricsCollectionService.startAsync();
+    }
     logAppender = previewInjector.getInstance(LogAppender.class);
     logAppender.start();
     LoggingContextAccessor.setLoggingContext(
@@ -199,10 +201,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
     logSubscriberService = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
-    logSubscriberService.startAndWait();
+    logSubscriberService.startAsync().awaitRunning();
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
-    dataSubscriberService.startAndWait();
-    previewDataCleanupService.startAndWait();
+    dataSubscriberService.startAsync().awaitRunning();
+    previewDataCleanupService.startAsync().awaitRunning();
   }
 
   @Override
@@ -448,8 +450,14 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   private void stopQuietly(Service service) {
+    if (service == null) {
+      return;
+    }
     try {
-      service.stopAndWait();
+      State state = service.state();
+      if (state != State.FAILED && state != State.TERMINATED && state != State.NEW) {
+        service.stopAsync().awaitTerminated();
+      }
     } catch (Exception e) {
       LOG.warn("Exception when stopping service {}", service, e);
     }

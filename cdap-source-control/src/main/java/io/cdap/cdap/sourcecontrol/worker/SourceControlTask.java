@@ -56,7 +56,7 @@ abstract class SourceControlTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    inMemoryOperationRunner.startAndWait();
+    inMemoryOperationRunner.startAsync().awaitRunning();
     doRun(context);
   }
 

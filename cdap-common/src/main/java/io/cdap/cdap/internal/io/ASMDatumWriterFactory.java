@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.io;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -63,7 +62,7 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
       return (DatumWriter<T>) writerClass.getConstructor(Schema.class, FieldAccessorFactory.class)
           .newInstance(schema, fieldAccessorFactory);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

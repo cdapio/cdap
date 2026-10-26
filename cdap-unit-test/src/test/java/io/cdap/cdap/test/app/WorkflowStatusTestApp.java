@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.test.app;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -105,7 +104,7 @@ public class WorkflowStatusTestApp extends AbstractApplication {
           }
         } catch (InterruptedException e) {
           LOG.warn("Interrupted while waiting for done file {}", firstFileDone);
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
     }

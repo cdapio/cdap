@@ -21,9 +21,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -69,7 +66,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -148,12 +144,10 @@ public abstract class NettyRouterTestBase {
   @Before
   public void startUp() throws Exception {
     routerService = createRouterService(HOSTNAME, discoveryService);
-    List<ListenableFuture<Service.State>> futures = new ArrayList<>();
-    futures.add(routerService.start());
+    routerService.startAsync().awaitRunning();
     for (ServerService server : allServers) {
-      futures.add(server.start());
+      server.startAsync().awaitRunning();
     }
-    Futures.allAsList(futures).get();
 
     // Wait for both servers of defaultService to be registered
     ServiceDiscovered discover = ((DiscoveryServiceClient) discoveryService)
@@ -173,12 +167,10 @@ public abstract class NettyRouterTestBase {
 
   @After
   public void tearDown() throws Exception {
-    List<ListenableFuture<Service.State>> futures = new ArrayList<>();
     for (ServerService server : allServers) {
-      futures.add(server.stop());
+      server.stopAsync().awaitTerminated();
     }
-    futures.add(routerService.stop());
-    Futures.successfulAsList(futures).get();
+    routerService.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -531,7 +523,7 @@ public abstract class NettyRouterTestBase {
       });
       t.start();
 
-      defaultServer1.stopAndWait();
+      defaultServer1.stopAsync().awaitTerminated();
       Assert.assertEquals(200, result.get().intValue());
       Assert.assertEquals(1, defaultServer1.getNumRequests());
       Assert.assertEquals(1, defaultServer2.getNumRequests());
@@ -561,7 +553,7 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router1.startAndWait();
+    router1.startAsync().awaitRunning();
 
     // Configure router with config-reloading time set to 0
     CConfiguration cConfSpy2 = Mockito.spy(CConfiguration.create());
@@ -573,15 +565,15 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router2.startAndWait();
+    router2.startAsync().awaitRunning();
 
     // Wait sometime for cConf to reload
     Thread.sleep(TimeUnit.MILLISECONDS.convert(reloadIntervalSeconds + 2, TimeUnit.SECONDS));
 
     Mockito.verify(cConfSpy1, Mockito.times(1)).reloadConfiguration();
     Mockito.verify(cConfSpy2, Mockito.never()).reloadConfiguration();
-    router1.stopAndWait();
-    router2.stopAndWait();
+    router1.stopAsync().awaitTerminated();
+    router2.stopAsync().awaitTerminated();
   }
 
   protected HttpURLConnection openUrl(URL url) throws Exception {

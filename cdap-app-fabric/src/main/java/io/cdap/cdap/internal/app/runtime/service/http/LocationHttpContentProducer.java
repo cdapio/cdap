@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
@@ -82,7 +81,13 @@ public class LocationHttpContentProducer extends HttpContentProducer {
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void onError(Throwable failureCause) {
-    Closeables.closeQuietly(input);
+    try {
+
+      input.close();
+
+    } catch (Exception ignored) {
+
+    }
     LOG.warn("Failure in producing http content from location {}", location, failureCause);
   }
 }

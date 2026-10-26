@@ -16,10 +16,8 @@
 
 package io.cdap.cdap.messaging.client;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -494,13 +492,19 @@ public abstract class AbstractClientMessagingService implements MessagingService
               .setPayload(Bytes.toBytes((ByteBuffer) messageRecord.get("payload")))
               .build();
         } catch (IOException e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
 
       @Override
       public void close() {
-        Closeables.closeQuietly(inputStream);
+        try {
+
+          inputStream.close();
+
+        } catch (Exception ignored) {
+
+        }
         urlConn.disconnect();
       }
     };

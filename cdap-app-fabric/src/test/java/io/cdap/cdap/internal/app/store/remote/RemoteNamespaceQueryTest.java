@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.store.remote;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -63,11 +64,15 @@ public class RemoteNamespaceQueryTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    if (txManager.state() == Service.State.NEW) {
+      txManager.startAsync().awaitRunning();
+    }
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    if (datasetService.state() == Service.State.NEW) {
+      datasetService.startAsync().awaitRunning();
+    }
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     waitForService(discoveryServiceClient, Constants.Service.DATASET_MANAGER);
     waitForService(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP);
@@ -78,9 +83,9 @@ public class RemoteNamespaceQueryTest {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
     AppFabricTestHelper.shutdown();
   }
 

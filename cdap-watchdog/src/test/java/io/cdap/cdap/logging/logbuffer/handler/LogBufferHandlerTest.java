@@ -73,7 +73,7 @@ public class LogBufferHandlerTest {
                                       "Test", MockAppender.class);
 
     LogBufferProcessorPipeline pipeline = getLogPipeline(loggerContext);
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
 
@@ -98,7 +98,7 @@ public class LogBufferHandlerTest {
 
     remoteLogAppender.stop();
     httpService.stop();
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 

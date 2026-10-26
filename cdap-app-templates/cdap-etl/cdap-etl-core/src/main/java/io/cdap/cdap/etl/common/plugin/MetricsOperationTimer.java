@@ -36,7 +36,7 @@ public class MetricsOperationTimer implements OperationTimer {
 
   public MetricsOperationTimer(StageMetrics stageMetrics) {
     this.stageMetrics = stageMetrics;
-    this.stopwatch = new Stopwatch();
+    this.stopwatch = Stopwatch.createUnstarted();
   }
 
   /**
@@ -65,7 +65,7 @@ public class MetricsOperationTimer implements OperationTimer {
    */
   @Override
   public void reset() {
-    emitTimeMetrics(stopwatch.elapsedTime(TimeUnit.MICROSECONDS));
+    emitTimeMetrics(stopwatch.elapsed(TimeUnit.MICROSECONDS));
     stopwatch.reset();
   }
 

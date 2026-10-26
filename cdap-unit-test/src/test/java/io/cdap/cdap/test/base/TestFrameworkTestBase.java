@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.test.base;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -139,7 +138,7 @@ public class TestFrameworkTestBase extends TestBase {
       }
     } catch (Exception e) {
       // If really fail to do reset, propagate the exception
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

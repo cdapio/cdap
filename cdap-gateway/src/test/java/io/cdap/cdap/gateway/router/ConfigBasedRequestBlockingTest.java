@@ -68,7 +68,7 @@ public class ConfigBasedRequestBlockingTest {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router.startAndWait();
+    router.startAsync().awaitRunning();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new AuditLogTest.TestHandler())
         .build();
@@ -121,7 +121,7 @@ public class ConfigBasedRequestBlockingTest {
   public static void finish() throws Exception {
     cancelDiscovery.cancel();
     httpService.stop();
-    router.stopAndWait();
+    router.stopAsync().awaitTerminated();
   }
 
   private void testGet(int expectedStatus, String expectedResponse, String path)

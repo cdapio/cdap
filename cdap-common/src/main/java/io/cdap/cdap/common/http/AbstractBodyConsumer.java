@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.common.http;
 
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
@@ -51,7 +49,7 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
       }
       request.readBytes(output, request.readableBytes());
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -63,7 +61,7 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
       }
       onFinish(responder, file);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     } finally {
       cleanup();
     }
@@ -74,7 +72,13 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
     try {
       LOG.error("Failed to handle upload", cause);
       if (output != null) {
-        Closeables.closeQuietly(output);
+        try {
+
+          output.close();
+
+        } catch (Exception ignored) {
+
+        }
       }
       onError(cause);
       // The netty-http framework will response with 500, no need to response in here.

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.client.app;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
@@ -104,7 +103,7 @@ public class ConfigurableProgramsApp extends AbstractApplication<ConfigurablePro
           keyValueTable.write("Dwayne", "Johnson");
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
   }

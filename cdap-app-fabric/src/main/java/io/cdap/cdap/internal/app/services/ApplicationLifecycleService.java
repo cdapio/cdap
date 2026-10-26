@@ -24,7 +24,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
 import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
@@ -53,7 +52,6 @@ import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.CannotBeDeletedException;
@@ -346,7 +344,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         consumer.accept(applicationDetail);
       }
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -825,7 +823,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       applicationWithPrograms = manager.deploy(deploymentInfo).get();
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), Exception.class);
-      throw Throwables.propagate(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
         applicationWithPrograms.getSpecification());
@@ -1147,7 +1145,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       applicationWithPrograms = manager.deploy(deploymentInfo).get();
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), Exception.class);
-      throw Throwables.propagate(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
 
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),

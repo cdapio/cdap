@@ -18,12 +18,10 @@ package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.exception.WrappedStageException;
-import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +62,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
     stopRequested = true;
     long gracefulTimeoutMillis = getGracefulTimeoutMillis();
     if (gracefulTimeoutMillis < 0) {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     } else {
       gracefulStop(gracefulTimeoutMillis);
     }
@@ -77,7 +75,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
    * supports graceful termination with timeout.
    */
   protected void gracefulStop(long gracefulTimeoutMillis) {
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Override
@@ -86,7 +84,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   }
 
   private void listenToRuntimeState(Service service) {
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void running() {
         started();

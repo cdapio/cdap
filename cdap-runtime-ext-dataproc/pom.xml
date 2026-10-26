@@ -63,9 +63,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <!-- newer version required by google libs,
-           but set to 0.13.0 by parent pom, so put explicit version
-           needed by google libs -->
+      <!-- newer version required by google libs -->
       <version>33.0.0-jre</version>
     </dependency>
     <dependency>

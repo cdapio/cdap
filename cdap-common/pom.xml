@@ -34,6 +34,7 @@
     <!-- Workaround for bug http://jira.codehaus.org/browse/MRESOURCES-99 -->
     <project.info.buildtime>${maven.build.timestamp}</project.info.buildtime>
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss.SSSZ</maven.build.timestamp.format>
+    <twill.version>1.5.0-SNAPSHOT</twill.version>
   </properties>
 
   <dependencies>

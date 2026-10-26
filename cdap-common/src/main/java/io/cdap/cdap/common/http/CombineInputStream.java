@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.http;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.common.io.FileSeekableInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -82,7 +81,13 @@ final class CombineInputStream extends InputStream {
 
   @Override
   public void close() throws IOException {
-    Closeables.closeQuietly(bufferStream);
+    try {
+
+      bufferStream.close();
+
+    } catch (Exception ignored) {
+
+    }
     if (spillStream != null) {
       spillStream.close();
     }

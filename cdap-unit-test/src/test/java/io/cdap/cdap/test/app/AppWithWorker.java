@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.test.app;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -72,7 +71,7 @@ public class AppWithWorker extends AbstractApplication {
           }
         }
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -81,7 +80,7 @@ public class AppWithWorker extends AbstractApplication {
       try {
         writeToTable(STOP, STOP);
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

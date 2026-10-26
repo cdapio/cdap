@@ -17,7 +17,7 @@
 package io.cdap.cdap.service;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
+
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -134,11 +134,17 @@ public class FileUploadApp extends AbstractApplication {
         @Override
         public void onError(HttpServiceResponder responder, Throwable failureCause) {
           try {
-            Closeables.closeQuietly(channel);
+            try {
+
+              channel.close();
+
+            } catch (Exception ignored) {
+
+            }
             partitionDir.delete(true);
           } catch (IOException e) {
             // Nothing much can be done.
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           } finally {
             if (Throwables.getRootCause(failureCause) instanceof IllegalArgumentException) {
               responder.sendStatus(HttpURLConnection.HTTP_BAD_REQUEST);

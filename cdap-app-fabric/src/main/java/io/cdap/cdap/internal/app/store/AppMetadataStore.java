@@ -373,9 +373,8 @@ public class AppMetadataStore {
             e -> ((ApplicationFilter.ApplicationIdFilter) filter).test(e.getKey()));
       } else if (filter instanceof ApplicationFilter.ArtifactIdFilter) {
         scanEntryPredicate = scanEntryPredicate.and(
-            e -> e.getArtifactId()
-                .map(((ApplicationFilter.ArtifactIdFilter) filter)::test)
-                .orElse(false));
+            e -> ((ApplicationFilter.ArtifactIdFilter) filter).test(
+                e.getValue().getSpec().getArtifactId()));
       } else {
         throw new UnsupportedOperationException(
             "Application filter " + filter + " is not supported");
@@ -3136,9 +3135,6 @@ public class AppMetadataStore {
 
   private static final class AppScanEntry implements Map.Entry<ApplicationId, ApplicationMeta> {
 
-    private static final String SPEC_KEY = "spec";
-    private static final String ARTIFACT_ID_KEY = "artifactId";
-
     private final ApplicationId appId;
     private final String rawAppMeta;
     private volatile ApplicationMeta appMeta;
@@ -3149,7 +3145,6 @@ public class AppMetadataStore {
     private final StructuredTable pluginDataTable;
     private final StructuredTable universalPluginDataTable;
     private final boolean appSpecReductionEnabled;
-    private ArtifactId artifactId;
 
     private AppScanEntry(StructuredRow row, StructuredTable pluginDataTable,
         StructuredTable universalPluginDataTable, boolean appSpecReductionEnabled) {
@@ -3191,46 +3186,6 @@ public class AppMetadataStore {
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);
       return meta;
-    }
-
-    /**
-     * Fast-path method to extract the {@link ArtifactId} from the raw application metadata JSON.
-     * This avoids full deserialization of the application specification and loading of plugins,
-     * which is expensive.
-     *
-     * @return the {@link ArtifactId} if found, or empty if not found or parsing fails.
-     */
-    public Optional<ArtifactId> getArtifactId() {
-      ArtifactId id = artifactId;
-      if (id != null) {
-        return Optional.of(id);
-      }
-
-      try (JsonReader reader = new JsonReader(new StringReader(rawAppMeta))) {
-        reader.beginObject();
-
-        while (reader.hasNext()) {
-          if (SPEC_KEY.equals(reader.nextName())) {
-            reader.beginObject();
-            while (reader.hasNext()) {
-              if (ARTIFACT_ID_KEY.equals(reader.nextName())) {
-                id = GSON.fromJson(reader, ArtifactId.class);
-                artifactId = id;
-                return Optional.of(id);
-              } else {
-                reader.skipValue();
-              }
-            }
-            break;
-          } else {
-            reader.skipValue();
-          }
-        }
-      } catch (IOException | IllegalStateException e) {
-        throw new IllegalStateException("Failed to parse artifact ID from app meta", e);
-      }
-
-      return Optional.empty();
     }
 
     @Override

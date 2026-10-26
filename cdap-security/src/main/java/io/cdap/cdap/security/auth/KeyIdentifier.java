@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.auth;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -106,7 +107,7 @@ public final class KeyIdentifier {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("keyId", keyId)
         .add("expiration", expiration)
         .toString();

@@ -32,7 +32,6 @@
   <properties>
     <google.api.client.version>1.24.1</google.api.client.version>
     <google.cloudkms.api.version>v1-rev59-1.24.1</google.cloudkms.api.version>
-    <guava.version>20.0</guava.version>
   </properties>
 
   <dependencies>

@@ -17,7 +17,6 @@
 package io.cdap.cdap.messaging.service;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
@@ -128,7 +127,11 @@ final class ConcurrentMessageWriter implements Closeable {
           pendingStoreRequest.getEndTimestamp(), pendingStoreRequest.getEndSequenceId());
     } else {
       metricsCollector.increment("persist.failure", 1L);
-      Throwables.propagateIfInstanceOf(pendingStoreRequest.getFailureCause(), IOException.class);
+      if (pendingStoreRequest.getFailureCause() instanceof IOException) {
+
+        throw (IOException) pendingStoreRequest.getFailureCause();
+
+      }
       throw new IOException("Unable to write message to " + storeRequest.getTopicId(),
           pendingStoreRequest.getFailureCause());
     }

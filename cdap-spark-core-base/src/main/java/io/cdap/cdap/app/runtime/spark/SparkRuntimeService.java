@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -30,7 +30,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.ProgramState;
 import io.cdap.cdap.api.ProgramStatus;
@@ -205,7 +204,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "Spark - " + runtimeContext.getSparkSpecification().getName();
   }
 
@@ -285,7 +284,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           // In case of spark-on-k8s, artifactFetcherService is used by spark-drivers for fetching artifacts bundle.
           Location location = createBundle(new File("./artifacts").getAbsoluteFile().toPath());
           artifactFetcherService = new ArtifactFetcherService(cConf, location, commonNettyHttpServiceFactory);
-          artifactFetcherService.startAndWait();
+          artifactFetcherService.startAsync().awaitRunning();
         }
 
       } else if (isLocal) {
@@ -472,7 +471,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } finally {
       try {
         if (artifactFetcherService != null) {
-          artifactFetcherService.stopAndWait();
+          artifactFetcherService.stopAsync().awaitTerminated();
         }
       } finally {
         cleanupTask.run();
@@ -502,16 +501,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    *
    * @param timeout the timeout for force termination of the spark job
    * @param timeoutUnit the unit for the timeout
-   * @return a future for the shutdown result, regardless of whether this call initiated shutdown.
-   *         Calling {@link ListenableFuture#get} will block until the service has finished shutting
-   *         down, and either returns {@link State#TERMINATED} or throws an
-   *         {@link ExecutionException}. If it has already finished stopping,
-   *         {@link ListenableFuture#get} returns immediately. Cancelling this future has no effect
-   *         on the service.
    */
-  public ListenableFuture<State> stop(long timeout, TimeUnit timeoutUnit) {
+  public void stop(long timeout, TimeUnit timeoutUnit) {
     gracefulTimeoutMillis = timeoutUnit.toMillis(timeout);
-    return stop();
+    stopAsync();
   }
 
   @Override
@@ -858,7 +851,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         FileSystem fs = FileSystem.get(scriptURI, hConf);
         InputStream is = fs.open(new Path(scriptURI))
       ) {
-        ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+        try (java.io.OutputStream os = java.nio.file.Files.newOutputStream(pythonFile.toPath())) {
+          ByteStreams.copy(is, os);
+        }
         return pythonFile.toURI();
       }
     } catch (IOException e) {
@@ -867,8 +862,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     // Last resort, turn the URI to URL and try to copy from it.
-    try (InputStream is = scriptURI.toURL().openStream()) {
-      ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+    try (InputStream is = scriptURI.toURL().openStream();
+         java.io.OutputStream os = java.nio.file.Files.newOutputStream(pythonFile.toPath())) {
+      ByteStreams.copy(is, os);
     }
     return pythonFile.toURI();
   }

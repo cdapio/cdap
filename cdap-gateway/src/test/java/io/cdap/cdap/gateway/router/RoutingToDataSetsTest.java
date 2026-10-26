@@ -84,21 +84,21 @@ public class RoutingToDataSetsTest {
         new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup()),
         new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
         new NoOpAeadCipher());
-    nettyRouter.startAndWait();
+    nettyRouter.startAsync().awaitRunning();
 
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.DATASET_MANAGER,
         new MockDatasetTypeHandler(), new MockDatasetInstanceHandler());
-    mockService.startAndWait();
+    mockService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void after() {
     try {
-      nettyRouter.stopAndWait();
+      nettyRouter.stopAsync().awaitTerminated();
     } finally {
-      mockService.stopAndWait();
+      mockService.stopAsync().awaitTerminated();
     }
   }
 

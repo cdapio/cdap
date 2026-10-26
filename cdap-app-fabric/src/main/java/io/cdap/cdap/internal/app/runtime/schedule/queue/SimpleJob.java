@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule.queue;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -115,7 +116,7 @@ public final class SimpleJob implements Job {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("schedule", schedule)
         .add("creationTime", creationTime)
         .add("jobKey", jobKey)

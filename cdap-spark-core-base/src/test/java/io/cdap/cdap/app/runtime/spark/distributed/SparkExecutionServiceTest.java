@@ -17,8 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.distributed;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.Tasks;
@@ -86,7 +84,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -99,7 +97,7 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 
@@ -111,7 +109,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       final SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -122,7 +120,7 @@ public class SparkExecutionServiceTest {
       }
 
       // Stop the program from the service side
-      ListenableFuture<Service.State> stopFuture = service.stop();
+      service.stopAsync();
 
       // Expect some future heartbeats will receive the STOP command
       Tasks.waitFor(true, new Callable<Boolean>() {
@@ -136,10 +134,10 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
 
-      // The stop future of the service should be completed after the client.completed call.
-      stopFuture.get(5, TimeUnit.SECONDS);
+      // The service should be terminated after the client.completed call.
+      service.awaitTerminated(5, TimeUnit.SECONDS);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 
@@ -153,7 +151,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, token);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -172,7 +170,7 @@ public class SparkExecutionServiceTest {
       clientToken.put("completed", "true");
       client.completed(clientToken);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
 
     // The token on the service side should get updated after the completed call.
@@ -199,7 +197,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -227,7 +225,7 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 }

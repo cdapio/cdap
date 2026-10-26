@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.conf;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -192,7 +191,13 @@ public class CConfigurationTest {
       }
 
       // Close the InputStream
-      Closeables.closeQuietly(resource);
+      try {
+
+        resource.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 

@@ -22,7 +22,6 @@ import static io.cdap.cdap.api.metadata.MetadataScope.USER;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.Transactional;
@@ -155,7 +154,7 @@ public class SearchHelper {
           dataset = metaDatasetDefinition.getDataset(
               SYSTEM_CONTEXT, datasetSpecs.get(scope), Collections.emptyMap(), null);
         } catch (IOException e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
         datasets.put(scope, dataset);
         txContext.addTransactionAware(dataset);
@@ -198,7 +197,13 @@ public class SearchHelper {
     @Override
     public void close() {
       for (String scope : datasets.keySet()) {
-        Closeables.closeQuietly(datasets.get(scope));
+        try {
+
+          datasets.get(scope).close();
+
+        } catch (Exception ignored) {
+
+        }
       }
       datasets.clear();
     }

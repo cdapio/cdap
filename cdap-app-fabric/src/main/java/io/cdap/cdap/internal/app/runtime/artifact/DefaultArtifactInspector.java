@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
@@ -386,13 +385,13 @@ final class DefaultArtifactInspector implements ArtifactInspector {
               return pluginClassLoader.loadClass(className);
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
               // Cannot happen, since the class name is from the list of the class files under the classloader.
-              throw Throwables.propagate(e);
+              throw new RuntimeException(e);
             }
           })
           .collect(Collectors.toList());
     } catch (IOException e) {
       // Cannot happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

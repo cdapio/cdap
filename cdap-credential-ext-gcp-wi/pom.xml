@@ -30,7 +30,6 @@
   <packaging>jar</packaging>
 
   <properties>
-    <guava.version>31.1-jre</guava.version>
     <k8s.version>16.0.2</k8s.version>
     <!-- Needs to bump the okhttp version for fixing https://github.com/square/okhttp/issues/4029 that hangs on exit -->
     <okhttp.version>4.9.1</okhttp.version>
@@ -54,34 +53,6 @@
       <groupId>io.kubernetes</groupId>
       <artifactId>client-java</artifactId>
       <version>${k8s.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-io</groupId>
-          <artifactId>commons-io</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-compress</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.bitbucket.b_c</groupId>
-          <artifactId>jose4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <!-- Fixes CVE-2021-35515, CVE-2023-31582, CVE-2024-47554 -->
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.bitbucket.b_c</groupId>
-      <artifactId>jose4j</artifactId>
-      <version>${bitbucket.jose4j.version}</version>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import org.apache.hadoop.conf.Configuration;
@@ -74,7 +73,7 @@ public class RDDUtils {
         inputFormatProvider.getInputFormatClassName());
       return jsc.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
     } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

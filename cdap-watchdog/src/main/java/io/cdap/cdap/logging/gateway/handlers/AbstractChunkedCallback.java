@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import com.google.common.collect.Multimap;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.logging.read.Callback;
 import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.http.ChunkResponder;
@@ -112,7 +110,13 @@ public abstract class AbstractChunkedCallback implements Callback {
       // Just log the error as debug.
       LOG.debug("Failed to send chunk", e);
     } finally {
-      Closeables.closeQuietly(chunkResponder);
+      try {
+
+        chunkResponder.close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 

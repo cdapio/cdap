@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -320,7 +319,7 @@ public class RDDCollection<T> implements BatchCollection<T> {
         try {
           sink.run(sparkPluginContext, countedRDD);
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
     };

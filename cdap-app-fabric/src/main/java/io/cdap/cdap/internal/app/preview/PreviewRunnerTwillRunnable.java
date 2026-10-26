@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -34,7 +33,6 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.AuditLogWriterModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
-import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -86,11 +84,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +112,11 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     try {
       doInitialize(context);
     } catch (Exception e) {
-      Throwables.propagateIfPossible(e);
+      if (e instanceof RuntimeException) {
+
+        throw (RuntimeException) e;
+
+      }
       throw new RuntimeException(e);
     }
   }
@@ -124,7 +124,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void run() {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    previewRunnerManager.addListener(new ServiceListenerAdapter() {
+    previewRunnerManager.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);
@@ -137,7 +137,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting preview runner manager");
-    previewRunnerManager.start();
+    previewRunnerManager.startAsync();
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -150,7 +150,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping preview runner manager");
-    previewRunnerManager.stop();
+    previewRunnerManager.stopAsync();
   }
 
   @Override

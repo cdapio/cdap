@@ -18,14 +18,12 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -167,8 +165,12 @@ public class PluginInstantiator implements Closeable {
     try {
       return classLoaders.get(new ClassLoaderKey(artifactId));
     } catch (ExecutionException e) {
-      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
-      throw Throwables.propagate(e.getCause());
+      if (e.getCause() instanceof IOException) {
+
+        throw (IOException) e.getCause();
+
+      }
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -196,8 +198,12 @@ public class PluginInstantiator implements Closeable {
     try {
       return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents));
     } catch (ExecutionException e) {
-      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
-      throw Throwables.propagate(e.getCause());
+      if (e.getCause() instanceof IOException) {
+
+        throw (IOException) e.getCause();
+
+      }
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -495,7 +501,7 @@ public class PluginInstantiator implements Closeable {
           return (T) constructor.newInstance(config);
         } catch (InvocationTargetException e) {
           // If there is exception thrown from the constructor, propagate it.
-          throw Throwables.propagate(e.getCause());
+          throw new RuntimeException(e.getCause());
         } catch (Exception e) {
           // Failed to instantiate. Resort to field injection
           LOG.warn("Failed to invoke plugin constructor {}. Resort to config field injection.",
@@ -517,7 +523,13 @@ public class PluginInstantiator implements Closeable {
     // Cleanup the ClassLoader cache and the temporary directory for the expanded plugin jar.
     classLoaders.invalidateAll();
     if (ownedParentClassLoader) {
-      Closeables.closeQuietly((Closeable) parentClassLoader);
+      try {
+
+        ((Closeable) parentClassLoader).close();
+
+      } catch (Exception ignored) {
+
+      }
     }
     try {
       DirUtils.deleteDirectoryContents(tmpDir);
@@ -618,7 +630,13 @@ public class PluginInstantiator implements Closeable {
 
     @Override
     public void onRemoval(RemovalNotification<ClassLoaderKey, PluginClassLoader> notification) {
-      Closeables.closeQuietly(notification.getValue());
+      try {
+
+        notification.getValue().close();
+
+      } catch (Exception ignored) {
+
+      }
     }
   }
 

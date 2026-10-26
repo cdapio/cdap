@@ -16,10 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
@@ -38,12 +36,9 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
-import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.logging.context.MapReduceLoggingContext;
-import io.cdap.cdap.logging.context.WorkflowProgramLoggingContext;
 import io.cdap.cdap.proto.id.ProgramId;
 import java.io.File;
 import java.io.IOException;
@@ -150,10 +145,12 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     synchronized (this) {
-      taskContextProvider = Optional.fromNullable(taskContextProvider)
-          .or(taskContextProviderSupplier);
+      if (taskContextProvider == null) {
+        taskContextProvider = taskContextProviderSupplier.get();
+        taskContextProvider.startAsync();
+      }
     }
-    taskContextProvider.startAndWait();
+    taskContextProvider.awaitRunning();
     return taskContextProvider;
   }
 
@@ -196,7 +193,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       if (provider != null) {
         Service.State state = provider.state();
         if (state == Service.State.STARTING || state == Service.State.RUNNING) {
-          provider.stopAndWait();
+          provider.stopAsync().awaitTerminated();
         }
       }
     } catch (Exception e) {
@@ -304,7 +301,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
             FilterClassLoader.create(contextConfig.getHConf().getClassLoader()));
       } catch (IOException e) {
         LOG.error("Failed to create ProgramClassLoader", e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

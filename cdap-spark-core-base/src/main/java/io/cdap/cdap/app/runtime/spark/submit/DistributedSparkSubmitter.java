@@ -113,7 +113,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
       }
     }
 
-    sparkExecutionService.startAndWait();
+    sparkExecutionService.startAsync().awaitRunning();
     SparkRuntimeEnv.setProperty("spark.yarn.appMasterEnv." + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
                                 sparkExecutionService.getBaseURI().toString());
     return Collections.emptyList();
@@ -124,7 +124,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
     sparkExecutionService.setShutdownWaitSeconds(timeoutTimeUnit.toSeconds(timeout));
-    sparkExecutionService.stopAndWait();
+    sparkExecutionService.stopAsync().awaitTerminated();
   }
 
   @Override

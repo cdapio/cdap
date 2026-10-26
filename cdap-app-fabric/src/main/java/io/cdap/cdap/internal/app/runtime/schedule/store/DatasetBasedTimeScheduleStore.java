@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.schedule.store;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -87,7 +86,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       setMisfireThreshold(cConf.getLong(Constants.Scheduler.CFG_SCHEDULER_MISFIRE_THRESHOLD_MS));
       readSchedulesFromPersistentStore();
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      throw new RuntimeException(th);
     }
   }
 
@@ -143,7 +142,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       executeDelete(triggerKey);
       return true;
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -154,7 +153,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       executeDelete(jobKey);
       return true;
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -169,7 +168,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         delete(getTimeScheduleStructuredTable(context), TRIGGER_KEY, triggerKey.getName());
       });
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      throw new RuntimeException(th);
     }
   }
 
@@ -179,7 +178,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         delete(getTimeScheduleStructuredTable(context), JOB_KEY, jobKey.getName());
       });
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -200,7 +199,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         }
       });
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      throw new RuntimeException(th);
     }
   }
 
@@ -223,7 +222,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         }
       });
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      throw new RuntimeException(th);
     }
   }
 

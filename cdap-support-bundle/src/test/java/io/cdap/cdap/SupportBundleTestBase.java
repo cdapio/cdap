@@ -17,7 +17,6 @@
 package io.cdap.cdap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -186,40 +185,40 @@ public abstract class SupportBundleTestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    dsOpService.startAsync().awaitRunning();
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    appFabricProcessor.startAsync().awaitRunning();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.startAsync().awaitRunning();
     serviceStore = injector.getInstance(ServiceStore.class);
-    serviceStore.startAndWait();
+    serviceStore.startAsync().awaitRunning();
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    metadataService.startAsync().awaitRunning();
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    metadataSubscriberService.startAsync().awaitRunning();
     logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+    logQueryService.startAsync().awaitRunning();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
-    supportBundleInternalService.startAndWait();
+    supportBundleInternalService.startAsync().awaitRunning();
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.
@@ -234,21 +233,27 @@ public abstract class SupportBundleTestBase {
 
   @AfterClass
   public static void afterClass() throws IOException {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
-    metricsCollectionService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    txManager.stopAndWait();
-    serviceStore.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    metadataService.stopAndWait();
-    logQueryService.stopAndWait();
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessor.stopAsync().awaitTerminated();
+    metricsCollectionService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
+    serviceStore.stopAsync().awaitTerminated();
+    metadataSubscriberService.stopAsync().awaitTerminated();
+    metadataService.stopAsync().awaitTerminated();
+    logQueryService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
-    Closeables.closeQuietly(metadataStorage);
-    supportBundleInternalService.stopAndWait();
+    try {
+
+      metadataStorage.close();
+
+    } catch (Exception ignored) {
+
+    }
+    supportBundleInternalService.stopAsync().awaitTerminated();
   }
 
   protected static CConfiguration createBasicCconf() throws IOException {

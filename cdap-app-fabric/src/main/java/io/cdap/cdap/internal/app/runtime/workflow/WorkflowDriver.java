@@ -102,7 +102,6 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -356,7 +355,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       future.get();
     } catch (Throwable t) {
       Throwables.propagateIfPossible(t, Exception.class);
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     } finally {
       executorService.shutdownNow();
       executorTerminateLatch.await();
@@ -402,7 +401,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } catch (ExecutionException e) {
           // Unwrap the cause
           Throwables.propagateIfPossible(e.getCause(), Exception.class);
-          throw Throwables.propagate(e.getCause());
+          throw new RuntimeException(e.getCause());
         }
       }
     } finally {

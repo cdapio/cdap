@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.appender.system;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.serialize.LoggingEvent;
@@ -72,8 +71,20 @@ class LogFileOutputStream implements Closeable, Flushable, Syncable {
       this.createTime = createTime;
       this.fileSize = 0;
     } catch (IOException e) {
-      Closeables.closeQuietly(outputStream);
-      Closeables.closeQuietly(dataFileWriter);
+      try {
+
+        outputStream.close();
+
+      } catch (Exception ignored) {
+
+      }
+      try {
+
+        dataFileWriter.close();
+
+      } catch (Exception ignored) {
+
+      }
       throw e;
     }
   }

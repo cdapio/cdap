@@ -108,7 +108,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       return appFabricClient.getPlugins(application);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -130,7 +131,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     } catch (NamespaceNotFoundException e) {
       // This can be safely ignore if the unit-test already deleted the namespace
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -143,7 +145,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
           programName, programId.getType());
       waitForStopped(programId);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -153,7 +156,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
       appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
           application.getVersion(), programId.getProgram(), programId.getType(), arguments);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -174,7 +178,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
           programId.getVersion(), programId.getProgram(), programId.getType());
       return status.name().equals(actual);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -183,7 +188,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       return appFabricClient.getHistory(programId, status);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
