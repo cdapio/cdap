@@ -19,9 +19,11 @@ package io.cdap.cdap.internal.app.runtime.schedule.store;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -35,6 +37,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.quartz.CronExpression;
@@ -55,6 +58,21 @@ public class Schedulers {
   public static final int SUBSCRIBER_TX_TIMEOUT_SECONDS = 30;
   public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS =
       1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
+
+  /**
+   * Returns the metrics tags for schedule job metrics emitted while checking and launching jobs.
+   *
+   * @param application the application of the schedule
+   * @param schedule the name of the schedule
+   * @return the metrics tags
+   */
+  public static Map<String, String> getScheduleJobMetricsTags(String application, String schedule) {
+    return ImmutableMap.of(
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.APP, application,
+        Constants.Metrics.Tag.COMPONENT, "constraintchecker",
+        Constants.Metrics.Tag.SCHEDULE, schedule);
+  }
 
   public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
