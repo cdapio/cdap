@@ -158,6 +158,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Runnable initialized: {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }
@@ -290,7 +291,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.warn("Program {} interrupted.", name, e);
     } catch (ExecutionException e) {
       LOG.error("Program {} execution failed.", name, e);
-      throw new RuntimeException(Throwables.getRootCause(e));
+      Throwable rootCause = Throwables.getRootCause(e);
+      Throwables.throwIfUnchecked(rootCause);
+      throw new RuntimeException(rootCause);
     } finally {
       LOG.info("Program run {} completed. Releasing resources.", programRunId);
 

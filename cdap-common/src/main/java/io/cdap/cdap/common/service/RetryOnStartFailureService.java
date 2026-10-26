@@ -21,8 +21,10 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
@@ -68,17 +70,41 @@ public class RetryOnStartFailureService extends AbstractService {
 
         while (!stopped) {
           try {
-            try {
-              currentDelegate.startAsync().awaitRunning();
-            } catch (IllegalStateException e) {
-              Service.State state = currentDelegate.state();
-              if (state != Service.State.STOPPING && state != Service.State.TERMINATED) {
-                throw e;
+            CountDownLatch runningLatch = new CountDownLatch(1);
+            AtomicReference<Throwable> failedThrowable = new AtomicReference<>();
+            currentDelegate.addListener(new Service.Listener() {
+              @Override
+              public void running() {
+                runningLatch.countDown();
               }
+
+              @Override
+              public void failed(Service.State from, Throwable failure) {
+                failedThrowable.set(failure);
+                runningLatch.countDown();
+              }
+
+              @Override
+              public void terminated(Service.State from) {
+                runningLatch.countDown();
+              }
+            }, MoreExecutors.directExecutor());
+            currentDelegate.startAsync();
+            runningLatch.await();
+            if (failedThrowable.get() != null) {
+              throw new RuntimeException(failedThrowable.get());
+            }
+            if (currentDelegate.state() != Service.State.RUNNING) {
+              if (stopped) {
+                break;
+              }
+              throw new IllegalStateException("Service failed to start");
             }
             // Only assigned the delegate if and only if the delegate service started successfully
             startedService = currentDelegate;
             break;
+          } catch (InterruptedException e) {
+            // This thread will be interrupted from the doStop() method. Don't reset the interrupt flag.
           } catch (Throwable t) {
             LOG.debug("Exception raised when starting service {}", delegateServiceName, t);
 

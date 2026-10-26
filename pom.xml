@@ -1555,6 +1555,7 @@
                   <exclude>**/*.iml</exclude>
                   <exclude>**/*.md</exclude>
                   <exclude>logs/**</exclude>
+                  <exclude>**/target/**</exclude>
                   <exclude>cdap-docs/**</exclude>
                   <exclude>**/grok/patterns/**</exclude>
                   <exclude>conf/**</exclude>

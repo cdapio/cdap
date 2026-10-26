@@ -30,6 +30,7 @@ import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.api.workflow.WorkflowActionNode;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.ProjectInfo;
@@ -1182,7 +1183,185 @@ public abstract class AppMetadataStoreTest {
     Assert.assertEquals(count, apps.size());
   }
 
-    @Test
+  @Test
+  public void testScanApplicationsWithArtifactFilter() {
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("artifact1", "1.0").toApiArtifactId();
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("artifact2", "1.0").toApiArtifactId();
+
+    ApplicationSpecification spec1 = createDummyAppSpec("app1", ApplicationId.DEFAULT_VERSION,
+        artifactId1);
+    ApplicationSpecification spec2 = createDummyAppSpec("app2", ApplicationId.DEFAULT_VERSION,
+        artifactId2);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.writeApplication(NamespaceId.DEFAULT.getNamespace(), "app1",
+          ApplicationId.DEFAULT_VERSION, spec1,
+          new ChangeDetail(null, null, null, creationTimeMillis), null);
+      store.writeApplication(NamespaceId.DEFAULT.getNamespace(), "app2",
+          ApplicationId.DEFAULT_VERSION, spec2,
+          new ChangeDetail(null, null, null, creationTimeMillis), null);
+    });
+
+    Map<ApplicationId, ApplicationMeta> apps = new LinkedHashMap<>();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      ApplicationFilter filter = new ApplicationFilter.ArtifactNamesInFilter(
+          Collections.singleton("artifact1"));
+      store.scanApplications(ScanApplicationsRequest.builder()
+              .setNamespaceId(NamespaceId.DEFAULT)
+              .addFilters(Collections.singletonList(filter))
+              .build(),
+          entry -> {
+            apps.put(entry.getKey(), entry.getValue());
+            return true;
+          });
+    });
+
+    Assert.assertEquals(1, apps.size());
+    Assert.assertTrue(apps.containsKey(NamespaceId.DEFAULT.app("app1")));
+  }
+
+  @Test
+  public void testScanApplicationsWithArtifactFilterCoverage() {
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("artifact1", "1.0").toApiArtifactId();
+    ApplicationSpecification spec1 = createDummyAppSpec("app1", ApplicationId.DEFAULT_VERSION,
+        artifactId1);
+
+    // 1. Test Cached Value (Multiple filters)
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.writeApplication(NamespaceId.DEFAULT.getNamespace(), "app1",
+          ApplicationId.DEFAULT_VERSION, spec1,
+          new ChangeDetail(null, null, null, creationTimeMillis), null);
+    });
+
+    Map<ApplicationId, ApplicationMeta> apps = new LinkedHashMap<>();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      ApplicationFilter filter1 = new ApplicationFilter.ArtifactNamesInFilter(
+          Collections.singleton("artifact1"));
+      ApplicationFilter filter2 = new ApplicationFilter.ArtifactNamesInFilter(
+          Collections.singleton("artifact1"));
+      store.scanApplications(ScanApplicationsRequest.builder()
+              .setNamespaceId(NamespaceId.DEFAULT)
+              .addFilters(Arrays.asList(filter1, filter2))
+              .build(),
+          entry -> {
+            apps.put(entry.getKey(), entry.getValue());
+            return true;
+          });
+    });
+    Assert.assertEquals(1, apps.size());
+
+    // 2. Test Skip Value in Inner Loop (JSON with other fields in spec)
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("artifact2", "1.0").toApiArtifactId();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      StructuredTable table = context.getTable(
+          StoreDefinition.AppMetadataStore.APPLICATION_SPECIFICATIONS);
+      List<Field<?>> keys = store.getApplicationPrimaryKeys(NamespaceId.DEFAULT.getNamespace(),
+          "app2", ApplicationId.DEFAULT_VERSION);
+      Gson gson = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+      String artifactJson = gson.toJson(artifactId2);
+      String rawMeta = "{\"spec\":{\"otherField\":\"value\",\"artifactId\":" + artifactJson + "}}";
+      keys.add(
+          Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, rawMeta));
+      keys.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+      table.upsert(keys);
+    });
+
+    AtomicInteger count = new AtomicInteger();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      ApplicationFilter filter = new ApplicationFilter.ArtifactNamesInFilter(
+          Collections.singleton("artifact2"));
+      store.scanApplications(ScanApplicationsRequest.builder()
+              .setNamespaceId(NamespaceId.DEFAULT)
+              .addFilters(Collections.singletonList(filter))
+              .build(),
+          entry -> {
+            count.incrementAndGet();
+            Assert.assertEquals(NamespaceId.DEFAULT.app("app2"), entry.getKey());
+            return true;
+          });
+    });
+    Assert.assertEquals(1, count.get());
+
+    // 3. Test Artifact Not Found (JSON with empty spec)
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      StructuredTable table = context.getTable(
+          StoreDefinition.AppMetadataStore.APPLICATION_SPECIFICATIONS);
+      List<Field<?>> keys = store.getApplicationPrimaryKeys(NamespaceId.DEFAULT.getNamespace(),
+          "app3", ApplicationId.DEFAULT_VERSION);
+      String rawMeta = "{\"spec\":{}}";
+      keys.add(
+          Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, rawMeta));
+      keys.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+      table.upsert(keys);
+    });
+
+    count.set(0);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      ApplicationFilter filter = new ApplicationFilter.ArtifactNamesInFilter(
+          Collections.singleton("artifact3"));
+      store.scanApplications(ScanApplicationsRequest.builder()
+              .setNamespaceId(NamespaceId.DEFAULT)
+              .addFilters(Collections.singletonList(filter))
+              .build(),
+          entry -> {
+            count.incrementAndGet();
+            return true;
+          });
+    });
+    Assert.assertEquals(0, count.get());
+
+    // 4. Test Parsing Exception (Corrupt JSON)
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      StructuredTable table = context.getTable(
+          StoreDefinition.AppMetadataStore.APPLICATION_SPECIFICATIONS);
+      List<Field<?>> keys = store.getApplicationPrimaryKeys(NamespaceId.DEFAULT.getNamespace(),
+          "app4", ApplicationId.DEFAULT_VERSION);
+      String rawMeta = "{\"spec\":\"notAnObject\"}"; // Triggers IllegalStateException in beginObject()
+      keys.add(
+          Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, rawMeta));
+      keys.add(Fields.booleanField(StoreDefinition.AppMetadataStore.LATEST_FIELD, true));
+      table.upsert(keys);
+    });
+
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        ApplicationFilter filter = new ApplicationFilter.ArtifactNamesInFilter(
+            Collections.singleton("artifact1"));
+        store.scanApplications(ScanApplicationsRequest.builder()
+                .setNamespaceId(NamespaceId.DEFAULT)
+                .addFilters(Collections.singletonList(filter))
+                .build(),
+            entry -> true);
+      });
+      Assert.fail("Expected IllegalStateException");
+    } catch (Exception e) {
+      boolean found = false;
+      Throwable t = e;
+      while (t != null) {
+        if (t instanceof IllegalStateException && t.getMessage()
+            .contains("Failed to parse artifact ID from app meta")) {
+          found = true;
+          break;
+        }
+        t = t.getCause();
+      }
+      Assert.assertTrue(
+          "Expected IllegalStateException with message 'Failed to parse artifact ID from app meta'",
+          found);
+    }
+  }
+
+  @Test
   public void testScanApplicationsReverse() {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
