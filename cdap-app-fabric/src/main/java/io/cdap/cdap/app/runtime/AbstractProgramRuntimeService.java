@@ -472,11 +472,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private void cleanupRuntimeInfo(@Nullable RuntimeInfo info) {
     if (info instanceof Closeable) {
       try {
-
         ((Closeable) info).close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

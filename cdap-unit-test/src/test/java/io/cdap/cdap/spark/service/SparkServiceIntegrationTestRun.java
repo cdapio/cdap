@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.service;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -70,6 +71,7 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
       serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Failed to start {} service", TestSparkServiceIntegrationApp.SERVICE_NAME, e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

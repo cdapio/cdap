@@ -17,6 +17,7 @@
 package io.cdap.cdap.test;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -648,11 +649,8 @@ public class TestBase {
     metadataService.stopAsync().awaitTerminated();
     metadataSubscriberService.stopAsync().awaitTerminated();
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
     txService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
@@ -889,6 +887,7 @@ public class TestBase {
       getTestManager().clear();
     } catch (Exception e) {
       // Unchecked exception to maintain compatibility until we remove this method
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

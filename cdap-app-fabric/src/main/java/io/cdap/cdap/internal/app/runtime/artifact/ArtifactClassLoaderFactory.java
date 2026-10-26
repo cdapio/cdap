@@ -103,20 +103,14 @@ final class ArtifactClassLoaderFactory {
     return new CloseableClassLoader(programClassLoader, () -> {
       if (finalProgramClassLoader instanceof Closeable) {
         try {
-
           ((Closeable) finalProgramClassLoader).close();
-
         } catch (Exception ignored) {
-
         }
       }
       if (finalSparkClassLoader instanceof Closeable) {
         try {
-
           ((Closeable) finalSparkClassLoader).close();
-
         } catch (Exception ignored) {
-
         }
       }
     });
@@ -141,18 +135,12 @@ final class ArtifactClassLoaderFactory {
       CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
       return new CloseableClassLoader(classLoader, () -> {
         try {
-
           classLoader.close();
-
         } catch (Exception ignored) {
-
         }
         try {
-
           classLoaderFolder.close();
-
         } catch (Exception ignored) {
-
         }
       });
     } catch (Exception e) {
@@ -190,18 +178,12 @@ final class ArtifactClassLoaderFactory {
       return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
           parentClassLoader, "lib"), () -> {
         try {
-
           parentClassLoader.close();
-
         } catch (Exception ignored) {
-
         }
         try {
-
           classLoaderFolder.close();
-
         } catch (Exception ignored) {
-
         }
       });
     } catch (Exception e) {

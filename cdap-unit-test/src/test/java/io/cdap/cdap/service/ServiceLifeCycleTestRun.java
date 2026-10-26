@@ -17,6 +17,7 @@
 package io.cdap.cdap.service;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedListMultimap;
@@ -486,6 +487,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
           urlConn.disconnect();
         }
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     });
@@ -506,6 +508,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
           urlConn.disconnect();
         }
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     });

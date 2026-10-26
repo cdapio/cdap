@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.WorkflowClient;
@@ -62,6 +63,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     try {
       return scheduleClient.listSchedules(workflowId);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -72,6 +74,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     try {
       return workflowClient.getWorkflowToken(workflowId.run(runId), scope, key);
     } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -83,6 +86,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
     try {
       return workflowClient.getWorkflowTokenAtNode(workflowId.run(runId), nodeName, scope, key);
     } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -94,6 +98,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       ProgramRunId programRunId = workflowId.run(workflowRunId);
       return workflowClient.getWorkflowNodeStates(programRunId);
     } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -106,6 +111,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
         try {
           scheduleClient.suspend(programId.getParent().schedule(schedName));
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }
@@ -115,6 +121,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
         try {
           scheduleClient.resume(programId.getParent().schedule(schedName));
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }
@@ -124,6 +131,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
         try {
           return scheduleClient.getStatus(programId.getParent().schedule(schedName));
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }

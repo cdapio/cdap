@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.lang;
 
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -97,6 +98,7 @@ public final class InstantiatorFactory {
           try {
             return (T) defaultCons.newInstance();
           } catch (Exception e) {
+            Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
           }
         }
@@ -183,6 +185,7 @@ public final class InstantiatorFactory {
           }
           return (T) instance;
         } catch (InstantiationException | IllegalAccessException e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }

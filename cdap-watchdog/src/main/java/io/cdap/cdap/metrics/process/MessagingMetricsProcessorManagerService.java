@@ -205,4 +205,3 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     }
   }
 }
-

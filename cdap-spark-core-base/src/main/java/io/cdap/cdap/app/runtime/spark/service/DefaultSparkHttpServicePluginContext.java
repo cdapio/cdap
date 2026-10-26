@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.service;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -90,11 +91,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
       @Override
       public void onTaskCompletion(TaskContext context) {
         try {
-
           pluginInstantiator.close();
-
         } catch (Exception ignored) {
-
         }
       }
     });
@@ -205,6 +203,7 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
       throw new IllegalArgumentException("Plugin class not found", e);
     } catch (IOException e) {
       // This is fatal, since jar cannot be expanded.
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -233,6 +232,7 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
       throw new IllegalArgumentException("Plugin class not found", e);
     } catch (IOException e) {
       // This is fatal, since jar cannot be expanded.
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -266,11 +266,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
   @Override
   public void close() {
     try {
-
       pluginInstantiator.close();
-
     } catch (Exception ignored) {
-
     }
   }
 

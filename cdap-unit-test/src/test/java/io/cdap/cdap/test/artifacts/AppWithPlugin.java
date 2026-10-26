@@ -17,6 +17,7 @@
 package io.cdap.cdap.test.artifacts;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
@@ -103,6 +104,7 @@ public class AppWithPlugin extends AbstractApplication {
         Object plugin = context.newPluginInstance("workflowplugin");
         table.write("val", plugin.toString());
       } catch (InstantiationException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

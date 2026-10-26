@@ -169,11 +169,8 @@ public class LogBufferReader implements Closeable {
     public void close() {
       // close input stream wrapped by this reader
       try {
-
         inputStream.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

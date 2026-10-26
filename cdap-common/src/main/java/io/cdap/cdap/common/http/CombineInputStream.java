@@ -82,11 +82,8 @@ final class CombineInputStream extends InputStream {
   @Override
   public void close() throws IOException {
     try {
-
       bufferStream.close();
-
     } catch (Exception ignored) {
-
     }
     if (spillStream != null) {
       spillStream.close();

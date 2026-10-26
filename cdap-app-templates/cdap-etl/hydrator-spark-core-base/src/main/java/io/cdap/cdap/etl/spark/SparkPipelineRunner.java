@@ -248,6 +248,7 @@ public abstract class SparkPipelineRunner {
     }
     executorService.shutdownNow();
     if (error != null) {
+      Throwables.throwIfUnchecked(error);
       throw new RuntimeException(error);
     }
   }

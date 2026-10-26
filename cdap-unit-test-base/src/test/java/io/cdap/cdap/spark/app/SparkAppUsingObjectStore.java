@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.ObjectStores;
@@ -37,6 +38,7 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
       addSpark(new ScalaCharCountProgram());
       addSpark(new ScalaCrossNSProgram());
     } catch (Throwable t) {
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }

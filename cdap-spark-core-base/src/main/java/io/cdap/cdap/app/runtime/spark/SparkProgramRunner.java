@@ -18,6 +18,7 @@ package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
@@ -211,6 +212,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         spark = new InstantiatorFactory(false).get(TypeToken.of(program.<Spark>getMainClass())).create();
       } catch (Exception e) {
         LOG.error("Failed to instantiate Spark class for {}", spec.getClassName(), e);
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
 
@@ -244,13 +246,14 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (isLocal || UserGroupInformation.isSecurityEnabled()) {
-        sparkRuntimeService.startAsync().awaitRunning();
+        sparkRuntimeService.startAsync();
       } else {
         ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), sparkRuntimeService);
       }
       return controller;
     } catch (Throwable t) {
       closeAllQuietly(closeables);
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }
@@ -276,11 +279,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         Uninterruptibles.sleepUninterruptibly(2, TimeUnit.SECONDS);
         if (classLoader instanceof Closeable) {
           try {
-
             ((Closeable) classLoader).close();
-
           } catch (Exception ignored) {
-
           }
           LOG.trace("Closed SparkProgramRunner ClassLoader {}", classLoader);
         }

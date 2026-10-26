@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.storage.spanner;
 
-import com.google.api.client.util.Throwables;
 import com.google.cloud.spanner.Struct;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
 import io.cdap.cdap.spi.data.compression.Compressor;
@@ -82,6 +82,7 @@ public class SpannerStructuredRow implements StructuredRow {
     try {
       value = compressor.decompress(value);
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
     return value;
@@ -116,6 +117,7 @@ public class SpannerStructuredRow implements StructuredRow {
       Compressor compressor = CompressorFactory.getCompressor(compressorType);
       value = compressor.decompress(value);
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
     return value;

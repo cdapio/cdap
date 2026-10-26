@@ -102,6 +102,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
           throw e;
         } catch (Exception e) {
           Throwables.throwIfUnchecked(e);
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }
@@ -114,6 +115,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
@@ -128,6 +130,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }

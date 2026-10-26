@@ -373,8 +373,10 @@ public class AppMetadataStore {
             e -> ((ApplicationFilter.ApplicationIdFilter) filter).test(e.getKey()));
       } else if (filter instanceof ApplicationFilter.ArtifactIdFilter) {
         scanEntryPredicate = scanEntryPredicate.and(
-            e -> ((ApplicationFilter.ArtifactIdFilter) filter).test(
-                e.getValue().getSpec().getArtifactId()));
+            e -> {
+              ArtifactId artifactId = e.getArtifactId();
+              return artifactId != null && ((ApplicationFilter.ArtifactIdFilter) filter).test(artifactId);
+            });
       } else {
         throw new UnsupportedOperationException(
             "Application filter " + filter + " is not supported");
@@ -3186,6 +3188,41 @@ public class AppMetadataStore {
       appMeta = meta = new ApplicationMeta(tempMeta.getId(), tempMeta.getSpec(), changeDetail,
           sourceControlMeta);
       return meta;
+    }
+
+    @Nullable
+    public ArtifactId getArtifactId() {
+      ApplicationMeta meta = appMeta;
+      if (meta != null) {
+        return meta.getSpec().getArtifactId();
+      }
+      if (rawAppMeta == null) {
+        return null;
+      }
+      try (JsonReader reader = new JsonReader(new StringReader(rawAppMeta))) {
+        reader.beginObject();
+        while (reader.peek() != JsonToken.END_OBJECT) {
+          String name = reader.nextName();
+          if (name.equals("spec")) {
+            reader.beginObject();
+            while (reader.peek() != JsonToken.END_OBJECT) {
+              String specName = reader.nextName();
+              if (specName.equals("artifactId")) {
+                return GSON.fromJson(reader, ArtifactId.class);
+              } else {
+                reader.skipValue();
+              }
+            }
+            reader.endObject();
+          } else {
+            reader.skipValue();
+          }
+        }
+        reader.endObject();
+      } catch (IOException e) {
+        LOG.warn("Failed to extract artifact id from raw application metadata", e);
+      }
+      return null;
     }
 
     @Override

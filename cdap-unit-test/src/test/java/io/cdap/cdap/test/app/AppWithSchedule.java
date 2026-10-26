@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
@@ -52,6 +53,7 @@ public class AppWithSchedule extends AbstractApplication {
       schedule(buildSchedule(EVERY_THREE_SECOND_SCHEDULE, ProgramType.WORKFLOW, WORKFLOW_NAME)
                  .triggerByTime("0/3 * * * * ?"));
     } catch (UnsupportedTypeException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

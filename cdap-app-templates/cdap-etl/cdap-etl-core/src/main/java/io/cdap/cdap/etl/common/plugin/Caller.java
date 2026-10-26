@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common.plugin;
 
+import com.google.common.base.Throwables;
 import java.util.concurrent.Callable;
 
 /**
@@ -53,6 +54,7 @@ public abstract class Caller {
     try {
       return call(callable);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

@@ -138,11 +138,8 @@ public class DatasetAdminService {
           }
         } finally {
           try {
-
             admin.close();
-
           } catch (Exception ignored) {
-
           }
         }
         return spec1;
@@ -229,11 +226,8 @@ public class DatasetAdminService {
           admin.drop();
         } finally {
           try {
-
             admin.close();
-
           } catch (Exception ignored) {
-
           }
         }
         return null;
@@ -279,11 +273,8 @@ public class DatasetAdminService {
         return operation.perform(admin);
       } finally {
         try {
-
           admin.close();
-
         } catch (Exception ignored) {
-
         }
       }
     }

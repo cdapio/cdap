@@ -198,10 +198,12 @@ public abstract class IntegrationTestBase {
         try {
           accessToken = fetchAccessToken();
         } catch (IOException ex) {
+          Throwables.throwIfUnchecked(ex);
           throw new RuntimeException(ex);
         }
         checkServicesWithRetry(cdapAvailable, errorMessage);
       } else {
+        Throwables.throwIfUnchecked(rootCause);
         throw new RuntimeException(rootCause);
       }
     }
@@ -259,6 +261,7 @@ public abstract class IntegrationTestBase {
         Throwable rootCause = Throwables.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
           // Throw if root cause is any other exception e.g. UnauthenticatedException
+          Throwables.throwIfUnchecked(rootCause);
           throw new RuntimeException(rootCause);
         }
       }
@@ -288,6 +291,7 @@ public abstract class IntegrationTestBase {
     try {
       return new IntegrationTestManager(clientConfig, restClient, TEMP_FOLDER.newFolder());
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

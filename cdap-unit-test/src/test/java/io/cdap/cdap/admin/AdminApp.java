@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.admin;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.Admin;
@@ -288,6 +289,7 @@ public class AdminApp extends AbstractApplication {
         admin.dropDataset("d");
       }
     } catch (DatasetManagementException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
 

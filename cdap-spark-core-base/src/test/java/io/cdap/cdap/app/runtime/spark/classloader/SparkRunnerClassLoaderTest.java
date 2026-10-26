@@ -69,11 +69,8 @@ public class SparkRunnerClassLoaderTest {
             exception.set(e);
           } finally {
             try {
-
               secondCL.close();
-
             } catch (Exception ignored) {
-
             }
           }
         }
@@ -146,11 +143,8 @@ public class SparkRunnerClassLoaderTest {
     // After closing the ClassLoader,
     // reading from stream acquired through getResourceAsStream() should fail with an exception.
     try {
-
       cl.close();
-
     } catch (Exception ignored) {
-
     }
     is.read();
   }

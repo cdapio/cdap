@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.TransactionControl;
@@ -184,6 +185,7 @@ public class AppWithCustomTx extends AbstractApplication {
         }
       });
     } catch (TransactionFailureException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
     try {
@@ -194,6 +196,7 @@ public class AppWithCustomTx extends AbstractApplication {
         }
       });
     } catch (TransactionFailureException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -224,6 +227,7 @@ public class AppWithCustomTx extends AbstractApplication {
       try {
         txTimeout = (int) tx.getClass().getField("timeout").get(tx);
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
       value = String.valueOf(txTimeout);
@@ -283,7 +287,9 @@ public class AppWithCustomTx extends AbstractApplication {
         }
       });
     } catch (TransactionFailureException e) {
-      throw new RuntimeException(e.getCause() == null ? e : e.getCause());
+      Throwable cause = e.getCause() == null ? e : e.getCause();
+      Throwables.throwIfUnchecked(cause);
+      throw new RuntimeException(cause);
     }
   }
 

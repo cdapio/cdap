@@ -132,5 +132,4 @@ public class InMemoryTransactionService extends AbstractService {
     txManager.stopAsync().awaitTerminated();
     notifyStopped();
   }
-
 }

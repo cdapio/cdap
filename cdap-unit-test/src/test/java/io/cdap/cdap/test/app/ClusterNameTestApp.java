@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.UseDataSet;
@@ -98,6 +99,7 @@ public class ClusterNameTestApp extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

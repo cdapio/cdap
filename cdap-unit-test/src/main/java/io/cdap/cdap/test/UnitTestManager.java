@@ -191,6 +191,7 @@ public class UnitTestManager extends AbstractTestManager {
       throw e;
     } catch (Exception e) {
       Throwables.throwIfUnchecked(e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -300,6 +301,7 @@ public class UnitTestManager extends AbstractTestManager {
       appFabricClient.reset();
     } catch (Exception e) {
       Throwables.throwIfUnchecked(e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } finally {
       metricsManager.resetAll();
@@ -341,6 +343,7 @@ public class UnitTestManager extends AbstractTestManager {
       return new UnitTestDatasetManager<>(dataSet, txContext);
     } catch (Exception e) {
       Throwables.throwIfUnchecked(e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -374,6 +377,7 @@ public class UnitTestManager extends AbstractTestManager {
           txContext.start();
         }
       } catch (TransactionFailureException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

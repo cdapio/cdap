@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -97,6 +98,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       return applicationClient.getPlugins(application);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -113,6 +115,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
         waitForStopped(programId);
       }
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -123,6 +126,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
       programClient.stop(programId);
       waitForStopped(programId);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -132,6 +136,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       programClient.start(programId, false, arguments);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -151,6 +156,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
       String actual = programClient.getStatus(programId);
       return status.name().equals(actual);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -161,6 +167,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
       return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE,
           Integer.MAX_VALUE);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -170,6 +177,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       applicationClient.addSchedule(application, scheduleDetail);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -179,6 +187,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       applicationClient.enableSchedule(scheduleId);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

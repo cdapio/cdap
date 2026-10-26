@@ -18,6 +18,7 @@ package io.cdap.cdap.test.messaging;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -118,6 +119,7 @@ public class MessagingApp extends AbstractApplication {
         });
 
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }
@@ -167,6 +169,7 @@ public class MessagingApp extends AbstractApplication {
               }
             });
           } catch (TransactionFailureException e) {
+            Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
           }
         }
@@ -229,6 +232,7 @@ public class MessagingApp extends AbstractApplication {
               }
             });
           } catch (Exception e) {
+            Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
           }
         }

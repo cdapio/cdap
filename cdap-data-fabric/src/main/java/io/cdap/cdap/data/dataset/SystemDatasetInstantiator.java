@@ -109,9 +109,7 @@ public class SystemDatasetInstantiator implements Closeable {
       return dataset;
     } catch (Exception e) {
       if (e instanceof ServiceUnavailableException) {
-
         throw (ServiceUnavailableException) e;
-
       }
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }

@@ -756,9 +756,7 @@ public class ArtifactStore {
       destination = copyFileToDestination(artifactId, artifactContent, entityImpersonator);
     } catch (Exception e) {
       if (e instanceof IOException) {
-
         throw (IOException) e;
-
       }
       throw new RuntimeException(e);
     }

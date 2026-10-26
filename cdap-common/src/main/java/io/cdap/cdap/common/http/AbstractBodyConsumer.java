@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.http;
 
+import com.google.common.base.Throwables;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
@@ -49,6 +50,7 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
       }
       request.readBytes(output, request.readableBytes());
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -61,6 +63,7 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
       }
       onFinish(responder, file);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } finally {
       cleanup();
@@ -73,11 +76,8 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
       LOG.error("Failed to handle upload", cause);
       if (output != null) {
         try {
-
           output.close();
-
         } catch (Exception ignored) {
-
         }
       }
       onError(cause);

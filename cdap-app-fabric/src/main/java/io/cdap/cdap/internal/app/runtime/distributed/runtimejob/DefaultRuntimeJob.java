@@ -290,11 +290,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
       } finally {
         if (programRunner instanceof Closeable) {
           try {
-
             ((Closeable) programRunner).close();
-
           } catch (Exception ignored) {
-
           }
         }
       }

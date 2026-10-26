@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.metrics;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
@@ -109,6 +110,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       // since it is totals, we know there's one value only
       return timeValues.get(0).getValue();
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

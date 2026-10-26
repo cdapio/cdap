@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -267,6 +268,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
           directStoreSinks.add(sinkName);
         }
       } catch (InterruptedException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       } catch (ExecutionException e) {
         // We don't propagate this exception as the regular sink workflow can continue.
@@ -294,6 +296,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
       try {
         pull().createStoreTask(stageSpec, sink).run();
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     };

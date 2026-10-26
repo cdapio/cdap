@@ -337,11 +337,8 @@ public abstract class AppFabricTestBase {
       ((Service) messagingService).stopAsync().awaitTerminated();
     }
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
   }
 

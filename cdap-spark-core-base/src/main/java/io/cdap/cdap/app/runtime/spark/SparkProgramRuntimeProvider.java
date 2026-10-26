@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Binding;
@@ -140,15 +141,13 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
           } catch (Throwable t) {
             // If there is any exception, close the classloader
             try {
-
               classLoader.close();
-
             } catch (Exception ignored) {
-
             }
             throw t;
           }
         } catch (IOException e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       case DISTRIBUTED:
@@ -196,6 +195,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
           bindEnum(binder(), type, providerSparkCompat.name());
         } catch (ClassNotFoundException e) {
           // This shouldn't happen
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }
@@ -215,6 +215,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       }
       return distributedRunnerClassLoader;
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -233,6 +234,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     } catch (Throwable t) {
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }

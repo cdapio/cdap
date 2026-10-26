@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.test.remote;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.metrics.RuntimeMetrics;
 import io.cdap.cdap.client.MetricsClient;
 import io.cdap.cdap.client.ProgramClient;
@@ -56,6 +57,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
     try {
       programClient.setServiceInstances(serviceId, instances);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -70,6 +72,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
     try {
       return programClient.getServiceInstances(serviceId);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -96,6 +99,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
       }, timeout, timeoutUnit);
       return serviceClient.getServiceURL(serviceId);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

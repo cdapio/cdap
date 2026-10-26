@@ -301,11 +301,8 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
   @Override
   public void close() {
     try {
-
       instantiator.close();
-
     } catch (Exception ignored) {
-
     }
   }
 
@@ -393,4 +390,3 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
     }
   }
 }
-

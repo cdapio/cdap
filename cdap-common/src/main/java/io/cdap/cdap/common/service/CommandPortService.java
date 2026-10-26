@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.service;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.LineReader;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -107,6 +108,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
         serverSocket.close();
       }
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

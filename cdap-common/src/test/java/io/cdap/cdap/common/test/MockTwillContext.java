@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.test;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.common.app.RunIds;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -55,6 +56,7 @@ public final class MockTwillContext implements TwillContext {
     try {
       return InetAddress.getLocalHost();
     } catch (UnknownHostException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

@@ -92,9 +92,7 @@ public class ConcurrentLogBufferWriter implements Closeable {
 
     if (!pendingLogBufferRequest.isSuccess()) {
       if (pendingLogBufferRequest.getFailureCause() instanceof IOException) {
-
         throw (IOException) pendingLogBufferRequest.getFailureCause();
-
       }
       throw new IOException("Unable to write log event to log buffer",
           pendingLogBufferRequest.getFailureCause());

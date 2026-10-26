@@ -111,11 +111,8 @@ public abstract class AbstractChunkedCallback implements Callback {
       LOG.debug("Failed to send chunk", e);
     } finally {
       try {
-
         chunkResponder.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

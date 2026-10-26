@@ -1670,6 +1670,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
           return response.getResponseCode();
         } catch (Exception e) {
           LOG.error("Request thread got exception.", e);
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }

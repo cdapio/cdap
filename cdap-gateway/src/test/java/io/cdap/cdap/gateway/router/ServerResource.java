@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.router;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.http.AbstractHttpHandler;
@@ -178,6 +179,7 @@ public class ServerResource extends ExternalResource {
 
         @Override
         public void handleError(Throwable cause) {
+          Throwables.throwIfUnchecked(cause);
           throw new RuntimeException(cause);
         }
       };

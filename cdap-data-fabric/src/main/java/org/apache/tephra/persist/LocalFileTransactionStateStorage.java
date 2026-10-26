@@ -345,5 +345,4 @@ public class LocalFileTransactionStateStorage extends AbstractTransactionStateSt
       return res;
     }
   }
-
 }

@@ -180,11 +180,8 @@ public class HubPackage {
         @Override
         public void onFinished() {
           try {
-
             channel.close();
-
           } catch (Exception ignored) {
-
           }
         }
       }).build();

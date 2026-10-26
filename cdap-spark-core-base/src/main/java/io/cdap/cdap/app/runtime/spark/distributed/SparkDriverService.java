@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark.distributed;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -263,6 +264,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
         }
       } catch (Exception e) {
         // Just throw it out. The SparkCredentialsUpdater will handle it
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     };

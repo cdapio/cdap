@@ -275,11 +275,8 @@ public class HttpHandlerGeneratorTest {
     public void onError(HttpServiceResponder responder, Throwable failureCause) {
       validateTransaction();
       try {
-
         channel.close();
-
       } catch (Exception ignored) {
-
       }
       LOG.error("Failed when handling upload", failureCause);
     }

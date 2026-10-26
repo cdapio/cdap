@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.http;
 
+import com.google.common.base.Throwables;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
@@ -86,14 +87,17 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
 
   @Override
   public void finished(HttpResponder responder) {
-    try { if (outputStream != null) outputStream.close(); } catch (IOException ignored) { }
+    try {
+      if (outputStream != null) {
+        outputStream.close();
+      }
+    } catch (IOException ignored) {
+    }
 
     try (InputStream is = new CombineInputStream(buffer, outputStream == null ? null : spillPath)) {
       processInput(is, responder);
     } catch (Exception e) {
-      if (e instanceof RuntimeException) {
-        throw (RuntimeException) e;
-      }
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(String.format("Failed to process input from buffer%s",
           outputStream == null ? "" : " and spill path " + spillPath), e);
     } finally {
@@ -103,7 +107,12 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
 
   @Override
   public void handleError(Throwable cause) {
-    try { if (outputStream != null) outputStream.close(); } catch (IOException ignored) { }
+    try {
+      if (outputStream != null) {
+        outputStream.close();
+      }
+    } catch (IOException ignored) {
+    }
     cleanup();
   }
 

@@ -101,6 +101,7 @@ public class RouterMain extends DaemonMain {
       LOG.info("Router initialized.");
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }

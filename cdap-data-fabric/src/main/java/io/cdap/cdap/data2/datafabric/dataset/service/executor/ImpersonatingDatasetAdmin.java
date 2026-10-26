@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -113,11 +114,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception t) {
-      if (t instanceof RuntimeException) {
-
-        throw (RuntimeException) t;
-
-      }
+      Throwables.throwIfUnchecked(t);
 
       // since the callables we execute only throw IOException (besides unchecked exceptions),
       // this should never happen

@@ -113,18 +113,12 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
     @Override
     public void close() throws IOException {
       try {
-
         directoryClassLoader.close();
-
       } catch (Exception ignored) {
-
       }
       try {
-
         folder.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

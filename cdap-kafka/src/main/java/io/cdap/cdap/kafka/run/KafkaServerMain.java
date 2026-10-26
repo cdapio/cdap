@@ -17,7 +17,7 @@
 package io.cdap.cdap.kafka.run;
 
 import com.google.common.base.Preconditions;
-
+import com.google.common.base.Throwables;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
@@ -80,6 +80,7 @@ public class KafkaServerMain extends DaemonMain {
         client.stopAsync().awaitTerminated();
         zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       } finally {
         client.stopAsync().awaitTerminated();
@@ -103,6 +104,7 @@ public class KafkaServerMain extends DaemonMain {
         try {
           address = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       } else {

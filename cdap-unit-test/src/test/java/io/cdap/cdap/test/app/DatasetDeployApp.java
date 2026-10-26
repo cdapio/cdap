@@ -18,6 +18,7 @@ package io.cdap.cdap.test.app;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.Config;
@@ -114,6 +115,7 @@ public class DatasetDeployApp extends AbstractApplication {
         schema = Schema.recordOf("record", schema.getFields());
         return schema.toString();
       } catch (ClassNotFoundException | UnsupportedTypeException | IOException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }
@@ -128,6 +130,7 @@ public class DatasetDeployApp extends AbstractApplication {
       try {
         return new RecordDataset(spec, kvTable);
       } catch (ClassNotFoundException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -306,6 +307,7 @@ public final class SparkRuntimeContextProvider {
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -333,6 +335,7 @@ public final class SparkRuntimeContextProvider {
     } catch (UnknownHostException e) {
       // Nothing much we can do. Just throw exception since
       // we need the hostname to start the SparkTransactionService
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

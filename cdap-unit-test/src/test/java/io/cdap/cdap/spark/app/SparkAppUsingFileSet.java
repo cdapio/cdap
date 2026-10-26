@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.spark.app;
 
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
@@ -73,6 +74,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       addSpark(new FileCountSparkProgram());
       addSpark(new ScalaFileCountSparkProgram());
     } catch (Throwable t) {
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }
@@ -129,6 +131,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       try {
         getSuccessLocation().createNew();
       } catch (Throwable t) {
+        Throwables.throwIfUnchecked(t);
         throw new RuntimeException(t);
       }
     }
@@ -138,6 +141,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       try {
         getFailureLocation().createNew();
       } catch (Throwable t) {
+        Throwables.throwIfUnchecked(t);
         throw new RuntimeException(t);
       }
     }

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.storage.spanner;
 
-import com.google.api.client.util.Throwables;
 import com.google.cloud.ByteArray;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.Key;
@@ -30,6 +29,7 @@ import com.google.cloud.spanner.TimestampBound;
 import com.google.cloud.spanner.TransactionContext;
 import com.google.cloud.spanner.Value;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.spi.data.FieldSizeLimitExceededException;
@@ -801,6 +801,7 @@ public class SpannerStructuredTable implements StructuredTable {
       try {
         val = compressor.compress(val);
       } catch (IOException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }
@@ -821,6 +822,7 @@ public class SpannerStructuredTable implements StructuredTable {
       try {
         val = compressor.compress(val);
       } catch (IOException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

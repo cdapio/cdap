@@ -175,11 +175,8 @@ public class LocationManager implements Flushable, Closeable, Syncable {
     for (LocationOutputStream locationOutputStream : locations) {
       // we do not want to throw any exception rather close all the open output streams. so close quietly
       try {
-
         locationOutputStream.close();
-
       } catch (Exception ignored) {
-
       }
     }
 

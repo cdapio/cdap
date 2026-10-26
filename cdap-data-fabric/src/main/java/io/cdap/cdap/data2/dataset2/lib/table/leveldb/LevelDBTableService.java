@@ -212,11 +212,8 @@ public class LevelDBTableService implements AutoCloseable {
   public void clearTables() {
     for (DB entries : tables.values()) {
       try {
-
         entries.close();
-
       } catch (Exception ignored) {
-
       }
     }
     tables.clear();

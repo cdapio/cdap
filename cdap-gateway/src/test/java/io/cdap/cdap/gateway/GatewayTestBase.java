@@ -229,11 +229,8 @@ public abstract class GatewayTestBase {
     dsOpService.stopAsync().awaitTerminated();
     metadataService.stopAsync().awaitTerminated();
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
     txService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {

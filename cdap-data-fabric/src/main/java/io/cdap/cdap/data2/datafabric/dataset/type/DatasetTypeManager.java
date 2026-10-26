@@ -148,18 +148,12 @@ public class DatasetTypeManager {
         } finally {
           // Close the ProgramClassLoader
           try {
-
             cl.close();
-
           } catch (Exception ignored) {
-
           }
           try {
-
             classLoaderFolder.close();
-
           } catch (Exception ignored) {
-
           }
         }
 
@@ -354,9 +348,7 @@ public class DatasetTypeManager {
         } catch (Exception e) {
           // the only checked exception the try-catch throws is IOException
           if (e instanceof IOException) {
-
             throw (IOException) e;
-
           }
           throw new RuntimeException(e);
         }

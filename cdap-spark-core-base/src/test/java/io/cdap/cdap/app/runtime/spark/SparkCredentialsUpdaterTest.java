@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Locations;
 import org.apache.hadoop.io.Text;
@@ -152,6 +153,7 @@ public class SparkCredentialsUpdaterTest {
           }
           throw new IllegalArgumentException("Expect name ended with number suffix");
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }
@@ -166,6 +168,7 @@ public class SparkCredentialsUpdaterTest {
         try {
           return UserGroupInformation.getCurrentUser().getCredentials();
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }

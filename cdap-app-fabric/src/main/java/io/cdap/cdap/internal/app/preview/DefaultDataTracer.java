@@ -15,6 +15,8 @@
  */
 package io.cdap.cdap.internal.app.preview;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -36,6 +38,20 @@ class DefaultDataTracer implements DataTracer {
 
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class,
           new SchemaTypeAdapter())
+      .setExclusionStrategies(new ExclusionStrategy() {
+        @Override
+        public boolean shouldSkipField(FieldAttributes f) {
+          return false;
+        }
+
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+          String name = clazz.getName();
+          return name.startsWith("java.lang.module")
+              || name.startsWith("jdk.internal")
+              || name.startsWith("sun.");
+        }
+      })
       .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
 
   private final String tracerName;

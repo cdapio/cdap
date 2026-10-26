@@ -366,11 +366,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     for (TransactionAware txAware : extraTxAwares) {
       if (txAware instanceof Closeable) {
         try {
-
           ((Closeable) txAware).close();
-
         } catch (Exception ignored) {
-
         }
       }
     }
@@ -500,4 +497,3 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
   }
 }
-

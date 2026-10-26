@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.batch.connector;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.AbstractCloseableIterator;
 import io.cdap.cdap.api.dataset.lib.FileSet;
@@ -73,6 +74,7 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
       }
       return GSON.fromJson(line, Alert.class);
     } catch (IOException e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -83,6 +85,7 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
       try {
         currentReader.close();
       } catch (IOException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

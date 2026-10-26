@@ -320,11 +320,8 @@ public class SSHSessionTest {
               LOG.error("Exception raised from the EchoServer handling thread", e);
             } finally {
               try {
-
                 socket.close();
-
               } catch (Exception ignored) {
-
               }
             }
           });
@@ -343,11 +340,8 @@ public class SSHSessionTest {
     protected void triggerShutdown() {
       stopped = true;
       try {
-
         serverSocket.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

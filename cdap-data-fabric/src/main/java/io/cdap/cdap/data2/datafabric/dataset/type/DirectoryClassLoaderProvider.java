@@ -95,11 +95,8 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       ClassLoader cl = notification.getValue();
       if (cl instanceof Closeable) {
         try {
-
           ((Closeable) cl).close();
-
         } catch (Exception ignored) {
-
         }
       }
     }

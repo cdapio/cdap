@@ -165,11 +165,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       // Otherwise it will be released when the execution completed.
       programStateWriter.error(program.getId().run(runId), t);
       try {
-
         closeable.close();
-
       } catch (Exception ignored) {
-
       }
       throw t;
     }
@@ -215,11 +212,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       @Override
       public void completed() {
         try {
-
           closeable.close();
-
         } catch (Exception ignored) {
-
         }
         Set<Operation> fieldLineageOperations = new HashSet<>();
         if (controller instanceof WorkflowDataProvider) {
@@ -235,11 +229,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       @Override
       public void killed() {
         try {
-
           closeable.close();
-
         } catch (Exception ignored) {
-
         }
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
@@ -249,11 +240,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       @Override
       public void error(Throwable cause) {
         try {
-
           closeable.close();
-
         } catch (Exception ignored) {
-
         }
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
@@ -294,11 +282,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       @Override
       public void close() throws IOException {
         try {
-
           program.close();
-
         } catch (Exception ignored) {
-
         }
         closeProgramRunner(programRunner);
       }
@@ -311,11 +296,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private void closeProgramRunner(ProgramRunner programRunner) {
     if (programRunner instanceof Closeable) {
       try {
-
         ((Closeable) programRunner).close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

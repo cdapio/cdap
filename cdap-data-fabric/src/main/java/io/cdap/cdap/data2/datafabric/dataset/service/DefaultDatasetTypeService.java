@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -269,10 +270,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
       });
     } catch (Exception e) {
       // the only checked exception that the callable throws is IOException
+      Throwables.throwIfUnchecked(e);
       if (e instanceof IOException) {
-
         throw (IOException) e;
-
       }
       throw new RuntimeException(e);
     }
@@ -387,6 +387,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
         LOG.debug("Not adding {} module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
+        Throwables.throwIfUnchecked(th);
         throw new RuntimeException(th);
       }
     }
@@ -423,6 +424,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
         LOG.debug("Not adding {} extension module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
+        Throwables.throwIfUnchecked(th);
         throw new RuntimeException(th);
       }
     }

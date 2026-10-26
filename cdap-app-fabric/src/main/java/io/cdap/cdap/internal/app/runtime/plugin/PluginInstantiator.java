@@ -166,9 +166,7 @@ public class PluginInstantiator implements Closeable {
       return classLoaders.get(new ClassLoaderKey(artifactId));
     } catch (ExecutionException e) {
       if (e.getCause() instanceof IOException) {
-
         throw (IOException) e.getCause();
-
       }
       throw new RuntimeException(e.getCause());
     }
@@ -199,9 +197,7 @@ public class PluginInstantiator implements Closeable {
       return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents));
     } catch (ExecutionException e) {
       if (e.getCause() instanceof IOException) {
-
         throw (IOException) e.getCause();
-
       }
       throw new RuntimeException(e.getCause());
     }
@@ -524,11 +520,8 @@ public class PluginInstantiator implements Closeable {
     classLoaders.invalidateAll();
     if (ownedParentClassLoader) {
       try {
-
         ((Closeable) parentClassLoader).close();
-
       } catch (Exception ignored) {
-
       }
     }
     try {
@@ -631,11 +624,8 @@ public class PluginInstantiator implements Closeable {
     @Override
     public void onRemoval(RemovalNotification<ClassLoaderKey, PluginClassLoader> notification) {
       try {
-
         notification.getValue().close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

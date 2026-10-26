@@ -128,9 +128,7 @@ final class ConcurrentMessageWriter implements Closeable {
     } else {
       metricsCollector.increment("persist.failure", 1L);
       if (pendingStoreRequest.getFailureCause() instanceof IOException) {
-
         throw (IOException) pendingStoreRequest.getFailureCause();
-
       }
       throw new IOException("Unable to write message to " + storeRequest.getTopicId(),
           pendingStoreRequest.getFailureCause());

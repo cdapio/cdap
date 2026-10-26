@@ -169,7 +169,7 @@ public class TransactionEdit implements Writable {
   }
 
   /**
-   * Returns the transaction type. This is only populated for edits of type {@link State#INPROGRESS} or 
+   * Returns the transaction type. This is only populated for edits of type {@link State#INPROGRESS} or
    * {@link State#ABORTED}.
    */
   public TransactionType getType() {
@@ -182,7 +182,7 @@ public class TransactionEdit implements Writable {
 
   /**
    * Returns the transaction ids to be removed from invalid transaction list. This is only populated for
-   * edits of type {@link State#TRUNCATE_INVALID_TX} 
+   * edits of type {@link State#TRUNCATE_INVALID_TX}
    */
   public Set<Long> getTruncateInvalidTx() {
     return truncateInvalidTx;
@@ -249,7 +249,7 @@ public class TransactionEdit implements Writable {
    */
   public static TransactionEdit createCommitted(long writePointer, Set<ChangeId> changes, long nextWritePointer,
                                                 boolean canCommit) {
-    return new TransactionEdit(writePointer, 0L, State.COMMITTED, 0L, changes, nextWritePointer, canCommit, null, 
+    return new TransactionEdit(writePointer, 0L, State.COMMITTED, 0L, changes, nextWritePointer, canCommit, null,
                                null, 0L, 0L, null);
   }
 
@@ -287,7 +287,7 @@ public class TransactionEdit implements Writable {
    * Creates a new instance in the {@link State#TRUNCATE_INVALID_TX} state.
    */
   public static TransactionEdit createTruncateInvalidTxBefore(long truncateInvalidTxTime) {
-    return new TransactionEdit(0L, 0L, State.TRUNCATE_INVALID_TX, 0L, null, 0L, false, null, null, 
+    return new TransactionEdit(0L, 0L, State.TRUNCATE_INVALID_TX, 0L, null, 0L, false, null, null,
                                truncateInvalidTxTime, 0L, null);
   }
 
@@ -348,7 +348,7 @@ public class TransactionEdit implements Writable {
         Objects.equal(this.parentWritePointer, that.parentWritePointer) &&
         Arrays.equals(this.checkpointPointers, that.checkpointPointers);
   }
-  
+
   @Override
   public final int hashCode() {
     return Objects.hashCode(writePointer, visibilityUpperBound, commitPointer, expirationDate, state, changes,
@@ -372,5 +372,4 @@ public class TransactionEdit implements Writable {
       .add("checkpointPointers", checkpointPointers)
       .toString();
   }
-
 }

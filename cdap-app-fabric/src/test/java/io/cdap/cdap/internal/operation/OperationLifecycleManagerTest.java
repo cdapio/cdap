@@ -98,11 +98,8 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
   @AfterClass
   public static void afterClass() {
     try {
-
       postgres.close();
-
     } catch (Exception ignored) {
-
     }
   }
 
