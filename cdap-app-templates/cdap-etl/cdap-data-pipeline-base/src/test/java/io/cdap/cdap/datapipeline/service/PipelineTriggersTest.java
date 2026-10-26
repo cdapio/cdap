@@ -22,6 +22,10 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ProgramFailureException;
 import io.cdap.cdap.api.schedule.ProgramStatusTriggerInfo;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.etl.proto.v2.ArgumentMapping;
@@ -106,5 +110,81 @@ public class PipelineTriggersTest {
     Assert.assertEquals(propertyMappingResult.get("middle-plugin"), expectedValue2);
     Assert.assertEquals(propertyMappingResult.get("tail-arg"), "pipelineIdMiddleValue");
     Assert.assertEquals(propertyMappingResult.get("tail-plugin"), "pipelineIdMiddleValue");
+  }
+
+  @Test
+  public void testMissingResolvedPropertiesFailsWithDescriptiveError() {
+    ProgramStatusTriggerInfo infoWithoutResolvedProperties = triggerInfoWithoutResolvedProperties();
+    try {
+      PipelineTriggers.addSchedulePropertiesMapping(new HashMap<>(), infoWithoutResolvedProperties,
+                                                    triggeringPropertyMapping, true);
+      Assert.fail("Expected ProgramFailureException when resolved plugin properties are missing");
+    } catch (ProgramFailureException e) {
+      Assert.assertEquals(new ErrorCategory(ErrorCategoryEnum.SCHEDULES_AND_TRIGGERS), e.getErrorCategory());
+      Assert.assertEquals(ErrorType.SYSTEM, e.getErrorType());
+      Assert.assertNotNull(e.getErrorReason());
+      Assert.assertTrue(e.getErrorReason(), e.getErrorReason().contains("Resolved plugin properties"));
+      Assert.assertTrue(e.getErrorReason(), e.getErrorReason().contains("action1"));
+      Assert.assertTrue(e.getErrorReason(), e.getErrorReason().contains("head"));
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("resolved plugin properties"));
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("head"));
+    }
+  }
+
+  @Test
+  public void testMissingResolvedPropertiesFailsWithoutCompositeTrigger() {
+    ProgramStatusTriggerInfo infoWithoutResolvedProperties = triggerInfoWithoutResolvedProperties();
+    try {
+      PipelineTriggers.addSchedulePropertiesMapping(new HashMap<>(), infoWithoutResolvedProperties,
+                                                    triggeringPropertyMapping, false);
+      Assert.fail("Expected ProgramFailureException when resolved plugin properties are missing");
+    } catch (ProgramFailureException e) {
+      Assert.assertEquals(new ErrorCategory(ErrorCategoryEnum.SCHEDULES_AND_TRIGGERS), e.getErrorCategory());
+      Assert.assertEquals(ErrorType.SYSTEM, e.getErrorType());
+      Assert.assertNotNull(e.getErrorReason());
+      Assert.assertTrue(e.getErrorReason(), e.getErrorReason().contains("Resolved plugin properties"));
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("resolved plugin properties"));
+    }
+  }
+
+  @Test
+  public void testMissingResolvedPropertiesWithArgumentOnlyMapping() {
+    TriggeringPipelineId pipelineIdHead = new TriggeringPipelineId(defaultNamespace, "head");
+    TriggeringPropertyMapping argumentOnlyMapping = new TriggeringPropertyMapping(
+      ImmutableList.of(new ArgumentMapping("head-arg", "middle-arg", pipelineIdHead)),
+      ImmutableList.of());
+
+    Map<String, String> propertyMappingResult = new HashMap<>();
+    PipelineTriggers.addSchedulePropertiesMapping(propertyMappingResult, triggerInfoWithoutResolvedProperties(),
+                                                  argumentOnlyMapping, true);
+
+    Assert.assertEquals(1, propertyMappingResult.size());
+    Assert.assertEquals(expectedValue1, propertyMappingResult.get("middle-arg"));
+  }
+
+  @Test
+  public void testMissingResolvedPropertiesIgnoredForOtherPipelineMapping() {
+    // Composite trigger: the only plugin mapping refers to another triggering pipeline.
+    TriggeringPipelineId pipelineIdMiddle = new TriggeringPipelineId(defaultNamespace, "middle");
+    TriggeringPropertyMapping otherPipelineMapping = new TriggeringPropertyMapping(
+      ImmutableList.of(),
+      ImmutableList.of(new PluginPropertyMapping("action2", "value", "tail-plugin", pipelineIdMiddle)));
+
+    Map<String, String> propertyMappingResult = new HashMap<>();
+    PipelineTriggers.addSchedulePropertiesMapping(propertyMappingResult, triggerInfoWithoutResolvedProperties(),
+                                                  otherPipelineMapping, true);
+
+    Assert.assertTrue(propertyMappingResult.isEmpty());
+  }
+
+  private ProgramStatusTriggerInfo triggerInfoWithoutResolvedProperties() {
+    Map<String, String> runtimeArguments = new HashMap<>();
+    runtimeArguments.put("head-arg", expectedValue1);
+    return new DefaultProgramStatusTriggerInfo(
+      defaultNamespace, "head",
+      ProgramType.WORKFLOW,
+      WorkflowAppWithFork.WorkflowWithFork.class.getSimpleName(),
+      RunIds.generate(), ProgramStatus.COMPLETED,
+      new BasicWorkflowToken(1), runtimeArguments);
   }
 }
