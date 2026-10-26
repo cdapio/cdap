@@ -48,6 +48,7 @@ public final class PipelineTriggers {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter()).create();
+  // Also read by app-fabric WorkflowTokenAvailableConstraint; keep in sync.
   private static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
   private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(PipelineTriggers.class);
