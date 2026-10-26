@@ -19,9 +19,12 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.api.gax.grpc.GrpcStatusCode;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterOperationStatus;
 import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.collect.ImmutableMap;
 import com.google.longrunning.Operation;
+import com.google.protobuf.Any;
+import com.google.protobuf.Timestamp;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorType;
@@ -522,13 +525,9 @@ public class DataprocProvisionerTest {
     Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
       .thenReturn(ClusterStatus.RUNNING);
 
-    Operation operation = Operation.newBuilder()
-      .setName("op-create")
-      .setDone(true)
-      .build();
-
+    Operation operation = createOperationWithTimestamps("op-create", 1000L, 1120L);
     Mockito.when(dataprocClient.getLatestOperation(Mockito.anyString(), Mockito.anyString()))
-      .thenReturn(Optional.of(operation));
+        .thenReturn(Optional.of(operation));
 
     ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
     Assert.assertEquals(ClusterStatus.RUNNING, currentStatus);
@@ -536,6 +535,10 @@ public class DataprocProvisionerTest {
     Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
     Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
     Assert.assertEquals(1, count.intValue());
+
+    Long latency = localContext.getMetricGauges().get("provisioner.cluster.operation.latency.seconds");
+    Assert.assertNotNull("The LRO latency metric was not emitted or recorded in the mock context", latency);
+    Assert.assertEquals(120L, latency.longValue());
   }
 
   @Test
@@ -555,12 +558,28 @@ public class DataprocProvisionerTest {
     Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
       .thenReturn(ClusterStatus.NOT_EXISTS);
 
+    Operation operation = createOperationWithTimestamps("op-delete", 2000L, 2045L);
+    Mockito.when(dataprocClient.getLatestOperation("mycluster", "DELETE"))
+        .thenReturn(Optional.of(operation));
+
     ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
     Assert.assertEquals(ClusterStatus.NOT_EXISTS, currentStatus);
 
     Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
     Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
     Assert.assertEquals(1, count.intValue());
+
+    Long latency = localContext.getMetricGauges().get("provisioner.cluster.operation.latency.seconds");
+    Assert.assertNotNull("The LRO latency metric was not emitted or recorded in the mock context", latency);
+    Assert.assertEquals(45L, latency.longValue());
+
+    // Also verify the fallback when getLatestOperation returns empty on DELETING -> NOT_EXISTS
+    Mockito.when(dataprocClient.getLatestOperation("mycluster", "DELETE"))
+        .thenReturn(Optional.empty());
+    currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
+    Assert.assertEquals(ClusterStatus.NOT_EXISTS, currentStatus);
+    Assert.assertEquals(2,
+        localContext.getMetricCounts().get("provisioner.cluster.operation.response.count").intValue());
   }
 
   @Test
@@ -598,6 +617,51 @@ public class DataprocProvisionerTest {
     Integer count = localContext.getMetricCounts().get("provisioner.cluster.operation.response.count");
     Assert.assertNotNull("The LRO metric was not emitted or recorded in the mock context", count);
     Assert.assertEquals(1, count.intValue());
+    Assert.assertNull(localContext.getMetricGauges().get("provisioner.cluster.operation.latency.seconds"));
+  }
+
+  @Test
+  public void testGetClusterStatusEmitLroMetricWithIncompleteMetadata() throws Exception {
+    MockProvisionerContext localContext = new MockProvisionerContext();
+    localContext.addProperty("accountKey", "testKey");
+    localContext.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    localContext.addProperty("region", "testRegion");
+    localContext.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    localContext.setProgramRunInfo(new ProgramRunInfo.Builder()
+        .setNamespace("ns").setApplication("app").setVersion("1.0")
+        .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Cluster cdapClusterInput = new Cluster("mycluster", ClusterStatus.CREATING,
+        Collections.emptyList(), Collections.emptyMap());
+    Mockito.when(dataprocClient.getClusterStatus(Mockito.anyString()))
+        .thenReturn(ClusterStatus.RUNNING);
+
+    List<Operation> incompleteOperations = Arrays.asList(
+        Operation.newBuilder().setName("op-wrong-type").setDone(true)
+            .setMetadata(Any.pack(Timestamp.getDefaultInstance())).build(),
+        Operation.newBuilder().setName("op-no-history").setDone(true)
+            .setMetadata(Any.pack(ClusterOperationMetadata.getDefaultInstance())).build(),
+        Operation.newBuilder().setName("op-no-start").setDone(true)
+            .setMetadata(Any.pack(ClusterOperationMetadata.newBuilder()
+                .addStatusHistory(ClusterOperationStatus.getDefaultInstance()).build())).build(),
+        Operation.newBuilder().setName("op-no-end").setDone(true)
+            .setMetadata(Any.pack(ClusterOperationMetadata.newBuilder()
+                .addStatusHistory(ClusterOperationStatus.newBuilder()
+                    .setStateStartTime(Timestamp.newBuilder().setSeconds(1000L).build()).build())
+                .build())).build());
+
+    int expectedCount = 0;
+    for (Operation op : incompleteOperations) {
+      expectedCount++;
+      Mockito.when(dataprocClient.getLatestOperation("mycluster", "CREATE"))
+          .thenReturn(Optional.of(op));
+
+      ClusterStatus currentStatus = provisioner.getClusterStatus(localContext, cdapClusterInput);
+      Assert.assertEquals(ClusterStatus.RUNNING, currentStatus);
+      Assert.assertEquals(expectedCount,
+          localContext.getMetricCounts().get("provisioner.cluster.operation.response.count").intValue());
+      Assert.assertNull(localContext.getMetricGauges().get("provisioner.cluster.operation.latency.seconds"));
+    }
   }
 
   @Test
@@ -683,13 +747,23 @@ public class DataprocProvisionerTest {
 
     DataprocUtils.emitMetric(localContext, metricWithGenericExp);
 
+    DataprocMetric gaugeMetric = DataprocMetric.builder("test.gauge.metric")
+      .setRegion("us-test1")
+      .setMethod("CREATE")
+      .build();
+
+    DataprocUtils.emitMetric(localContext, gaugeMetric, 42L);
+
     Integer apiCount = localContext.getMetricCounts().get("test.api.metric");
     Integer genericCount = localContext.getMetricCounts().get("test.generic.metric");
+    Long gaugeValue = localContext.getMetricGauges().get("test.gauge.metric");
 
     Assert.assertNotNull(apiCount);
     Assert.assertNotNull(genericCount);
+    Assert.assertNotNull(gaugeValue);
     Assert.assertEquals(1, apiCount.intValue());
     Assert.assertEquals(1, genericCount.intValue());
+    Assert.assertEquals(42L, gaugeValue.longValue());
   }
 
   @Test
@@ -965,5 +1039,22 @@ public class DataprocProvisionerTest {
       DataprocConf.CLOUD_PLATFORM_SCOPE
     );
     Assert.assertEquals(expectedScopes, conf.getScopes());
+  }
+
+  private Operation createOperationWithTimestamps(String operationName,
+      long startSeconds, long endSeconds) {
+    ClusterOperationMetadata metadata = ClusterOperationMetadata.newBuilder()
+        .addStatusHistory(ClusterOperationStatus.newBuilder()
+            .setStateStartTime(Timestamp.newBuilder().setSeconds(startSeconds).build())
+            .build())
+        .setStatus(ClusterOperationStatus.newBuilder()
+            .setStateStartTime(Timestamp.newBuilder().setSeconds(endSeconds).build())
+            .build())
+        .build();
+    return Operation.newBuilder()
+        .setName(operationName)
+        .setDone(true)
+        .setMetadata(Any.pack(metadata))
+        .build();
   }
 }
