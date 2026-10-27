@@ -27,7 +27,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.AuthenticationMode;
@@ -146,12 +145,12 @@ public class AuthServerAnnounceTest {
               new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                   new RouterPathLookup()),
               validator, userIdentityExtractor, discoveryServiceClient, new NoOpAeadCipher());
-      Services.startAndWait(router);
+      router.startAsync().awaitRunning();
     }
 
     @Override
     protected void shutDown() {
-      Services.stopAndWait(router);
+      router.stopAsync().awaitTerminated();
     }
 
     InetSocketAddress getRouterAddress() {

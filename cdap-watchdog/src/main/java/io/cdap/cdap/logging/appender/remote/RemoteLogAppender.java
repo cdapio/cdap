@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.appender.remote;
 
 
-import java.nio.charset.StandardCharsets;
 import com.google.common.hash.Hashing;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
@@ -179,7 +178,7 @@ public class RemoteLogAppender extends LogAppender {
    * do not want kafka dependencies in this class, this method is added here.
    */
   private static int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key, StandardCharsets.UTF_8).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashUnencodedChars(key).asInt()) % numPartitions;
   }
 
   private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,

@@ -474,7 +474,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       try {
         ((Closeable) info).close();
       } catch (Exception ignored) {
-        // Ignored because we are performing resource cleanup of RuntimeInfo.
       }
     }
   }

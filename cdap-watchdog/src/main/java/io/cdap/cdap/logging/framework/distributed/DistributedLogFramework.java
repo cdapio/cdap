@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.framework.distributed;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -108,16 +107,13 @@ public class DistributedLogFramework extends ResourceBalancerService {
     return new AbstractIdleService() {
       @Override
       protected void startUp() throws Exception {
-        // Starts all pipelines in parallel
-        List<Throwable> failures = new ArrayList<>();
-        for (Service pipeline : pipelines) {
-          pipeline.startAsync();
-        }
+        // Starts all pipeline
+        List<Exception> failures = new ArrayList<>();
         for (Service pipeline : pipelines) {
           try {
-            pipeline.awaitRunning();
-          } catch (IllegalStateException e) {
-            failures.add(pipeline.failureCause());
+            pipeline.startAsync().awaitRunning();
+          } catch (Exception e) {
+            failures.add(e);
           }
         }
         throwIfNeeded(failures);
@@ -125,32 +121,25 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
       @Override
       protected void shutDown() throws Exception {
-        // Stops all pipelines in parallel
-        List<Throwable> failures = new ArrayList<>();
-        for (Service pipeline : pipelines) {
-          pipeline.stopAsync();
-        }
+        // Stops all pipeline
+        List<Exception> failures = new ArrayList<>();
         for (Service pipeline : pipelines) {
           try {
-            pipeline.awaitTerminated();
-          } catch (IllegalStateException e) {
-            failures.add(pipeline.failureCause());
+            pipeline.stopAsync().awaitTerminated();
+          } catch (Exception e) {
+            failures.add(e);
           }
         }
         throwIfNeeded(failures);
       }
 
-      private void throwIfNeeded(List<Throwable> failures) throws Exception {
+      private void throwIfNeeded(List<Exception> failures) throws Exception {
         if (!failures.isEmpty()) {
-          Throwable first = failures.get(0);
+          Exception first = failures.get(0);
           for (int i = 1; i < failures.size(); i++) {
             first.addSuppressed(failures.get(i));
           }
-          Throwables.throwIfUnchecked(first);
-          if (first instanceof Exception) {
-            throw (Exception) first;
-          }
-          throw new RuntimeException(first);
+          throw first;
         }
       }
     };

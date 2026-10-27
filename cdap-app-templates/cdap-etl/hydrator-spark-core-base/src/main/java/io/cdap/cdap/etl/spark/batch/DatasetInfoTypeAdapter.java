@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
@@ -48,7 +49,7 @@ public class DatasetInfoTypeAdapter implements JsonSerializer<DatasetInfo>, Json
       return new DatasetInfo(datasetName, datasetArgs, null);
     }
     String datasetSplitClass = obj.get("datasetSplitClass").getAsString();
-    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader classLoader = MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    SparkBatchSourceFactory.class.getClassLoader());
     try {
       Class<?> splitClass = classLoader.loadClass(datasetSplitClass);

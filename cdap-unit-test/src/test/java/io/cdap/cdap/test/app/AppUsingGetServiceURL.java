@@ -17,7 +17,6 @@
 package io.cdap.cdap.test.app;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.UseDataSet;
@@ -182,7 +181,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

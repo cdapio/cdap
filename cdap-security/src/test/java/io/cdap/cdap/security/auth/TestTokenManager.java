@@ -42,7 +42,9 @@ public abstract class TestTokenManager {
   public void testTokenValidation() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
-    tokenManager.startAsync().awaitRunning();
+    if (!tokenManager.isRunning()) {
+      tokenManager.startAsync().awaitRunning();
+    }
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -98,7 +100,9 @@ public abstract class TestTokenManager {
   public void testTokenSerialization() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
-    tokenManager.startAsync().awaitRunning();
+    if (!tokenManager.isRunning()) {
+      tokenManager.startAsync().awaitRunning();
+    }
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();

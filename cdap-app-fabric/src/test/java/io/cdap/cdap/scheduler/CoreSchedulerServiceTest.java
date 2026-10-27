@@ -145,7 +145,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   public static void setup() {
     cConf = getInjector().getInstance(CConfiguration.class);
     scheduler = getInjector().getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
+    if (scheduler instanceof Service && ((Service) scheduler).state() == Service.State.NEW) {
       ((Service) scheduler).startAsync().awaitRunning();
     }
     messagingService = getInjector().getInstance(MessagingService.class);

@@ -18,7 +18,6 @@ package io.cdap.cdap.common.lang;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -283,7 +282,6 @@ public final class ClassLoaders {
         return URI.create(path.substring(0, path.indexOf("!/"))).toURL();
       }
     } catch (MalformedURLException e) {
-      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
     throw new IllegalStateException("Unsupported class URL: " + classUrl);

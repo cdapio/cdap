@@ -43,7 +43,6 @@ import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -150,18 +149,18 @@ public class LogHttpHandlerTest {
     }));
 
     transactionManager = injector.getInstance(TransactionManager.class);
-    Services.startAndWait(transactionManager);
+    transactionManager.startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    Services.startAndWait(dsOpService);
+    dsOpService.startAsync().awaitRunning();
 
     datasetService = injector.getInstance(DatasetService.class);
-    Services.startAndWait(datasetService);
+    datasetService.startAsync().awaitRunning();
 
     logQueryService = injector.getInstance(LogQueryService.class);
-    Services.startAndWait(logQueryService);
+    logQueryService.startAsync().awaitRunning();
 
-      mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
+    mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
     mockLogReader.generateLogs();
 
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -169,10 +168,10 @@ public class LogHttpHandlerTest {
 
   @AfterClass
   public static void tearDown() {
-    Services.stopAndWait(logQueryService);
-    Services.stopAndWait(datasetService);
-    Services.stopAndWait(dsOpService);
-    Services.stopAndWait(transactionManager);
+    logQueryService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    transactionManager.stopAsync().awaitTerminated();
   }
 
   @Test

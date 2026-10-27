@@ -157,9 +157,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     } catch (Exception e) {
       LOG.error("Encountered error while initializing ArtifactLocalizerTwillRunnable", e);
       if (e instanceof RuntimeException) {
-
         throw (RuntimeException) e;
-
       }
       throw new RuntimeException(e);
     }

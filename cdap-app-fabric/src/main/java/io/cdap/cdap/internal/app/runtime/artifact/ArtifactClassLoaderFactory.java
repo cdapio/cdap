@@ -105,14 +105,12 @@ final class ArtifactClassLoaderFactory {
         try {
           ((Closeable) finalProgramClassLoader).close();
         } catch (Exception ignored) {
-          // Ignored because we are closing the classloader and cleaning up resources.
         }
       }
       if (finalSparkClassLoader instanceof Closeable) {
         try {
           ((Closeable) finalSparkClassLoader).close();
         } catch (Exception ignored) {
-          // Ignored because we are closing the classloader and cleaning up resources.
         }
       }
     });
@@ -139,12 +137,10 @@ final class ArtifactClassLoaderFactory {
         try {
           classLoader.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup on close.
         }
         try {
           classLoaderFolder.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup on close.
         }
       });
     } catch (Exception e) {
@@ -184,12 +180,10 @@ final class ArtifactClassLoaderFactory {
         try {
           parentClassLoader.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup on close.
         }
         try {
           classLoaderFolder.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup on close.
         }
       });
     } catch (Exception e) {

@@ -17,7 +17,6 @@
 package io.cdap.cdap.test.app;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.annotation.Property;
@@ -250,7 +249,7 @@ public class AppWithServices extends AbstractApplication {
           TimeUnit.MILLISECONDS.sleep(sleepMs);
         }
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -282,7 +281,7 @@ public class AppWithServices extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

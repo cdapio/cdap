@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.cli.command.system;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
@@ -127,12 +127,14 @@ public class HelpCommand implements Command {
       Predicate<Command> filter) {
 
     for (Command childCommand : Iterables.filter(commandSet.getCommands(), filter)) {
-      Optional<String> commandCategory = getCategory(childCommand).or(parentCategory);
-      result.put(commandCategory.or(defaultCategory.getName()), childCommand);
+      Optional<String> commandCategory = getCategory(childCommand).isPresent() ? getCategory(childCommand)
+          : parentCategory;
+      result.put(commandCategory.orElse(defaultCategory.getName()), childCommand);
     }
 
     for (CommandSet<Command> childCommandSet : commandSet.getCommandSets()) {
-      Optional<String> commandCategory = getCategory(childCommandSet).or(parentCategory);
+      Optional<String> commandCategory = getCategory(childCommandSet).isPresent() ? getCategory(childCommandSet)
+          : parentCategory;
       populate(result, childCommandSet, commandCategory, defaultCategory, filter);
     }
   }
@@ -141,7 +143,7 @@ public class HelpCommand implements Command {
     if (object instanceof Categorized) {
       return Optional.of(((Categorized) object).getCategory());
     }
-    return Optional.absent();
+    return Optional.empty();
   }
 
   @Override

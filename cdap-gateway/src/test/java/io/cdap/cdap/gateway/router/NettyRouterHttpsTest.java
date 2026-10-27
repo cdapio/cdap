@@ -201,12 +201,12 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
                   new RouterPathLookup()),
               new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
               new NoOpAeadCipher());
-      io.cdap.cdap.common.service.Services.startAndWait(router);
+      router.startAsync().awaitRunning();
     }
 
     @Override
     protected void shutDown() {
-      io.cdap.cdap.common.service.Services.stopAndWait(router);
+      router.stopAsync().awaitTerminated();
     }
 
     public InetSocketAddress getRouterAddress() {

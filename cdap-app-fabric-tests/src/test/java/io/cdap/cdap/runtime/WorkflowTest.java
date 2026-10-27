@@ -16,7 +16,6 @@
 package io.cdap.cdap.runtime;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.SettableFuture;
@@ -77,7 +76,7 @@ public class WorkflowTest {
     try {
       return tmpFolder.newFolder();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   };
 

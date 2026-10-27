@@ -30,7 +30,6 @@ import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.security.KeyStores;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
 import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
 import io.cdap.cdap.gateway.router.handlers.ConfigBasedRequestBlockingHandler;
@@ -142,7 +141,7 @@ public class NettyRouter extends AbstractIdleService {
   protected void startUp() throws Exception {
     // If internal authorization enforcement is enabled, we avoid re-initialization of the token manager.
     if (SecurityUtil.isManagedSecurity(cConf) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
-      Services.startAndWait(tokenValidator);
+      tokenValidator.startAsync().awaitRunning();
     }
     ChannelGroup channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     serverCancellable = startServer(createServerBootstrap(channelGroup), channelGroup);
@@ -158,12 +157,13 @@ public class NettyRouter extends AbstractIdleService {
     serverCancellable.cancel();
     // If internal authorization enforcement is enabled, we avoid duplicate cleanup of the token manager.
     if (SecurityUtil.isManagedSecurity(cConf) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
-      Services.stopAndWait(tokenValidator);
+      tokenValidator.stopAsync().awaitTerminated();
     }
 
     LOG.info("Stopped Netty Router.");
   }
 
+  @Override
   protected Executor executor() {
     final AtomicInteger id = new AtomicInteger();
     return runnable -> {

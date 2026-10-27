@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.io;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -798,7 +797,6 @@ final class DatumWriterGenerator {
         mg.invokeVirtual(classType, getEncodeMethod(fieldType, field.getSchema()));
       }
     } catch (Exception e) {
-      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

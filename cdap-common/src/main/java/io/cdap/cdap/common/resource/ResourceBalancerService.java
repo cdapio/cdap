@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.common.resource;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -162,7 +161,6 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
       LOG.error("Exception while shutting down{}.", serviceName, th);
     }
     if (throwable != null) {
-      Throwables.throwIfUnchecked(throwable);
       throw new RuntimeException(throwable);
     }
     LOG.info("Stopped ResourceBalancer {} service.", serviceName);

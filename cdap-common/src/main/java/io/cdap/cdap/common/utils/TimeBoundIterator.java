@@ -20,7 +20,6 @@ package io.cdap.cdap.common.utils;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An iterator that will act as if there are no more elements if a certain amount of time has
@@ -49,7 +48,7 @@ public class TimeBoundIterator<T> extends AbstractIterator<T> {
 
   @Override
   protected T computeNext() {
-    if (stopwatch.elapsed(TimeUnit.MILLISECONDS) < timeBoundMillis && delegate.hasNext()) {
+    if (stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS) < timeBoundMillis && delegate.hasNext()) {
       return delegate.next();
     }
     return endOfData();

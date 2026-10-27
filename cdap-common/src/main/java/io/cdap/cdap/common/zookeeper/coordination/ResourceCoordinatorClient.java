@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Objects;
 import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -67,7 +66,6 @@ public final class ResourceCoordinatorClient extends AbstractService {
           } catch (Throwable t) {
             LOG.error("Failed to decode resource requirement: {}",
                 Bytes.toStringBinary(input.getData()), t);
-            Throwables.throwIfUnchecked(t);
             throw new RuntimeException(t);
           }
         }

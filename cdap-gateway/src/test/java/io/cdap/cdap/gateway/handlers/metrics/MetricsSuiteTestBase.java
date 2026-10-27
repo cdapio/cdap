@@ -24,7 +24,6 @@ import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.app.metrics.MapReduceMetrics;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -175,20 +174,20 @@ public abstract class MetricsSuiteTestBase {
     }));
 
     transactionManager = injector.getInstance(TransactionManager.class);
-    Services.startAndWait(transactionManager);
+    transactionManager.startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    Services.startAndWait(dsOpService);
+    dsOpService.startAsync().awaitRunning();
 
     datasetService = injector.getInstance(DatasetService.class);
-    Services.startAndWait(datasetService);
+    datasetService.startAsync().awaitRunning();
 
     metrics = injector.getInstance(MetricsQueryService.class);
-    Services.startAndWait(metrics);
+    metrics.startAsync().awaitRunning();
 
     collectionService = injector.getInstance(MetricsCollectionService.class);
-    Services.startAndWait(collectionService);
+    collectionService.startAsync().awaitRunning();
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -203,11 +202,11 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stopMetricsService(CConfiguration conf) {
-    Services.stopAndWait(collectionService);
-    Services.stopAndWait(datasetService);
-    Services.stopAndWait(dsOpService);
-    Services.stopAndWait(transactionManager);
-    Services.stopAndWait(metrics);
+    collectionService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    transactionManager.stopAsync().awaitTerminated();
+    metrics.stopAsync().awaitTerminated();
     conf.clear();
   }
 

@@ -17,7 +17,6 @@ package io.cdap.cdap.common.zookeeper;
 
 import com.google.common.base.Function;
 import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
 import java.io.IOException;
@@ -108,7 +107,6 @@ public class ZKExtOperationsTest {
             return 3;
           }
         } catch (Exception e) {
-          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
         throw new IllegalStateException("Illegal input " + input);

@@ -120,7 +120,6 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     try {
       storage.close();
     } catch (Exception ignored) {
-      // Ignored because we are performing resource cleanup in teardown.
     }
   }
 

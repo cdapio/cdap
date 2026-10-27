@@ -65,11 +65,8 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.store.SecureStoreUtils;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -1012,8 +1009,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
-    try (InputStream in = new FileInputStream(file);
-         OutputStream out = Locations.newOutputSupplier(targetLocation).getOutput()) {
+    try (java.io.InputStream in = new java.io.FileInputStream(file);
+         java.io.OutputStream out = Locations.newOutputSupplier(targetLocation).getOutput()) {
       ByteStreams.copy(in, out);
     }
     return targetLocation;
@@ -1027,8 +1024,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    try (InputStream in = Locations.newInputSupplier(programJarLocation).getInput();
-         OutputStream out = Locations.newOutputSupplier(programJarCopy).getOutput()) {
+    try (java.io.InputStream in = Locations.newInputSupplier(programJarLocation).getInput();
+         java.io.OutputStream out = Locations.newOutputSupplier(programJarCopy).getOutput()) {
       ByteStreams.copy(in, out);
     }
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);

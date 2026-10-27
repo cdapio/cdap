@@ -140,7 +140,6 @@ public class DatasetAdminService {
           try {
             admin.close();
           } catch (Exception ignored) {
-            // Ignored because we are in a finally block performing cleanup.
           }
         }
         return spec1;
@@ -229,7 +228,6 @@ public class DatasetAdminService {
           try {
             admin.close();
           } catch (Exception ignored) {
-            // Ignored because we are in a finally block performing cleanup.
           }
         }
         return null;
@@ -277,7 +275,6 @@ public class DatasetAdminService {
         try {
           admin.close();
         } catch (Exception ignored) {
-          // Ignored because we are in a finally block performing cleanup.
         }
       }
     }

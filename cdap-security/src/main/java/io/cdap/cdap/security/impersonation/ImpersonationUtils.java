@@ -50,15 +50,11 @@ public final class ImpersonationUtils {
       // UserGroupInformation#doAs will wrap any checked exceptions, so unwrap and rethrow here
       Throwable wrappedException = e.getUndeclaredThrowable();
       if (wrappedException instanceof RuntimeException) {
-
         throw (RuntimeException) wrappedException;
-
       }
 
       if (wrappedException instanceof Error) {
-
         throw (Error) wrappedException;
-
       }
 
       if (wrappedException instanceof Exception) {

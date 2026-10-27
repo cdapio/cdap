@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.security;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +96,6 @@ public final class YarnTokenUtils {
 
       return credentials;
     } catch (Exception e) {
-      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

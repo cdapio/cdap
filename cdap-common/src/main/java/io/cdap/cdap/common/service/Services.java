@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.common.service;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +53,36 @@ public class Services {
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit,
       @Nullable String timeoutErrorMessage)
       throws TimeoutException, InterruptedException, ExecutionException {
+    CountDownLatch runningLatch = new CountDownLatch(1);
+    AtomicReference<Throwable> failedThrowable = new AtomicReference<>();
+    service.addListener(new Service.Listener() {
+      @Override
+      public void running() {
+        runningLatch.countDown();
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        failedThrowable.set(failure);
+        runningLatch.countDown();
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        runningLatch.countDown();
+      }
+    }, MoreExecutors.directExecutor());
+    service.startAsync();
     try {
-      service.startAsync().awaitRunning(timeout, timeoutUnit);
+      if (!runningLatch.await(timeout, timeoutUnit)) {
+        throw new TimeoutException(timeoutErrorMessage);
+      }
+      if (failedThrowable.get() != null) {
+        throw new ExecutionException(failedThrowable.get());
+      }
+      if (service.state() != Service.State.RUNNING) {
+        throw new ExecutionException(new IllegalStateException("Service failed to start"));
+      }
     } catch (TimeoutException e) {
       LOG.error(timeoutErrorMessage != null ? timeoutErrorMessage
           : "Timeout while waiting to start service.", e);
@@ -65,14 +96,22 @@ public class Services {
         LOG.error("Error while trying to stop service: ", stopException);
       }
       throw timeoutException;
-    } catch (IllegalStateException e) {
+    } catch (InterruptedException e) {
+      LOG.error("Interrupted while waiting to start service.", e);
+      try {
+        service.stopAsync();
+      } catch (Exception stopException) {
+        LOG.error("Error while trying to stop service:", stopException);
+      }
+      throw e;
+    } catch (ExecutionException e) {
       LOG.error("Failed to start service.", e);
       try {
         service.stopAsync();
       } catch (Exception stopException) {
         LOG.error("Error while trying to stop service:", stopException);
       }
-      throw new ExecutionException(e);
+      throw e;
     }
   }
 
@@ -82,55 +121,5 @@ public class Services {
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit)
       throws TimeoutException, InterruptedException, ExecutionException {
     startAndWait(service, timeout, timeoutUnit, null);
-  }
-
-  /**
-   * Starts a service and waits for it to be running, using reflection
-   * to be compatible with both Guava 13 and Guava 15+ / 20+.
-   */
-  public static void startAndWait(Service service) {
-    try {
-      try {
-        // Guava 15+
-        service.getClass().getMethod("startAsync").invoke(service);
-        service.getClass().getMethod("awaitRunning").invoke(service);
-      } catch (NoSuchMethodException e) {
-        // Guava 13
-        Object future = service.getClass().getMethod("start").invoke(service);
-        if (future instanceof ListenableFuture) {
-          ((ListenableFuture<?>) future).get();
-        }
-      }
-    } catch (Exception e) {
-      if (e.getCause() instanceof RuntimeException) {
-        throw (RuntimeException) e.getCause();
-      }
-      throw new RuntimeException(e.getCause() != null ? e.getCause() : e);
-    }
-  }
-
-  /**
-   * Stops a service and waits for it to be terminated, using reflection
-   * to be compatible with both Guava 13 and Guava 15+ / 20+.
-   */
-  public static void stopAndWait(Service service) {
-    try {
-      try {
-        // Guava 15+
-        service.getClass().getMethod("stopAsync").invoke(service);
-        service.getClass().getMethod("awaitTerminated").invoke(service);
-      } catch (NoSuchMethodException e) {
-        // Guava 13
-        Object future = service.getClass().getMethod("stop").invoke(service);
-        if (future instanceof ListenableFuture) {
-          ((ListenableFuture<?>) future).get();
-        }
-      }
-    } catch (Exception e) {
-      if (e.getCause() instanceof RuntimeException) {
-        throw (RuntimeException) e.getCause();
-      }
-      throw new RuntimeException(e.getCause() != null ? e.getCause() : e);
-    }
   }
 }

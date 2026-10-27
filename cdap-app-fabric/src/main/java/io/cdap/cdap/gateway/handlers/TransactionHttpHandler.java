@@ -117,7 +117,6 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
           try {
             in.close();
           } catch (Exception ignored) {
-            // Ignored because we are performing resource cleanup after sending content.
           }
         }
 
@@ -126,7 +125,6 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
           try {
             in.close();
           } catch (Exception ignored) {
-            // Ignored because we are performing resource cleanup after error handling.
           }
         }
       }, EmptyHttpHeaders.INSTANCE);
@@ -134,7 +132,6 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         in.close();
       } catch (Exception ignored) {
-        // Ignored because we are performing resource cleanup on exception.
       }
       throw e;
     }

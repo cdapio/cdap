@@ -20,15 +20,10 @@ import com.google.common.io.Resources;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,12 +53,12 @@ public final class LocalizationUtils {
     } else {
       try {
         LOG.debug("Hard link file from {} to {}", input, localizedResource);
-        Files.createLink(Paths.get(localizedResource.toURI()),
+        java.nio.file.Files.createLink(Paths.get(localizedResource.toURI()),
             Paths.get(input.toURI()));
       } catch (Exception e) {
         LOG.debug("Copy file from {} to {}", input, localizedResource);
-        Files.copy(input.toPath(), localizedResource.toPath(),
-            StandardCopyOption.REPLACE_EXISTING);
+        java.nio.file.Files.copy(input.toPath(), localizedResource.toPath(),
+            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
       }
     }
     return localizedResource;
@@ -89,8 +84,8 @@ public final class LocalizationUtils {
     URL url = uri.toURL();
     String name = new File(uri.getPath()).getName();
     File tempFile = new File(tempDir, name);
-    try (InputStream in = Resources.asByteSource(url).openStream();
-         OutputStream out = new FileOutputStream(tempFile)) {
+    try (java.io.InputStream in = Resources.asByteSource(url).openStream();
+         java.io.OutputStream out = new java.io.FileOutputStream(tempFile)) {
       com.google.common.io.ByteStreams.copy(in, out);
     }
     return tempFile;

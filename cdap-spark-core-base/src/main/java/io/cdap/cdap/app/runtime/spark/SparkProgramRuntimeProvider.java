@@ -17,8 +17,6 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Binding;
@@ -141,11 +139,14 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
                                             SparkProgramRunner.class.getName(), classLoader);
           } catch (Throwable t) {
             // If there is any exception, close the classloader
-            Closeables.closeQuietly(classLoader);
+            try {
+              classLoader.close();
+            } catch (Exception ignored) {
+            }
             throw t;
           }
         } catch (IOException e) {
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       case DISTRIBUTED:
         // The distributed program runner is only used by the CDAP master to launch the twill container
@@ -192,7 +193,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
           bindEnum(binder(), type, providerSparkCompat.name());
         } catch (ClassNotFoundException e) {
           // This shouldn't happen
-          throw Throwables.propagate(e);
+          throw new RuntimeException(e);
         }
       }
 
@@ -211,7 +212,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       }
       return distributedRunnerClassLoader;
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -229,7 +230,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
   }
 

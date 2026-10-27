@@ -61,7 +61,6 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private static final String ZNODE_PATH_SEP = "/";
   private static final int MAX_RETRIES = 3;
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCache.class);
-  private static final java.util.concurrent.Executor DIRECT_EXECUTOR = Runnable::run;
 
   private final List<ACL> znodeACL;
 
@@ -198,7 +197,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
           },
           MoreExecutors.directExecutor());
 
-        // Block until it is done
+      // Block until it is done
       completion.get();
 
     } catch (Exception ioe) {
@@ -409,9 +408,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }
@@ -429,9 +426,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }
@@ -449,9 +444,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }
@@ -469,9 +462,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }

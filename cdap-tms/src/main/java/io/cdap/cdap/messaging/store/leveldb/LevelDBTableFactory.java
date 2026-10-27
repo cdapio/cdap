@@ -197,7 +197,6 @@ public final class LevelDBTableFactory implements TableFactory {
       try {
         metadataTable.getLevelDB().close();
       } catch (Exception ignored) {
-        // Ignored because we are performing resource cleanup during close.
       }
     }
     Collection<DB> dbs = levelDBs.values();
@@ -205,7 +204,6 @@ public final class LevelDBTableFactory implements TableFactory {
       try {
         db.close();
       } catch (Exception ignored) {
-        // Ignored because we are performing resource cleanup during close.
       }
     });
     dbs.clear();
@@ -213,7 +211,6 @@ public final class LevelDBTableFactory implements TableFactory {
       try {
         db.close();
       } catch (Exception ignored) {
-        // Ignored because we are performing resource cleanup during close.
       }
     });
     partitionedLevelDBs.clear();
@@ -330,7 +327,6 @@ public final class LevelDBTableFactory implements TableFactory {
             try {
               levelDBs.remove(dataDBPath).close();
             } catch (Exception ignored) {
-              // Ignored because we are performing background data cleanup.
             }
             filesToDelete.add(dataDBPath);
 
@@ -343,7 +339,6 @@ public final class LevelDBTableFactory implements TableFactory {
             try {
               levelDBs.remove(dataDBPath).close();
             } catch (Exception ignored) {
-              // Ignored because we are performing background data cleanup.
             }
             filesToDelete.add(dataDBPath);
           }

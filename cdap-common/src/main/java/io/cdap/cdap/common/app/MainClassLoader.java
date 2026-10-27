@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.app;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
@@ -143,7 +142,6 @@ public class MainClassLoader extends InterceptableClassLoader {
     try {
       return isRewriteNeeded(className);
     } catch (IOException e) {
-      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

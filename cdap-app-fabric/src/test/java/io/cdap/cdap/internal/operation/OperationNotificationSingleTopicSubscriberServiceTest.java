@@ -99,11 +99,8 @@ public class OperationNotificationSingleTopicSubscriberServiceTest extends Opera
   @AfterClass
   public static void afterClass() {
     try {
-
       pg.close();
-
     } catch (Exception ignored) {
-
     }
   }
 

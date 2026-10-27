@@ -77,12 +77,12 @@ class RouterResource extends ExternalResource {
             new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                 new RouterPathLookup()),
             mockValidator, extractor, discoveryServiceClient, new NoOpAeadCipher());
-    io.cdap.cdap.common.service.Services.startAndWait(router);
+    router.startAsync().awaitRunning();
   }
 
   @Override
   protected void after() {
-    io.cdap.cdap.common.service.Services.stopAndWait(router);
+    router.stopAsync().awaitTerminated();
   }
 
   InetSocketAddress getRouterAddress() {

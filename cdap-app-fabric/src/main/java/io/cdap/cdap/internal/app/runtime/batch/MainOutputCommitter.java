@@ -169,9 +169,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       taskContext.postTxCommit();
     } catch (Exception e) {
       if (e instanceof IOException) {
-
         throw (IOException) e;
-
       }
       throw new RuntimeException(e);
     }
@@ -208,9 +206,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       finishDatasets(jobContext, success);
     } catch (Exception e) {
       if (e instanceof IOException) {
-
         throw (IOException) e;
-
       }
       throw new RuntimeException(e);
     }

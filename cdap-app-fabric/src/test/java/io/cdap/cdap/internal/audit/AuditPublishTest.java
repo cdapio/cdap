@@ -48,6 +48,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.TopicId;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -86,7 +87,7 @@ public class AuditPublishTest {
 
     Injector injector = AppFabricTestHelper.getInjector(cConf, new AuditModule());
     messagingService = injector.getInstance(MessagingService.class);
-    if (messagingService instanceof Service) {
+    if (messagingService instanceof Service && ((Service) messagingService).state() == Service.State.NEW) {
       ((Service) messagingService).startAsync().awaitRunning();
     }
     auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
@@ -164,6 +165,13 @@ public class AuditPublishTest {
               // Version is dynamic for deploys in test cases
               entityId =
                   Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
+            } else if (entityId instanceof ApplicationId) {
+              ApplicationId applicationId = (ApplicationId) entityId;
+              entityId = new ApplicationId(applicationId.getNamespace(), applicationId.getApplication());
+            } else if (entityId instanceof ProgramId) {
+              ProgramId programId = (ProgramId) entityId;
+              entityId = new ProgramId(programId.getNamespace(), programId.getApplication(),
+                                       programId.getType(), programId.getProgram());
             }
             actualAuditEntities.put(message.getType(), entityId);
           }

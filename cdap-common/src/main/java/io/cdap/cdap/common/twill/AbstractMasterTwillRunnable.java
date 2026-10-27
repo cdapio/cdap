@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.twill;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -109,7 +108,6 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       Preconditions.checkArgument(!services.isEmpty(), "Should have at least one service");
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
-      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }
@@ -137,7 +135,6 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
     } catch (InterruptedException e) {
       LOG.debug("Waiting on latch interrupted {}", name);
     } catch (ExecutionException e) {
-      Throwables.throwIfUnchecked(e.getCause());
       throw new RuntimeException(e.getCause());
     }
   }

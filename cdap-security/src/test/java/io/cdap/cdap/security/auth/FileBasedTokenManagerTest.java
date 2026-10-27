@@ -27,7 +27,6 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.guice.FileBasedCoreSecurityModule;
@@ -61,7 +60,6 @@ public class FileBasedTokenManagerTest extends TestTokenManager {
                                              new FileBasedCoreSecurityModule(),
                                              new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
-    tokenManager.startAsync().awaitRunning();
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<>(tokenManager, tokenCodec);
   }

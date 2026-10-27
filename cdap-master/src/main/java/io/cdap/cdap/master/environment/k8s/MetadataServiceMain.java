@@ -145,11 +145,8 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
       @Override
       protected void doStop() {
         try {
-
           metadataStorage.close();
-
         } catch (Exception ignored) {
-
         }
         notifyStopped();
       }

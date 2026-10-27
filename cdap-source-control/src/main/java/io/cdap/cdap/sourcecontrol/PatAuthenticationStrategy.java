@@ -78,7 +78,7 @@ public class PatAuthenticationStrategy implements AuthenticationStrategy {
       try {
         data = secureStore.getData(namespaceId, passwordKeyName);
       } catch (Exception e) {
-        if (e instanceof IOException){
+        if (e instanceof IOException) {
           throw (IOException) e;
         }
         throw new AuthenticationConfigException("Failed to get password from secure store", e);
