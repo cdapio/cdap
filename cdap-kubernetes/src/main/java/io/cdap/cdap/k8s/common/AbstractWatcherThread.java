@@ -106,6 +106,23 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   }
 
   /**
+   * Called when listing or watching fails while the thread is still running. Subclasses may
+   * override to log specific failures (such as HTTP 403) more prominently before the retry loop.
+   */
+  protected void onWatchFailure(Exception e) {
+    Throwable cause = e.getCause();
+    if (cause instanceof IOException || e instanceof IllegalStateException) {
+      // Log at lower level if it is caused by IOException or IllegalStateException, which will happen
+      // if connection to the API server is lost or the watch is closed
+      LOG.trace("Exception raised when watching for changes in resource of type {}",
+          resourceType, e);
+    } else {
+      LOG.warn("Exception raised when watching for changes in resource of type {}",
+          resourceType, e);
+    }
+  }
+
+  /**
    * Close the existing watch. Children class can call this method to force closing the existing
    * watch.
    */
@@ -168,16 +185,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
         }
 
         // We just retry on any form of exceptions
-        Throwable cause = e.getCause();
-        if (cause instanceof IOException || e instanceof IllegalStateException) {
-          // Log at lower level if it is caused by IOException or IllegalStateException, which will happen
-          // if connection to the API server is lost or the watch is closed
-          LOG.trace("Exception raised when watching for changes in resource of type {}",
-              resourceType, e);
-        } else {
-          LOG.warn("Exception raised when watching for changes in resource of type {}",
-              resourceType, e);
-        }
+        onWatchFailure(e);
 
         try {
           // If not stopped and failed more than once, sleep for some random second.
