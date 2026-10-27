@@ -107,11 +107,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   protected void shutDown() throws Exception {
     super.shutDown();
     try {
-
       logAppenderInitializer.close();
-
     } catch (Exception ignored) {
-
     }
 
     Exception failure = null;

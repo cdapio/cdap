@@ -137,9 +137,7 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
         stats.collect();
       } catch (Throwable t) {
         if (t instanceof InterruptedException) {
-
           throw (InterruptedException) t;
-
         }
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ServiceUnavailableException || rootCause instanceof TException) {

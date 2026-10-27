@@ -169,7 +169,6 @@ public class LogHttpHandlerTest {
   @AfterClass
   public static void tearDown() {
     logQueryService.stopAsync().awaitTerminated();
-
     datasetService.stopAsync().awaitTerminated();
     dsOpService.stopAsync().awaitTerminated();
     transactionManager.stopAsync().awaitTerminated();

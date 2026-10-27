@@ -236,11 +236,8 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
         is = urlConn.getInputStream();
         if (this.responseCode >= 400) {
           try {
-
             is.close();
-
           } catch (Exception ignored) {
-
           }
           is = null;
         }
@@ -281,11 +278,8 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
     @Override
     public void close() {
       try {
-
         input.close();
-
       } catch (Exception ignored) {
-
       }
       urlConn.disconnect();
     }
@@ -317,11 +311,8 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
     @Override
     public void finished() {
       try {
-
         responseInfo.close();
-
       } catch (Exception ignored) {
-
       }
     }
 
@@ -329,11 +320,8 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
     public void handleError(@Nullable Throwable cause) {
       LOG.warn("Exception raised when handling request to {}", url, cause);
       try {
-
         responseInfo.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

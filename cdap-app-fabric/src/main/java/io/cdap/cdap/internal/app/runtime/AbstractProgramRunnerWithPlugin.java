@@ -75,11 +75,8 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
   protected void closeAllQuietly(Iterable<Closeable> closeables) {
     for (Closeable c : closeables) {
       try {
-
         c.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

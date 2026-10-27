@@ -648,11 +648,8 @@ public class TestBase {
     metadataService.stopAsync().awaitTerminated();
     metadataSubscriberService.stopAsync().awaitTerminated();
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
     txService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {

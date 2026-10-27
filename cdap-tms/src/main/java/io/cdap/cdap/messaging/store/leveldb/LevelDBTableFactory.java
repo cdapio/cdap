@@ -195,20 +195,23 @@ public final class LevelDBTableFactory implements TableFactory {
     }
     if (metadataTable != null) {
       try {
-
         metadataTable.getLevelDB().close();
-
       } catch (Exception ignored) {
-
       }
     }
     Collection<DB> dbs = levelDBs.values();
     dbs.forEach(db -> {
-      try { db.close(); } catch (Exception ignored) { }
+      try {
+        db.close();
+      } catch (Exception ignored) {
+      }
     });
     dbs.clear();
     partitionedLevelDBs.values().forEach(db -> {
-      try { db.close(); } catch (Exception ignored) { }
+      try {
+        db.close();
+      } catch (Exception ignored) {
+      }
     });
     partitionedLevelDBs.clear();
   }
@@ -322,11 +325,8 @@ public final class LevelDBTableFactory implements TableFactory {
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
             try {
-
               levelDBs.remove(dataDBPath).close();
-
             } catch (Exception ignored) {
-
             }
             filesToDelete.add(dataDBPath);
 
@@ -337,11 +337,8 @@ public final class LevelDBTableFactory implements TableFactory {
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
             try {
-
               levelDBs.remove(dataDBPath).close();
-
             } catch (Exception ignored) {
-
             }
             filesToDelete.add(dataDBPath);
           }

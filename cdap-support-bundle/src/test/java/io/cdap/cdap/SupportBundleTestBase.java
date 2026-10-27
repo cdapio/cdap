@@ -247,11 +247,8 @@ public abstract class SupportBundleTestBase {
       ((Service) messagingService).stopAsync().awaitTerminated();
     }
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
     supportBundleInternalService.stopAsync().awaitTerminated();
   }

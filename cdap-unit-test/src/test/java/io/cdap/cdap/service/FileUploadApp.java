@@ -17,7 +17,6 @@
 package io.cdap.cdap.service;
 
 import com.google.common.base.Throwables;
-
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -135,11 +134,8 @@ public class FileUploadApp extends AbstractApplication {
         public void onError(HttpServiceResponder responder, Throwable failureCause) {
           try {
             try {
-
               channel.close();
-
             } catch (Exception ignored) {
-
             }
             partitionDir.delete(true);
           } catch (IOException e) {

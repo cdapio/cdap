@@ -154,14 +154,8 @@ public class LogBufferWriter implements Flushable, Closeable {
     }
 
     try {
-
-
       currOutputStream.close();
-
-
     } catch (Exception ignored) {
-
-
     }
     executorService.shutdown();
   }
@@ -193,11 +187,8 @@ public class LogBufferWriter implements Flushable, Closeable {
     currOutputStream.flush();
     // close current location output stream
     try {
-
       currOutputStream.close();
-
     } catch (Exception ignored) {
-
     }
 
     writtenBytes = 0;

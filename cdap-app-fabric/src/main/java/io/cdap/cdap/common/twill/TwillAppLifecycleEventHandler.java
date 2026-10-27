@@ -208,11 +208,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   @Override
   public void destroy() {
     try {
-
       logAppenderInitializer.close();
-
     } catch (Exception ignored) {
-
     }
     if (zkClientService != null) {
       zkClientService.stopAsync();

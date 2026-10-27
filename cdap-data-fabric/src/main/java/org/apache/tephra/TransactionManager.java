@@ -634,7 +634,7 @@ public class TransactionManager extends AbstractService {
             case INPROGRESS:
               long expiration = edit.getExpiration();
               TransactionType type = edit.getType();
-              // Check if transaction needs to be migrated to have expiration and type. Previous version of 
+              // Check if transaction needs to be migrated to have expiration and type. Previous version of
               // long running transactions were represented with expiration time as -1.
               // This can be removed when we stop supporting TransactionEditCodecV2.
               if (expiration < 0) {
@@ -813,7 +813,7 @@ public class TransactionManager extends AbstractService {
     txMetricsCollector.histogram("start.short.latency", (int) timer.elapsed(TimeUnit.MILLISECONDS));
     return tx;
   }
-  
+
   private static long getTxExpiration(long timeoutInSeconds) {
     long currentTime = System.currentTimeMillis();
     return currentTime + TimeUnit.SECONDS.toMillis(timeoutInSeconds);
@@ -1089,14 +1089,14 @@ public class TransactionManager extends AbstractService {
 
   private void doAbort(long writePointer, long[] checkpointWritePointers, TransactionType type) {
     committingChangeSets.remove(writePointer);
-    
+
     if (type == TransactionType.LONG) {
-      // Long running transactions cannot be aborted as their change sets are not saved, 
+      // Long running transactions cannot be aborted as their change sets are not saved,
       // and hence the changes cannot be rolled back. Invalidate the long running transaction instead.
       doInvalidate(writePointer);
       return;
     }
-    
+
     // makes tx visible (assumes that all operations were rolled back)
     // remove from in-progress set, so that it does not get excluded in the future
     InProgressTx removed = inProgress.remove(writePointer);
@@ -1231,7 +1231,7 @@ public class TransactionManager extends AbstractService {
       this.logReadLock.unlock();
     }
   }
-  
+
   private boolean doTruncateInvalidTxBefore(long time) throws InvalidTruncateTimeException {
     LOG.info("Removing tx ids before {} from invalid list", time);
     long truncateWp = time * TxConstants.MAX_TX_PER_MS;
@@ -1239,7 +1239,7 @@ public class TransactionManager extends AbstractService {
     if (inProgress.lowerKey(truncateWp) != null) {
       throw new InvalidTruncateTimeException("Transactions started earlier than " + time + " are in-progress");
     }
-    
+
     // Find all invalid transactions earlier than truncateWp
     LongSet toTruncate = new LongArraySet();
     LongIterator it = invalidTxList.toRawList().iterator();
@@ -1300,7 +1300,7 @@ public class TransactionManager extends AbstractService {
     addInProgressAndAdvance(newWritePointer, existingTx.getVisibilityUpperBound(), existingTx.getExpiration(),
                             InProgressType.CHECKPOINT, existingTx.getClientId());
   }
-  
+
   // hack for exposing important metric
   public int getExcludedListSize() {
     return getInvalidSize() + inProgress.size();

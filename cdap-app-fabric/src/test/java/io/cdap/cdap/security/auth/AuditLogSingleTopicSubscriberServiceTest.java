@@ -94,11 +94,8 @@ public class AuditLogSingleTopicSubscriberServiceTest {
   @AfterClass
   public static void afterClass() {
     try {
-
       pg.close();
-
     } catch (Exception ignored) {
-
     }
   }
 

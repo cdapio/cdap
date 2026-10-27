@@ -499,11 +499,8 @@ public abstract class AbstractClientMessagingService implements MessagingService
       @Override
       public void close() {
         try {
-
           inputStream.close();
-
         } catch (Exception ignored) {
-
         }
         urlConn.disconnect();
       }

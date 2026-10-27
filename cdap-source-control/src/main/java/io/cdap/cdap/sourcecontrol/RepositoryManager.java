@@ -204,9 +204,7 @@ public class RepositoryManager implements AutoCloseable {
           e);
     } catch (Exception e) {
       if (e instanceof RepositoryConfigValidationException) {
-
         throw (RepositoryConfigValidationException) e;
-
       }
       throw new RemoteRepositoryValidationException(
           "Failed to list remotes in remote repository.",

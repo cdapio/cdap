@@ -115,32 +115,23 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
         @Override
         public void finished() throws Exception {
           try {
-
             in.close();
-
           } catch (Exception ignored) {
-
           }
         }
 
         @Override
         public void handleError(@Nullable Throwable cause) {
           try {
-
             in.close();
-
           } catch (Exception ignored) {
-
           }
         }
       }, EmptyHttpHeaders.INSTANCE);
     } catch (Exception e) {
       try {
-
         in.close();
-
       } catch (Exception ignored) {
-
       }
       throw e;
     }

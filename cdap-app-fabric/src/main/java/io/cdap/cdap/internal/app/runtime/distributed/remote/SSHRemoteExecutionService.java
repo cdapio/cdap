@@ -61,11 +61,8 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
       return;
     }
     try {
-
       sshSession.close();
-
     } catch (Exception ignored) {
-
     }
     sshSession = createServiceProxyTunnel();
   }
@@ -73,11 +70,8 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
   @Override
   protected void doShutdown() {
     try {
-
       sshSession.close();
-
     } catch (Exception ignored) {
-
     }
     LOG.debug("Stopped ssh service for run {}", getProgramRunId());
   }

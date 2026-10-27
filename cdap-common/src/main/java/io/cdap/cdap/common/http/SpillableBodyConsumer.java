@@ -86,7 +86,12 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
 
   @Override
   public void finished(HttpResponder responder) {
-    try { if (outputStream != null) outputStream.close(); } catch (IOException ignored) { }
+    try {
+      if (outputStream != null) {
+        outputStream.close();
+      }
+    } catch (IOException ignored) {
+    }
 
     try (InputStream is = new CombineInputStream(buffer, outputStream == null ? null : spillPath)) {
       processInput(is, responder);
@@ -103,7 +108,12 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
 
   @Override
   public void handleError(Throwable cause) {
-    try { if (outputStream != null) outputStream.close(); } catch (IOException ignored) { }
+    try {
+      if (outputStream != null) {
+        outputStream.close();
+      }
+    } catch (IOException ignored) {
+    }
     cleanup();
   }
 

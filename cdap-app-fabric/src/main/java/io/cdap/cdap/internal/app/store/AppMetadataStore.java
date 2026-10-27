@@ -3208,7 +3208,6 @@ public class AppMetadataStore {
 
       try (JsonReader reader = new JsonReader(new StringReader(rawAppMeta))) {
         reader.beginObject();
-
         while (reader.hasNext()) {
           if (SPEC_KEY.equals(reader.nextName())) {
             reader.beginObject();

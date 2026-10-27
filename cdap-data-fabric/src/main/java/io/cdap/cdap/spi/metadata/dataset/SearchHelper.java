@@ -198,11 +198,8 @@ public class SearchHelper {
     public void close() {
       for (String scope : datasets.keySet()) {
         try {
-
           datasets.get(scope).close();
-
         } catch (Exception ignored) {
-
         }
       }
       datasets.clear();

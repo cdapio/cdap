@@ -148,7 +148,6 @@ public abstract class NettyRouterTestBase {
     for (ServerService server : allServers) {
       server.startAsync().awaitRunning();
     }
-
     // Wait for both servers of defaultService to be registered
     ServiceDiscovered discover = ((DiscoveryServiceClient) discoveryService)
         .discover(APP_FABRIC_SERVICE);

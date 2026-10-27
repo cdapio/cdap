@@ -331,11 +331,8 @@ public class MasterServiceMain extends DaemonMain {
     stopQuietly(electionInfoService);
     stopQuietly(zkClient);
     try {
-
       logAppenderInitializer.close();
-
     } catch (Exception ignored) {
-
     }
   }
 
@@ -718,25 +715,16 @@ public class MasterServiceMain extends DaemonMain {
       }
       services.clear();
       try {
-
         metadataStorage.close();
-
       } catch (Exception ignored) {
-
       }
       try {
-
         accessControllerInstantiator.close();
-
       } catch (Exception ignored) {
-
       }
       try {
-
         logAppenderInitializer.close();
-
       } catch (Exception ignored) {
-
       }
     }
 

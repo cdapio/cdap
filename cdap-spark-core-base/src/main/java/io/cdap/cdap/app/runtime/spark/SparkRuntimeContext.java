@@ -115,11 +115,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   public void close() {
     super.close();
     try {
-
       closeable.close();
-
     } catch (Exception ignored) {
-
     }
   }
 

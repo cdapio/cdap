@@ -192,11 +192,8 @@ public class CConfigurationTest {
 
       // Close the InputStream
       try {
-
         resource.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

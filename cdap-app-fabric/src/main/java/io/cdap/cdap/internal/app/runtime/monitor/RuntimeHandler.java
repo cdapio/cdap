@@ -227,11 +227,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
       public void handleError(Throwable cause) {
         LOG.error("Failed to write spark event logs for {}", programRunId, cause);
         try {
-
           os.close();
-
         } catch (Exception ignored) {
-
         }
         try {
           location.delete();
@@ -352,11 +349,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
         }
       } finally {
         try {
-
           inputStream.close();
-
         } catch (Exception ignored) {
-
         }
         buffer.release();
       }
@@ -380,11 +374,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     void setDelegate(InputStream delegate) {
       try {
-
         in.close();
-
       } catch (Exception ignored) {
-
       }
       in = delegate;
     }

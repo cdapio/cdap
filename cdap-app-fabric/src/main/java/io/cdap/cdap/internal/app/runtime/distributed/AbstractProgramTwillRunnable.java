@@ -299,19 +299,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       // Close the Program and the ProgramRunner
       try {
-
         program.close();
-
       } catch (Exception ignored) {
-
       }
       if (programRunner instanceof Closeable) {
         try {
-
           ((Closeable) programRunner).close();
-
         } catch (Exception ignored) {
-
         }
       }
 
@@ -503,11 +497,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void stopCoreServices() {
     try {
-
       logAppenderInitializer.close();
-
     } catch (Exception ignored) {
-
     }
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {

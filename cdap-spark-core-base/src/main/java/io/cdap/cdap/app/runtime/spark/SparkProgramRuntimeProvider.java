@@ -140,11 +140,8 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
           } catch (Throwable t) {
             // If there is any exception, close the classloader
             try {
-
               classLoader.close();
-
             } catch (Exception ignored) {
-
             }
             throw t;
           }

@@ -270,9 +270,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     } catch (Exception e) {
       // the only checked exception that the callable throws is IOException
       if (e instanceof IOException) {
-
         throw (IOException) e;
-
       }
       throw new RuntimeException(e);
     }

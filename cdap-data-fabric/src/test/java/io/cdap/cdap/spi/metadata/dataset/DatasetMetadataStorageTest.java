@@ -118,11 +118,8 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     txManager.stopAsync().awaitTerminated();
     storage.dropIndex();
     try {
-
       storage.close();
-
     } catch (Exception ignored) {
-
     }
   }
 

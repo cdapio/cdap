@@ -111,11 +111,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       throw e;
     } finally {
       try {
-
         reader.close();
-
       } catch (Exception ignored) {
-
       }
     }
   }

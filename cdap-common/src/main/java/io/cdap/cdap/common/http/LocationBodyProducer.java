@@ -65,11 +65,8 @@ public class LocationBodyProducer extends BodyProducer {
       LOG.warn("Error in sending location {}", location, throwable);
     }
     try {
-
       inputStream.close();
-
     } catch (Exception ignored) {
-
     }
   }
 }

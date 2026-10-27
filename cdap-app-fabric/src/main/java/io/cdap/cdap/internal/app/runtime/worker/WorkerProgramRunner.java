@@ -161,11 +161,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       return controller;
     } catch (Throwable t) {
       try {
-
         pluginInstantiator.close();
-
       } catch (Exception ignored) {
-
       }
       throw t;
     }

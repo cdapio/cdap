@@ -73,11 +73,8 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
       LOG.error("Failed to handle upload", cause);
       if (output != null) {
         try {
-
           output.close();
-
         } catch (Exception ignored) {
-
         }
       }
       onError(cause);

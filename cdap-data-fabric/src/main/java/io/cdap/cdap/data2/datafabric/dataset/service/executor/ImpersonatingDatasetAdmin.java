@@ -114,9 +114,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
       throw ioe;
     } catch (Exception t) {
       if (t instanceof RuntimeException) {
-
         throw (RuntimeException) t;
-
       }
 
       // since the callables we execute only throw IOException (besides unchecked exceptions),

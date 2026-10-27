@@ -408,9 +408,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }
@@ -428,9 +426,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }
@@ -448,9 +444,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }
@@ -468,9 +462,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
             } catch (Throwable t) {
               LOG.error("Exception notifying listener {}", listener, t);
               if (t instanceof Error) {
-
                 throw (Error) t;
-
               }
             }
           }

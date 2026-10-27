@@ -112,16 +112,11 @@ public final class Locations {
               createDFSStreamSizeProvider(fs, false, path, input));
         } catch (Throwable t) {
           try {
-
             input.close();
-
           } catch (Exception ignored) {
-
           }
           if (t instanceof IOException) {
-
             throw (IOException) t;
-
           }
           throw new IOException(t);
         }
@@ -176,16 +171,11 @@ public final class Locations {
           throw new IOException("Failed to create SeekableInputStream from location " + location);
         } catch (Throwable t) {
           try {
-
             input.close();
-
           } catch (Exception ignored) {
-
           }
           if (t instanceof IOException) {
-
             throw (IOException) t;
-
           }
           throw new IOException(t);
         }

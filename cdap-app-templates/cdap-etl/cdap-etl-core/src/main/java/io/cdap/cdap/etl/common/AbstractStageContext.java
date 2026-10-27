@@ -116,9 +116,7 @@ public abstract class AbstractStageContext implements StageContext {
               .newPluginInstance(scopePluginId(pluginId), macroEvaluator));
     } catch (Exception e) {
       if (e instanceof InstantiationException) {
-
         throw (InstantiationException) e;
-
       }
       throw new RuntimeException(e);
     }

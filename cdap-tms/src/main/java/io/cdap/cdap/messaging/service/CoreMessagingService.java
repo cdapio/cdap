@@ -268,11 +268,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
     try {
-
       tableFactory.close();
-
     } catch (Exception ignored) {
-
     }
     LOG.info("Core Messaging Service stopped");
   }

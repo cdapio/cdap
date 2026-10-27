@@ -206,11 +206,8 @@ public final class SparkContainerLauncher {
     } finally {
       if (sparkRuntimeContext instanceof Closeable) {
         try {
-
           ((Closeable) sparkRuntimeContext).close();
-
         } catch (Exception ignored) {
-
         }
       }
     }

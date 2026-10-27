@@ -17,7 +17,6 @@
 package io.cdap.cdap.kafka.run;
 
 import com.google.common.base.Preconditions;
-
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;

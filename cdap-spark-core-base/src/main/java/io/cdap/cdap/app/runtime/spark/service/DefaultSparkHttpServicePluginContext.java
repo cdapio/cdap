@@ -90,11 +90,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
       @Override
       public void onTaskCompletion(TaskContext context) {
         try {
-
           pluginInstantiator.close();
-
         } catch (Exception ignored) {
-
         }
       }
     });
@@ -266,11 +263,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
   @Override
   public void close() {
     try {
-
       pluginInstantiator.close();
-
     } catch (Exception ignored) {
-
     }
   }
 
