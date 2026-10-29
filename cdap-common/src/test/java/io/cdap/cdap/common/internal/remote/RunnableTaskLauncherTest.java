@@ -38,7 +38,7 @@ public class RunnableTaskLauncherTest {
 
   @Test
   public void testLaunchRunnableTask() throws Exception {
-    String want = "test-want";
+    String want = "test-want-købere-äé";
     RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
         TestRunnableTask.class.getName()).withParam(want).build();
 
@@ -57,7 +57,7 @@ public class RunnableTaskLauncherTest {
 
     @Override
     public void run(RunnableTaskContext context) throws Exception {
-      context.writeResult(context.getParam().getBytes());
+      context.writeResult(context.getParam().getBytes(StandardCharsets.UTF_8));
     }
   }
 
