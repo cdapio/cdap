@@ -38,6 +38,12 @@ import javax.annotation.Nullable;
  */
 final class MessagingHandlerAuthorizer {
 
+  /**
+   * Credential value set by {@code WorkerAuthenticationContext} when a task worker or preview
+   * runner makes a background call outside of a user request.
+   */
+  private static final String EMPTY_WORKER_CREDENTIAL_VALUE = "empty-worker-user-credential";
+
   private final boolean internalAuthEnabled;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
@@ -72,11 +78,48 @@ final class MessagingHandlerAuthorizer {
     return namespaceId;
   }
 
+  /**
+   * Authorizes the caller to publish messages to a topic in the given namespace.
+   *
+   * <p>Requires {@link StandardPermission#UPDATE} on the namespace. When internal authentication
+   * is enabled, publishing to the system namespace requires an internal credential, and background
+   * calls from a task worker or preview runner carrying the worker placeholder internal credential
+   * are permitted without calling the access enforcer.
+   *
+   * @return the id of the namespace
+   * @throws IllegalArgumentException if the namespace name is invalid
+   * @throws UnauthorizedException if the caller is not allowed to publish to the namespace
+   */
+  NamespaceId authorizePublish(String namespace) throws AccessException {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    Principal principal = authenticationContext.getPrincipal();
+    if (internalAuthEnabled && NamespaceId.SYSTEM.equals(namespaceId)) {
+      if (!hasInternalCredential(principal)) {
+        throw new UnauthorizedException(
+            "Only internal services can access topics of the system namespace.");
+      }
+      if (hasEmptyWorkerCredential(principal)) {
+        return namespaceId;
+      }
+    }
+    accessEnforcer.enforce(namespaceId, principal, StandardPermission.UPDATE);
+    return namespaceId;
+  }
+
   private static boolean hasInternalCredential(@Nullable Principal principal) {
     if (principal == null) {
       return false;
     }
     Credential credential = principal.getFullCredential();
     return credential != null && credential.getType() == Credential.CredentialType.INTERNAL;
+  }
+
+  private static boolean hasEmptyWorkerCredential(@Nullable Principal principal) {
+    if (principal == null) {
+      return false;
+    }
+    Credential credential = principal.getFullCredential();
+    return credential != null && credential.getType() == Credential.CredentialType.INTERNAL
+        && EMPTY_WORKER_CREDENTIAL_VALUE.equals(credential.getValue());
   }
 }
