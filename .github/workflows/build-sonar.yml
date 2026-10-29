@@ -113,7 +113,7 @@ jobs:
           -Dsonar.branch.name=$BRANCH
 
       - name: Checkstyle report
-        uses: cdapio/checkstyle-github-action@add_filter
+        uses: cdapio/checkstyle-github-action@cfb6d45831dce5bfd439fb53efe5200005b23821  # 'add_filter' branch pinned to immutable SHA (was a mutable branch ref)
         if: ${{ github.event_name == 'pull_request' }}
         with:
           path: '**/checkstyle-result.xml'
