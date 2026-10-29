@@ -23,13 +23,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.SpillableBodyConsumer;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.messaging.DefaultStoreRequest;
+import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
-import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.StoreRequest;
-import io.cdap.cdap.messaging.DefaultStoreRequest;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
@@ -66,6 +66,13 @@ import org.apache.avro.io.EncoderFactory;
 
 /**
  * A netty http handler for handling message storage REST API for the messaging system.
+ *
+ * <p>Every endpoint first authorizes the caller with {@link StandardPermission#UPDATE} on the
+ * namespace of the topic, before any temporary file is created or the request body is read. When
+ * internal authentication is enabled, only internal callers can write to topics of the system
+ * namespace. Background publishing to the system namespace from a task worker or preview runner,
+ * which carries the worker placeholder internal credential, is allowed on {@link #publish} without
+ * token secret validation.
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class StoreHandler extends AbstractHttpHandler {
@@ -73,14 +80,17 @@ public final class StoreHandler extends AbstractHttpHandler {
   private final java.nio.file.Path tempDir;
   private final int bufferSize;
   private final MessagingService messagingService;
+  private final MessagingHandlerAuthorizer authorizer;
 
   @Inject
-  StoreHandler(CConfiguration cConf, MessagingService messagingService) {
+  StoreHandler(CConfiguration cConf, MessagingService messagingService,
+      MessagingHandlerAuthorizer authorizer) {
     this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
         cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
     this.bufferSize =
         cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB) * 1024 * 1024;
     this.messagingService = messagingService;
+    this.authorizer = authorizer;
 
     DirUtils.mkdirs(tempDir.toFile());
   }
@@ -91,7 +101,7 @@ public final class StoreHandler extends AbstractHttpHandler {
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
 
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorizePublish(namespace).topic(topic);
     return new SpillableBodyConsumer(Files.createTempFile(tempDir, "tms.publish", ".tmp"),
         bufferSize) {
       @Override
@@ -124,7 +134,7 @@ public final class StoreHandler extends AbstractHttpHandler {
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
 
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.UPDATE).topic(topic);
     return new SpillableBodyConsumer(Files.createTempFile(tempDir, "tms.store", ".tmp"),
         bufferSize) {
       @Override
@@ -149,7 +159,7 @@ public final class StoreHandler extends AbstractHttpHandler {
   public void rollback(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.UPDATE).topic(topic);
 
     Decoder decoder = DecoderFactory.get()
         .directBinaryDecoder(new ByteBufInputStream(request.content()), null);
