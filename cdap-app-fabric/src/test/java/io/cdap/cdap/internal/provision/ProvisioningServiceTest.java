@@ -277,6 +277,8 @@ public class ProvisioningServiceTest {
       return provisioningService.provision(provisionRequest, context);
     });
     task.run();
+    Tasks.waitFor(true, () -> MockProvisioner.isWaiting(taskFields.programRunId.getRun()),
+                  10, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     Assert.assertTrue(provisioningService.cancelProvisionTask(taskFields.programRunId).isPresent());
 
@@ -294,6 +296,8 @@ public class ProvisioningServiceTest {
       return provisioningService.deprovision(taskFields.programRunId, context, t -> { });
     });
     task.run();
+    Tasks.waitFor(true, () -> MockProvisioner.isWaiting(taskFields.programRunId.getRun()),
+                  10, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(provisioningService.cancelDeprovisionTask(taskFields.programRunId).isPresent());
 
     // check that the state of the task is cancelled

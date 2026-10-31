@@ -301,6 +301,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // service is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(serviceId1));
     startProgram(serviceId1, 200);
+    waitState(serviceId1, RUNNING);
 
     // deploy the second version of the app
     Assert.assertEquals(200, deploy(appId2, appRequest).getResponseCode());
@@ -322,6 +323,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     stopProgram(serviceId1, null, 200, null);
     stopProgram(serviceId2, null, 200, null);
+    waitState(serviceId1, STOPPED);
     waitState(serviceId2, STOPPED);
     // cleanup
     deleteApp(appId1, 200);
