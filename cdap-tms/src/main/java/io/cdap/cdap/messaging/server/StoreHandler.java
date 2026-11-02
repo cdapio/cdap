@@ -70,9 +70,8 @@ import org.apache.avro.io.EncoderFactory;
  * <p>Every endpoint first authorizes the caller with {@link StandardPermission#UPDATE} on the
  * namespace of the topic, before any temporary file is created or the request body is read. When
  * internal authentication is enabled, only internal callers can write to topics of the system
- * namespace. Background publishing to the system namespace from a task worker or preview runner,
- * which carries the worker placeholder internal credential, is allowed on {@link #publish} without
- * token secret validation.
+ * namespace, except on {@link #publish} for the preview topic and for worker background publishing
+ * to worker system topics (see {@link MessagingHandlerAuthorizer#authorizePublish}).
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class StoreHandler extends AbstractHttpHandler {
@@ -101,7 +100,7 @@ public final class StoreHandler extends AbstractHttpHandler {
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
 
-    TopicId topicId = authorizer.authorizePublish(namespace).topic(topic);
+    TopicId topicId = authorizer.authorizePublish(namespace, topic).topic(topic);
     return new SpillableBodyConsumer(Files.createTempFile(tempDir, "tms.publish", ".tmp"),
         bufferSize) {
       @Override

@@ -27,6 +27,9 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -34,7 +37,8 @@ import javax.annotation.Nullable;
  *
  * <p>Topics are authorized through their namespace because authorization does not support topics
  * as entities. When internal authentication is enabled, only internal callers can access the
- * topics of the system namespace.
+ * topics of the system namespace, except for publishing to the preview topic with a user
+ * credential and background publishing from workers to their own system topics.
  */
 final class MessagingHandlerAuthorizer {
 
@@ -44,7 +48,17 @@ final class MessagingHandlerAuthorizer {
    */
   private static final String EMPTY_WORKER_CREDENTIAL_VALUE = "empty-worker-user-credential";
 
+  /**
+   * System topic to which preview runners publish preview logs. {@code PreviewConfigModule} sets
+   * {@link Constants.Logging#TMS_TOPIC_PREFIX} to {@code "previewlog"} with 1 partition, and
+   * {@code PreviewTMSLogSubscriber} subscribes to {@code TOPIC_NAME = "previewlog0"}.
+   */
+  private static final String PREVIEW_LOG_TOPIC = "previewlog0";
+
   private final boolean internalAuthEnabled;
+  @Nullable
+  private final String previewTopic;
+  private final Set<String> workerSystemTopics;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
 
@@ -52,6 +66,8 @@ final class MessagingHandlerAuthorizer {
   MessagingHandlerAuthorizer(CConfiguration cConf, AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext) {
     this.internalAuthEnabled = cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
+    this.previewTopic = cConf.get(Constants.Preview.MESSAGING_TOPIC);
+    this.workerSystemTopics = buildWorkerSystemTopics(cConf, this.previewTopic);
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
   }
@@ -82,28 +98,75 @@ final class MessagingHandlerAuthorizer {
    * Authorizes the caller to publish messages to a topic in the given namespace.
    *
    * <p>Requires {@link StandardPermission#UPDATE} on the namespace. When internal authentication
-   * is enabled, publishing to the system namespace requires an internal credential, and background
-   * calls from a task worker or preview runner carrying the worker placeholder internal credential
-   * are permitted without calling the access enforcer.
+   * is enabled, publishing to the system namespace is permitted without calling the access
+   * enforcer in two cases:
+   * <ul>
+   *   <li>Background calls from a task worker or preview runner carrying the worker placeholder
+   *       internal credential, when the target topic is one of the worker system topics.
+   *   <li>Calls from a preview runner on a preview request thread carrying the user's non-internal
+   *       credential, when the target topic is the configured preview topic.
+   * </ul>
+   * All other callers publishing to the system namespace must carry a valid internal credential
+   * and pass the access enforcer.
    *
    * @return the id of the namespace
    * @throws IllegalArgumentException if the namespace name is invalid
-   * @throws UnauthorizedException if the caller is not allowed to publish to the namespace
+   * @throws UnauthorizedException if the caller is not allowed to publish to the topic
    */
-  NamespaceId authorizePublish(String namespace) throws AccessException {
+  NamespaceId authorizePublish(String namespace, String topic) throws AccessException {
     NamespaceId namespaceId = new NamespaceId(namespace);
     Principal principal = authenticationContext.getPrincipal();
     if (internalAuthEnabled && NamespaceId.SYSTEM.equals(namespaceId)) {
+      if (hasEmptyWorkerCredential(principal)) {
+        if (!workerSystemTopics.contains(topic)) {
+          throw new UnauthorizedException(
+              "Workers can only publish to their own topics of the system namespace.");
+        }
+        return namespaceId;
+      }
       if (!hasInternalCredential(principal)) {
+        if (previewTopic != null && !previewTopic.isEmpty()
+            && previewTopic.equals(topic) && hasCredential(principal)) {
+          return namespaceId;
+        }
         throw new UnauthorizedException(
             "Only internal services can access topics of the system namespace.");
-      }
-      if (hasEmptyWorkerCredential(principal)) {
-        return namespaceId;
       }
     }
     accessEnforcer.enforce(namespaceId, principal, StandardPermission.UPDATE);
     return namespaceId;
+  }
+
+  private static Set<String> buildWorkerSystemTopics(CConfiguration cConf,
+      @Nullable String previewTopic) {
+    Set<String> topics = new HashSet<>();
+    addNumberedTopics(topics, cConf.get(Constants.Metrics.TOPIC_PREFIX),
+        cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM));
+    addNumberedTopics(topics, cConf.get(Constants.AuditLogging.AUDIT_LOG_EVENT_TOPIC),
+        cConf.getInt(Constants.AuditLogging.AUDIT_LOG_EVENT_NUM_PARTITIONS));
+    topics.add(PREVIEW_LOG_TOPIC);
+    if (previewTopic != null && !previewTopic.isEmpty()) {
+      topics.add(previewTopic);
+    }
+    return Collections.unmodifiableSet(topics);
+  }
+
+  private static void addNumberedTopics(Set<String> topics, @Nullable String prefix, int count) {
+    if (prefix == null || prefix.isEmpty()) {
+      return;
+    }
+    for (int i = 0; i < count; i++) {
+      topics.add(prefix + i);
+    }
+  }
+
+  private static boolean hasCredential(@Nullable Principal principal) {
+    if (principal == null) {
+      return false;
+    }
+    Credential credential = principal.getFullCredential();
+    return credential != null && credential.getType() != null
+        && credential.getValue() != null && !credential.getValue().isEmpty();
   }
 
   private static boolean hasInternalCredential(@Nullable Principal principal) {

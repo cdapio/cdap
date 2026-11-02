@@ -76,6 +76,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -282,16 +283,22 @@ public class StoreAndFetchHandlerAuthorizationTest {
   @Test
   public void testSystemNamespaceIsLeftToTheEnforcerWhenInternalAuthIsOff() throws Exception {
     startService(false);
-    createTopicDirectly(NamespaceId.SYSTEM.topic(TOPIC));
+    for (String topic : Arrays.asList(TOPIC, "preview", "metrics0", "programstatusevent")) {
+      createTopicDirectly(NamespaceId.SYSTEM.topic(topic));
+    }
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
 
-    assertAllEndpoints(200, NamespaceId.SYSTEM);
+    for (String topic : Arrays.asList(TOPIC, "preview", "metrics0", "programstatusevent")) {
+      assertAllEndpoints(200, NamespaceId.SYSTEM, topic);
+    }
   }
 
   @Test
   public void testSystemNamespaceRejectsCredentialsThatAreNotInternal() throws Exception {
     startService(true);
-    createTopicDirectly(NamespaceId.SYSTEM.topic(TOPIC));
+    for (String topic : Arrays.asList(TOPIC, "metrics0", "programstatusevent", "previewlog0")) {
+      createTopicDirectly(NamespaceId.SYSTEM.topic(topic));
+    }
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
 
     for (Credential.CredentialType type : Credential.CredentialType.values()) {
@@ -302,12 +309,54 @@ public class StoreAndFetchHandlerAuthorizationTest {
         currentPrincipal.set(
             new Principal("system", Principal.PrincipalType.USER, new Credential(value, type)));
 
-        assertAllEndpoints(403, NamespaceId.SYSTEM);
+        for (String topic : Arrays.asList(TOPIC, "metrics0", "programstatusevent", "previewlog0")) {
+          assertAllEndpoints(403, NamespaceId.SYSTEM, topic);
+        }
       }
     }
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(TOPIC)).isEmpty());
+    for (String topic : Arrays.asList(TOPIC, "metrics0", "programstatusevent", "previewlog0")) {
+      Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(topic)).isEmpty());
+    }
+    assertNoTempFilesCreated();
+  }
+
+  @Test
+  public void testUserCredentialCanPublishToPreviewTopicOnlyInSystemNamespace() throws Exception {
+    startService(true);
+    TopicId previewTopicId = NamespaceId.SYSTEM.topic("preview");
+    createTopicDirectly(previewTopicId);
+    for (String otherTopic : Arrays.asList("metrics0", "programstatusevent", "previewlog0")) {
+      createTopicDirectly(NamespaceId.SYSTEM.topic(otherTopic));
+    }
+    currentPrincipal.set(END_USER);
+    // The enforcer grants nothing; preview publish must succeed without calling the enforcer.
+
+    assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "preview"));
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+    Assert.assertEquals(Collections.singletonList("msg"), fetchDirectly(previewTopicId));
+
+    // Even if the enforcer granted SYSTEM permissions, non-internal credentials cannot publish to
+    // other system topics and cannot store, rollback, poll, or administer system:preview.
+    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
+    for (String otherTopic : Arrays.asList("metrics0", "programstatusevent", "previewlog0")) {
+      HttpResponse response = send(Endpoint.PUBLISH, NamespaceId.SYSTEM, otherTopic);
+      assertStatus(403, response);
+      Assert.assertTrue(response.getResponseBodyAsString().contains(
+          "Only internal services can access topics of the system namespace."));
+      Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(otherTopic)).isEmpty());
+    }
+    for (Endpoint endpoint : Arrays.asList(Endpoint.STORE, Endpoint.ROLLBACK, Endpoint.POLL)) {
+      HttpResponse response = send(endpoint, NamespaceId.SYSTEM, "preview");
+      assertStatus(403, response);
+      Assert.assertTrue(response.getResponseBodyAsString().contains(
+          "Only internal services can access topics of the system namespace."));
+    }
+    assertStatus(403, sendTopicAdmin(HttpMethod.GET, "system", "preview"));
+    assertStatus(403, sendTopicAdmin(HttpMethod.PUT, "system", "preview"));
+    assertStatus(403, sendTopicAdmin(HttpMethod.DELETE, "system", "preview"));
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
     assertNoTempFilesCreated();
   }
 
@@ -315,13 +364,27 @@ public class StoreAndFetchHandlerAuthorizationTest {
   public void testSystemNamespaceRejectsPrincipalWithoutCredential() throws Exception {
     startService(true);
     createTopicDirectly(NamespaceId.SYSTEM.topic(TOPIC));
+    createTopicDirectly(NamespaceId.SYSTEM.topic("preview"));
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-    currentPrincipal.set(new Principal("system", Principal.PrincipalType.USER));
 
-    assertAllEndpoints(403, NamespaceId.SYSTEM);
+    List<Principal> invalidPrincipals = Arrays.asList(
+        new Principal("system", Principal.PrincipalType.USER),
+        new Principal("alice", Principal.PrincipalType.USER,
+            new Credential("", Credential.CredentialType.EXTERNAL)),
+        new Principal("alice", Principal.PrincipalType.USER,
+            new Credential(null, Credential.CredentialType.EXTERNAL)),
+        new Principal("alice", Principal.PrincipalType.USER,
+            new Credential("user-token", null)));
+
+    for (Principal principal : invalidPrincipals) {
+      currentPrincipal.set(principal);
+      assertAllEndpoints(403, NamespaceId.SYSTEM, TOPIC);
+      assertAllEndpoints(403, NamespaceId.SYSTEM, "preview");
+    }
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
     Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(TOPIC)).isEmpty());
+    Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic("preview")).isEmpty());
     assertNoTempFilesCreated();
   }
 
@@ -329,13 +392,16 @@ public class StoreAndFetchHandlerAuthorizationTest {
   public void testSystemNamespaceRejectsNullPrincipal() throws Exception {
     startService(true);
     createTopicDirectly(NamespaceId.SYSTEM.topic(TOPIC));
+    createTopicDirectly(NamespaceId.SYSTEM.topic("preview"));
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
     currentPrincipal.set(null);
 
-    assertAllEndpoints(403, NamespaceId.SYSTEM);
+    assertAllEndpoints(403, NamespaceId.SYSTEM, TOPIC);
+    assertAllEndpoints(403, NamespaceId.SYSTEM, "preview");
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
     Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(TOPIC)).isEmpty());
+    Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic("preview")).isEmpty());
     assertNoTempFilesCreated();
   }
 
@@ -343,14 +409,19 @@ public class StoreAndFetchHandlerAuthorizationTest {
   public void testSystemNamespaceRejectsEncodedSpellingOfItsName() throws Exception {
     startService(true);
     createTopicDirectly(NamespaceId.SYSTEM.topic(TOPIC));
+    createTopicDirectly(NamespaceId.SYSTEM.topic("programstatusevent"));
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
 
     for (Endpoint endpoint : Endpoint.values()) {
       assertStatus(403, send("%73ystem", TOPIC, endpoint.action, "avro/binary", endpoint.body()));
     }
+    currentPrincipal.set(EMPTY_WORKER_PRINCIPAL);
+    assertStatus(403, send("%73ystem", "%70rogramstatusevent",
+        Endpoint.PUBLISH.action, "avro/binary", Endpoint.PUBLISH.body()));
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
     Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(TOPIC)).isEmpty());
+    Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic("programstatusevent")).isEmpty());
     assertNoTempFilesCreated();
   }
 
@@ -384,24 +455,89 @@ public class StoreAndFetchHandlerAuthorizationTest {
   }
 
   @Test
-  public void testWorkerPlaceholderCanPublishToSystemNamespaceWithoutCallingEnforcer()
+  public void testWorkerPlaceholderCanPublishToAllowedSystemTopicsOnly()
       throws Exception {
     startService(true);
-    TopicId systemTopic = NamespaceId.SYSTEM.topic(TOPIC);
-    createTopicDirectly(systemTopic);
     currentPrincipal.set(EMPTY_WORKER_PRINCIPAL);
     // The enforcer grants nothing and would fail if called for publish on system.
 
-    assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM));
-    Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertEquals(Collections.singletonList("msg"), fetchDirectly(systemTopic));
+    List<String> allowedTopics = Arrays.asList(
+        "metrics0", "metrics9", "previewlog0", "preview", "auditlogevent0", "auditlogevent2");
+    for (String topic : allowedTopics) {
+      TopicId topicId = NamespaceId.SYSTEM.topic(topic);
+      createTopicDirectly(topicId);
 
-    // Store, rollback, and poll on the system namespace still go through the enforcer and are denied.
+      assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, topic));
+      Assert.assertTrue(accessEnforcer.checks().isEmpty());
+      Assert.assertEquals(Collections.singletonList("msg"), fetchDirectly(topicId));
+    }
+
+    // Non-worker system topics are rejected with 403 before calling the enforcer.
+    List<String> disallowedTopics = Arrays.asList(
+        "programstatusevent", "metadata", "metrics10", "previewlog1", "auditlogevent3", TOPIC);
+    for (String topic : disallowedTopics) {
+      TopicId topicId = NamespaceId.SYSTEM.topic(topic);
+      createTopicDirectly(topicId);
+
+      HttpResponse response = send(Endpoint.PUBLISH, NamespaceId.SYSTEM, topic);
+      assertStatus(403, response);
+      Assert.assertTrue(response.getResponseBodyAsString().contains(
+          "Workers can only publish to their own topics of the system namespace."));
+      Assert.assertTrue(accessEnforcer.checks().isEmpty());
+      Assert.assertTrue(fetchDirectly(topicId).isEmpty());
+    }
+    // Invalid topic names are also forbidden (403) before topic name validation (400).
+    assertStatus(403,
+        send("system", "bad.topic", Endpoint.PUBLISH.action, "avro/binary",
+            Endpoint.PUBLISH.body()));
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+    assertNoTempFilesCreated();
+
+    // Store, rollback, poll, and topic admin on an allowlisted system topic still go through the
+    // enforcer and are denied.
     for (Endpoint endpoint : Arrays.asList(Endpoint.STORE, Endpoint.ROLLBACK, Endpoint.POLL)) {
       accessEnforcer.clearChecks();
-      assertStatus(403, send(endpoint, NamespaceId.SYSTEM));
+      assertStatus(403, send(endpoint, NamespaceId.SYSTEM, "metrics0"));
       assertSingleCheck(endpoint, NamespaceId.SYSTEM, EMPTY_WORKER_PRINCIPAL);
     }
+    accessEnforcer.clearChecks();
+    assertStatus(403, sendTopicAdmin(HttpMethod.GET, "system", "metrics0"));
+    assertStatus(403, sendTopicAdmin(HttpMethod.PUT, "system", "metrics0"));
+    assertStatus(403, sendTopicAdmin(HttpMethod.DELETE, "system", "metrics0"));
+    Assert.assertEquals(3, accessEnforcer.checks().size());
+  }
+
+  @Test
+  public void testWorkerAllowlistAndPreviewTopicFollowConfigOverrides() throws Exception {
+    startService(true, conf -> {
+      conf.setInt(Constants.Metrics.MESSAGING_TOPIC_NUM, 3);
+      conf.setInt(Constants.AuditLogging.AUDIT_LOG_EVENT_NUM_PARTITIONS, 1);
+      conf.set(Constants.Preview.MESSAGING_TOPIC, "custompreview");
+    });
+    for (String topic : Arrays.asList(
+        "metrics0", "metrics2", "metrics3", "auditlogevent0", "auditlogevent1",
+        "custompreview", "preview", "previewlog0")) {
+      createTopicDirectly(NamespaceId.SYSTEM.topic(topic));
+    }
+
+    currentPrincipal.set(EMPTY_WORKER_PRINCIPAL);
+    for (String allowed : Arrays.asList(
+        "metrics0", "metrics2", "auditlogevent0", "custompreview", "previewlog0")) {
+      assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, allowed));
+      Assert.assertEquals(
+          Collections.singletonList("msg"), fetchDirectly(NamespaceId.SYSTEM.topic(allowed)));
+    }
+    for (String rejected : Arrays.asList("metrics3", "auditlogevent1", "preview")) {
+      assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, rejected));
+      Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(rejected)).isEmpty());
+    }
+
+    // Non-internal user credential follows the configured preview topic as well.
+    currentPrincipal.set(END_USER);
+    assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "custompreview"));
+    assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "preview"));
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+    assertNoTempFilesCreated();
   }
 
   @Test
@@ -445,12 +581,18 @@ public class StoreAndFetchHandlerAuthorizationTest {
   }
 
   private void startService(boolean internalAuthEnabled) throws IOException {
+    startService(internalAuthEnabled, conf -> { });
+  }
+
+  private void startService(boolean internalAuthEnabled,
+      Consumer<CConfiguration> configurer) throws IOException {
     CConfiguration cConf = CConfiguration.create();
     File localDataDir = TEMP_FOLDER.newFolder();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS,
         InetAddress.getLocalHost().getHostName());
     cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, internalAuthEnabled);
+    configurer.accept(cConf);
     tempDir = new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR));
 
     Injector injector = Guice.createInjector(
@@ -509,7 +651,12 @@ public class StoreAndFetchHandlerAuthorizationTest {
   }
 
   private HttpResponse send(Endpoint endpoint, NamespaceId namespace) throws IOException {
-    return send(namespace.getNamespace(), TOPIC, endpoint.action, "avro/binary", endpoint.body());
+    return send(endpoint, namespace, TOPIC);
+  }
+
+  private HttpResponse send(Endpoint endpoint, NamespaceId namespace, String topic)
+      throws IOException {
+    return send(namespace.getNamespace(), topic, endpoint.action, "avro/binary", endpoint.body());
   }
 
   private HttpResponse send(String namespace, String topic, String action,
@@ -524,16 +671,32 @@ public class StoreAndFetchHandlerAuthorizationTest {
     return HttpRequests.execute(request.build());
   }
 
+  private HttpResponse sendTopicAdmin(HttpMethod method, String namespace, String topic)
+      throws IOException {
+    URL url = URIScheme.createURI(messagingServer, "%s",
+        "/v1/namespaces/" + namespace + "/topics/" + topic).toURL();
+    HttpRequest.Builder request = HttpRequest.builder(method, url);
+    if (method == HttpMethod.PUT) {
+      request.withBody("{}");
+    }
+    return HttpRequests.execute(request.build());
+  }
+
   private void assertStatus(int expectedStatus, HttpResponse response) {
     Assert.assertEquals(response.getResponseBodyAsString(),
         expectedStatus, response.getResponseCode());
   }
 
   private void assertAllEndpoints(int expectedStatus, NamespaceId namespace) throws IOException {
+    assertAllEndpoints(expectedStatus, namespace, TOPIC);
+  }
+
+  private void assertAllEndpoints(int expectedStatus, NamespaceId namespace, String topic)
+      throws IOException {
     for (Endpoint endpoint : Endpoint.values()) {
-      HttpResponse response = send(endpoint, namespace);
+      HttpResponse response = send(endpoint, namespace, topic);
       Assert.assertEquals(
-          endpoint + " in " + namespace + ": " + response.getResponseBodyAsString(),
+          endpoint + " in " + namespace + "." + topic + ": " + response.getResponseBodyAsString(),
           expectedStatus, response.getResponseCode());
     }
   }
