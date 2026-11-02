@@ -14,21 +14,22 @@
 # Note: Any changes to this workflow would be used only after merging into develop
 name: Build Unit Tests Report
 
-on:
+on: # zizmor: ignore[dangerous-triggers] -- intentional workflow_run pattern for publishing JUnit test reports without checking out untrusted code
   workflow_run:
     workflows:
     - Build with unit tests
     types:
     - completed
 
-permissions:
-  actions: read    # Allows reading workflow run information
-  statuses: write  # Required if the action updates commit statuses
-  checks: write    # Required if it updates GitHub Checks API
+permissions: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read    # Allows reading workflow run information
+      statuses: write  # Required if the action updates commit statuses
+      checks: write    # Required if it updates GitHub Checks API
 
     if: ${{ github.event.workflow_run.conclusion != 'skipped' }}
 
@@ -37,7 +38,7 @@ jobs:
     - uses: marocchino/action-workflow_run-status@54b6e87d6cb552fc5f36dbe9a722a6048725917a
 
     - name: Download artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         run-id: ${{ github.event.workflow_run.id }}

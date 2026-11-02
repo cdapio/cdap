@@ -21,12 +21,14 @@ on:
     branches: [ develop, release/** ]
     types: [opened, synchronize, reopened, labeled]
 
-permissions:
-  checks: write
+permissions: {}
 
 jobs:
   build-sonar:
     runs-on: k8s-runner-build
+    permissions:
+      checks: write   # Required by cdapio/checkstyle-github-action to publish check annotations
+      contents: read  # Required to checkout repository code
 
     # We allow builds:
     # 1) When it's a merge into a branch
@@ -49,12 +51,13 @@ jobs:
           gcloud config configurations activate emulator
           gcloud emulators spanner start &
           echo "SPANNER_EMULATOR_HOST=localhost:9010" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4 # zizmor: ignore[cache-poisoning] -- Maven test dependency cache; job does not publish release artifacts
         with:
           path: ~/.m2/repository11
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -71,7 +74,7 @@ jobs:
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: reports-${{ github.run_id }}
@@ -84,7 +87,9 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
         run: >-
           mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -fae -T 2 -B -V
@@ -93,9 +98,9 @@ jobs:
           -Pcoverage,templates
           -Dmaven.wagon.http.retryHandler.count=3
           -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
-          -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+          -Dsonar.pullrequest.key="$PR_NUMBER"
           -Dsonar.pullrequest.branch="$PR_HEAD_REF"
-          -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+          -Dsonar.pullrequest.base="$PR_BASE_REF"
 
       - name: Sonar report
         if: ${{ github.event_name == 'push' }}
@@ -113,7 +118,7 @@ jobs:
           -Dsonar.branch.name=$BRANCH
 
       - name: Checkstyle report
-        uses: cdapio/checkstyle-github-action@add_filter
+        uses: cdapio/checkstyle-github-action@cfb6d45831dce5bfd439fb53efe5200005b23821 # add_filter
         if: ${{ github.event_name == 'pull_request' }}
         with:
           path: '**/checkstyle-result.xml'

@@ -21,6 +21,9 @@ on:
     branches: [ develop, release/** ]
     types: [opened, synchronize, reopened, labeled]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: k8s-runner-build
@@ -45,11 +48,12 @@ jobs:
           gcloud config configurations activate emulator
           gcloud emulators spanner start &
           echo "SPANNER_EMULATOR_HOST=localhost:9010" >> $GITHUB_ENV
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           submodules: recursive
+          persist-credentials: false
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4 # zizmor: ignore[cache-poisoning] -- Maven test dependency cache; job does not publish release artifacts
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ github.workflow }}-${{ hashFiles('**/pom.xml') }}
@@ -59,7 +63,7 @@ jobs:
         # TODO(CDAP-21120): Enable PreviewDataPipelineTest after fixing the flaky test.
         run: mvn clean test -fae -T 2 -B -V -DcloudBuild -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dtest='!io.cdap.cdap.datapipeline.preview.PreviewDataPipelineTest,!io.cdap.cdap.test.base.TestFrameworkTestBase,!io.cdap.cdap.datapipeline.ReducibleAggregatorTestBase' -Dsurefire.failIfNoSpecifiedTests=false
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: reports-${{ github.run_id }}
