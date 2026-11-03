@@ -49,7 +49,7 @@ COPY packer/scripts /tmp/scripts
 COPY packer/files /tmp/files
 
 # Install Chef, setup APT, run Chef cdap::sdk recipe, then clean up
-RUN curl -O https://packages.chef.io/files/stable/chef/13.8.5/ubuntu/16.04/chef_13.8.5-1_amd64.deb && \
+RUN curl -fL -O https://web.archive.org/web/20190929120928id_/https://packages.chef.io/files/stable/chef/13.8.5/ubuntu/16.04/chef_13.8.5-1_amd64.deb && \
     dpkg-sig --verify chef_13.8.5-1_amd64.deb && \
     dpkg -i chef_13.8.5-1_amd64.deb && \
     for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
