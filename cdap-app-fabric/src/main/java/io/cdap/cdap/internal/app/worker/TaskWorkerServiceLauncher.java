@@ -203,7 +203,28 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           Map<String, String> configMap = new HashMap<>();
           configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
               NamespaceId.SYSTEM.getNamespace());
+          if (cConf.get(Constants.TaskWorker.CONTAINER_CPU_MULTIPLIER) != null) {
+            configMap.put(Constants.Kube.CPU_MULTIPLIER,
+                cConf.get(Constants.TaskWorker.CONTAINER_CPU_MULTIPLIER));
+          }
+          if (cConf.get(Constants.TaskWorker.CONTAINER_MEMORY_MULTIPLIER) != null) {
+            configMap.put(Constants.Kube.MEMORY_MULTIPLIER,
+                cConf.get(Constants.TaskWorker.CONTAINER_MEMORY_MULTIPLIER));
+          }
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
+
+          Map<String, String> artifactLocalizerConfig = new HashMap<>();
+          if (cConf.get(Constants.ArtifactLocalizer.CONTAINER_CPU_MULTIPLIER) != null) {
+            artifactLocalizerConfig.put(Constants.Kube.CPU_MULTIPLIER,
+                cConf.get(Constants.ArtifactLocalizer.CONTAINER_CPU_MULTIPLIER));
+          }
+          if (cConf.get(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MULTIPLIER) != null) {
+            artifactLocalizerConfig.put(Constants.Kube.MEMORY_MULTIPLIER,
+                cConf.get(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MULTIPLIER));
+          }
+          if (!artifactLocalizerConfig.isEmpty()) {
+            twillPreparer.withConfiguration("ArtifactLocalizerTwillRunnable", artifactLocalizerConfig);
+          }
 
           if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
             String localhost = InetAddress.getLoopbackAddress().getHostName();
