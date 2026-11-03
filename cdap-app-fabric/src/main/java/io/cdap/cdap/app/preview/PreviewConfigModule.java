@@ -82,8 +82,8 @@ public class PreviewConfigModule extends AbstractModule {
     // Don't load custom log pipelines in preview
     previewCConf.unset(Constants.Logging.PIPELINE_CONFIG_DIR);
 
-    previewCConf.set(Constants.Logging.TMS_TOPIC_PREFIX, "previewlog");
-    previewCConf.setInt(Constants.Logging.NUM_PARTITIONS, 1);
+    previewCConf.set(Constants.Logging.TMS_TOPIC_PREFIX, Constants.Preview.LOG_TOPIC_PREFIX);
+    previewCConf.setInt(Constants.Logging.NUM_PARTITIONS, Constants.Preview.LOG_NUM_PARTITIONS);
 
     // Don't upload event logs for preview execution
     previewCConf.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, false);

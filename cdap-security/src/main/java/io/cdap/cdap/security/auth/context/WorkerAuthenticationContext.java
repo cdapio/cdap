@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.auth.context;
 
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -26,9 +27,10 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
  */
 public class WorkerAuthenticationContext implements AuthenticationContext {
 
-  private static final Principal EMPTY_PRINCIPAL = new Principal("empty-worker-user-id",
+  private static final Principal EMPTY_PRINCIPAL = new Principal(
+      Constants.Security.Authentication.EMPTY_WORKER_USER_ID,
       Principal.PrincipalType.USER,
-      new Credential("empty-worker-user-credential",
+      new Credential(Constants.Security.Authentication.EMPTY_WORKER_CREDENTIAL,
           Credential.CredentialType.INTERNAL));
 
   /**

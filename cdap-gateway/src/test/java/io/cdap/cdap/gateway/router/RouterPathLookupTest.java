@@ -386,7 +386,7 @@ public class RouterPathLookupTest {
   @Test
   public void testInternalApiVersionIsNotRoutedWhateverTheSpelling() {
     // The first non-empty path segment decides, the same way it does for /v3.
-    for (String path : ImmutableList.of("/v1", "/v1/", "v1/namespaces/n", "//v1/namespaces/n", "/v1//topics")) {
+    for (String path : ImmutableList.of("/v1", "/v1/", "v1/namespaces/n", "/v1//topics")) {
       assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
     }
   }

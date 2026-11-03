@@ -174,7 +174,8 @@ public class MetadataHandlerAuthorizationTest {
 
     assertStatus(403, send(HttpMethod.PUT, ALPHA.getNamespace(), "/topics/bad.topic", null));
 
-    // A caller with permission still gets the validation error.
+    // A caller with permission still gets the validation error (400 in MessagingHttpService via its
+    // CDAP-7688 IllegalArgumentException handler; 500 in AppFabricServer's HttpExceptionHandler).
     accessEnforcer.grant(ALPHA, StandardPermission.UPDATE);
     assertStatus(400, send(HttpMethod.PUT, ALPHA.getNamespace(), "/topics/bad.topic", null));
   }
@@ -183,7 +184,8 @@ public class MetadataHandlerAuthorizationTest {
   public void testInvalidNamespaceNameIsRejectedWithoutAskingTheEnforcer() throws Exception {
     startService(false);
 
-    // There is no namespace entity to authorize, so the request fails before the enforcer is asked.
+    // There is no namespace entity to authorize, so the request fails before the enforcer is asked
+    // (400 in MessagingHttpService via CDAP-7688; 500 in AppFabricServer's HttpExceptionHandler).
     assertStatus(400, send(HttpMethod.PUT, "bad-namespace", "/topics/" + TOPIC, null));
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
@@ -399,6 +401,83 @@ public class MetadataHandlerAuthorizationTest {
     accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
 
     assertAllEndpoints(200, ALPHA);
+  }
+
+  @Test
+  public void testMixedCaseSystemNamespaceIsTreatedAsSystemNamespace() throws Exception {
+    startService(true);
+    List<NamespaceId> mixedCaseSystemNamespaces = Arrays.asList(
+        new NamespaceId("SYSTEM"), new NamespaceId("System"), new NamespaceId("sYsTeM"));
+    for (NamespaceId mixedNs : mixedCaseSystemNamespaces) {
+      accessEnforcer.grant(mixedNs, StandardPermission.UPDATE, StandardPermission.GET);
+    }
+
+    // Non-internal credentials are rejected on all mixed-case spellings without calling the enforcer.
+    currentPrincipal.set(END_USER);
+    for (NamespaceId mixedNs : mixedCaseSystemNamespaces) {
+      assertAllEndpoints(403, mixedNs);
+      Assert.assertTrue(messagingService.listTopics(mixedNs).isEmpty());
+    }
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+
+    // Internal credentials pass the system-namespace gate and still go through the enforcer.
+    currentPrincipal.set(INTERNAL_SERVICE);
+    for (NamespaceId mixedNs : mixedCaseSystemNamespaces) {
+      for (Endpoint endpoint : Endpoint.values()) {
+        accessEnforcer.clearChecks();
+        assertStatus(200, send(endpoint, mixedNs));
+        assertSingleCheck(endpoint, mixedNs, INTERNAL_SERVICE);
+      }
+    }
+  }
+
+  @Test
+  public void testPlaceholderInternalCredentialsAreRejectedWith403BeforeEnforcer()
+      throws Exception {
+    startService(true);
+    accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
+    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
+
+    List<Principal> placeholderPrincipals = Arrays.asList(
+        new Principal(Constants.Security.Authentication.EMPTY_USER_ID,
+            Principal.PrincipalType.USER,
+            new Credential(Constants.Security.Authentication.EMPTY_USER_CREDENTIAL,
+                Credential.CredentialType.INTERNAL)),
+        new Principal(Constants.Security.Authentication.EMPTY_WORKER_USER_ID,
+            Principal.PrincipalType.USER,
+            new Credential(Constants.Security.Authentication.EMPTY_WORKER_CREDENTIAL,
+                Credential.CredentialType.INTERNAL)));
+
+    for (Principal placeholder : placeholderPrincipals) {
+      currentPrincipal.set(placeholder);
+      for (Endpoint endpoint : Endpoint.values()) {
+        HttpResponse response = send(endpoint, NamespaceId.SYSTEM);
+        assertStatus(403, response);
+        Assert.assertTrue(response.getResponseBodyAsString().contains(
+            "Only internal services can access topics of the system namespace."));
+      }
+      assertAllEndpoints(403, ALPHA);
+    }
+
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
+    Assert.assertTrue(messagingService.listTopics(ALPHA).isEmpty());
+  }
+
+  @Test
+  public void testUnauthenticatedHttpRequestWithoutHeadersIsRejectedWith403() throws Exception {
+    startServiceWithMasterInternalAuth();
+    accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
+    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
+
+    // Direct HTTP requests with no authentication headers get CDAP-empty-user-credential from
+    // AuthenticationChannelHandler and must be rejected with 403 before InternalAccessEnforcer.
+    assertAllEndpoints(403, NamespaceId.SYSTEM);
+    assertAllEndpoints(403, ALPHA);
+
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
+    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
+    Assert.assertTrue(messagingService.listTopics(ALPHA).isEmpty());
   }
 
   @Test
