@@ -28,8 +28,8 @@ import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
-import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -72,9 +72,7 @@ import org.slf4j.LoggerFactory;
 /**
  * A netty http handler for handling message fetching REST API for the messaging system.
  *
- * <p>The {@link #poll} endpoint first authorizes the caller with {@link StandardPermission#GET} on
- * the namespace of the topic, before anything else about the request is looked at. When internal
- * authentication is enabled, only internal callers can fetch from topics of the system namespace.
+ * <p>Requests are authorized by {@link MessagingHandlerAuthorizer}.
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class FetchHandler extends AbstractHttpHandler {
@@ -90,7 +88,7 @@ public final class FetchHandler extends AbstractHttpHandler {
 
   private final MessagingService messagingService;
   private final MessagingHandlerAuthorizer authorizer;
-  private final int messageChunkSize;
+  private int messageChunkSize;
 
   @Inject
   FetchHandler(CConfiguration cConf, MessagingService messagingService,

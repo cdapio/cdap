@@ -50,12 +50,7 @@ import javax.ws.rs.PathParam;
 /**
  * A netty http handler for metadata REST API for the messaging system.
  *
- * <p>Every endpoint first authorizes the caller on the namespace it addresses, before anything
- * else about the request is looked at: {@link StandardPermission#UPDATE} is needed to create,
- * update or delete a topic and {@link StandardPermission#GET} to read or list topics. Topics are
- * authorized through their namespace because authorization does not support topics as entities.
- * When internal authentication is enabled, only internal callers can access the topics of the
- * system namespace.
+ * <p>Requests are authorized by {@link MessagingHandlerAuthorizer}.
  */
 @Path("/v1/namespaces/{namespace}")
 public final class MetadataHandler extends AbstractHttpHandler {

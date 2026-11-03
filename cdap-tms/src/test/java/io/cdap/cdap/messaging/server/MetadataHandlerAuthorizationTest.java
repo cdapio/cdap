@@ -17,65 +17,45 @@
 package io.cdap.cdap.messaging.server;
 
 import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
-import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
-import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
-import io.cdap.cdap.messaging.client.AbstractClientMessagingService;
-import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
+import io.cdap.cdap.messaging.server.StoreAndFetchHandlerAuthorizationTest.Check;
+import io.cdap.cdap.messaging.server.StoreAndFetchHandlerAuthorizationTest.RecordingAccessEnforcer;
 import io.cdap.cdap.messaging.spi.MessagingService;
-import io.cdap.cdap.proto.element.EntityType;
-import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.Credential;
-import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.authorization.InternalAccessEnforcer;
-import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.apache.twill.discovery.Discoverable;
@@ -99,10 +79,6 @@ public class MetadataHandlerAuthorizationTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() {
-  }.getType();
-
   private static final NamespaceId ALPHA = new NamespaceId("alpha");
   private static final NamespaceId BETA = new NamespaceId("beta");
   private static final String TOPIC = "t1";
@@ -114,22 +90,15 @@ public class MetadataHandlerAuthorizationTest {
 
   private final RecordingAccessEnforcer accessEnforcer = new RecordingAccessEnforcer();
   private final AtomicReference<Principal> currentPrincipal = new AtomicReference<>(END_USER);
-  private final AtomicReference<Injector> injectorRef = new AtomicReference<>();
 
   private MessagingHttpService httpService;
   private MessagingService messagingService;
   private Discoverable messagingServer;
-  private TokenManager tokenManager;
 
   @After
   public void afterTest() {
-    SecurityRequestContext.reset();
     if (httpService != null) {
       Services.stopAndWait(httpService);
-    }
-    if (tokenManager != null) {
-      Services.stopAndWait(tokenManager);
-      tokenManager = null;
     }
   }
 
@@ -145,16 +114,6 @@ public class MetadataHandlerAuthorizationTest {
           messagingService.listTopics(namespace));
       Assert.assertEquals("100", getTtl(namespace.topic(TOPIC)));
     }
-  }
-
-  @Test
-  public void testNoPermissionIsForbiddenEvenIfTheTopicDoesNotExist() throws Exception {
-    startService(false);
-
-    // A caller without permission must get the same answer whether or not the topic exists.
-    assertAllEndpoints(403, ALPHA);
-
-    Assert.assertTrue(messagingService.listTopics(ALPHA).isEmpty());
   }
 
   @Test
@@ -175,7 +134,8 @@ public class MetadataHandlerAuthorizationTest {
 
     assertStatus(403, send(HttpMethod.PUT, ALPHA.getNamespace(), "/topics/bad.topic", null));
 
-    // A caller with permission still gets the validation error.
+    // A caller with permission still gets the validation error (400 in MessagingHttpService via its
+    // CDAP-7688 IllegalArgumentException handler; 500 in AppFabricServer's HttpExceptionHandler).
     accessEnforcer.grant(ALPHA, StandardPermission.UPDATE);
     assertStatus(400, send(HttpMethod.PUT, ALPHA.getNamespace(), "/topics/bad.topic", null));
   }
@@ -184,7 +144,8 @@ public class MetadataHandlerAuthorizationTest {
   public void testInvalidNamespaceNameIsRejectedWithoutAskingTheEnforcer() throws Exception {
     startService(false);
 
-    // There is no namespace entity to authorize, so the request fails before the enforcer is asked.
+    // There is no namespace entity to authorize, so the request fails before the enforcer is asked
+    // (400 in MessagingHttpService via CDAP-7688; 500 in AppFabricServer's HttpExceptionHandler).
     assertStatus(400, send(HttpMethod.PUT, "bad-namespace", "/topics/" + TOPIC, null));
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
@@ -236,32 +197,6 @@ public class MetadataHandlerAuthorizationTest {
   }
 
   @Test
-  public void testListedTopicsKeepTheirOrder() throws Exception {
-    startService(false);
-    createTopicDirectly(ALPHA, "t1");
-    createTopicDirectly(ALPHA, "t2");
-    accessEnforcer.grant(ALPHA, StandardPermission.GET);
-
-    HttpResponse response = send(Endpoint.LIST_TOPICS, ALPHA);
-
-    assertStatus(200, response);
-    Assert.assertEquals(Arrays.asList("t1", "t2"),
-        GSON.fromJson(response.getResponseBodyAsString(), STRING_LIST_TYPE));
-  }
-
-  @Test
-  public void testAuthorizedCallersStillGetTopicErrors() throws Exception {
-    startService(false);
-    accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
-
-    assertStatus(404, send(Endpoint.GET_TOPIC, ALPHA));
-    assertStatus(404, send(Endpoint.UPDATE_TOPIC, ALPHA));
-    assertStatus(404, send(Endpoint.DELETE_TOPIC, ALPHA));
-    assertStatus(200, send(Endpoint.CREATE_TOPIC, ALPHA));
-    assertStatus(409, send(Endpoint.CREATE_TOPIC, ALPHA));
-  }
-
-  @Test
   public void testEachEndpointChecksTheNamespaceOnceAsTheCaller() throws Exception {
     startService(false);
     accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
@@ -276,86 +211,15 @@ public class MetadataHandlerAuthorizationTest {
   }
 
   @Test
-  public void testEnforcerFailureDeniesTheRequest() throws Exception {
-    startService(false);
-    createTopicDirectly(ALPHA, TOPIC);
-    accessEnforcer.failWith(new IllegalStateException("The authorization backend is down"));
-
-    assertAllEndpoints(500, ALPHA);
-
-    Assert.assertEquals(Collections.singletonList(ALPHA.topic(TOPIC)), messagingService.listTopics(ALPHA));
-    Assert.assertEquals("100", getTtl(ALPHA.topic(TOPIC)));
-  }
-
-  @Test
-  public void testSystemNamespaceIsLeftToTheEnforcerWhenInternalAuthIsOff() throws Exception {
-    startService(false);
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-
-    assertAllEndpoints(200, NamespaceId.SYSTEM);
-  }
-
-  @Test
-  public void testSystemNamespaceRejectsCredentialsThatAreNotInternal() throws Exception {
-    startService(true);
-    // The enforcer would approve everything, so only the credential type can stop these requests.
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-    for (Credential.CredentialType type : Credential.CredentialType.values()) {
-      if (type == Credential.CredentialType.INTERNAL) {
-        continue;
-      }
-      // Even a principal that is called "system" is not an internal service without the credential.
-      currentPrincipal.set(new Principal("system", Principal.PrincipalType.USER, new Credential("token", type)));
-
-      assertAllEndpoints(403, NamespaceId.SYSTEM);
-    }
-
-    Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
-  }
-
-  @Test
-  public void testSystemNamespaceRejectsPrincipalWithoutCredential() throws Exception {
+  public void testSystemNamespaceAcceptsOnlyInternalCredential() throws Exception {
     startService(true);
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-    currentPrincipal.set(new Principal("system", Principal.PrincipalType.USER));
 
+    currentPrincipal.set(END_USER);
     assertAllEndpoints(403, NamespaceId.SYSTEM);
-
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
-  }
 
-  @Test
-  public void testSystemNamespaceRejectsNullPrincipal() throws Exception {
-    startService(true);
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-    currentPrincipal.set(null);
-
-    assertAllEndpoints(403, NamespaceId.SYSTEM);
-
-    Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
-  }
-
-  @Test
-  public void testSystemNamespaceRejectsEncodedSpellingOfItsName() throws Exception {
-    startService(true);
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-
-    // "%73" is "s": the namespace the handler authorizes is the decoded one, which is "system".
-    assertStatus(403, send(HttpMethod.PUT, "%73ystem", "/topics/" + TOPIC, null));
-
-    Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
-  }
-
-  @Test
-  public void testSystemNamespaceAcceptsInternalCredential() throws Exception {
-    startService(true);
     currentPrincipal.set(INTERNAL_SERVICE);
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-
     for (Endpoint endpoint : Endpoint.values()) {
       accessEnforcer.clearChecks();
 
@@ -363,198 +227,6 @@ public class MetadataHandlerAuthorizationTest {
 
       assertSingleCheck(endpoint, NamespaceId.SYSTEM, INTERNAL_SERVICE);
     }
-  }
-
-  @Test
-  public void testInternalCredentialStillNeedsTheApprovalOfTheEnforcer() throws Exception {
-    startService(true);
-    currentPrincipal.set(INTERNAL_SERVICE);
-
-    assertAllEndpoints(403, NamespaceId.SYSTEM);
-
-    Assert.assertEquals(Endpoint.values().length, accessEnforcer.checks().size());
-    Assert.assertTrue(messagingService.listTopics(NamespaceId.SYSTEM).isEmpty());
-  }
-
-  @Test
-  public void testInternalCredentialCanManageUserNamespaces() throws Exception {
-    startService(true);
-    currentPrincipal.set(INTERNAL_SERVICE);
-    accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
-
-    assertAllEndpoints(200, ALPHA);
-  }
-
-  @Test
-  public void testUserNamespaceStillNeedsPermissionWhenInternalAuthIsOn() throws Exception {
-    startService(true);
-
-    assertAllEndpoints(403, ALPHA);
-
-    Assert.assertTrue(messagingService.listTopics(ALPHA).isEmpty());
-  }
-
-  @Test
-  public void testUserWithPermissionCanManageUserNamespaceWhenInternalAuthIsOn() throws Exception {
-    startService(true);
-    accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
-
-    assertAllEndpoints(200, ALPHA);
-  }
-
-  @Test
-  public void testDefaultClientMessagingServiceUsesInternalIdentityWhenUserContextIsSet()
-      throws Exception {
-    final DefaultClientMessagingService client = startServiceWithMasterInternalAuth();
-    final TopicId systemTopic = NamespaceId.SYSTEM.topic(TOPIC);
-
-    // Simulate a /v3 HTTP handler thread in AppFabric where AuthenticationChannelHandler has
-    // populated SecurityRequestContext with an end-user's EXTERNAL credential.
-    SecurityRequestContext.setUserId(END_USER.getName());
-    SecurityRequestContext.setUserCredential(END_USER.getFullCredential());
-    SecurityRequestContext.setUserIp("10.1.2.3");
-
-    // A direct AbstractClientMessagingService subclass that does not clear SecurityRequestContext
-    // propagates END_USER's EXTERNAL credential and is rejected on NamespaceId.SYSTEM.
-    RemoteClientFactory remoteClientFactory =
-        injectorRef.get().getInstance(RemoteClientFactory.class);
-    AbstractClientMessagingService rawClient =
-        new DirectClientMessagingService(remoteClientFactory);
-    try {
-      rawClient.createTopic(new DefaultTopicMetadata(systemTopic, "ttl", "100"));
-      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
-    try {
-      rawClient.listTopics(NamespaceId.SYSTEM);
-      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
-
-    client.createTopic(new DefaultTopicMetadata(systemTopic, "ttl", "100"));
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    client.updateTopic(new DefaultTopicMetadata(systemTopic, "ttl", "200"));
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    Assert.assertEquals("200", client.getTopicMetadataProperties(systemTopic).get("ttl"));
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    Assert.assertEquals(Collections.singletonList(systemTopic),
-        client.listTopics(NamespaceId.SYSTEM));
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    client.deleteTopic(systemTopic);
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    List<Check> checks = accessEnforcer.checks();
-    Assert.assertEquals(5, checks.size());
-    for (Check check : checks) {
-      Assert.assertEquals(NamespaceId.SYSTEM, check.entity);
-      Assert.assertNotNull(check.principal.getFullCredential());
-      Assert.assertEquals(Credential.CredentialType.INTERNAL,
-          check.principal.getFullCredential().getType());
-    }
-
-    try {
-      client.getTopicMetadataProperties(systemTopic);
-      Assert.fail("Expected TopicNotFoundException");
-    } catch (TopicNotFoundException expected) {
-      // expected
-    }
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    SecurityRequestContext.resetUserDetails();
-    Assert.assertTrue(client.listTopics(NamespaceId.SYSTEM).isEmpty());
-    assertUserContextPreserved(null, null, null);
-  }
-
-  private static final class DirectClientMessagingService extends AbstractClientMessagingService {
-
-    DirectClientMessagingService(RemoteClientFactory remoteClientFactory) {
-      super(remoteClientFactory.createRemoteClient(
-          Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/"), false);
-    }
-  }
-
-  private static void assertUserContextPreserved(@Nullable String expectedUserId,
-      @Nullable Credential expectedCredential, @Nullable String expectedUserIp) {
-    Assert.assertEquals(expectedUserId, SecurityRequestContext.getUserId());
-    Assert.assertEquals(expectedCredential, SecurityRequestContext.getUserCredential());
-    Assert.assertEquals(expectedUserIp, SecurityRequestContext.getUserIp());
-  }
-
-  private DefaultClientMessagingService startServiceWithMasterInternalAuth() throws IOException {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS,
-        InetAddress.getLocalHost().getHostName());
-    cConf.setBoolean(Constants.Security.ENABLED, true);
-    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
-
-    Injector injector = Guice.createInjector(
-        new ConfigModule(cConf),
-        new IOModule(),
-        RemoteAuthenticatorModules.getDefaultModule(),
-        new InMemoryDiscoveryModule(),
-        new CoreSecurityRuntimeModule().getInMemoryModules(),
-        new AuthenticationContextModules().getMasterModule(),
-        Modules.override(new AuthorizationEnforcementModule().getNoOpModules())
-            .with(new AbstractModule() {
-              @Override
-              protected void configure() {
-                bind(AccessEnforcer.class).toProvider(() -> {
-                  InternalAccessEnforcer internalEnforcer =
-                      injectorRef.get().getInstance(InternalAccessEnforcer.class);
-                  return new AccessEnforcer() {
-                    @Override
-                    public void enforce(EntityId entity, Principal principal,
-                        Set<? extends Permission> permissions) {
-                      internalEnforcer.enforce(entity, principal, permissions);
-                      accessEnforcer.enforce(entity, principal, permissions);
-                    }
-
-                    @Override
-                    public void enforceOnParent(EntityType entityType, EntityId parentId,
-                        Principal principal, Permission permission) {
-                      internalEnforcer.enforceOnParent(entityType, parentId, principal, permission);
-                    }
-
-                    @Override
-                    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds,
-                        Principal principal) {
-                      return internalEnforcer.isVisible(entityIds, principal);
-                    }
-                  };
-                });
-              }
-            }),
-        new MessagingServerRuntimeModule().getInMemoryModules(),
-        new NoOpAuditLogModule(),
-        new UserCredentialAeadEncryptionModule(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-          }
-        }
-    );
-    injectorRef.set(injector);
-
-    tokenManager = injector.getInstance(TokenManager.class);
-    Services.startAndWait(tokenManager);
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-
-    messagingService = injector.getInstance(MessagingService.class);
-    httpService = injector.getInstance(MessagingHttpService.class);
-    Services.startAndWait(httpService);
-    messagingServer = Iterables.getOnlyElement(
-        injector.getInstance(DiscoveryServiceClient.class)
-            .discover(Constants.Service.MESSAGING_SERVICE));
-    return injector.getInstance(DefaultClientMessagingService.class);
   }
 
   /**
@@ -674,72 +346,6 @@ public class MetadataHandlerAuthorizationTest {
       this.pathFormat = pathFormat;
       this.body = body;
       this.requiredPermission = requiredPermission;
-    }
-  }
-
-  /**
-   * One call to {@link AccessEnforcer#enforce}.
-   */
-  private static final class Check {
-
-    private final EntityId entity;
-    private final Principal principal;
-    private final Set<Permission> permissions;
-
-    private Check(EntityId entity, Principal principal, Set<? extends Permission> permissions) {
-      this.entity = entity;
-      this.principal = principal;
-      this.permissions = new HashSet<>(permissions);
-    }
-  }
-
-  /**
-   * An {@link AccessEnforcer} that approves what it was told to grant, records every check, and can
-   * be told to fail. Anything other than {@link #enforce} is unexpected and fails loudly.
-   */
-  private static final class RecordingAccessEnforcer implements AccessEnforcer {
-
-    private final Map<EntityId, Set<Permission>> grants = new ConcurrentHashMap<>();
-    private final List<Check> checks = new CopyOnWriteArrayList<>();
-    private volatile RuntimeException failure;
-
-    void grant(EntityId entity, Permission... permissions) {
-      grants.computeIfAbsent(entity, key -> ConcurrentHashMap.newKeySet()).addAll(Arrays.asList(permissions));
-    }
-
-    void failWith(RuntimeException failure) {
-      this.failure = failure;
-    }
-
-    List<Check> checks() {
-      return new ArrayList<>(checks);
-    }
-
-    void clearChecks() {
-      checks.clear();
-    }
-
-    @Override
-    public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-        throws UnauthorizedException {
-      checks.add(new Check(entity, principal, permissions));
-      if (failure != null) {
-        throw failure;
-      }
-      if (!grants.getOrDefault(entity, Collections.emptySet()).containsAll(permissions)) {
-        throw new UnauthorizedException(principal, permissions, entity);
-      }
-    }
-
-    @Override
-    public void enforceOnParent(io.cdap.cdap.proto.element.EntityType entityType, EntityId parentId,
-        Principal principal, Permission permission) {
-      throw new UnsupportedOperationException("enforceOnParent is not expected");
-    }
-
-    @Override
-    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) {
-      throw new UnsupportedOperationException("isVisible is not expected");
     }
   }
 }

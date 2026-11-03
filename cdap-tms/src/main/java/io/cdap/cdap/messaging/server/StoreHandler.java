@@ -23,11 +23,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.SpillableBodyConsumer;
 import io.cdap.cdap.common.io.ByteBuffers;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.messaging.DefaultStoreRequest;
-import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RollbackDetail;
+import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.StoreRequest;
+import io.cdap.cdap.messaging.DefaultStoreRequest;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.http.AbstractHttpHandler;
@@ -67,11 +67,7 @@ import org.apache.avro.io.EncoderFactory;
 /**
  * A netty http handler for handling message storage REST API for the messaging system.
  *
- * <p>Every endpoint first authorizes the caller with {@link StandardPermission#UPDATE} on the
- * namespace of the topic, before any temporary file is created or the request body is read. When
- * internal authentication is enabled, only internal callers can write to topics of the system
- * namespace, except on {@link #publish} for the preview topic and for worker background publishing
- * to worker system topics (see {@link MessagingHandlerAuthorizer#authorizePublish}).
+ * <p>Requests are authorized by {@link MessagingHandlerAuthorizer}.
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class StoreHandler extends AbstractHttpHandler {

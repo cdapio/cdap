@@ -41,9 +41,6 @@ public class DefaultClientMessagingService extends AbstractClientMessagingServic
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultClientMessagingService.class);
 
-  /**
-   * Creates a {@link DefaultClientMessagingService} targeting {@link Constants.Service#MESSAGING_SERVICE}.
-   */
   @Inject
   public DefaultClientMessagingService(CConfiguration cConf,
       RemoteClientFactory remoteClientFactory) {
@@ -89,7 +86,6 @@ public class DefaultClientMessagingService extends AbstractClientMessagingServic
     try {
       return callable.call();
     } finally {
-      SecurityRequestContext.resetUserDetails();
       if (oldUserId != null) {
         SecurityRequestContext.setUserId(oldUserId);
       }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.server;
 
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,24 +36,21 @@ import javax.annotation.Nullable;
 /**
  * Authorizes requests to the messaging HTTP handlers on the namespace of the target topic.
  *
- * <p>Topics are authorized through their namespace because authorization does not support topics
- * as entities. When internal authentication is enabled, only internal callers can access the
- * topics of the system namespace, except for publishing to the preview topic with a user
- * credential and background publishing from workers to their own system topics.
+ * <p>Topics are authorized at the namespace level rather than per-topic. When internal
+ * authentication is enabled, only internal callers can access the topics of the system namespace,
+ * except for publishing to the preview topic with a user credential and background publishing from
+ * workers to their own system topics.
  */
 final class MessagingHandlerAuthorizer {
 
-  /**
-   * Credential value set by {@code WorkerAuthenticationContext} when a task worker or preview
-   * runner makes a background call outside of a user request.
-   */
-  private static final String EMPTY_WORKER_CREDENTIAL_VALUE = "empty-worker-user-credential";
-
-  /**
-   * System topic to which preview runners publish preview logs. {@code PreviewConfigModule} sets
-   * {@link Constants.Logging#TMS_TOPIC_PREFIX} to {@code "previewlog"} with 1 partition, and
-   * {@code PreviewTMSLogSubscriber} subscribes to {@code TOPIC_NAME = "previewlog0"}.
-   */
+  private static final String SYSTEM_NAMESPACE_INTERNAL_ONLY_MESSAGE =
+      "Only internal services can access topics of the system namespace.";
+  private static final String WORKER_SYSTEM_TOPIC_ONLY_MESSAGE =
+      "Workers can only publish to their own topics of the system namespace.";
+  // Placeholder credentials set by WorkerAuthenticationContext and AuthenticationChannelHandler.
+  private static final String EMPTY_WORKER_CREDENTIAL = "empty-worker-user-credential";
+  private static final String EMPTY_USER_CREDENTIAL = "CDAP-empty-user-credential";
+  // Preview log topic, set by PreviewConfigModule.
   private static final String PREVIEW_LOG_TOPIC = "previewlog0";
 
   private final boolean internalAuthEnabled;
@@ -66,7 +64,7 @@ final class MessagingHandlerAuthorizer {
   MessagingHandlerAuthorizer(CConfiguration cConf, AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext) {
     this.internalAuthEnabled = cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
-    this.previewTopic = cConf.get(Constants.Preview.MESSAGING_TOPIC);
+    this.previewTopic = Strings.emptyToNull(cConf.get(Constants.Preview.MESSAGING_TOPIC));
     this.workerSystemTopics = buildWorkerSystemTopics(cConf, this.previewTopic);
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
@@ -75,20 +73,25 @@ final class MessagingHandlerAuthorizer {
   /**
    * Authorizes the caller to perform the given permission on the topics of a namespace.
    *
-   * <p>Every endpoint calls this first, so that a caller without permission gets the same answer
-   * whether or not the topic exists and whether or not the rest of its request is valid.
+   * <p>Every endpoint other than {@link StoreHandler#publish} (which uses
+   * {@link #authorizePublish}) calls this first, so that a caller without permission gets the same
+   * answer whether or not the topic exists and whether or not the rest of its request is valid.
    *
    * @return the id of the namespace
    * @throws IllegalArgumentException if the namespace name is invalid
    * @throws UnauthorizedException if the caller is not allowed to perform the permission
+   * @throws AccessException if the access enforcer fails to check the caller
    */
   NamespaceId authorize(String namespace, StandardPermission permission) throws AccessException {
     NamespaceId namespaceId = new NamespaceId(namespace);
     Principal principal = authenticationContext.getPrincipal();
-    if (internalAuthEnabled && NamespaceId.SYSTEM.equals(namespaceId)
-        && !hasInternalCredential(principal)) {
+    if (internalAuthEnabled && isSystemNamespace(namespaceId)
+        && (!hasInternalCredential(principal) || hasPlaceholderCredential(principal))) {
+      throw new UnauthorizedException(SYSTEM_NAMESPACE_INTERNAL_ONLY_MESSAGE);
+    }
+    if (internalAuthEnabled && hasPlaceholderCredential(principal)) {
       throw new UnauthorizedException(
-          "Only internal services can access topics of the system namespace.");
+          principal, Collections.singleton(permission), namespaceId, true, false);
     }
     accessEnforcer.enforce(namespaceId, principal, permission);
     return namespaceId;
@@ -97,44 +100,45 @@ final class MessagingHandlerAuthorizer {
   /**
    * Authorizes the caller to publish messages to a topic in the given namespace.
    *
-   * <p>Requires {@link StandardPermission#UPDATE} on the namespace. When internal authentication
-   * is enabled, publishing to the system namespace is permitted without calling the access
-   * enforcer in two cases:
+   * <p>Same as {@link #authorize} with {@link StandardPermission#UPDATE}, except that when internal
+   * authentication is enabled two callers may publish to the system namespace without a signed
+   * internal token or an access enforcer check:
    * <ul>
-   *   <li>Background calls from a task worker or preview runner carrying the worker placeholder
-   *       internal credential, when the target topic is one of the worker system topics.
-   *   <li>Calls from a preview runner on a preview request thread carrying the user's non-internal
-   *       credential, when the target topic is the configured preview topic.
+   *   <li>Task workers and preview runners on background threads, which carry the worker
+   *       placeholder credential, but only to the worker system topics.
+   *   <li>Preview runners on a preview request thread, which carry the user's credential, but only
+   *       to the configured preview topic.
    * </ul>
-   * All other callers publishing to the system namespace must carry a valid internal credential
-   * and pass the access enforcer.
    *
    * @return the id of the namespace
    * @throws IllegalArgumentException if the namespace name is invalid
    * @throws UnauthorizedException if the caller is not allowed to publish to the topic
+   * @throws AccessException if the access enforcer fails to check the caller
    */
   NamespaceId authorizePublish(String namespace, String topic) throws AccessException {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    Principal principal = authenticationContext.getPrincipal();
-    if (internalAuthEnabled && NamespaceId.SYSTEM.equals(namespaceId)) {
+    if (internalAuthEnabled && isSystemNamespace(namespaceId)) {
+      Principal principal = authenticationContext.getPrincipal();
       if (hasEmptyWorkerCredential(principal)) {
         if (!workerSystemTopics.contains(topic)) {
-          throw new UnauthorizedException(
-              "Workers can only publish to their own topics of the system namespace.");
+          throw new UnauthorizedException(WORKER_SYSTEM_TOPIC_ONLY_MESSAGE);
         }
         return namespaceId;
       }
-      if (!hasInternalCredential(principal)) {
-        if (previewTopic != null && !previewTopic.isEmpty()
-            && previewTopic.equals(topic) && hasCredential(principal)) {
-          return namespaceId;
-        }
-        throw new UnauthorizedException(
-            "Only internal services can access topics of the system namespace.");
+      if (!hasInternalCredential(principal) && topic.equals(previewTopic)
+          && hasCredential(principal)) {
+        return namespaceId;
       }
     }
-    accessEnforcer.enforce(namespaceId, principal, StandardPermission.UPDATE);
-    return namespaceId;
+    return authorize(namespace, StandardPermission.UPDATE);
+  }
+
+  /**
+   * Compares the namespace name case-insensitively against {@code "system"}, because the Spanner
+   * messaging tables are named after the namespace and Spanner table names are case-insensitive.
+   */
+  private static boolean isSystemNamespace(NamespaceId namespaceId) {
+    return NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId.getNamespace());
   }
 
   private static Set<String> buildWorkerSystemTopics(CConfiguration cConf,
@@ -145,14 +149,14 @@ final class MessagingHandlerAuthorizer {
     addNumberedTopics(topics, cConf.get(Constants.AuditLogging.AUDIT_LOG_EVENT_TOPIC),
         cConf.getInt(Constants.AuditLogging.AUDIT_LOG_EVENT_NUM_PARTITIONS));
     topics.add(PREVIEW_LOG_TOPIC);
-    if (previewTopic != null && !previewTopic.isEmpty()) {
+    if (previewTopic != null) {
       topics.add(previewTopic);
     }
     return Collections.unmodifiableSet(topics);
   }
 
   private static void addNumberedTopics(Set<String> topics, @Nullable String prefix, int count) {
-    if (prefix == null || prefix.isEmpty()) {
+    if (Strings.isNullOrEmpty(prefix)) {
       return;
     }
     for (int i = 0; i < count; i++) {
@@ -161,28 +165,28 @@ final class MessagingHandlerAuthorizer {
   }
 
   private static boolean hasCredential(@Nullable Principal principal) {
-    if (principal == null) {
-      return false;
-    }
-    Credential credential = principal.getFullCredential();
+    Credential credential = principal == null ? null : principal.getFullCredential();
     return credential != null && credential.getType() != null
-        && credential.getValue() != null && !credential.getValue().isEmpty();
+        && !Strings.isNullOrEmpty(credential.getValue());
   }
 
   private static boolean hasInternalCredential(@Nullable Principal principal) {
-    if (principal == null) {
-      return false;
-    }
-    Credential credential = principal.getFullCredential();
+    Credential credential = principal == null ? null : principal.getFullCredential();
     return credential != null && credential.getType() == Credential.CredentialType.INTERNAL;
   }
 
   private static boolean hasEmptyWorkerCredential(@Nullable Principal principal) {
-    if (principal == null) {
-      return false;
-    }
-    Credential credential = principal.getFullCredential();
-    return credential != null && credential.getType() == Credential.CredentialType.INTERNAL
-        && EMPTY_WORKER_CREDENTIAL_VALUE.equals(credential.getValue());
+    return hasInternalCredential(principal)
+        && EMPTY_WORKER_CREDENTIAL.equals(principal.getCredential());
+  }
+
+  /**
+   * Returns {@code true} for the internal placeholder credentials, which are not signed access
+   * tokens and are rejected with 403 before reaching the access enforcer.
+   */
+  private static boolean hasPlaceholderCredential(@Nullable Principal principal) {
+    return hasInternalCredential(principal)
+        && (EMPTY_WORKER_CREDENTIAL.equals(principal.getCredential())
+            || EMPTY_USER_CREDENTIAL.equals(principal.getCredential()));
   }
 }
