@@ -23,19 +23,25 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
+import io.cdap.cdap.messaging.client.AbstractClientMessagingService;
+import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -43,9 +49,13 @@ import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.InternalAccessEnforcer;
+import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
@@ -103,15 +113,22 @@ public class MetadataHandlerAuthorizationTest {
 
   private final RecordingAccessEnforcer accessEnforcer = new RecordingAccessEnforcer();
   private final AtomicReference<Principal> currentPrincipal = new AtomicReference<>(END_USER);
+  private final AtomicReference<Injector> injectorRef = new AtomicReference<>();
 
   private MessagingHttpService httpService;
   private MessagingService messagingService;
   private Discoverable messagingServer;
+  private TokenManager tokenManager;
 
   @After
   public void afterTest() {
+    SecurityRequestContext.reset();
     if (httpService != null) {
       httpService.stopAndWait();
+    }
+    if (tokenManager != null) {
+      tokenManager.stopAndWait();
+      tokenManager = null;
     }
   }
 
@@ -382,6 +399,161 @@ public class MetadataHandlerAuthorizationTest {
     accessEnforcer.grant(ALPHA, StandardPermission.UPDATE, StandardPermission.GET);
 
     assertAllEndpoints(200, ALPHA);
+  }
+
+  @Test
+  public void testDefaultClientMessagingServiceUsesInternalIdentityWhenUserContextIsSet()
+      throws Exception {
+    final DefaultClientMessagingService client = startServiceWithMasterInternalAuth();
+    final TopicId systemTopic = NamespaceId.SYSTEM.topic(TOPIC);
+
+    // Simulate a /v3 HTTP handler thread in AppFabric where AuthenticationChannelHandler has
+    // populated SecurityRequestContext with an end-user's EXTERNAL credential.
+    SecurityRequestContext.setUserId(END_USER.getName());
+    SecurityRequestContext.setUserCredential(END_USER.getFullCredential());
+    SecurityRequestContext.setUserIp("10.1.2.3");
+
+    // A direct AbstractClientMessagingService subclass that does not clear SecurityRequestContext
+    // propagates END_USER's EXTERNAL credential and is rejected on NamespaceId.SYSTEM.
+    RemoteClientFactory remoteClientFactory =
+        injectorRef.get().getInstance(RemoteClientFactory.class);
+    AbstractClientMessagingService rawClient =
+        new DirectClientMessagingService(remoteClientFactory);
+    try {
+      rawClient.createTopic(new DefaultTopicMetadata(systemTopic, "ttl", "100"));
+      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+    try {
+      rawClient.listTopics(NamespaceId.SYSTEM);
+      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+
+    client.createTopic(new DefaultTopicMetadata(systemTopic, "ttl", "100"));
+    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+    client.updateTopic(new DefaultTopicMetadata(systemTopic, "ttl", "200"));
+    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+    Assert.assertEquals("200", client.getTopicMetadataProperties(systemTopic).get("ttl"));
+    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+    Assert.assertEquals(Collections.singletonList(systemTopic),
+        client.listTopics(NamespaceId.SYSTEM));
+    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+    client.deleteTopic(systemTopic);
+    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+    List<Check> checks = accessEnforcer.checks();
+    Assert.assertEquals(5, checks.size());
+    for (Check check : checks) {
+      Assert.assertEquals(NamespaceId.SYSTEM, check.entity);
+      Assert.assertNotNull(check.principal.getFullCredential());
+      Assert.assertEquals(Credential.CredentialType.INTERNAL,
+          check.principal.getFullCredential().getType());
+    }
+
+    try {
+      client.getTopicMetadataProperties(systemTopic);
+      Assert.fail("Expected TopicNotFoundException");
+    } catch (TopicNotFoundException expected) {
+      // expected
+    }
+    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+    SecurityRequestContext.resetUserDetails();
+    Assert.assertTrue(client.listTopics(NamespaceId.SYSTEM).isEmpty());
+    assertUserContextPreserved(null, null, null);
+  }
+
+  private static final class DirectClientMessagingService extends AbstractClientMessagingService {
+
+    DirectClientMessagingService(RemoteClientFactory remoteClientFactory) {
+      super(remoteClientFactory.createRemoteClient(
+          Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/"), false);
+    }
+  }
+
+  private static void assertUserContextPreserved(@Nullable String expectedUserId,
+      @Nullable Credential expectedCredential, @Nullable String expectedUserIp) {
+    Assert.assertEquals(expectedUserId, SecurityRequestContext.getUserId());
+    Assert.assertEquals(expectedCredential, SecurityRequestContext.getUserCredential());
+    Assert.assertEquals(expectedUserIp, SecurityRequestContext.getUserIp());
+  }
+
+  private DefaultClientMessagingService startServiceWithMasterInternalAuth() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS,
+        InetAddress.getLocalHost().getHostName());
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
+
+    Injector injector = Guice.createInjector(
+        new ConfigModule(cConf),
+        new IOModule(),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new InMemoryDiscoveryModule(),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        Modules.override(new AuthorizationEnforcementModule().getNoOpModules())
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(AccessEnforcer.class).toProvider(() -> {
+                  InternalAccessEnforcer internalEnforcer =
+                      injectorRef.get().getInstance(InternalAccessEnforcer.class);
+                  return new AccessEnforcer() {
+                    @Override
+                    public void enforce(EntityId entity, Principal principal,
+                        Set<? extends Permission> permissions) {
+                      internalEnforcer.enforce(entity, principal, permissions);
+                      accessEnforcer.enforce(entity, principal, permissions);
+                    }
+
+                    @Override
+                    public void enforceOnParent(EntityType entityType, EntityId parentId,
+                        Principal principal, Permission permission) {
+                      internalEnforcer.enforceOnParent(entityType, parentId, principal, permission);
+                    }
+
+                    @Override
+                    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds,
+                        Principal principal) {
+                      return internalEnforcer.isVisible(entityIds, principal);
+                    }
+                  };
+                });
+              }
+            }),
+        new MessagingServerRuntimeModule().getInMemoryModules(),
+        new NoOpAuditLogModule(),
+        new UserCredentialAeadEncryptionModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
+          }
+        }
+    );
+    injectorRef.set(injector);
+
+    tokenManager = injector.getInstance(TokenManager.class);
+    tokenManager.startAndWait();
+    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
+
+    messagingService = injector.getInstance(MessagingService.class);
+    httpService = injector.getInstance(MessagingHttpService.class);
+    httpService.startAndWait();
+    messagingServer = Iterables.getOnlyElement(
+        injector.getInstance(DiscoveryServiceClient.class)
+            .discover(Constants.Service.MESSAGING_SERVICE));
+    return injector.getInstance(DefaultClientMessagingService.class);
   }
 
   /**
