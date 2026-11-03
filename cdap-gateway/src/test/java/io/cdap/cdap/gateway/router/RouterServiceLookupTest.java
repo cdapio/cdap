@@ -59,6 +59,9 @@ public class RouterServiceLookupTest {
   public void testInternalApiIsNotRoutedWhateverTheSpelling() {
     for (String uri : ImmutableList.of(
         "/v1/namespaces/system/topics?limit=1",
+        // duplicate slashes in the path collapsed by URI.normalize()
+        "///v1/namespaces/system/topics",
+        "/v1//namespaces/system/topics",
         // percent-encoded characters, including an encoded slash
         "/%76%31/namespaces/system/topics",
         "/v1%2Fnamespaces%2Fsystem%2Ftopics",
@@ -77,10 +80,13 @@ public class RouterServiceLookupTest {
   @Test
   public void testOtherPathsAreStillRouted() {
     // Without these, the tests above would also pass if nothing was routable at all.
+    // Note: a leading "//v1/..." is parsed by URI.create() (in both RouterServiceLookup and
+    // netty-http's HttpResourceHandler) as authority "v1" with path "/namespaces/system/topics".
     for (String uri : ImmutableList.of(
         "/v3/namespaces",
         "/v3Internal/namespaces/default/apps/a/states/s",
-        "/v1x/a")) {
+        "/v1x/a",
+        "//v1/namespaces/system/topics")) {
       Assert.assertNotNull(uri, lookup(HttpMethod.GET, uri));
     }
   }
