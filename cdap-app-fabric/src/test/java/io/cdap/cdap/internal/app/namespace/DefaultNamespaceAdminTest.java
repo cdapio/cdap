@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
@@ -26,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.tethering.NamespaceAllocation;
 import io.cdap.cdap.internal.tethering.PeerInfo;
@@ -33,7 +38,14 @@ import io.cdap.cdap.internal.tethering.PeerMetadata;
 import io.cdap.cdap.internal.tethering.TetheringStatus;
 import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.store.NamespaceStore;
 import java.util.Collections;
 import javax.annotation.Nullable;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -42,6 +54,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * Tests for {@link DefaultNamespaceAdmin}
@@ -458,6 +471,49 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       Assert.assertTrue(loc.exists());
       Assert.assertEquals(nsGroup, loc.getGroup());
       Assert.assertEquals("rwx", loc.getPermissions().substring(3, 6));
+    }
+  }
+
+  @Test
+  public void testDeleteDatasetsRequiresDeletePermission() throws Exception {
+    NamespaceId namespaceId = new NamespaceId("nsDeleteDatasetsAuth");
+    Principal alice = new Principal("alice", Principal.PrincipalType.USER);
+    AccessEnforcer enforcer = Mockito.mock(AccessEnforcer.class);
+    Mockito.doThrow(new UnauthorizedException(alice, Collections.singleton(StandardPermission.DELETE), namespaceId))
+        .when(enforcer).enforce(namespaceId, alice, StandardPermission.DELETE);
+    DefaultNamespaceAdmin securedAdmin = new DefaultNamespaceAdmin(
+        getInjector().getInstance(NamespaceStore.class), getInjector().getInstance(Store.class),
+        getInjector().getInstance(DatasetFramework.class),
+        getInjector().getInstance(MetricsCollectionService.class),
+        getInjector().getProvider(NamespaceResourceDeleter.class),
+        getInjector().getProvider(StorageProviderNamespaceAdmin.class), cConf,
+        getInjector().getInstance(Impersonator.class), enforcer, () -> alice, tetheringStore);
+
+    // A missing namespace is still reported as not found before the DELETE check
+    try {
+      securedAdmin.deleteDatasets(new NamespaceId("nonexistent_ns"));
+      Assert.fail("Expected NamespaceNotFoundException");
+    } catch (NamespaceNotFoundException expected) {
+      // expected
+    }
+
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    try {
+      DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+      DatasetId datasetId = namespaceId.dataset("authTestDs");
+      dsFramework.addInstance(KeyValueTable.class.getName(), datasetId, DatasetProperties.EMPTY);
+      try {
+        securedAdmin.deleteDatasets(namespaceId);
+        Assert.fail("Expected UnauthorizedException without DELETE permission");
+      } catch (UnauthorizedException expected) {
+        Assert.assertTrue(dsFramework.hasInstance(datasetId));
+      }
+
+      Mockito.reset(enforcer);
+      securedAdmin.deleteDatasets(namespaceId);
+      Assert.assertFalse(dsFramework.hasInstance(datasetId));
+    } finally {
+      namespaceAdmin.delete(namespaceId);
     }
   }
 

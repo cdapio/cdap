@@ -337,11 +337,11 @@ public class OAuthStore {
     }
   }
 
-  private static String getClientCredsKey(String oauthProvider) {
+  public static String getClientCredsKey(String oauthProvider) {
     return String.format("%s-%s", CLIENT_CREDS_KEY_PREFIX, oauthProvider.toLowerCase());
   }
 
-  private static String getRefreshTokenKey(String oauthProvider, String credentialId) {
+  public static String getRefreshTokenKey(String oauthProvider, String credentialId) {
     return String.format("%s-%s-%s", REFRESH_TOKEN_KEY_PREFIX, oauthProvider.toLowerCase(), credentialId.toLowerCase());
   }
 

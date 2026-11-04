@@ -52,6 +52,9 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +97,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
       return;
     }
+    getContext().getContextAccessEnforcer().enforceOnParent(
+        EntityType.APPLICATION, new NamespaceId(namespace), StandardPermission.CREATE);
 
     //Validate remotely if remote execution is enabled
     if (getContext().isRemoteTaskEnabled()) {
@@ -193,6 +198,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("Namespace '%s' does not exist", namespace));
       return;
     }
+    getContext().getContextAccessEnforcer().enforceOnParent(
+        EntityType.APPLICATION, new NamespaceId(namespace), StandardPermission.CREATE);
 
     AppRequest<JsonObject> appRequest;
     try {

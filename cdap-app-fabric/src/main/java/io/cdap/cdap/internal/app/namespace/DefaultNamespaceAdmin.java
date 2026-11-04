@@ -380,6 +380,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
+        StandardPermission.DELETE);
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
