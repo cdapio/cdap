@@ -71,6 +71,16 @@ public class DraftHandler extends AbstractDataPipelineHandler {
     this.draftService = new DraftService(context, this.metrics);
   }
 
+  @Override
+  protected <T> void respond(String namespace, HttpServiceResponder responder, NamespacedResponder callable) {
+    // Drafts are not supported in the system namespace, where reads bypass RBAC.
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Drafts are not supported in the system namespace");
+      return;
+    }
+    super.respond(namespace, responder, callable);
+  }
+
   /**
    * Returns a list of drafts associated with a namespace.
    */
