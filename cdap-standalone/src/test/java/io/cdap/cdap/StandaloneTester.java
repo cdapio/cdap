@@ -22,8 +22,8 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -71,7 +71,8 @@ public class StandaloneTester extends ExternalResource {
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Router.ADDRESS, getLocalHostname());
-    cConf.setInt(Constants.Router.ROUTER_PORT, Networks.getRandomPort());
+    cConf.setInt(Constants.Router.ROUTER_PORT, 0);
+    cConf.setInt(Constants.Router.ROUTER_SSL_PORT, 0);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
     cConf.setBoolean(Constants.Audit.ENABLED, false);
@@ -85,6 +86,11 @@ public class StandaloneTester extends ExternalResource {
     standaloneMain = StandaloneMain.create(cConf, new Configuration());
     standaloneMain.startUp();
     try {
+      NettyRouter router = standaloneMain.getInjector().getInstance(NettyRouter.class);
+      router.getBoundAddress().ifPresent(address ->
+          cConf.setInt(cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)
+              ? Constants.Router.ROUTER_SSL_PORT
+              : Constants.Router.ROUTER_PORT, address.getPort()));
       waitForStandalone();
     } catch (Throwable t) {
       standaloneMain.shutDown();

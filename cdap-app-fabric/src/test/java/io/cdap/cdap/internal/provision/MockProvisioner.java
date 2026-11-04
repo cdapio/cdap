@@ -57,6 +57,7 @@ public class MockProvisioner implements Provisioner {
   public static final String EXPECTED_APP_CDAP_VERSION = "expected.app.cdap.version";
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     NAME, "Native", "Runs programs on the CDAP master cluster. Does not provision any resources.");
+  private static final Set<String> WAITING_RUNS = Collections.synchronizedSet(new HashSet<>());
   private final AtomicInteger callCount;
   private final Set<ProgramRunInfo> seenRuns;
 
@@ -165,7 +166,18 @@ public class MockProvisioner implements Provisioner {
 
   private void waitIfConfigured(ProvisionerContext context, String key) throws InterruptedException {
     long dur = context.getProperties().containsKey(key) ? Long.parseLong(context.getProperties().get(key)) : -1L;
-    TimeUnit.MILLISECONDS.sleep(dur);
+    if (dur > 0) {
+      WAITING_RUNS.add(context.getProgramRunInfo().getRun());
+    }
+    try {
+      TimeUnit.MILLISECONDS.sleep(dur);
+    } finally {
+      WAITING_RUNS.remove(context.getProgramRunInfo().getRun());
+    }
+  }
+
+  public static boolean isWaiting(String runId) {
+    return WAITING_RUNS.contains(runId);
   }
 
   private void validateContext(ProvisionerContext context) {
