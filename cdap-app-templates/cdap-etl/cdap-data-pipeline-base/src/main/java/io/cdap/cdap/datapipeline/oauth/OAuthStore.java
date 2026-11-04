@@ -337,12 +337,26 @@ public class OAuthStore {
     }
   }
 
-  private static String getClientCredsKey(String oauthProvider) {
+  /**
+   * Returns the secure store key for the OAuth client credentials of the given provider.
+   *
+   * @param oauthProvider name of the OAuth provider
+   * @return secure store key for the client credentials
+   */
+  public static String getClientCredsKey(String oauthProvider) {
     return String.format("%s-%s", CLIENT_CREDS_KEY_PREFIX, oauthProvider.toLowerCase());
   }
 
-  private static String getRefreshTokenKey(String oauthProvider, String credentialId) {
-    return String.format("%s-%s-%s", REFRESH_TOKEN_KEY_PREFIX, oauthProvider.toLowerCase(), credentialId.toLowerCase());
+  /**
+   * Returns the secure store key for the OAuth refresh token of the given provider and credential.
+   *
+   * @param oauthProvider name of the OAuth provider
+   * @param credentialId ID used to identify the credential
+   * @return secure store key for the refresh token
+   */
+  public static String getRefreshTokenKey(String oauthProvider, String credentialId) {
+    return String.format("%s-%s-%s", REFRESH_TOKEN_KEY_PREFIX,
+        oauthProvider.toLowerCase(), credentialId.toLowerCase());
   }
 
   private static String getAccessTokenKey(String oauthProvider, String credentialId) {

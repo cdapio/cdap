@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
@@ -26,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.tethering.NamespaceAllocation;
 import io.cdap.cdap.internal.tethering.PeerInfo;
@@ -33,8 +38,23 @@ import io.cdap.cdap.internal.tethering.PeerMetadata;
 import io.cdap.cdap.internal.tethering.TetheringStatus;
 import io.cdap.cdap.internal.tethering.TetheringStore;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.store.NamespaceStore;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
@@ -459,6 +479,98 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       Assert.assertEquals(nsGroup, loc.getGroup());
       Assert.assertEquals("rwx", loc.getPermissions().substring(3, 6));
     }
+  }
+
+  @Test
+  public void testDeleteDatasetsAuthorization() throws Exception {
+    NamespaceId namespaceId = new NamespaceId("nsDeleteDatasetsAuth");
+    NamespaceId nonexistentNs = new NamespaceId("nonexistent_ns");
+    Principal alice = new Principal("alice", Principal.PrincipalType.USER);
+    Map<EntityId, Set<Permission>> grantedPermissions = new HashMap<>();
+    grantedPermissions.put(
+        namespaceId, new HashSet<>(EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE)));
+    DefaultNamespaceAdmin securedAdmin = createSecuredNamespaceAdmin(alice, grantedPermissions);
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+    try {
+      DatasetId datasetId = namespaceId.dataset("authTestDs");
+      dsFramework.addInstance(KeyValueTable.class.getName(), datasetId, DatasetProperties.EMPTY);
+      Assert.assertTrue(dsFramework.hasInstance(datasetId));
+
+      try {
+        securedAdmin.deleteDatasets(nonexistentNs);
+        Assert.fail("Expected UnauthorizedException when caller lacks StandardPermission.GET");
+      } catch (UnauthorizedException e) {
+        Assert.assertEquals(
+            Collections.singleton(StandardPermission.GET.toString()), e.getMissingPermissions());
+      }
+
+      grantedPermissions.put(
+          nonexistentNs,
+          new HashSet<>(EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE)));
+      try {
+        securedAdmin.deleteDatasets(nonexistentNs);
+        Assert.fail("Expected NamespaceNotFoundException for non-existent namespace");
+      } catch (NamespaceNotFoundException e) {
+        Assert.assertEquals(nonexistentNs, e.getId());
+      }
+
+      try {
+        securedAdmin.deleteDatasets(namespaceId);
+        Assert.fail("Expected UnauthorizedException when caller lacks StandardPermission.DELETE");
+      } catch (UnauthorizedException e) {
+        Assert.assertEquals(
+            Collections.singleton(StandardPermission.DELETE.toString()), e.getMissingPermissions());
+      }
+      Assert.assertTrue(dsFramework.hasInstance(datasetId));
+
+      grantedPermissions.get(namespaceId).add(StandardPermission.DELETE);
+      securedAdmin.deleteDatasets(namespaceId);
+      Assert.assertFalse(dsFramework.hasInstance(datasetId));
+    } finally {
+      namespaceAdmin.delete(namespaceId);
+    }
+  }
+
+  private DefaultNamespaceAdmin createSecuredNamespaceAdmin(
+      Principal caller, Map<EntityId, Set<Permission>> grantedPermissions) {
+    AccessEnforcer testEnforcer = new AccessEnforcer() {
+      @Override
+      public void enforce(EntityId entity, Principal principal,
+                          Set<? extends Permission> permissions) {
+        Set<Permission> entityPerms =
+            grantedPermissions.getOrDefault(entity, Collections.emptySet());
+        if (!principal.equals(caller) || !entityPerms.containsAll(permissions)) {
+          throw new UnauthorizedException(principal, permissions, entity);
+        }
+      }
+
+      @Override
+      public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+                                  Permission permission) {
+        enforce(parentId, principal, Collections.singleton(permission));
+      }
+
+      @Override
+      public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds,
+                                               Principal principal) {
+        return entityIds;
+      }
+    };
+
+    return new DefaultNamespaceAdmin(
+        getInjector().getInstance(NamespaceStore.class),
+        getInjector().getInstance(Store.class),
+        getInjector().getInstance(DatasetFramework.class),
+        getInjector().getInstance(MetricsCollectionService.class),
+        getInjector().getProvider(NamespaceResourceDeleter.class),
+        getInjector().getProvider(StorageProviderNamespaceAdmin.class),
+        cConf,
+        getInjector().getInstance(Impersonator.class),
+        testEnforcer,
+        () -> caller,
+        tetheringStore);
   }
 
   @Nullable

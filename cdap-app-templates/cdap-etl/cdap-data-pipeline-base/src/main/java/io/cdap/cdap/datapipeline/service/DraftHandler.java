@@ -84,6 +84,12 @@ public class DraftHandler extends AbstractDataPipelineHandler {
                          @QueryParam("filter") @Nullable String filter) {
 
     respond(namespaceName, responder, (namespace) -> {
+      if (namespace.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                            "Listing drafts in system namespace is currently not supported");
+        return;
+      }
+      contextAccessEnforcer.enforce(new NamespaceId(namespace.getName()), StandardPermission.GET);
       if (!draftService.fieldExists(sortBy)) {
         throw new IllegalArgumentException(String.format(
           "Invalid value '%s' for sortBy. This field does not exist in the Drafts table.", sortBy));
@@ -104,6 +110,12 @@ public class DraftHandler extends AbstractDataPipelineHandler {
                        @PathParam("context") String namespaceName,
                        @PathParam("draft") String draftId) {
     respond(namespaceName, responder, (namespace) -> {
+      if (namespace.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                            "Getting draft in system namespace is currently not supported");
+        return;
+      }
+      contextAccessEnforcer.enforce(new NamespaceId(namespace.getName()), StandardPermission.GET);
       String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
       responder.sendJson(draftService.getDraft(id));
@@ -118,10 +130,13 @@ public class DraftHandler extends AbstractDataPipelineHandler {
   public void putDraft(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("context") String namespaceName,
                        @PathParam("draft") String draftId) {
-
-    contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.UPDATE);
     respond(namespaceName, responder, (namespace) -> {
-
+      if (namespace.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                            "Creating draft in system namespace is currently not supported");
+        return;
+      }
+      contextAccessEnforcer.enforce(new NamespaceId(namespace.getName()), StandardPermission.UPDATE);
       String requestStr = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       DraftStoreRequest<ETLConfig> draftStoreRequest = deserializeDraftStoreRequest(requestStr);
       // Expose draft to all users within the same namespace.
@@ -141,8 +156,13 @@ public class DraftHandler extends AbstractDataPipelineHandler {
   public void deleteDraft(HttpServiceRequest request, HttpServiceResponder responder,
                           @PathParam("context") String namespaceName,
                           @PathParam("draft") String draftId) {
-    contextAccessEnforcer.enforce(new NamespaceId(namespaceName), StandardPermission.UPDATE);
     respond(namespaceName, responder, (namespace) -> {
+      if (namespace.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
+        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                            "Deleting draft in system namespace is currently not supported");
+        return;
+      }
+      contextAccessEnforcer.enforce(new NamespaceId(namespace.getName()), StandardPermission.UPDATE);
       String userId = "";
       DraftId id = new DraftId(namespace, draftId, userId);
 

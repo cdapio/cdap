@@ -17,14 +17,23 @@ package io.cdap.cdap.datapipeline;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
+import io.cdap.cdap.datapipeline.oauth.OAuthStore;
+import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshType;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.store.SecureStoreService;
+import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -38,14 +47,17 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
+import java.util.EnumSet;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -55,10 +67,16 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   private static final Gson GSON = new GsonBuilder()
       .setPrettyPrinting()
       .create();
+  public static final String ALICE_NAME = "alice";
+  public static final Principal ALICE_PRINCIPAL = new Principal(ALICE_NAME, Principal.PrincipalType.USER);
+
+  @ClassRule
+  public static final TestConfiguration AUTH_CONFIG = new TestConfiguration().enableAuthorization(TMP_FOLDER);
 
   private NettyHttpService mockOAuthServer;
   private String mockTokenUrl;
   private int mockTokenPort;
+  private String user;
 
   public static final class MockTokenHandler extends AbstractHttpHandler {
     @POST
@@ -122,6 +140,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Before
   public void setUpMockServer() throws Exception {
+    user = null;
     setupMockSecureStoreLeasing();
     mockOAuthServer = NettyHttpService.builder("mock-oauth-server")
         .setHost("localhost")
@@ -370,8 +389,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     URL url = serviceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE, url).build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE, url);
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   @Test
@@ -494,8 +516,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     URL url = serviceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   private <T> T makeGetCall(String endpoint, Class<T> clazz) throws IOException {
@@ -508,10 +533,12 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     URL url = serviceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, url)
-        .withBody(GSON.toJson(body))
-        .build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, url)
+        .withBody(GSON.toJson(body));
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   @Test
@@ -602,5 +629,144 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     Assert.assertEquals(200, response.getResponseCode());
     String body = response.getResponseBodyAsString();
     Assert.assertTrue(body.replaceAll("\\s+", "").contains("\"isValid\":false"));
+  }
+
+  @Test
+  public void testOAuthAuthorization() throws Exception {
+    String providerName = "authProvider";
+    String credentialName = "cred1";
+    String loginUrl = "http://localhost:" + mockTokenPort + "/login";
+    PutOAuthProviderRequest providerRequest =
+        createPutRequest(loginUrl, mockTokenUrl, "clientid", "clientsecret");
+    PutOAuthProviderRequest hijackedRequest =
+        createPutRequest("http://attacker.example.com/login", mockTokenUrl, null, null);
+    PutOAuthCredentialRequest credentialRequest =
+        new PutOAuthCredentialRequest("mock_code", "http://redirect", null);
+
+    // Seed provider as privileged user so we can verify unprivileged requests do not mutate or delete it
+    HttpResponse seedResp = makePutCall("provider/" + providerName, providerRequest);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, seedResp.getResponseCode());
+
+    Authorizable defaultNsAuthorizable = Authorizable.fromEntityId(NamespaceId.DEFAULT);
+    Authorizable systemNsAuthorizable = Authorizable.fromEntityId(NamespaceId.SYSTEM);
+    getPermissionManager().grant(defaultNsAuthorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.GET));
+    getPermissionManager().grant(systemNsAuthorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.GET));
+    try {
+      user = ALICE_NAME;
+
+      // Verify all 6 endpoints return 403 Forbidden for unprivileged user alice
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makeGetCall("provider/" + providerName + "/authurl").getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makePutCall("provider/" + providerName, providerRequest).getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makePutCall("provider/" + providerName + "?reuse_client_credentials=true",
+              hijackedRequest).getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makeDeleteCall("provider/" + providerName).getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makeDeleteCall("provider/" + providerName + "?preserve_client_credentials=true")
+              .getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makePutCall("provider/" + providerName + "/credential/" + credentialName,
+              credentialRequest).getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makeGetCall("provider/" + providerName + "/credential/" + credentialName)
+              .getResponseCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+          makeGetCall("provider/" + providerName + "/credential/" + credentialName + "/valid")
+              .getResponseCode());
+
+      // Verify StructuredTable row was not modified by reuse_client_credentials=true
+      // and not deleted by preserve_client_credentials=true
+      user = null;
+      HttpResponse verifyUnmodifiedResp = makeGetCall("provider/" + providerName + "/authurl");
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, verifyUnmodifiedResp.getResponseCode());
+      Assert.assertEquals(loginUrl + "?client_id=clientid&redirect_uri=null",
+          verifyUnmodifiedResp.getResponseBodyAsString());
+
+      // Grant alice SecureKeyId permissions progressively (GET -> UPDATE -> DELETE)
+      user = ALICE_NAME;
+      Authorizable[] secureKeyAuthorizables = new Authorizable[] {
+          Authorizable.fromEntityId(NamespaceId.SYSTEM, EntityType.SECUREKEY),
+          Authorizable.fromEntityId(
+              NamespaceId.SYSTEM.secureKey(OAuthStore.getClientCredsKey(providerName))),
+          Authorizable.fromEntityId(
+              NamespaceId.SYSTEM.secureKey(OAuthStore.getRefreshTokenKey(providerName, credentialName))),
+          Authorizable.fromEntityId(NamespaceId.SYSTEM.secureKey(
+              "oauthaccesstoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase()))
+      };
+      EnumSet<StandardPermission> allSecureKeyPerms = EnumSet.of(
+          StandardPermission.GET, StandardPermission.UPDATE, StandardPermission.DELETE);
+      try {
+        // 1. With only GET on SecureKeyId: getAuthURL succeeds, but PUT and DELETE endpoints still return 403
+        for (Authorizable authorizable : secureKeyAuthorizables) {
+          getPermissionManager().grant(authorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.GET));
+        }
+        Assert.assertEquals(HttpURLConnection.HTTP_OK,
+            makeGetCall("provider/" + providerName + "/authurl").getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makePutCall("provider/" + providerName, providerRequest).getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makePutCall("provider/" + providerName + "?reuse_client_credentials=true",
+                hijackedRequest).getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makePutCall("provider/" + providerName + "/credential/" + credentialName,
+                credentialRequest).getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makeDeleteCall("provider/" + providerName).getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makeDeleteCall("provider/" + providerName + "?preserve_client_credentials=true")
+                .getResponseCode());
+
+        // Verify reuse_client_credentials=true did not overwrite loginURL even when caller has GET on ClientCredsKey
+        HttpResponse verifyAfterGetGrantResp = makeGetCall("provider/" + providerName + "/authurl");
+        Assert.assertEquals(HttpURLConnection.HTTP_OK, verifyAfterGetGrantResp.getResponseCode());
+        Assert.assertEquals(loginUrl + "?client_id=clientid&redirect_uri=null",
+            verifyAfterGetGrantResp.getResponseBodyAsString());
+
+        // 2. With GET + UPDATE on SecureKeyId: PUT and GET endpoints succeed, but DELETE still returns 403
+        for (Authorizable authorizable : secureKeyAuthorizables) {
+          getPermissionManager().grant(authorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.UPDATE));
+        }
+        Assert.assertEquals(HttpURLConnection.HTTP_OK,
+            makePutCall("provider/" + providerName, providerRequest).getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_OK,
+            makePutCall("provider/" + providerName + "/credential/" + credentialName,
+                credentialRequest).getResponseCode());
+
+        HttpResponse credResp =
+            makeGetCall("provider/" + providerName + "/credential/" + credentialName);
+        Assert.assertEquals(HttpURLConnection.HTTP_OK, credResp.getResponseCode());
+        Assert.assertTrue(credResp.getResponseBodyAsString().contains("mock_access_token"));
+
+        HttpResponse validResp =
+            makeGetCall("provider/" + providerName + "/credential/" + credentialName + "/valid");
+        Assert.assertEquals(HttpURLConnection.HTTP_OK, validResp.getResponseCode());
+        Assert.assertTrue(validResp.getResponseBodyAsString()
+            .replaceAll("\\s+", "").contains("\"isValid\":true"));
+
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makeDeleteCall("provider/" + providerName).getResponseCode());
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN,
+            makeDeleteCall("provider/" + providerName + "?preserve_client_credentials=true")
+                .getResponseCode());
+
+        // 3. With GET + UPDATE + DELETE on SecureKeyId: DELETE succeeds
+        for (Authorizable authorizable : secureKeyAuthorizables) {
+          getPermissionManager().grant(authorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.DELETE));
+        }
+        Assert.assertEquals(HttpURLConnection.HTTP_OK,
+            makeDeleteCall("provider/" + providerName).getResponseCode());
+      } finally {
+        for (Authorizable authorizable : secureKeyAuthorizables) {
+          getPermissionManager().revoke(authorizable, ALICE_PRINCIPAL, allSecureKeyPerms);
+        }
+      }
+    } finally {
+      user = null;
+      getPermissionManager().revoke(defaultNsAuthorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.GET));
+      getPermissionManager().revoke(systemNsAuthorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.GET));
+    }
   }
 }

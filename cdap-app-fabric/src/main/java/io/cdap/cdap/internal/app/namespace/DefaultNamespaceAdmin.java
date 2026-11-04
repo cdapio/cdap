@@ -374,12 +374,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public synchronized void deleteDatasets(@Name("namespaceId") NamespaceId namespaceId)
-      throws Exception {
+  public synchronized void deleteDatasets(NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
+        StandardPermission.DELETE);
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,

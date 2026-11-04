@@ -38,8 +38,11 @@ import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
@@ -171,7 +174,6 @@ public class DraftServiceTest extends DataPipelineServiceTest {
   @Test
   public void testDraftAuthorization() throws Exception {
     user = ALICE_NAME;
-    HttpResponse response;
     // Check Alice can't list requests
     expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
     listDrafts(NamespaceId.DEFAULT.getNamespace(), false, "", "", "");
@@ -196,7 +198,7 @@ public class DraftServiceTest extends DataPipelineServiceTest {
     DraftId draftId = new DraftId(namespace, "draft1", ALICE_NAME);
     // She can't delete it as well
     expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
-    deleteDraft(draftId);
+    deleteDraftAndCheck(draftId);
     createBatchPipelineDraft(draftId, "TestPipeline1", "This is a test pipeline.");
     // Grant Alice create priviledge. Note that we don't differenciate create and update,
     // so update is used in both cases
@@ -213,7 +215,72 @@ public class DraftServiceTest extends DataPipelineServiceTest {
     // Alice should be able to delete draft
     expectedCode = HttpURLConnection.HTTP_OK;
     user = ALICE_NAME;
-    deleteDraft(draftId);
+    Assert.assertNotNull(getDraft(draftId));
+    deleteDraftAndCheck(draftId);
+
+    // Draft operations in system namespace (case-insensitive) are not supported and must return 400 Bad Request
+    expectedCode = HttpURLConnection.HTTP_BAD_REQUEST;
+    for (String sysNs : new String[]{NamespaceId.SYSTEM.getNamespace(), "SYSTEM"}) {
+      listDrafts(sysNs, false, "", "", "");
+      DraftId sysDraftId = new DraftId(new NamespaceSummary(sysNs, "", 0), "draft1", ALICE_NAME);
+      getDraft(sysDraftId);
+      createBatchPipelineDraft(sysDraftId, "TestPipeline1", "This is a test pipeline.");
+      deleteDraftAndCheck(sysDraftId);
+    }
+
+    // Alice only has GET/UPDATE on NamespaceId.DEFAULT (not CREATE on EntityType.APPLICATION),
+    // so validateStage and validatePipeline must return 403 Forbidden
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    ETLStage stage = new ETLStage("src", MockSource.getPlugin("dummy1"));
+    StageValidationRequest stageValidationRequest =
+        new StageValidationRequest(stage, Collections.emptyList(), false);
+    validateStage(NamespaceId.DEFAULT.getNamespace(), stageValidationRequest);
+
+    ArtifactSummary artifact = new ArtifactSummary("cdap-data-pipeline", "1.0.0");
+    ETLBatchConfig batchConfig = ETLBatchConfig.builder()
+        .addStage(stage)
+        .addStage(new ETLStage("sink", MockSink.getPlugin("dummy2")))
+        .addConnection("src", "sink")
+        .setEngine(Engine.SPARK)
+        .build();
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(artifact, batchConfig);
+    validatePipeline(NamespaceId.DEFAULT.getNamespace(), appRequest);
+
+    // Grant Alice CREATE permission on APPLICATION in NamespaceId.DEFAULT
+    Authorizable defaultAppAuthorizable =
+        Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.APPLICATION);
+    getPermissionManager().grant(defaultAppAuthorizable,
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.CREATE));
+    try {
+      expectedCode = HttpURLConnection.HTTP_OK;
+      validateStage(NamespaceId.DEFAULT.getNamespace(), stageValidationRequest);
+      validatePipeline(NamespaceId.DEFAULT.getNamespace(), appRequest);
+    } finally {
+      getPermissionManager().revoke(defaultAppAuthorizable,
+                                    ALICE_PRINCIPAL,
+                                    EnumSet.of(StandardPermission.CREATE));
+    }
+
+    // Unprivileged caller without GET on non-existent namespace 'ghost' receives 403 Forbidden
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    validateStage("ghost", stageValidationRequest);
+    validatePipeline("ghost", appRequest);
+
+    // Caller with GET on 'ghost' (but without APPLICATION CREATE) receives 404 Not Found before 403
+    Authorizable ghostAuthorizable = Authorizable.fromEntityId(new NamespaceId("ghost"));
+    getPermissionManager().grant(ghostAuthorizable,
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.GET));
+    try {
+      expectedCode = HttpURLConnection.HTTP_NOT_FOUND;
+      validateStage("ghost", stageValidationRequest);
+      validatePipeline("ghost", appRequest);
+    } finally {
+      getPermissionManager().revoke(ghostAuthorizable,
+                                    ALICE_PRINCIPAL,
+                                    EnumSet.of(StandardPermission.GET));
+    }
   }
 
   @Test
@@ -406,6 +473,22 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .withBody(GSON.toJson(draftStoreRequest));
     HttpResponse response = executeRequest(request);
     assertResponseCode(response);
+  }
+
+  private void validateStage(String namespace, StageValidationRequest request) throws IOException {
+    URL url = serviceURI
+        .resolve(String.format("v1/contexts/%s/validations/stage", namespace))
+        .toURL();
+    assertResponseCode(
+        executeRequest(HttpRequest.builder(HttpMethod.POST, url).withBody(GSON.toJson(request))));
+  }
+
+  private void validatePipeline(String namespace, AppRequest<?> request) throws IOException {
+    URL url = serviceURI
+        .resolve(String.format("v1/contexts/%s/validations/pipeline", namespace))
+        .toURL();
+    assertResponseCode(
+        executeRequest(HttpRequest.builder(HttpMethod.POST, url).withBody(GSON.toJson(request))));
   }
 
   /**

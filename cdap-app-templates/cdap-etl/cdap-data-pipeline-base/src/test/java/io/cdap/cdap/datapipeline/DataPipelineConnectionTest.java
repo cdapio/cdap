@@ -806,6 +806,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
                                  APP_ARTIFACT_ID.getVersion())));
     addConnection(conn, creationRequest);
+    testConnection(creationRequest);
     deleteConnection(conn);
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
@@ -839,6 +840,24 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                                 EnumSet.of(StandardPermission.DELETE));
     expectedCode = HttpURLConnection.HTTP_OK;
     deleteConnection(conn);
+
+    // Alice still cannot test connections without wildcard CREATE permission on ConnectionEntityId
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    testConnection(creationRequest);
+
+    ConnectionEntityId wildcardConnectionId = new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(), "*");
+    Authorizable wildcardAuthorizable = Authorizable.fromEntityId(wildcardConnectionId);
+    getPermissionManager().grant(wildcardAuthorizable,
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.CREATE));
+    try {
+      expectedCode = HttpURLConnection.HTTP_OK;
+      testConnection(creationRequest);
+    } finally {
+      getPermissionManager().revoke(wildcardAuthorizable,
+                                    ALICE_PRINCIPAL,
+                                    EnumSet.of(StandardPermission.CREATE));
+    }
   }
 
   private HttpResponse executeRequest(URL connectionURL, HttpMethod method) throws IOException {
@@ -868,6 +887,18 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       StandardCharsets.UTF_8.name());
     URL validatePipelineURL = serviceURI.resolve(url).toURL();
     HttpRequest.Builder request = HttpRequest.builder(HttpMethod.PUT, validatePipelineURL)
+      .withBody(GSON.toJson(creationRequest));
+    HttpResponse response = executeRequest(request);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+  }
+
+  private void testConnection(ConnectionCreationRequest creationRequest) throws IOException {
+    String url = URLEncoder.encode(
+      String.format("v1/contexts/%s/connections/test", NamespaceId.DEFAULT.getNamespace()),
+      StandardCharsets.UTF_8.name());
+    URL testConnectionUrl = serviceURI.resolve(url).toURL();
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, testConnectionUrl)
       .withBody(GSON.toJson(creationRequest));
     HttpResponse response = executeRequest(request);
     Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
