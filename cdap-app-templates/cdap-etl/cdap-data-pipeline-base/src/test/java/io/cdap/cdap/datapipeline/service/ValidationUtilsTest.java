@@ -16,6 +16,12 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.InvalidMacroException;
@@ -26,15 +32,21 @@ import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.plugin.PluginSelector;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
+import io.cdap.cdap.api.service.worker.SystemAppTaskContext;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.validation.StageSchema;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -104,12 +116,51 @@ public class ValidationUtilsTest {
         stageValidationResponse.getSpec().getPlugin().getProperties().get("tableName"));
   }
 
+  @Test
+  public void testRemoteValidationTaskPreservesNonAsciiCharacters() throws Exception {
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+        .serializeNulls()
+        .create();
+    String nonAsciiTable = "parttwo_samlet_købere_total_gads_ä_é";
+    Schema testSchema = Schema.recordOf("a",
+        Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
+    StageSchema testStageSchema = new StageSchema("source", testSchema);
+    ETLStage etlStage = new ETLStage("source", MockSource.getPlugin(nonAsciiTable));
+    StageValidationRequest validationRequest = new StageValidationRequest(
+        etlStage, Collections.singletonList(testStageSchema), false);
+    RemoteValidationRequest remoteRequest = new RemoteValidationRequest(
+        NamespaceId.DEFAULT.getNamespace(), gson.toJson(validationRequest));
+
+    SystemAppTaskContext systemAppTaskContext = Mockito.mock(SystemAppTaskContext.class);
+    Mockito.when(systemAppTaskContext.createPluginConfigurer(Mockito.anyString()))
+        .thenReturn(getPluginConfigurer(MockSource.PLUGIN_CLASS));
+    Mockito.when(systemAppTaskContext.evaluateMacros(
+        Mockito.anyString(), Mockito.anyMap(), Mockito.any(), Mockito.any()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
+
+    RunnableTaskRequest taskRequest = RunnableTaskRequest.getBuilder(
+        RemoteValidationTask.class.getName()).withParam(gson.toJson(remoteRequest)).build();
+    RunnableTaskContext context = new RunnableTaskContext(taskRequest, systemAppTaskContext);
+
+    new RemoteValidationTask().run(context);
+
+    String responseJson = StandardCharsets.UTF_8.decode(context.getResult()).toString();
+    StageValidationResponse response = gson.fromJson(responseJson, StageValidationResponse.class);
+    Assert.assertTrue(response.getFailures().isEmpty());
+    Assert.assertEquals(nonAsciiTable,
+        response.getSpec().getPlugin().getProperties().get("tableName"));
+  }
+
   //Mock PluginConfigurer
   private PluginConfigurer getPluginConfigurer(PluginClass pluginClass) {
     return new PluginConfigurer() {
       @Override
       public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
           PluginProperties properties, PluginSelector selector) {
+        selector.select(ImmutableSortedMap.of(
+            new ArtifactId("mock", new ArtifactVersion("1.0.0"), ArtifactScope.SYSTEM),
+            pluginClass));
         String tableName = properties.getProperties().get("tableName");
         if (tableName == null || tableName.isEmpty()) {
           throw new InvalidPluginConfigException(pluginClass, Collections.singleton("tableName"),

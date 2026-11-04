@@ -1379,11 +1379,25 @@ export LOG_DIR=${CDAP_LOG_DIR:-/var/log/cdap}
 # A string representing this instance of CDAP. $USER by default.
 export IDENT_STRING=${USER}
 
+# Ensure a UTF-8 locale by default so JVM file.encoding and sun.jnu.encoding do not fall back to US-ASCII
+if [[ -z "${LANG}" && -z "${LC_ALL}" && -z "${LC_CTYPE}" ]]; then
+  if locale -a 2>/dev/null | grep -Eiq '^C\.utf-?8$'; then
+    export LANG="C.UTF-8"
+  elif locale -a 2>/dev/null | grep -Eiq '^en_US\.utf-?8$'; then
+    export LANG="en_US.UTF-8"
+  else
+    export LANG="C.UTF-8"
+  fi
+fi
+
 # Extra Java runtime options.
 # Below are what we set by default.  May only work with SUN JVM.
 # For more on why as well as other possible settings,
 # see http://wiki.apache.org/hadoop/PerformanceTuning
 export OPTS=${OPTS:-"-XX:+UseG1GC"}
+if [[ "${OPTS}" != *"-Dfile.encoding="* ]]; then
+  export OPTS="${OPTS} -Dfile.encoding=UTF-8"
+fi
 
 # The directory where PID files are stored. Default: /var/cdap/run
 export PID_DIR=${CDAP_PID_DIR:-/var/cdap/run}
