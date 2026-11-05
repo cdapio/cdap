@@ -250,7 +250,8 @@ public class AppWithServices extends AbstractApplication {
           TimeUnit.MILLISECONDS.sleep(sleepMs);
         }
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -282,7 +283,8 @@ public class AppWithServices extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 

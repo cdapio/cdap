@@ -90,7 +90,7 @@ public class PipelineTypeValidator {
       Type firstType = resTypeList.get(i);
       Type secondType = resTypeList.get(i + 1);
       // Check if secondType can accept firstType
-      Preconditions.checkArgument(TypeToken.of(secondType).isAssignableFrom(firstType),
+      Preconditions.checkArgument(TypeToken.of(secondType).isSupertypeOf(TypeToken.of(firstType)),
           "Types between stages didn't match. Mismatch between %s -> %s",
           firstType, secondType);
     }

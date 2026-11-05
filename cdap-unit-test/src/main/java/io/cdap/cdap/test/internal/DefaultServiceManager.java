@@ -59,7 +59,9 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
       appFabricClient.setServiceInstances(programId.getNamespace(), programId.getApplication(),
           programId.getProgram(), instances);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -81,7 +83,9 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
           programId.getApplication(),
           programId.getProgram());
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -194,7 +194,6 @@ public class CConfigurationTest {
       try {
         resource.close();
       } catch (Exception ignored) {
-        // Ignored during cleanup
       }
     }
   }

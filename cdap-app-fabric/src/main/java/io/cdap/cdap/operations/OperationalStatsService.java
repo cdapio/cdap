@@ -137,7 +137,6 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
         stats.collect();
       } catch (Throwable t) {
         if (t instanceof InterruptedException) {
-          // Propagate InterruptedException to allow the service run loop to stop properly.
           throw (InterruptedException) t;
         }
         Throwable rootCause = Throwables.getRootCause(t);

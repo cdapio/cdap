@@ -54,7 +54,8 @@ public abstract class Caller {
     try {
       return call(callable);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

@@ -158,6 +158,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Runnable initialized: {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }
@@ -290,25 +291,21 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.warn("Program {} interrupted.", name, e);
     } catch (ExecutionException e) {
       LOG.error("Program {} execution failed.", name, e);
-      throw new RuntimeException(Throwables.getRootCause(e));
+      Throwable rootCause = Throwables.getRootCause(e);
+      Throwables.throwIfUnchecked(rootCause);
+      throw new RuntimeException(rootCause);
     } finally {
       LOG.info("Program run {} completed. Releasing resources.", programRunId);
 
       // Close the Program and the ProgramRunner
       try {
-
         program.close();
-
       } catch (Exception ignored) {
-
       }
       if (programRunner instanceof Closeable) {
         try {
-
           ((Closeable) programRunner).close();
-
         } catch (Exception ignored) {
-
         }
       }
 
@@ -500,11 +497,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void stopCoreServices() {
     try {
-
       logAppenderInitializer.close();
-
     } catch (Exception ignored) {
-
     }
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {

@@ -70,7 +70,6 @@ final class DFSSeekableInputStream extends SeekableInputStream {
         try {
           ((Closeable) sizeProvider).close();
         } catch (Exception ignored) {
-          // Ignored during cleanup
         }
       }
     }

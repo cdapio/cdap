@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.security.impersonation;
 
-
-
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;

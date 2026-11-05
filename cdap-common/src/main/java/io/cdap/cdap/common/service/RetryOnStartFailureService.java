@@ -21,7 +21,10 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
@@ -67,9 +70,45 @@ public class RetryOnStartFailureService extends AbstractService {
 
         while (!stopped) {
           try {
-            currentDelegate.startAsync().awaitRunning();
+            CountDownLatch runningLatch = new CountDownLatch(1);
+            AtomicReference<Throwable> failedThrowable = new AtomicReference<>();
+            currentDelegate.addListener(new Service.Listener() {
+              @Override
+              public void running() {
+                runningLatch.countDown();
+              }
+
+              @Override
+              public void failed(Service.State from, Throwable failure) {
+                failedThrowable.set(failure);
+                runningLatch.countDown();
+              }
+
+              @Override
+              public void terminated(Service.State from) {
+                runningLatch.countDown();
+              }
+            }, MoreExecutors.directExecutor());
+            currentDelegate.startAsync();
+            runningLatch.await();
+            if (failedThrowable.get() != null) {
+              throw new RuntimeException(failedThrowable.get());
+            }
+            if (currentDelegate.state() != Service.State.RUNNING) {
+              if (stopped) {
+                break;
+              }
+              throw new IllegalStateException("Service failed to start");
+            }
             // Only assigned the delegate if and only if the delegate service started successfully
             startedService = currentDelegate;
+            break;
+          } catch (InterruptedException e) {
+            // This thread will be interrupted from the doStop() method.
+            Thread.currentThread().interrupt();
+            if (!stopped) {
+              currentDelegate.stopAsync();
+            }
             break;
           } catch (Throwable t) {
             LOG.debug("Exception raised when starting service {}", delegateServiceName, t);
@@ -87,7 +126,9 @@ public class RetryOnStartFailureService extends AbstractService {
               LOG.debug("Retry to start service {}", delegateServiceName);
               currentDelegate = delegate.get();
             } catch (InterruptedException e) {
-              // This thread will be interrupted from the doStop() method. Don't reset the interrupt flag.
+              // This thread will be interrupted from the doStop() method.
+              Thread.currentThread().interrupt();
+              break;
             }
           }
         }
@@ -109,6 +150,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // the setting of the startedService field. When that happens, the stop failure state is not propagated.
     // Nevertheless, there won't be any service left behind without stopping.
     if (startedService != null) {
+      AtomicBoolean notified = new AtomicBoolean(false);
       startedService.addListener(new Service.Listener() {
         @Override
         public void starting() {}
@@ -121,15 +163,25 @@ public class RetryOnStartFailureService extends AbstractService {
 
         @Override
         public void terminated(State from) {
-          notifyStopped();
+          if (notified.compareAndSet(false, true)) {
+            notifyStopped();
+          }
         }
 
         @Override
         public void failed(State from, Throwable failure) {
-          notifyFailed(failure);
+          if (notified.compareAndSet(false, true)) {
+            notifyFailed(failure);
+          }
         }
       }, MoreExecutors.directExecutor());
       startedService.stopAsync();
+      State delegateState = startedService.state();
+      if (delegateState == State.TERMINATED && notified.compareAndSet(false, true)) {
+        notifyStopped();
+      } else if (delegateState == State.FAILED && notified.compareAndSet(false, true)) {
+        notifyFailed(startedService.failureCause());
+      }
       return;
     }
 
@@ -137,13 +189,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // because if the underlying service is not yet started due to failure, it shouldn't affect the stop state
     // of this retrying service.
     if (currentDelegate != null) {
-      // If the delegate is already in a terminal state (FAILED or TERMINATED), stopAsync() won't
-      // trigger any listener callbacks, so we need to notify directly.
-      State delegateState = currentDelegate.state();
-      if (delegateState == State.TERMINATED || delegateState == State.FAILED) {
-        notifyStopped();
-        return;
-      }
+      AtomicBoolean notified = new AtomicBoolean(false);
       currentDelegate.addListener(new Service.Listener() {
         @Override
         public void starting() {}
@@ -156,15 +202,24 @@ public class RetryOnStartFailureService extends AbstractService {
 
         @Override
         public void terminated(State from) {
-          notifyStopped();
+          if (notified.compareAndSet(false, true)) {
+            notifyStopped();
+          }
         }
 
         @Override
         public void failed(State from, Throwable failure) {
-          notifyStopped();
+          if (notified.compareAndSet(false, true)) {
+            notifyStopped();
+          }
         }
       }, Threads.SAME_THREAD_EXECUTOR);
       currentDelegate.stopAsync();
+      State delegateState = currentDelegate.state();
+      if ((delegateState == State.TERMINATED || delegateState == State.FAILED)
+          && notified.compareAndSet(false, true)) {
+        notifyStopped();
+      }
       return;
     }
 

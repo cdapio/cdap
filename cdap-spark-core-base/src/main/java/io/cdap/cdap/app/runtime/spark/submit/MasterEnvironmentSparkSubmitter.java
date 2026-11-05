@@ -138,7 +138,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
 
   @Override
   protected List<String> beforeSubmit() throws Exception {
-    sparkExecutionService.startAndWait();
+    sparkExecutionService.startAsync().awaitRunning();
     InetSocketAddress socketAddress = sparkExecutionService.getBindAddress();
     // use ip instead of hostname, as some environments (like kubernetes) don't work properly with hostname
     String uri = String.format("http://%s:%d", socketAddress.getAddress().getHostAddress(), socketAddress.getPort());
@@ -164,7 +164,7 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
     sparkExecutionService.setShutdownWaitSeconds(timeoutTimeUnit.toSeconds(timeout));
-    sparkExecutionService.stopAndWait();
+    sparkExecutionService.stopAsync().awaitTerminated();
   }
 
   @Override

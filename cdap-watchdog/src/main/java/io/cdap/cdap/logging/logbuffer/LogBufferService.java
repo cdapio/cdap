@@ -115,7 +115,14 @@ public class LogBufferService extends AbstractIdleService {
     // start log recovery service to recover all the pending logs.
     recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers,
         startCleanup);
-    recoveryService.startAsync().awaitRunning();
+    try {
+      recoveryService.startAsync().awaitRunning();
+    } catch (IllegalStateException e) {
+      if (recoveryService.state() != State.STOPPING
+          && recoveryService.state() != State.TERMINATED) {
+        throw e;
+      }
+    }
 
     // create concurrent writer
     ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf,

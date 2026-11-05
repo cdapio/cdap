@@ -156,7 +156,6 @@ public class LogBufferWriter implements Flushable, Closeable {
     try {
       currOutputStream.close();
     } catch (Exception ignored) {
-      // Ignored because we are closing the writer and performing final cleanup.
     }
     executorService.shutdown();
   }
@@ -190,7 +189,6 @@ public class LogBufferWriter implements Flushable, Closeable {
     try {
       currOutputStream.close();
     } catch (Exception ignored) {
-      // Ignored because we are rotating the file and creating a new output stream.
     }
 
     writtenBytes = 0;

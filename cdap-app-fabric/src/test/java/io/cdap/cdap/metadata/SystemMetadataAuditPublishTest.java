@@ -69,7 +69,7 @@ public class SystemMetadataAuditPublishTest {
     auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
+    if (scheduler instanceof Service && ((Service) scheduler).state() == Service.State.NEW) {
       ((Service) scheduler).startAsync().awaitRunning();
     }
   }

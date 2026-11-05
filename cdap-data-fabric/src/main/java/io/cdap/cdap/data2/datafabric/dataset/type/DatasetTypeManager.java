@@ -150,12 +150,10 @@ public class DatasetTypeManager {
           try {
             cl.close();
           } catch (Exception ignored) {
-            // Ignored because we are performing resource cleanup in a finally block.
           }
           try {
             classLoaderFolder.close();
           } catch (Exception ignored) {
-            // Ignored because we are performing resource cleanup in a finally block.
           }
         }
 

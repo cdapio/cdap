@@ -263,9 +263,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     } catch (Exception e) {
       LOG.error("Encountered error while initializing SystemWorkerTwillRunnable", e);
       if (e instanceof RuntimeException) {
-
         throw (RuntimeException) e;
-
       }
       throw new RuntimeException(e);
     }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.store.state;
 
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -66,7 +67,9 @@ public class AppStateTableTest extends AppFabricTestBase {
     Injector injector = getInjector();
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAsync().awaitRunning();
+    if (txManager.state() == Service.State.NEW) {
+      txManager.startAsync().awaitRunning();
+    }
 
     transactionRunner = getInjector().getInstance(TransactionRunner.class);
 

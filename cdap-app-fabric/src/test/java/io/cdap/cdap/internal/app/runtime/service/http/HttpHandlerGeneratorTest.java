@@ -275,11 +275,8 @@ public class HttpHandlerGeneratorTest {
     public void onError(HttpServiceResponder responder, Throwable failureCause) {
       validateTransaction();
       try {
-
         channel.close();
-
       } catch (Exception ignored) {
-
       }
       LOG.error("Failed when handling upload", failureCause);
     }
@@ -512,7 +509,7 @@ public class HttpHandlerGeneratorTest {
       try {
         urlConn.setDoOutput(true);
         urlConn.setRequestMethod("POST");
-        Files.copy(file, urlConn.getOutputStream());
+        java.nio.file.Files.copy(file.toPath(), urlConn.getOutputStream());
         try (FileOutputStream fos = new FileOutputStream(downloadFile)) {
           ByteStreams.copy(urlConn.getInputStream(), fos);
         }

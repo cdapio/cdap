@@ -31,7 +31,6 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -179,38 +178,38 @@ public abstract class GatewayTestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      Services.startAndWait((Service) messagingService);
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     txService = injector.getInstance(TransactionManager.class);
-    Services.startAndWait(txService);
+    txService.startAsync().awaitRunning();
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
     metadataService = injector.getInstance(MetadataService.class);
-    Services.startAndWait(metadataService);
+    metadataService.startAsync().awaitRunning();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    Services.startAndWait(dsOpService);
+    dsOpService.startAsync().awaitRunning();
     datasetService = injector.getInstance(DatasetService.class);
-    Services.startAndWait(datasetService);
+    datasetService.startAsync().awaitRunning();
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    Services.startAndWait(appFabricServer);
+    appFabricServer.startAsync().awaitRunning();
     appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
-    Services.startAndWait(appFabricProcessorService);
+    appFabricProcessorService.startAsync().awaitRunning();
     logQueryService = injector.getInstance(LogQueryService.class);
-    Services.startAndWait(logQueryService);
+    logQueryService.startAsync().awaitRunning();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    Services.startAndWait(metricsQueryService);
+    metricsQueryService.startAsync().awaitRunning();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    Services.startAndWait(metricsCollectionService);
+    metricsCollectionService.startAsync().awaitRunning();
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(TEST_NAMESPACE_META1);
     namespaceAdmin.create(TEST_NAMESPACE_META2);
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
-    Services.startAndWait(router);
+    router.startAsync().awaitRunning();
     port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
 
     return injector;
@@ -220,25 +219,22 @@ public abstract class GatewayTestBase {
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE1));
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE2));
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    Services.stopAndWait(appFabricServer);
-    Services.stopAndWait(appFabricProcessorService);
-    Services.stopAndWait(metricsCollectionService);
-    Services.stopAndWait(metricsQueryService);
-    Services.stopAndWait(logQueryService);
-    Services.stopAndWait(router);
-    Services.stopAndWait(datasetService);
-    Services.stopAndWait(dsOpService);
-    Services.stopAndWait(metadataService);
+    appFabricServer.stopAsync().awaitTerminated();
+    appFabricProcessorService.stopAsync().awaitTerminated();
+    metricsCollectionService.stopAsync().awaitTerminated();
+    metricsQueryService.stopAsync().awaitTerminated();
+    logQueryService.stopAsync().awaitTerminated();
+    router.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpService.stopAsync().awaitTerminated();
+    metadataService.stopAsync().awaitTerminated();
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
-    Services.stopAndWait(txService);
+    txService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      Services.stopAndWait((Service) messagingService);
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
     conf.clear();
   }

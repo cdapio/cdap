@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
@@ -77,7 +78,9 @@ public class SystemMetadataWriterStageTest {
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataServiceClient = injector.getInstance(MetadataServiceClient.class);
     metadataSubscriber = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriber.startAsync().awaitRunning();
+    if (metadataSubscriber.state() == Service.State.NEW) {
+      metadataSubscriber.startAsync().awaitRunning();
+    }
   }
 
   @AfterClass

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.dataset2.lib.cube;
 
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -25,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.google.common.collect.Tables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationOption;
@@ -455,7 +455,8 @@ public class DefaultCube implements Cube, MeteredDataset {
   private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query,
       FactScanner scanner) {
     // {dimension values, measure} -> {time -> value}s
-    Table<Map<String, String>, String, Map<Long, Long>> result = HashBasedTable.create();
+    Table<Map<String, String>, String, Map<Long, Long>> result =
+        Tables.newCustomTable(new HashMap<>(), HashMap::new);
 
     int count = 0;
     while (scanner.hasNext()) {

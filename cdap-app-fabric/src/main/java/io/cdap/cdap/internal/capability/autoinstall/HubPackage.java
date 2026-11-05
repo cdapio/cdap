@@ -182,7 +182,6 @@ public class HubPackage {
           try {
             channel.close();
           } catch (Exception ignored) {
-            // Ignored because we are performing resource cleanup of the file channel on finishing.
           }
         }
       }).build();

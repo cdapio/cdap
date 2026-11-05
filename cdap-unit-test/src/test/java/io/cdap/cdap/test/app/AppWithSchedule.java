@@ -53,7 +53,8 @@ public class AppWithSchedule extends AbstractApplication {
       schedule(buildSchedule(EVERY_THREE_SECOND_SCHEDULE, ProgramType.WORKFLOW, WORKFLOW_NAME)
                  .triggerByTime("0/3 * * * * ?"));
     } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

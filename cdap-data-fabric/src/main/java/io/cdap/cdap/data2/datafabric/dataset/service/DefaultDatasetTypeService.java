@@ -20,8 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
-import java.nio.file.Files;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.common.ConflictException;
@@ -325,7 +325,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
           try (java.io.OutputStream os = tmpLocation.getOutputStream()) {
-            Files.copy(uploadedFile.toPath(), os);
+            Files.copy(uploadedFile, os);
           }
 
           // Finally, move archive to final location

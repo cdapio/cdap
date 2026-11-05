@@ -28,9 +28,6 @@
   <name>CDAP E2E Tests</name>
   <packaging>jar</packaging>
 
-  <properties>
-    <guava.version>25.1-jre</guava.version>
-  </properties>
 
   <build>
     <testSourceDirectory>${testSourceLocation}</testSourceDirectory>

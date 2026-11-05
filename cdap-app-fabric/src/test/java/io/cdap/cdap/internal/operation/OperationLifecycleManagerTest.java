@@ -100,7 +100,6 @@ public class OperationLifecycleManagerTest extends OperationTestBase {
     try {
       postgres.close();
     } catch (Exception ignored) {
-      // Ignored because we are shutting down the test class and cleaning up the embedded postgres.
     }
   }
 

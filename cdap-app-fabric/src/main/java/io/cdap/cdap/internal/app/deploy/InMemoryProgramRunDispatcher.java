@@ -494,11 +494,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
             }
           } else if (resource instanceof Closeable) {
             try {
-
               ((Closeable) resource).close();
-
             } catch (Exception ignored) {
-
             }
           } else if (resource instanceof Runnable) {
             ((Runnable) resource).run();
