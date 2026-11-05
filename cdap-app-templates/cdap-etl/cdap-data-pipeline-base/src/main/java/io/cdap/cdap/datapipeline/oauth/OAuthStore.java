@@ -21,6 +21,7 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -32,14 +33,18 @@ import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 
 /**
  * Schema for OAuth store.
@@ -61,6 +66,7 @@ public class OAuthStore {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final long codeVerifierTTL;
+  private final Map<String, Map<String, String>> preservedProviderUrls = new ConcurrentHashMap<>();
 
   public static final StructuredTableId TABLE_ID = new StructuredTableId("oauth");
   public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
@@ -131,47 +137,141 @@ public class OAuthStore {
    * @throws OAuthStoreException if the write fails
    */
   public void writeProvider(OAuthProvider oauthProvider, boolean reuseClientCredentials) throws OAuthStoreException {
+    String namespace = NamespaceId.SYSTEM.getNamespace();
+    String name = getClientCredsKey(oauthProvider.getName());
+    Map<String, String> providerUrlProperties = createProviderUrlProperties(
+        oauthProvider.getLoginURL(), oauthProvider.getTokenRefreshURL());
+
+    SecureStoreMetadata metadata = null;
+    if (reuseClientCredentials) {
+      // Check for existence of client credential when reusing them before mutating StructuredTable.
+      try {
+        metadata = secureStore.getMetadata(namespace, name);
+      } catch (IOException e) {
+        throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
+      } catch (Exception e) {
+        throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + name + "\" does not exist", e);
+      }
+      if (metadata == null) {
+        throw new OAuthStoreException("Client credential should be present in the secure store", null);
+      }
+    } else {
+      try {
+        secureStoreManager.put(
+            namespace,
+            name,
+            GSON.toJson(oauthProvider.getClientCredentials()),
+            "OAuth client creds",
+            providerUrlProperties);
+      } catch (IOException e) {
+        throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
+      } catch (Exception e) {
+        throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
+      }
+    }
+
+    SecureStoreMetadata existingMetadata = metadata;
     try {
       TransactionRunners.run(transactionRunner, context -> {
         StructuredTable table = context.getTable(TABLE_ID);
+        if (reuseClientCredentials) {
+          Optional<StructuredRow> existingRow = table.read(getKey(oauthProvider.getName()));
+          if (existingRow.isPresent()) {
+            validateSameOrigin(
+                existingRow.get().getString(LOGIN_URL_COL),
+                existingRow.get().getString(TOKEN_REFRESH_URL_COL),
+                oauthProvider);
+          }
+          Map<String, String> metadataProps = existingMetadata.getProperties();
+          if (metadataProps != null
+              && (metadataProps.containsKey(LOGIN_URL_COL)
+                  || metadataProps.containsKey(TOKEN_REFRESH_URL_COL))) {
+            validateSameOrigin(
+                metadataProps.get(LOGIN_URL_COL),
+                metadataProps.get(TOKEN_REFRESH_URL_COL),
+                oauthProvider);
+          }
+          Map<String, String> preservedUrls =
+              preservedProviderUrls.get(oauthProvider.getName().toLowerCase(Locale.ROOT));
+          if (preservedUrls != null
+              && (preservedUrls.containsKey(LOGIN_URL_COL)
+                  || preservedUrls.containsKey(TOKEN_REFRESH_URL_COL))) {
+            validateSameOrigin(
+                preservedUrls.get(LOGIN_URL_COL),
+                preservedUrls.get(TOKEN_REFRESH_URL_COL),
+                oauthProvider);
+          }
+        }
         table.upsert(getRow(oauthProvider));
-
       }, TableNotFoundException.class, InvalidFieldException.class);
+      preservedProviderUrls.put(
+          oauthProvider.getName().toLowerCase(Locale.ROOT), providerUrlProperties);
     } catch (TableNotFoundException e) {
       throw new OAuthStoreException("OAuth provider table not found", e);
     } catch (InvalidFieldException e) {
       throw new OAuthStoreException("OAuth provider object fields do not match table", e);
     }
+  }
 
-    String namespace = NamespaceId.SYSTEM.getNamespace();
-    String name = getClientCredsKey(oauthProvider.getName());
+  private static Map<String, String> createProviderUrlProperties(@Nullable String loginUrl,
+                                                                 @Nullable String tokenRefreshUrl) {
+    Map<String, String> properties = new HashMap<>(2);
+    if (loginUrl != null) {
+      properties.put(LOGIN_URL_COL, loginUrl);
+    }
+    if (tokenRefreshUrl != null) {
+      properties.put(TOKEN_REFRESH_URL_COL, tokenRefreshUrl);
+    }
+    return Collections.unmodifiableMap(properties);
+  }
 
-    // Check for existence of client credential when reusing them.
+  private static void validateSameOrigin(@Nullable String expectedLoginUrl,
+                                         @Nullable String expectedTokenRefreshUrl,
+                                         OAuthProvider oauthProvider) {
+    if (!hasSameOrigin(expectedLoginUrl, oauthProvider.getLoginURL())
+        || !hasSameOrigin(expectedTokenRefreshUrl, oauthProvider.getTokenRefreshURL())) {
+      throw new IllegalArgumentException(
+          "Cannot change OAuth provider URL scheme, host, or port when reusing client credentials");
+    }
+  }
+
+  /**
+   * Checks whether two URLs share the same scheme, host, and effective port, with no userinfo.
+   */
+  public static boolean hasSameOrigin(@Nullable String firstUrl, @Nullable String secondUrl) {
+    if (firstUrl == null || secondUrl == null) {
+      return false;
+    }
     try {
-      if (reuseClientCredentials) {
-        if (secureStore.getMetadata(namespace, name) == null) {
-          throw new OAuthStoreException("Client credential should be present in the secure store", null);
-        }
-        return;
+      URI firstUri = URI.create(firstUrl);
+      URI secondUri = URI.create(secondUrl);
+      if (firstUri.getRawUserInfo() != null || secondUri.getRawUserInfo() != null) {
+        return false;
       }
-    } catch (IOException e) {
-      throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
-    } catch (Exception e) {
-      throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + name + "\" does not exist", e);
+      String firstScheme = firstUri.getScheme();
+      String secondScheme = secondUri.getScheme();
+      String firstHost = firstUri.getHost();
+      String secondHost = secondUri.getHost();
+      return firstScheme != null && firstScheme.equalsIgnoreCase(secondScheme)
+          && firstHost != null && firstHost.equalsIgnoreCase(secondHost)
+          && getEffectivePort(firstScheme, firstUri.getPort())
+              == getEffectivePort(secondScheme, secondUri.getPort());
+    } catch (IllegalArgumentException e) {
+      return false;
     }
+  }
 
-    try {
-      secureStoreManager.put(
-          namespace,
-          name,
-          GSON.toJson(oauthProvider.getClientCredentials()),
-          "OAuth client creds",
-          Collections.emptyMap());
-    } catch (IOException e) {
-      throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
-    } catch (Exception e) {
-      throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
+  private static int getEffectivePort(String scheme, int port) {
+    if (port != -1) {
+      return port;
     }
+    if ("http".equalsIgnoreCase(scheme)) {
+      return 80;
+    }
+    if ("https".equalsIgnoreCase(scheme)) {
+      return 443;
+    }
+    return -1;
   }
 
   /**
@@ -227,8 +327,22 @@ public class OAuthStore {
     }
 
     try {
-       TransactionRunners.run(transactionRunner, context -> {
+      TransactionRunners.run(transactionRunner, context -> {
         StructuredTable table = context.getTable(TABLE_ID);
+        if (preserveClientCredentials) {
+          Optional<StructuredRow> existingRow = table.read(getKey(name));
+          if (existingRow.isPresent()) {
+            String existingLoginUrl = existingRow.get().getString(LOGIN_URL_COL);
+            String existingTokenRefreshUrl = existingRow.get().getString(TOKEN_REFRESH_URL_COL);
+            if (existingLoginUrl != null || existingTokenRefreshUrl != null) {
+              preservedProviderUrls.put(
+                  name.toLowerCase(Locale.ROOT),
+                  createProviderUrlProperties(existingLoginUrl, existingTokenRefreshUrl));
+            }
+          }
+        } else {
+          preservedProviderUrls.remove(name.toLowerCase(Locale.ROOT));
+        }
         table.delete(getKey(name));
       }, TableNotFoundException.class, InvalidFieldException.class);
     } catch (TableNotFoundException e) {

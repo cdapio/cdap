@@ -5268,6 +5268,17 @@
       the lease automatically expires after this duration to prevent deadlocks and allow other workers to recover.
     </description>
   </property>
+  <property>
+    <name>security.auth.oauth.allow.private.urls</name>
+    <value>false</value>
+    <description>
+      Whether to allow OAuth provider login, token refresh, and identity URLs that resolve to loopback or
+      private network addresses (RFC 1918, 100.64.0.0/10 CGNAT, fc00::/7 ULA). Intended for self-managed
+      deployments whose OAuth server runs on a private network. Link-local (including cloud metadata),
+      wildcard, and multicast addresses are always rejected. Disabled by default to prevent Server-Side
+      Request Forgery (SSRF).
+    </description>
+  </property>
 
   <!-- UI Configuration -->
 
