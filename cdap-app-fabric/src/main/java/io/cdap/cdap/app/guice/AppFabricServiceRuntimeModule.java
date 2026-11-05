@@ -641,7 +641,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       qrs.setThreadPool(threadPool);
       qrs.setThreadExecutor(new DefaultThreadExecutor());
       qrs.setJobStore(store);
-      qrs.setRunUpdateCheck(false);
       QuartzScheduler qs = new QuartzScheduler(qrs, -1, -1);
 
       ClassLoadHelper cch = new CascadingClassLoadHelper();

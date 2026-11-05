@@ -112,11 +112,11 @@
     <cdap.client.version>1.4.0</cdap.client.version>
     <commons.cli.version>1.2</commons.cli.version>
     <commons.collections.version>3.2.2</commons.collections.version>
-    <commons.io.version>2.15.1</commons.io.version>
+    <commons.io.version>2.22.0</commons.io.version>
     <commons.compress.version>1.26.1</commons.compress.version>
     <bitbucket.jose4j.version>0.9.6</bitbucket.jose4j.version>
-    <commons.lang3.version>3.12.0</commons.lang3.version>
-    <commons-configuration2.version>2.10.1</commons-configuration2.version>
+    <commons.lang3.version>3.20.0</commons.lang3.version>
+    <commons-configuration2.version>2.15.1</commons-configuration2.version>
     <dropwizard.version>3.1.2</dropwizard.version>
     <fastutil.version>6.5.6</fastutil.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
@@ -127,25 +127,25 @@
     <guice.version>4.0</guice.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
-    <jackson.version>2.15.1</jackson.version>
+    <jackson.version>2.18.12</jackson.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty9.version>9.4.51.v20230217</jetty9.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
-    <log4j2.slf4j.version>2.20.0</log4j2.slf4j.version>
+    <log4j2.slf4j.version>2.25.5</log4j2.slf4j.version>
     <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.10.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
-    <logback.version>1.2.11</logback.version>
+    <logback.version>1.2.13</logback.version>
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>3.9.0</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.http.version>1.7.0</netty.http.version>
     <netty.version>4.1.75.Final</netty.version>
     <powermock.version>2.0.9</powermock.version>
-    <quartz.version>2.2.0</quartz.version>
-    <resteasy.version>3.0.8.Final</resteasy.version>
+    <quartz.version>2.3.2</quartz.version>
+    <resteasy.version>3.0.26.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
     <scala2.12.version>2.12.15</scala2.12.version>
@@ -166,7 +166,7 @@
     <jacoco.version>0.8.6</jacoco.version>
     <!-- Overwrite Apache Ivy version to 2.5.1 for remediating CVE-2022-37866-->
     <ivy.version>2.5.1</ivy.version>
-    <jgit.version>5.9.0.202009080501-r</jgit.version>
+    <jgit.version>5.13.5.202508271544-r</jgit.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -219,6 +219,42 @@
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
         <version>${commons.io.version}</version>
+      </dependency>
+      <!-- Pin transitive dependencies to versions with security fixes. -->
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.11.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>1.15.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.codehaus.jettison</groupId>
+        <artifactId>jettison</artifactId>
+        <version>1.5.7</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.5.14</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j2.slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.minidev</groupId>
+        <artifactId>json-smart</artifactId>
+        <version>2.5.2</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>3.30.17</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
