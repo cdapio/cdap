@@ -46,7 +46,7 @@ public class NettyRouterPipelineAuthTest {
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static final RouterResource ROUTER = new RouterResource(HOSTNAME, DISCOVERY_SERVICE, ImmutableMap.of(
     Constants.Security.ENABLED, "true",
-    Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, "(/v1/repeat/.*|/v1/echo/dontfail)"
+    Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, "(/test/repeat/.*|/test/echo/dontfail)"
   ));
   private static final ServerResource GATEWAY_SERVER = new ServerResource(HOSTNAME, DISCOVERY_SERVICE, SERVICE_NAME);
 
@@ -60,21 +60,21 @@ public class NettyRouterPipelineAuthTest {
   @Test
   public void testRouterAuthBypass() throws Exception {
     // mock token validator passes for any token other than "Bearer failme"
-    testGet(200, "hello", "/v1/echo/hello", ImmutableMap.of("Authorization", "Bearer x"));
+    testGet(200, "hello", "/test/echo/hello", ImmutableMap.of("Authorization", "Bearer x"));
     // so this should fail
-    testGet(401, null, "/v1/echo/hello");
-    testGet(401, null, "/v1/echo/hello", ImmutableMap.of("Authorization", "Bearer failme"));
-    // but /v1/echo/dontfail is configured to bypass auth
-    testGet(200, "dontfail", "/v1/echo/dontfail", ImmutableMap.of("Authorization", "Bearer failme"));
+    testGet(401, null, "/test/echo/hello");
+    testGet(401, null, "/test/echo/hello", ImmutableMap.of("Authorization", "Bearer failme"));
+    // but /test/echo/dontfail is configured to bypass auth
+    testGet(200, "dontfail", "/test/echo/dontfail", ImmutableMap.of("Authorization", "Bearer failme"));
     // it only bypasses on exact match, not prefix match
-    testGet(401, null, "/v1/echo/dontfailme", ImmutableMap.of("Authorization", "Bearer failme"));
+    testGet(401, null, "/test/echo/dontfailme", ImmutableMap.of("Authorization", "Bearer failme"));
 
-    // /v1/repeat is configured to bypass auth validation, on prefix match
-    testGet(200, "hello", "/v1/repeat/hello");
-    testGet(200, "hello", "/v1/repeat/hello", ImmutableMap.of("Authorization", "Bearer x"));
-    testGet(200, "hello", "/v1/repeat/hello", ImmutableMap.of("Authorization", "Bearer failme"));
+    // /test/repeat is configured to bypass auth validation, on prefix match
+    testGet(200, "hello", "/test/repeat/hello");
+    testGet(200, "hello", "/test/repeat/hello", ImmutableMap.of("Authorization", "Bearer x"));
+    testGet(200, "hello", "/test/repeat/hello", ImmutableMap.of("Authorization", "Bearer failme"));
     // even with a token that fails validation, we get the correct status code 404
-    testGet(404, null, "/v1/repeat/dontfail/me", ImmutableMap.of("Authorization", "Bearer failme"));
+    testGet(404, null, "/test/repeat/dontfail/me", ImmutableMap.of("Authorization", "Bearer failme"));
   }
 
   private void testGet(int expectedStatus, String expectedResponse, String path) throws Exception {

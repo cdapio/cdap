@@ -40,6 +40,7 @@ import io.cdap.cdap.internal.provision.ProvisionerProvider;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.security.FakeSecureStore;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.util.Map;
 import org.apache.tephra.runtime.TransactionModules;
@@ -66,6 +67,7 @@ public class TetheringProvisionerTest {
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new ProvisionerModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new NoOpAuditLogModule(),

@@ -16,8 +16,12 @@
 
 package io.cdap.cdap.common.encryption;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.HttpHeaderNames;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.AbstractHandlerHook;
 import io.cdap.http.HttpResponder;
@@ -25,6 +29,7 @@ import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +53,33 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
   private static final List<Pattern> TASK_WORKER_EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
       Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"));
-  private static final List<Pattern> PREVIEW_RUNNER_EXEMPTED_URIS = ImmutableList.of(
+  private static final List<Pattern> BASE_PREVIEW_RUNNER_EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions(\\?.*)?$"),
       Pattern.compile(
           "/v3Internal/namespaces/([^/]+)/apps/([^/]+)/workflows/([^/]+)/preferences(\\?.*)?$"),
-      Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$"),
-      Pattern.compile("/v1/namespaces/system/topics/preview/publish"));
+      Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$"));
+
+  private final List<Pattern> previewRunnerExemptedUris;
+
+  public EncryptionExemptionHook() {
+    this(null);
+  }
+
+  public EncryptionExemptionHook(@Nullable CConfiguration cConf) {
+    String previewTopic = cConf == null
+        ? Constants.Preview.DEFAULT_MESSAGING_TOPIC
+        : cConf.get(Constants.Preview.MESSAGING_TOPIC);
+    ImmutableList.Builder<Pattern> builder = ImmutableList.<Pattern>builder()
+        .addAll(BASE_PREVIEW_RUNNER_EXEMPTED_URIS);
+    if (!Strings.isNullOrEmpty(previewTopic)) {
+      String publishUri = Constants.Preview.DEFAULT_MESSAGING_TOPIC.equals(previewTopic)
+          ? Constants.Preview.MESSAGING_PUBLISH_URI
+          : "/v1/namespaces/" + NamespaceId.SYSTEM.getNamespace()
+              + "/topics/" + Pattern.quote(previewTopic) + "/publish";
+      builder.add(Pattern.compile(publishUri));
+    }
+    this.previewRunnerExemptedUris = builder.build();
+  }
 
   @Override
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
@@ -62,7 +88,7 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
 
     if (isUriExempt(uri, SHARED_WORKER_EXEMPTED_URIS)) {
       exemptionType = WorkerDecryptionScope.ANY_WORKER;
-    } else if (isUriExempt(uri, PREVIEW_RUNNER_EXEMPTED_URIS)) {
+    } else if (isUriExempt(uri, previewRunnerExemptedUris)) {
       exemptionType = WorkerDecryptionScope.PREVIEW_RUNNER;
     } else if (isUriExempt(uri, TASK_WORKER_EXEMPTED_URIS)) {
       exemptionType = WorkerDecryptionScope.TASK_WORKER;

@@ -38,6 +38,7 @@ import io.cdap.cdap.messaging.spi.RawMessage;
 import io.cdap.cdap.metrics.MetricsTestBase;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -140,6 +141,7 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
   @Override
   protected List<Module> getAdditionalModules() {
     List<Module> modules = new ArrayList<>();
+    modules.add(new AuthenticationContextModules().getNoOpModule());
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
     modules.add(new NoOpAuditLogModule());
     modules.add(new UserCredentialAeadEncryptionModule());

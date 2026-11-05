@@ -478,6 +478,23 @@ public final class Constants {
     public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
     public static final String INTERNAL_ROUTER_ENABLED = "preview.runner.internal.router.enabled";
     public static final String HTTP_COMPRESS_PAYLOAD = "preview.http.compress.payload";
+
+    /**
+     * Default topic in the system namespace used for publishing preview data and status messages
+     * ({@link #MESSAGING_TOPIC}), and the internal {@code /v1} URI path to publish to it.
+     */
+    public static final String DEFAULT_MESSAGING_TOPIC = "preview";
+    public static final String MESSAGING_PUBLISH_URI =
+        "/v1/namespaces/" + NamespaceId.SYSTEM.getNamespace()
+            + "/topics/" + DEFAULT_MESSAGING_TOPIC + "/publish";
+
+    /**
+     * Topic prefix, partition count, and resulting topic name in the system namespace used for
+     * publishing and subscribing to preview logs.
+     */
+    public static final String LOG_TOPIC_PREFIX = "previewlog";
+    public static final int LOG_NUM_PARTITIONS = 1;
+    public static final String LOG_TOPIC = LOG_TOPIC_PREFIX + "0";
   }
 
   /**
@@ -1780,6 +1797,22 @@ public final class Constants {
        * Identity used for runtime monitor.
        */
       public static final String RUNTIME_IDENTITY = "runtime";
+
+      /**
+       * Placeholder user identity, credential, and IP set by {@code AuthenticationChannelHandler}
+       * when internal authentication is enabled and an incoming request carries no authentication
+       * headers.
+       */
+      public static final String EMPTY_USER_ID = "CDAP-empty-user-id";
+      public static final String EMPTY_USER_CREDENTIAL = "CDAP-empty-user-credential";
+      public static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
+
+      /**
+       * Placeholder user identity and credential set by {@code WorkerAuthenticationContext} when a
+       * task worker or preview runner makes a background call outside of a user request.
+       */
+      public static final String EMPTY_WORKER_USER_ID = "empty-worker-user-id";
+      public static final String EMPTY_WORKER_CREDENTIAL = "empty-worker-user-credential";
     }
 
     /**
