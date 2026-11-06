@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Permission;
@@ -39,6 +40,7 @@ import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -157,6 +159,22 @@ public class ProgramLifecycleServiceAuthorizationTest {
         SecurityRequestContext.setUserId("alice");
       }
     }
+
+    // run count of the latest version requires GET on the program
+    ProgramId workflowId = applicationId.program(ProgramType.WORKFLOW,
+        AllProgramsApp.NoOpWorkflow.NAME);
+    SecurityRequestContext.setUserId("bob");
+    try {
+      programLifecycleService.getProgramRunCount(workflowId.getProgramReference());
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+    SecurityRequestContext.setUserId("alice");
+    permissionManager.grant(Authorizable.fromEntityId(workflowId), ALICE,
+        Collections.singleton(StandardPermission.GET));
+    Assert.assertEquals(0L,
+        programLifecycleService.getProgramRunCount(workflowId.getProgramReference()));
   }
 
   @AfterClass

@@ -165,9 +165,10 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @Path("/support/bundles/{uuid}/status")
   public void getSupportBundleStatus(HttpRequest request, HttpResponder responder,
       @PathParam("uuid") String uuid)
-      throws IOException, NotFoundException {
+      throws BadRequestException, IOException, NotFoundException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
+    validateBundleId(uuid);
     SupportBundleOperationStatus bundleOperationStatus = bundleGenerator.getBundle(uuid);
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatus));
   }
@@ -182,9 +183,10 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @Path("/support/bundles/{uuid}")
   public void deleteSupportBundle(HttpRequest request, HttpResponder responder,
       @PathParam("uuid") String uuid)
-      throws IOException, NotFoundException {
+      throws BadRequestException, IOException, NotFoundException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.DELETE);
+    validateBundleId(uuid);
     bundleGenerator.deleteBundle(uuid);
     responder.sendString(HttpResponseStatus.OK,
         String.format("Successfully deleted bundle %s", uuid));
@@ -202,6 +204,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       throws BadRequestException, IOException, NotFoundException, NoSuchAlgorithmException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
+    File bundleDir = validateBundleId(uuid);
     String requestContent = request.content().toString(StandardCharsets.UTF_8);
     File tempDir = new File(
         cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();
@@ -221,6 +224,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
           throw new BadRequestException(
               String.format("Failed to parse body on %s", requestContent));
         }
+        validateRequestedFiles(bundleDir, bundleRequestFileList);
         digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath,
             bundleRequestFileList);
       }
@@ -230,6 +234,40 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
               String.format(CONTENT_DISPOSITION_VALUE, System.currentTimeMillis())));
     } finally {
       Files.deleteIfExists(tmpPath);
+    }
+  }
+
+  /**
+   * Validates that the given bundle id resolves to a direct child of the support bundle directory.
+   *
+   * @param uuid the bundle id
+   * @return the canonical bundle directory
+   * @throws BadRequestException if the bundle id resolves outside the support bundle directory
+   */
+  private File validateBundleId(String uuid) throws BadRequestException, IOException {
+    File baseDir = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR)).getCanonicalFile();
+    File bundleDir = new File(baseDir, uuid).getCanonicalFile();
+    if (!baseDir.equals(bundleDir.getParentFile())) {
+      throw new BadRequestException(String.format("Invalid support bundle id '%s'", uuid));
+    }
+    return bundleDir;
+  }
+
+  /**
+   * Validates that every requested file resolves inside the given bundle directory.
+   *
+   * @throws BadRequestException if a requested file resolves outside the bundle directory
+   */
+  private void validateRequestedFiles(File bundleDir, SupportBundleRequestFileList fileList)
+      throws BadRequestException, IOException {
+    if (fileList == null || fileList.getFiles() == null) {
+      throw new BadRequestException("The list of files to export is missing.");
+    }
+    for (String file : fileList.getFiles()) {
+      if (file == null
+          || !new File(bundleDir, file).getCanonicalFile().toPath().startsWith(bundleDir.toPath())) {
+        throw new BadRequestException(String.format("Invalid support bundle file '%s'", file));
+      }
     }
   }
 }

@@ -31,6 +31,7 @@ import io.cdap.cdap.data2.metadata.lineage.LineageSerializer;
 import io.cdap.cdap.data2.metadata.lineage.field.EndPointField;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.codec.NamespacedEntityIdCodec;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramReference;
@@ -150,7 +151,10 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
           programName);
     } catch (Exception e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return;
     }
+    accessEnforcer.enforce(programReference.id(ApplicationId.DEFAULT_VERSION),
+        authenticationContext.getPrincipal(), StandardPermission.GET);
     EndpointsSummary endpointSummary = fieldLineageAdmin.getEndpoints(namespaceId, programReference,
         RunIds.fromString(runId));
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(endpointSummary));

@@ -174,6 +174,14 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationSpecification spec = appSpecs.get(appId);
       ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
+      try {
+        accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
+            StandardPermission.GET);
+      } catch (UnauthorizedException e) {
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.FORBIDDEN.code(),
+            e.getMessage()));
+        continue;
+      }
       output.add(getProgramInstances(runnable, spec, programId));
     }
     responder.sendJson(HttpResponseStatus.OK, ProgramHandlerUtil.toJson(output));
@@ -305,6 +313,7 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramType type = ProgramType.valueOfCategoryName(programCategory, BadRequestException::new);
     ProgramId program = store.getLatestApp(new ApplicationReference(namespaceId, appId))
         .program(type, programId);
+    accessEnforcer.enforce(program, authenticationContext.getPrincipal(), StandardPermission.GET);
     getLiveInfo(responder, program, runtimeService);
   }
 
@@ -344,6 +353,8 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName,
       @PathParam("run-id") String runId) throws Exception {
+    // validate that the run belongs to the given program
+    getRunRecordDetailFromId(namespace, appName, type, programName, runId);
     updateLogLevels(request, responder, namespace, appName, appVersion, type, programName, runId);
   }
 
@@ -382,6 +393,8 @@ public class ProgramRuntimeHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("program-type") String type,
       @PathParam("program-name") String programName,
       @PathParam("run-id") String runId) throws Exception {
+    // validate that the run belongs to the given program
+    getRunRecordDetailFromId(namespace, appName, type, programName, runId);
     resetLogLevels(request, responder, namespace, appName, appVersion, type, programName, runId);
   }
 

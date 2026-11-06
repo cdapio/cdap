@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
@@ -84,6 +85,16 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
     Assert.assertTrue(bundleExport.isDirectory());
     Assert.assertTrue(new File(bundleExport, "status.json").isFile());
     Assert.assertTrue(new File(bundleExport, "system-log").isDirectory());
+  }
+
+  @Test
+  public void testExportSupportBundleRejectsPathsOutsideBundle() throws Exception {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK,
+                        requestExportBundle(bundleId, "{\"files\":[\"status.json\"]}").getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST,
+                        requestExportBundle(bundleId, "{\"files\":[\"../../status.json\"]}").getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST,
+                        requestExportBundle(bundleId, "{\"files\":[\"system-log/../../x\"]}").getResponseCode());
   }
 
   @Before
@@ -146,6 +157,10 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
    * @throws IOException if failed to request bundle download
    */
   private HttpResponse requestExportBundle(String bundleId) throws IOException {
+    return requestExportBundle(bundleId, null);
+  }
+
+  private HttpResponse requestExportBundle(String bundleId, @Nullable String body) throws IOException {
     DiscoveryServiceClient discoveryServiceClient = getInjector().getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable =
       new RandomEndpointStrategy(() -> discoveryServiceClient.discover(Constants.Service.SUPPORT_BUNDLE_SERVICE)).pick(
@@ -155,7 +170,10 @@ public class SupportBundleHttpHandlerTest extends SupportBundleTestBase {
 
     String path = String.format("%s/support/bundles/%s", Constants.Gateway.API_VERSION_3, bundleId);
 
-    HttpRequest request = HttpRequest.post(URIScheme.createURI(discoverable, "%s", path).toURL()).build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.post(URIScheme.createURI(discoverable, "%s", path).toURL());
+    if (body != null) {
+      builder.withBody(body);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 }

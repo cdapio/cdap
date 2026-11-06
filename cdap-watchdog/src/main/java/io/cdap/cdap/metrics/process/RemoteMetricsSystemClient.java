@@ -32,6 +32,7 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -70,6 +71,7 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
   private final EndpointStrategy endpointStrategy;
   private final MessagingContext messagingContext;
   private final RetryStrategy retryStrategy;
+  private InternalAuthenticator internalAuthenticator;
 
   @Inject
   RemoteMetricsSystemClient(CConfiguration cConf,
@@ -80,6 +82,15 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
         () -> discoveryServiceClient.discover(Constants.Service.METRICS));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metrics.");
+  }
+
+  /**
+   * Sets the {@link InternalAuthenticator} used to propagate the caller identity to the metrics
+   * service, which enforces authorization on metrics queries.
+   */
+  @Inject(optional = true)
+  void setInternalAuthenticator(InternalAuthenticator internalAuthenticator) {
+    this.internalAuthenticator = internalAuthenticator;
   }
 
   @Override
@@ -126,7 +137,7 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
             + metricsParam + tagsParam + groupByParam;
 
     URL url = getBaseURI().resolve("query?" + queryString).toURL();
-    HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(), REQUEST_CONFIG);
+    HttpResponse response = HttpRequests.execute(buildPostRequest(url), REQUEST_CONFIG);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Failed to query for metrics " + metrics + ", with tags " + tags
           + ". Error code " + response.getResponseCode()
@@ -155,7 +166,7 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
 
     URL url = getBaseURI().resolve("search?target=metric" + queryString).toURL();
 
-    HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(), REQUEST_CONFIG);
+    HttpResponse response = HttpRequests.execute(buildPostRequest(url), REQUEST_CONFIG);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Failed to search for metrics names for tags " + tags
           + ". Error code " + response.getResponseCode()
@@ -163,6 +174,17 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
     }
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<String>>() {
     }.getType());
+  }
+
+  /**
+   * Builds a POST request carrying the internal authentication headers, if available.
+   */
+  private HttpRequest buildPostRequest(URL url) {
+    HttpRequest.Builder builder = HttpRequest.post(url);
+    if (internalAuthenticator != null) {
+      internalAuthenticator.applyInternalAuthenticationHeaders(builder::addHeader);
+    }
+    return builder.build();
   }
 
   /**

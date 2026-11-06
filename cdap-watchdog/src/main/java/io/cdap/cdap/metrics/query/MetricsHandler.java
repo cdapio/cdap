@@ -16,10 +16,16 @@
 
 package io.cdap.cdap.metrics.query;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -28,8 +34,13 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -45,12 +56,19 @@ public class MetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsHandler.class);
   private static final Gson GSON = new Gson();
+  // Both the human readable and the internal tag name select the namespace of a metric
+  private static final Set<String> NAMESPACE_TAGS = ImmutableSet.of(
+      MetricsQueryHelper.NAMESPACE_STRING, Constants.Metrics.Tag.NAMESPACE);
+  private static final String ANY_TAG_VALUE = "*";
 
   private final MetricsQueryHelper metricsQueryHelper;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  public MetricsHandler(MetricsQueryHelper metricsQueryHelper) {
+  public MetricsHandler(MetricsQueryHelper metricsQueryHelper,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.metricsQueryHelper = metricsQueryHelper;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @POST
@@ -63,6 +81,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       return;
     }
     try {
+      enforceOnTags(tags);
       switch (target) {
         case "tag":
           responder.sendJson(HttpResponseStatus.OK,
@@ -77,6 +96,8 @@ public class MetricsHandler extends AbstractHttpHandler {
               "Unknown target param value: " + target);
           break;
       }
+    } catch (UnauthorizedException e) {
+      throw e;
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -108,14 +129,22 @@ public class MetricsHandler extends AbstractHttpHandler {
               GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                   new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
                   }.getType());
+          // Each query is executed independently, so each one must be authorized on its own
+          for (MetricsQueryHelper.QueryRequestFormat query : queries.values()) {
+            enforceOnNamespaces(getNamespaces(query.getTags()));
+          }
           responder.sendJson(HttpResponseStatus.OK,
               GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
           return;
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+        return;
       }
+      enforceOnTags(tags);
       responder.sendJson(HttpResponseStatus.OK,
           GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
+    } catch (UnauthorizedException e) {
+      throw e;
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -123,6 +152,51 @@ public class MetricsHandler extends AbstractHttpHandler {
       LOG.error("Exception querying metrics ", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
           "Internal error while querying for metrics");
+    }
+  }
+
+  /**
+   * Enforces {@link StandardPermission#GET} on the namespaces selected by the given tags, which are
+   * in the form {@code name:value}.
+   */
+  private void enforceOnTags(List<String> tags) {
+    List<String> namespaces = new ArrayList<>();
+    if (tags != null) {
+      for (String tag : tags) {
+        String[] tagSplit = tag.split(":", 2);
+        if (tagSplit.length == 2 && NAMESPACE_TAGS.contains(tagSplit[0])) {
+          namespaces.add(tagSplit[1]);
+        }
+      }
+    }
+    enforceOnNamespaces(namespaces);
+  }
+
+  private List<String> getNamespaces(@Nullable Map<String, String> tags) {
+    List<String> namespaces = new ArrayList<>();
+    if (tags == null) {
+      return namespaces;
+    }
+    for (Map.Entry<String, String> tag : tags.entrySet()) {
+      if (NAMESPACE_TAGS.contains(tag.getKey())) {
+        namespaces.add(tag.getValue());
+      }
+    }
+    return namespaces;
+  }
+
+  /**
+   * Enforces {@link StandardPermission#GET} on each of the given namespaces. If no namespace is
+   * given or any namespace is a wildcard, the metrics span all namespaces, so {@link
+   * StandardPermission#GET} on the instance is enforced instead.
+   */
+  private void enforceOnNamespaces(Collection<String> namespaces) {
+    if (namespaces.isEmpty() || namespaces.contains(null) || namespaces.contains(ANY_TAG_VALUE)) {
+      contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
+      return;
+    }
+    for (String namespace : new HashSet<>(namespaces)) {
+      contextAccessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.GET);
     }
   }
 

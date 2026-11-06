@@ -178,13 +178,13 @@ public class DatasetInstanceService {
    *     current user does not have any privileges on the #instance
    */
   DatasetMeta get(final DatasetId instance) throws Exception {
-    // ensure user has correct privileges before getting the meta if the dataset is not a system dataset
-    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
-      LOG.trace("Authorizing GET for dataset {}", instance.getDataset());
-      accessEnforcer.enforce(instance, authenticationContext.getPrincipal(),
-          StandardPermission.GET);
-      LOG.trace("Authorized GET for dataset {}", instance.getDataset());
-    }
+    // ensure user has correct privileges before getting the meta. This also applies to system datasets:
+    // CDAP's own internal callers are authorized by the AccessEnforcer (internal credentials or the
+    // master user in the system namespace).
+    LOG.trace("Authorizing GET for dataset {}", instance.getDataset());
+    accessEnforcer.enforce(instance, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
+    LOG.trace("Authorized GET for dataset {}", instance.getDataset());
     // Application Deployment first makes a call to the dataset service to check if the instance already exists with
     // a different type. To make sure that that call responds with the right exceptions if necessary, first fetch the
     // meta from the cache and throw appropriate exceptions if necessary.
@@ -250,10 +250,8 @@ public class DatasetInstanceService {
    */
   Map<String, String> getOriginalProperties(DatasetId instance) throws Exception {
     // Only return the properties if authorization succeeds
-    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
-      accessEnforcer.enforce(instance, authenticationContext.getPrincipal(),
-          StandardPermission.GET);
-    }
+    accessEnforcer.enforce(instance, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new NotFoundException(instance);
@@ -289,9 +287,12 @@ public class DatasetInstanceService {
       if (effectiveOwner != null) {
         accessEnforcer.enforce(effectiveOwner, requestingUser, AccessPermission.SET_OWNER);
       }
-      accessEnforcer.enforce(datasetId, requestingUser, StandardPermission.CREATE);
       LOG.trace("Authorized impersonation for dataset {}", name);
     }
+    // CREATE is also enforced for system datasets (in the system namespace or with a reserved name).
+    // CDAP's own internal callers are authorized by the AccessEnforcer (internal credentials or the
+    // master user in the system namespace).
+    accessEnforcer.enforce(datasetId, requestingUser, StandardPermission.CREATE);
 
     LOG.trace("Ensuring existence of namespace {} for dataset {}", namespace, name);
     ensureNamespaceExists(namespace);
@@ -374,9 +375,7 @@ public class DatasetInstanceService {
   void update(DatasetId instance, Map<String, String> properties) throws Exception {
     ensureNamespaceExists(instance.getParent());
     Principal requestingUser = authenticationContext.getPrincipal();
-    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
-      accessEnforcer.enforce(instance, requestingUser, StandardPermission.UPDATE);
-    }
+    accessEnforcer.enforce(instance, requestingUser, StandardPermission.UPDATE);
     DatasetSpecification existing = instanceManager.get(instance);
     if (existing == null) {
       throw new DatasetNotFoundException(instance);
@@ -417,9 +416,7 @@ public class DatasetInstanceService {
    */
   void drop(DatasetId datasetId) throws Exception {
     Principal requestingUser = authenticationContext.getPrincipal();
-    if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
-      accessEnforcer.enforce(datasetId, requestingUser, StandardPermission.DELETE);
-    }
+    accessEnforcer.enforce(datasetId, requestingUser, StandardPermission.DELETE);
     ensureNamespaceExists(datasetId.getParent());
     DatasetSpecification spec = instanceManager.get(datasetId);
     if (spec == null) {
@@ -443,9 +440,7 @@ public class DatasetInstanceService {
     Map<DatasetId, DatasetSpecification> datasets = new HashMap<>();
     for (DatasetSpecification spec : instanceManager.getAll(namespaceId)) {
       DatasetId datasetId = namespaceId.dataset(spec.getName());
-      if (DatasetsUtil.isUserDataset(datasetId)) {
-        accessEnforcer.enforce(datasetId, requestingUser, StandardPermission.DELETE);
-      }
+      accessEnforcer.enforce(datasetId, requestingUser, StandardPermission.DELETE);
       datasets.put(datasetId, spec);
     }
 
@@ -481,16 +476,12 @@ public class DatasetInstanceService {
     Principal principal = authenticationContext.getPrincipal();
     switch (method) {
       case "exists":
-        // ensure the user has some privilege on the dataset datasetId if it is not system dataset
-        if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
-          accessEnforcer.enforce(datasetId, principal, StandardPermission.GET);
-        }
+        // ensure the user has some privilege on the dataset datasetId
+        accessEnforcer.enforce(datasetId, principal, StandardPermission.GET);
         result = opExecutorClient.exists(datasetId);
         break;
       case "truncate":
-        if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
-          accessEnforcer.enforce(datasetId, principal, StandardPermission.DELETE);
-        }
+        accessEnforcer.enforce(datasetId, principal, StandardPermission.DELETE);
         if (instanceManager.get(datasetId) == null) {
           throw new DatasetNotFoundException(datasetId);
         }
@@ -498,9 +489,7 @@ public class DatasetInstanceService {
         publishAudit(datasetId, AuditType.TRUNCATE);
         break;
       case "upgrade":
-        if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
-          accessEnforcer.enforce(datasetId, principal, StandardPermission.UPDATE);
-        }
+        accessEnforcer.enforce(datasetId, principal, StandardPermission.UPDATE);
         if (instanceManager.get(datasetId) == null) {
           throw new DatasetNotFoundException(datasetId);
         }

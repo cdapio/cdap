@@ -781,7 +781,14 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     getPermissionManager().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.GET));
+    // Listing on the untyped system app entity child type is not sufficient
     getPermissionManager().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.SYSTEM_APP_ENTITY),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.LIST));
+    listConnections(NamespaceId.DEFAULT.getNamespace());
+    // LIST is checked for the connection child type
+    getPermissionManager().grant(Authorizable.fromEntityId(new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(),
+                                                                                  "*")),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.LIST));
 

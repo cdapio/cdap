@@ -26,6 +26,10 @@ import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientAdapter;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -80,14 +84,19 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private final CConfiguration cConf;
   private final TransactionSystemClient txClient;
   private final boolean pruneEnable;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
   private volatile InvalidListPruningDebug pruningDebug;
 
   @Inject
   public TransactionHttpHandler(Configuration hConf, CConfiguration cConf,
-      TransactionSystemClient txClient) {
+      TransactionSystemClient txClient, AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
     this.hConf = hConf;
     this.cConf = cConf;
     this.txClient = new TransactionSystemClientAdapter(txClient);
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
     this.pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
         TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
   }
@@ -99,6 +108,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getTxManagerSnapshot(HttpRequest request, HttpResponder responder)
       throws TransactionCouldNotTakeSnapshotException, IOException {
+    enforceInstancePermission(StandardPermission.GET);
     LOG.trace("Taking transaction manager snapshot at time {}", System.currentTimeMillis());
     LOG.trace("Took and retrieved transaction manager snapshot successfully.");
 
@@ -138,6 +148,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   public void invalidateTx(HttpRequest request, HttpResponder responder,
       @PathParam("tx-id") String txId) {
+    enforceInstancePermission(StandardPermission.UPDATE);
     try {
       long txIdLong = Long.parseLong(txId);
       boolean success = txClient.invalidate(txIdLong);
@@ -159,6 +170,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void truncateInvalidTxBefore(FullHttpRequest request,
       HttpResponder responder) throws InvalidTruncateTimeException {
+    enforceInstancePermission(StandardPermission.UPDATE);
     Map<String, Long> body;
     try {
       body = parseBody(request, STRING_LONG_MAP_TYPE);
@@ -181,6 +193,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void truncateInvalidTx(FullHttpRequest request, HttpResponder responder) {
+    enforceInstancePermission(StandardPermission.UPDATE);
     Map<String, Set<Long>> body;
     try {
       body = parseBody(request, STRING_LONG_SET_MAP_TYPE);
@@ -202,6 +215,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/invalid/size")
   @GET
   public void invalidTxSize(HttpRequest request, HttpResponder responder) {
+    enforceInstancePermission(StandardPermission.GET);
     int invalidSize = txClient.getInvalidSize();
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(Collections.singletonMap("size", invalidSize)));
@@ -211,6 +225,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void invalidList(HttpRequest request, HttpResponder responder,
       @QueryParam("limit") @DefaultValue("-1") int limit) {
+    enforceInstancePermission(StandardPermission.GET);
     Transaction tx = txClient.startShort();
     txClient.abort(tx);
     long[] invalids = tx.getInvalids();
@@ -228,6 +243,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/state")
   @POST
   public void resetTxManagerState(HttpRequest request, HttpResponder responder) {
+    enforceInstancePermission(StandardPermission.UPDATE);
     txClient.resetState();
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -238,6 +254,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/transactions/prune/now")
   @POST
   public void pruneNow(HttpRequest request, HttpResponder responder) {
+    enforceInstancePermission(StandardPermission.UPDATE);
     txClient.pruneNow();
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -247,6 +264,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getPruneInfo(HttpRequest request, HttpResponder responder,
       @PathParam("region-name") String regionName) {
+    enforceInstancePermission(StandardPermission.GET);
     try {
       if (!initializePruningDebug(responder)) {
         return;
@@ -269,6 +287,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getTimeRegions(HttpRequest request, HttpResponder responder,
       @QueryParam("time") @DefaultValue("now") String time) {
+    enforceInstancePermission(StandardPermission.GET);
     try {
       if (!initializePruningDebug(responder)) {
         return;
@@ -287,6 +306,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   public void getIdleRegions(HttpRequest request, HttpResponder responder,
       @QueryParam("limit") @DefaultValue("-1") int numRegions,
       @QueryParam("time") @DefaultValue("now") String time) {
+    enforceInstancePermission(StandardPermission.GET);
     try {
       if (!initializePruningDebug(responder)) {
         return;
@@ -306,6 +326,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   public void getRegionsToBeCompacted(HttpRequest request, HttpResponder responder,
       @QueryParam("limit") @DefaultValue("-1") int numRegions,
       @QueryParam("time") @DefaultValue("now") String time) {
+    enforceInstancePermission(StandardPermission.GET);
     try {
       if (!initializePruningDebug(responder)) {
         return;
@@ -317,6 +338,13 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
       LOG.debug("Exception while trying to get the regions that needs to be compacted.", e);
     }
+  }
+
+  /**
+   * Enforces the given permission on the CDAP instance for the current principal.
+   */
+  private void enforceInstancePermission(StandardPermission permission) {
+    accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(), permission);
   }
 
   private boolean initializePruningDebug(HttpResponder responder) {

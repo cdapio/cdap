@@ -20,10 +20,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.operations.OperationalStats;
 import io.cdap.cdap.operations.OperationalStatsUtils;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -51,9 +55,17 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsHttpHandler.class);
   private static final Gson GSON = new Gson();
 
+  private final ContextAccessEnforcer contextAccessEnforcer;
+
+  @Inject
+  OperationalStatsHttpHandler(ContextAccessEnforcer contextAccessEnforcer) {
+    this.contextAccessEnforcer = contextAccessEnforcer;
+  }
+
   @GET
   @Path("/")
   public void getServiceProviders(HttpRequest request, HttpResponder responder) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     // we want to fetch stats with the stat type 'info' grouped by the service name
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(
@@ -65,6 +77,7 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
   @Path("/{service-provider}/stats")
   public void getServiceProviderStats(HttpRequest request, HttpResponder responder,
       @PathParam("service-provider") String serviceProvider) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     // we want to fetch stats with the specified service name grouped by the stat type
     Map<String, Map<String, Object>> stats =
         getStats(OperationalStatsUtils.SERVICE_NAME_KEY, serviceProvider,

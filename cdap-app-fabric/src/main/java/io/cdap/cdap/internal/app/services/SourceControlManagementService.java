@@ -45,6 +45,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.security.NamespacePermission;
+import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
@@ -77,6 +78,7 @@ import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
 import java.io.IOException;
 import java.time.Clock;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -408,6 +410,8 @@ public class SourceControlManagementService {
     metricsContext.increment(SourceControlManagement.PUSH_APP_COUNT, request.getApps().size());
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
+    // Enforce upfront the same per-app check as pushApp, before the async operation is created.
+    enforceOnApps(namespace, request.getApps(), StandardPermission.GET);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     String principal = appLifecycleService.decodeUserId(authenticationContext);
     CommitMeta commitMeta = new CommitMeta(principal, principal, System.currentTimeMillis(),
@@ -434,12 +438,23 @@ public class SourceControlManagementService {
     metricsContext.increment(SourceControlManagement.PULL_APP_COUNT, request.getApps().size());
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
+    // Enforce upfront the same per-app check as pullAndDeploy, before the async operation is
+    // created.
+    enforceOnApps(namespace, request.getApps(), StandardPermission.CREATE);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     String principal = authenticationContext.getPrincipal().getName();
     PullAppsRequest pullOpRequest = new PullAppsRequest(new HashSet<>(request.getApps()),
         repoConfig);
     return operationLifecycleManager.createPullOperation(namespace.getNamespace(),
         RunIds.generate().getId(), pullOpRequest, principal);
+  }
+
+  private void enforceOnApps(NamespaceId namespace, Collection<String> apps,
+      StandardPermission permission) {
+    Principal principal = authenticationContext.getPrincipal();
+    for (String app : apps) {
+      accessEnforcer.enforce(namespace.app(app), principal, permission);
+    }
   }
 
   private MetricsContext getMetricContext(NamespaceId namespace) {
