@@ -83,7 +83,7 @@ public class ConfigBasedRequestBlockingTest {
     // Enable request-blocking
     cConf.setBoolean(Constants.Router.BLOCK_REQUEST_ENABLED, true);
 
-    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE), null, "/get");
+    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE), null, "/v3/get");
   }
 
   @Test
@@ -93,12 +93,12 @@ public class ConfigBasedRequestBlockingTest {
 
     // When no config is present for message, response should be empty
     cConf.unset(Constants.Router.BLOCK_REQUEST_MESSAGE);
-    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE), "", "/get");
+    testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE), "", "/v3/get");
 
     // Custom message passed in config
     cConf.set(Constants.Router.BLOCK_REQUEST_MESSAGE, "custom message");
     testGet(cConf.getInt(Constants.Router.BLOCK_REQUEST_STATUS_CODE),
-        cConf.get(Constants.Router.BLOCK_REQUEST_MESSAGE), "/get");
+        cConf.get(Constants.Router.BLOCK_REQUEST_MESSAGE), "/v3/get");
   }
 
   @Test
@@ -106,7 +106,7 @@ public class ConfigBasedRequestBlockingTest {
     // Disable request-blocking
     cConf.setBoolean(Constants.Router.BLOCK_REQUEST_ENABLED, false);
 
-    testGet(HttpResponseStatus.OK.code(), null, "/get");
+    testGet(HttpResponseStatus.OK.code(), null, "/v3/get");
   }
 
   @Test

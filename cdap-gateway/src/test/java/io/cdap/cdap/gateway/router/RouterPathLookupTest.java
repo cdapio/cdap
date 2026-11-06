@@ -360,6 +360,26 @@ public class RouterPathLookupTest {
   }
 
   @Test
+  public void testInternalApiPathsNotRouted() {
+    assertRouting("/v3Internal/location/some/file", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v3Internal/namespaces/default/preferences", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v3internal/router/services/task.worker/v3Internal/worker/run",
+                  RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v1/impersonation/credentials", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v1/namespaces/default/topics/t1/poll", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v2/ping", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/ping/v3Internal/location", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/ping", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/../v3Internal/location/some/file", RouterPathLookup.DONT_ROUTE);
+    assertRouting("/v3/namespaces/./default/apps", RouterPathLookup.DONT_ROUTE);
+    // Non-standard HTTP methods must not bypass the check either.
+    String path = "/v3Internal/location/some/file";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, HttpMethod.OPTIONS, path);
+    Assert.assertEquals(RouterPathLookup.DONT_ROUTE,
+                        pathLookup.getRoutingService(path, httpRequest));
+  }
+
+  @Test
   public void testServiceProviderStatsPaths() {
     assertRouting("/v3/system/////serviceproviders", RouterPathLookup.APP_FABRIC_HTTP);
   }
@@ -427,7 +447,7 @@ public class RouterPathLookupTest {
   @Test
   public void testProgramLifecycleInternalAndAppLifecycleInternalPaths() {
     assertRouting("v3Internal/namespaces//apps//versions//workflows/DataPipelineWorkflow/runs/",
-        RouterPathLookup.APP_FABRIC_HTTP);
+        RouterPathLookup.DONT_ROUTE);
   }
 
   @Test

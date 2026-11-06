@@ -69,12 +69,17 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    */
   @Nullable
   public RouteDestination getRoutingService(String requestPath, HttpRequest httpRequest) {
+    String[] uriParts = StreamSupport
+        .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
+        .toArray(String[]::new);
+    // Only the public v3 API and the health checks (/status, /ping) are exposed externally.
+    // Internal APIs such as /v3Internal and /v1 must not be reachable through the router.
+    if (!isExternallyRoutable(uriParts)) {
+      return DONT_ROUTE;
+    }
     try {
       String method = httpRequest.method().name();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
-      String[] uriParts = StreamSupport
-          .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
-          .toArray(String[]::new);
 
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
@@ -83,6 +88,19 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // Ignore exception. Default routing to app-fabric.
     }
     return APP_FABRIC_HTTP;
+  }
+
+  private static boolean isExternallyRoutable(String[] uriParts) {
+    if (uriParts.length == 0) {
+      return true;
+    }
+    for (String part : uriParts) {
+      if (part.equals(".") || part.equals("..")) {
+        return false;
+      }
+    }
+    return uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)
+        || (uriParts.length == 1 && (uriParts[0].equals("status") || uriParts[0].equals("ping")));
   }
 
   private boolean isUserServiceType(String uriPart) {
