@@ -45,7 +45,7 @@ public class AbstractDataPipelineHandler extends AbstractSystemHttpServiceHandle
    * @param namespace the namespace to check for
    * @param callable the endpoint logic to run
    */
-  protected <T> void respond(String namespace, HttpServiceResponder responder, NamespacedResponder callable) {
+  protected void respond(String namespace, HttpServiceResponder responder, NamespacedResponder callable) {
     // system namespace does not officially exist, so don't check existence for system namespace.
     NamespaceSummary namespaceSummary;
     if (NamespaceId.SYSTEM.getNamespace().equals(namespace.toLowerCase())) {

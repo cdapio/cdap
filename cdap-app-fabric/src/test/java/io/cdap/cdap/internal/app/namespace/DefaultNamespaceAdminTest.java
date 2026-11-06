@@ -490,24 +490,17 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
         getInjector().getInstance(Impersonator.class), enforcer, () -> alice, tetheringStore);
 
     // A missing namespace is still reported as not found before the DELETE check
-    try {
-      securedAdmin.deleteDatasets(new NamespaceId("nonexistent_ns"));
-      Assert.fail("Expected NamespaceNotFoundException");
-    } catch (NamespaceNotFoundException expected) {
-      // expected
-    }
+    Assert.assertThrows(NamespaceNotFoundException.class,
+        () -> securedAdmin.deleteDatasets(new NamespaceId("nonexistent_ns")));
 
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
     try {
       DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
       DatasetId datasetId = namespaceId.dataset("authTestDs");
       dsFramework.addInstance(KeyValueTable.class.getName(), datasetId, DatasetProperties.EMPTY);
-      try {
-        securedAdmin.deleteDatasets(namespaceId);
-        Assert.fail("Expected UnauthorizedException without DELETE permission");
-      } catch (UnauthorizedException expected) {
-        Assert.assertTrue(dsFramework.hasInstance(datasetId));
-      }
+      Assert.assertThrows(UnauthorizedException.class,
+          () -> securedAdmin.deleteDatasets(namespaceId));
+      Assert.assertTrue(dsFramework.hasInstance(datasetId));
 
       Mockito.reset(enforcer);
       securedAdmin.deleteDatasets(namespaceId);
