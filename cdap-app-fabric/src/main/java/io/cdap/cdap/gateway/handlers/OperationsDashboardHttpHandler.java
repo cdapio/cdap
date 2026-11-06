@@ -39,8 +39,12 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.ops.DashboardProgramRunRecord;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.reporting.ProgramHeartbeatService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -79,14 +83,19 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   private final ProgramHeartbeatService programHeartbeatService;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
 
   @Inject
   public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService,
-      Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
+      Scheduler scheduler, TimeSchedulerService timeSchedulerService,
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.programHeartbeatService = programHeartbeatService;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @GET
@@ -104,6 +113,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     if (namespaces.isEmpty()) {
       throw new BadRequestException(
           "'namespace' cannot be empty, please provide at least one namespace.");
+    }
+    // user needs GET on every requested namespace before any run record is read
+    Principal principal = authenticationContext.getPrincipal();
+    for (String namespace : namespaces) {
+      accessEnforcer.enforce(new NamespaceId(namespace), principal, StandardPermission.GET);
     }
     long endTimeSecs = startTimeSecs + durationTimeSecs;
 

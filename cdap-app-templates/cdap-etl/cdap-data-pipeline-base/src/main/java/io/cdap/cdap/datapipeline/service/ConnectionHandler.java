@@ -66,7 +66,6 @@ import io.cdap.cdap.etl.proto.v2.ConnectionConfig;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -142,8 +141,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, new NamespaceId(namespace),
-                                            StandardPermission.LIST);
+      // LIST is checked on the parent namespace for the connection child type
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, "*"), StandardPermission.LIST);
       responder.sendJson(store.listConnections(namespaceSummary));
     });
   }

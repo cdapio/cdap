@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -39,11 +43,19 @@ public class StackHandler extends AbstractHttpHandler {
 
   private static final ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
 
+  private final ContextAccessEnforcer contextAccessEnforcer;
+
+  @Inject
+  StackHandler(ContextAccessEnforcer contextAccessEnforcer) {
+    this.contextAccessEnforcer = contextAccessEnforcer;
+  }
+
   @Path(Constants.Gateway.API_VERSION_3 + "/system/services/{service-name}/stacks")
   @GET
   public void stacks(HttpRequest request, HttpResponder responder,
       @PathParam("service-name") String serviceName,
       @QueryParam("depth") @DefaultValue("20") int depth) {
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.HEALTH_CHECK);
     StringWriter stringWriter = new StringWriter();
     getThreadInfo(new PrintWriter(stringWriter), serviceName, depth);
     responder.sendString(HttpResponseStatus.OK, stringWriter.toString());

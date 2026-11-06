@@ -20,6 +20,10 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -34,15 +38,22 @@ import javax.ws.rs.Path;
 public class BootstrapHttpHandler extends AbstractHttpHandler {
 
   private final BootstrapService bootstrapService;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  BootstrapHttpHandler(BootstrapService bootstrapService) {
+  BootstrapHttpHandler(BootstrapService bootstrapService, AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
     this.bootstrapService = bootstrapService;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @POST
   @Path("/bootstrap")
   public void bootstrap(HttpRequest request, HttpResponder responder) throws InterruptedException {
+    accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
+        StandardPermission.UPDATE);
     bootstrapService.reload();
     bootstrapService.bootstrap();
     responder.sendStatus(HttpResponseStatus.OK);
