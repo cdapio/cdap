@@ -22,6 +22,9 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.LocationBodyProducer;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -44,10 +47,13 @@ import org.apache.twill.filesystem.LocationFactory;
 public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
 
   private final LocationFactory locationFactory;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  FileFetcherHttpHandlerInternal(LocationFactory locationFactory) {
+  FileFetcherHttpHandlerInternal(LocationFactory locationFactory,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.locationFactory = locationFactory;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   /**
@@ -59,6 +65,11 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("/location/**")
   public void download(HttpRequest request, HttpResponder responder) throws Exception {
+    // This handler resolves the requested path as an absolute location against the
+    // whole storage backend (see Locations#getLocationFromAbsolutePath), not scoped to
+    // any namespace or caller-owned resource, so it must be restricted to callers with
+    // instance-level access, same as the other raw-internal-state handler, ConfigHandler.
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     String prefix = String.format("%s/location/", Constants.Gateway.INTERNAL_API_VERSION_3);
     String path = request.uri().substring(prefix.length());
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
