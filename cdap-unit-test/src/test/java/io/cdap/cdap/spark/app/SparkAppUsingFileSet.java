@@ -74,7 +74,8 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       addSpark(new FileCountSparkProgram());
       addSpark(new ScalaFileCountSparkProgram());
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      Throwables.throwIfUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -130,7 +131,8 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       try {
         getSuccessLocation().createNew();
       } catch (Throwable t) {
-        throw Throwables.propagate(t);
+        Throwables.throwIfUnchecked(t);
+        throw new RuntimeException(t);
       }
     }
 
@@ -139,7 +141,8 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       try {
         getFailureLocation().createNew();
       } catch (Throwable t) {
-        throw Throwables.propagate(t);
+        Throwables.throwIfUnchecked(t);
+        throw new RuntimeException(t);
       }
     }
   }

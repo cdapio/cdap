@@ -292,7 +292,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
           try {
             ((Closeable) programRunner).close();
           } catch (Exception ignored) {
-            // Ignored because we are performing resource cleanup of the program runner on completion.
           }
         }
       }

@@ -115,7 +115,6 @@ public final class Locations {
           try {
             input.close();
           } catch (Exception ignored) {
-            // Ignored during cleanup
           }
           if (t instanceof IOException) {
             throw (IOException) t;
@@ -175,7 +174,6 @@ public final class Locations {
           try {
             input.close();
           } catch (Exception ignored) {
-            // Ignored during cleanup
           }
           if (t instanceof IOException) {
             throw (IOException) t;

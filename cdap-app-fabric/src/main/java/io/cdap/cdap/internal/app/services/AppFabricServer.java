@@ -142,14 +142,14 @@ public class AppFabricServer extends AbstractIdleService {
             Constants.Service.APP_FABRIC_HTTP));
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      namespaceCredentialProviderService.startAsync();
+      startIfNotRunning(namespaceCredentialProviderService);
     }
-    provisioningService.startAsync();
-    applicationLifecycleService.startAsync();
-    bootstrapService.startAsync();
-    credentialProviderService.startAsync();
-    sourceControlOperationRunner.startAsync();
-    repositoryCleanupService.startAsync();
+    startIfNotRunning(provisioningService);
+    startIfNotRunning(applicationLifecycleService);
+    startIfNotRunning(bootstrapService);
+    startIfNotRunning(credentialProviderService);
+    startIfNotRunning(sourceControlOperationRunner);
+    startIfNotRunning(repositoryCleanupService);
 
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
       namespaceCredentialProviderService.awaitRunning();
@@ -262,5 +262,11 @@ public class AppFabricServer extends AbstractIdleService {
 
       LOG.info("AppFabric HTTP service stopped.");
     };
+  }
+
+  private void startIfNotRunning(com.google.common.util.concurrent.Service service) {
+    if (service.state() == State.NEW) {
+      service.startAsync();
+    }
   }
 }

@@ -94,7 +94,8 @@ public final class ExternalDatasets {
       return Input.ofDataset(inputName, Collections.unmodifiableMap(arguments))
           .alias(input.getAlias());
     } catch (DatasetManagementException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -148,7 +149,8 @@ public final class ExternalDatasets {
       return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments))
           .alias(output.getAlias());
     } catch (DatasetManagementException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

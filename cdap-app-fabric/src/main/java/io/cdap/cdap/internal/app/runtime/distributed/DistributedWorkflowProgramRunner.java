@@ -168,11 +168,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
       } finally {
         if (runner instanceof Closeable) {
           try {
-
             ((Closeable) runner).close();
-
           } catch (Exception ignored) {
-
           }
         }
       }

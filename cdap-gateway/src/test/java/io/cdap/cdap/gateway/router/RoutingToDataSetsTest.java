@@ -26,7 +26,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
-import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -85,21 +84,21 @@ public class RoutingToDataSetsTest {
         new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup()),
         new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient,
         new NoOpAeadCipher());
-    Services.startAndWait(nettyRouter);
+    nettyRouter.startAsync().awaitRunning();
 
     // Starting mock DataSet service
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     mockService = new MockHttpService(discoveryService, Constants.Service.DATASET_MANAGER,
         new MockDatasetTypeHandler(), new MockDatasetInstanceHandler());
-    Services.startAndWait(mockService);
+    mockService.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void after() {
     try {
-      Services.stopAndWait(nettyRouter);
+      nettyRouter.stopAsync().awaitTerminated();
     } finally {
-      Services.stopAndWait(mockService);
+      mockService.stopAsync().awaitTerminated();
     }
   }
 

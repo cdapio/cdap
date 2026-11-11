@@ -268,7 +268,8 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
           directStoreSinks.add(sinkName);
         }
       } catch (InterruptedException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       } catch (ExecutionException e) {
         // We don't propagate this exception as the regular sink workflow can continue.
         LOG.warn("Execution exception when executing Direct store task. Sink will proceed with default output.", e);
@@ -295,7 +296,8 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
       try {
         pull().createStoreTask(stageSpec, sink).run();
       } catch (Exception e) {
-        Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     };
   }

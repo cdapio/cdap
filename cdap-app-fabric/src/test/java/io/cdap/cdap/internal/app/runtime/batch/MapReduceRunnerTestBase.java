@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.Config;
@@ -119,7 +120,9 @@ public class MapReduceRunnerTestBase {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
 
     metricStore = injector.getInstance(MetricStore.class);
-    txService.startAsync().awaitRunning();
+    if (txService.state() == Service.State.NEW) {
+      txService.startAsync().awaitRunning();
+    }
 
     // Always create the default namespace
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);

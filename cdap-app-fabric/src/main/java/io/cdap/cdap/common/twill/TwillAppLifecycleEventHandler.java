@@ -210,7 +210,6 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     try {
       logAppenderInitializer.close();
     } catch (Exception ignored) {
-      // Ignored because we are performing resource cleanup in the destroy method.
     }
     if (zkClientService != null) {
       zkClientService.stopAsync();

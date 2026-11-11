@@ -213,11 +213,8 @@ public class AppFabricTestHelper {
    */
   public static void shutdown() {
     try {
-
       metadataStorage.close();
-
     } catch (Exception ignored) {
-
     }
 
     if (services != null) {

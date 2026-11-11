@@ -167,7 +167,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       try {
         closeable.close();
       } catch (Exception ignored) {
-        // Ignored because we are already handling the original program execution error.
       }
       throw t;
     }
@@ -215,7 +214,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         try {
           closeable.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup of the program on completion.
         }
         Set<Operation> fieldLineageOperations = new HashSet<>();
         if (controller instanceof WorkflowDataProvider) {
@@ -233,7 +231,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         try {
           closeable.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup of the program on kill.
         }
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
@@ -245,7 +242,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         try {
           closeable.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup of the program on error.
         }
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
@@ -288,7 +284,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         try {
           program.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup of the program on close.
         }
         closeProgramRunner(programRunner);
       }
@@ -303,7 +298,6 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       try {
         ((Closeable) programRunner).close();
       } catch (Exception ignored) {
-        // Ignored because we are performing resource cleanup of the program runner on close.
       }
     }
   }

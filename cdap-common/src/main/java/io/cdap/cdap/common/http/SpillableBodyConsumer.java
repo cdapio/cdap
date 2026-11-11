@@ -92,7 +92,6 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
         outputStream.close();
       }
     } catch (IOException ignored) {
-      // Ignored during cleanup
     }
 
     try (InputStream is = new CombineInputStream(buffer, outputStream == null ? null : spillPath)) {
@@ -113,7 +112,6 @@ public abstract class SpillableBodyConsumer extends BodyConsumer {
         outputStream.close();
       }
     } catch (IOException ignored) {
-      // Ignored during cleanup
     }
     cleanup();
   }

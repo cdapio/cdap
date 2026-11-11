@@ -139,7 +139,8 @@ public class TestFrameworkTestBase extends TestBase {
       }
     } catch (Exception e) {
       // If really fail to do reset, propagate the exception
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

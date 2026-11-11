@@ -200,7 +200,6 @@ public class SearchHelper {
         try {
           datasets.get(scope).close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup in close().
         }
       }
       datasets.clear();

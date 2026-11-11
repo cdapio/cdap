@@ -529,9 +529,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
           flushOperations();
         } catch (Exception e) {
           if (e instanceof IOException) {
-
             throw (IOException) e;
-
           }
           throw new IOException(e);
         }

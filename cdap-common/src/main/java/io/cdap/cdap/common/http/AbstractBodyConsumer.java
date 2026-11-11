@@ -78,7 +78,6 @@ public abstract class AbstractBodyConsumer extends BodyConsumer {
         try {
           output.close();
         } catch (Exception ignored) {
-          // Ignored, as we are already in error handling mode and want to continue cleanup
         }
       }
       onError(cause);

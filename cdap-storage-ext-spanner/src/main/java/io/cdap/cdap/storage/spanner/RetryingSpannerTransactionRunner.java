@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.storage.spanner;
 
-import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.base.Throwables;
+import com.google.api.client.util.ExponentialBackOff;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;

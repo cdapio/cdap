@@ -88,7 +88,6 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
         try {
           elasticStore.close();
         } catch (Exception ignored) {
-          // Ignored because we are performing resource cleanup in teardown.
         }
       }
     }

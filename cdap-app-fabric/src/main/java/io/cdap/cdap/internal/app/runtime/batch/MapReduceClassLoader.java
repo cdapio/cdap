@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
-import java.util.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -146,10 +145,12 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     synchronized (this) {
-      taskContextProvider = Optional.ofNullable(taskContextProvider)
-          .orElseGet(taskContextProviderSupplier::get);
+      if (taskContextProvider == null) {
+        taskContextProvider = taskContextProviderSupplier.get();
+        taskContextProvider.startAsync();
+      }
     }
-    taskContextProvider.startAsync().awaitRunning();
+    taskContextProvider.awaitRunning();
     return taskContextProvider;
   }
 

@@ -322,7 +322,6 @@ public class SSHSessionTest {
               try {
                 socket.close();
               } catch (Exception ignored) {
-                // Ignored during cleanup
               }
             }
           });
@@ -343,7 +342,6 @@ public class SSHSessionTest {
       try {
         serverSocket.close();
       } catch (Exception ignored) {
-        // Ignored during cleanup
       }
     }
   }

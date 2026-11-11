@@ -83,8 +83,7 @@ final class CombineInputStream extends InputStream {
   public void close() throws IOException {
     try {
       bufferStream.close();
-    } catch (IOException ignored) {
-      // Ignored to ensure spillStream is closed even if bufferStream.close() fails
+    } catch (Exception ignored) {
     }
     if (spillStream != null) {
       spillStream.close();

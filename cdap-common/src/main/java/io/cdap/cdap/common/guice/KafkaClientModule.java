@@ -135,9 +135,6 @@ public class KafkaClientModule extends PrivateModule {
 
   /**
    * A {@link ZKClientService} wrapper using simple reference counting for start/stop.
-   * This wrapper is necessary because the underlying {@link ZKClientService} instance is shared between
-   * {@link DefaultKafkaClientService} and {@link DefaultBrokerService}. Both services manage its lifecycle;
-   * reference counting ensures the ZK client is only started once and remains open until both services are stopped.
    */
   private static final class RefCountZKClientService extends ForwardingZKClientService {
 
