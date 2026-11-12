@@ -186,7 +186,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     Assert.assertNotEquals(0, repository.getUpdatedTimeMillis());
 
     RepositoryConfig newRepoConfig = new RepositoryConfig.Builder(namespaceRepo)
-        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("a new password name", null)))
+        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("a-new-password-name", null)))
         .setLink("a new link")
         .build();
 
@@ -266,6 +266,14 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         new AuthConfig(AuthType.PAT, new PatConfig("", USERNAME)),
         null);
     assertResponseCode(400, setRepository(NAME, configMissingPasswordName));
+    assertResponseCode(404, getRepository(NAME));
+
+    // Set the invalid repository that has an improperly formatted secure key name
+    String configInvalidPasswordName = buildRepoRequestString(
+        Provider.GITHUB, LINK, DEFAULT_BRANCH,
+        new AuthConfig(AuthType.PAT, new PatConfig("Invalid Name", USERNAME)),
+        null);
+    assertResponseCode(400, setRepository(NAME, configInvalidPasswordName));
     assertResponseCode(404, getRepository(NAME));
 
     // Set the invalid bitbucket cloud repository that has wrong username
