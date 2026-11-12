@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.scheduler;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -56,7 +55,7 @@ public class LogPrintingJob implements Job {
         LOG.info("Parameter key: {}, value: {}", key, map.get(key));
       }
     } catch (Throwable e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     throw new JobExecutionException("exception");
   }

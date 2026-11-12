@@ -135,7 +135,8 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
     } catch (MalformedURLException e) {
       // Should never happen
       LOG.error("Error in adding jar URLs to classPathUrls", e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

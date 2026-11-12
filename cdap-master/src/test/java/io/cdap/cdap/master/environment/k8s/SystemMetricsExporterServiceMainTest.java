@@ -38,9 +38,9 @@ public class SystemMetricsExporterServiceMainTest extends MasterServiceMainTestB
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
     JmxMetricsCollector metricsCollector = factory.create(metricTags);
     // JMX server isn't running, but that shouldn't raise exceptions, errors will be logged.
-    metricsCollector.startAndWait();
+    metricsCollector.startAsync().awaitRunning();
     Assert.assertTrue(metricsCollector.isRunning());
-    metricsCollector.stopAndWait();
+    metricsCollector.stopAsync().awaitTerminated();
     Assert.assertFalse(metricsCollector.isRunning());
   }
 

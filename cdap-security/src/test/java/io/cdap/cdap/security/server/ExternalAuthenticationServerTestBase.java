@@ -124,14 +124,14 @@ public abstract class ExternalAuthenticationServerTestBase {
 
     startExternalAuthenticationServer();
 
-    server.startAndWait();
+    server.startAsync().awaitRunning();
     LOG.info("Auth server running on address {}", server.getSocketAddress());
     TimeUnit.SECONDS.sleep(3);
   }
 
   protected void tearDown() throws Exception {
     stopExternalAuthenticationServer();
-    server.stopAndWait();
+    server.stopAsync().awaitTerminated();
     // Clear any security properties for zookeeper.
     System.clearProperty(Constants.External.Zookeeper.ENV_AUTH_PROVIDER_1);
     Configuration.setConfiguration(null);

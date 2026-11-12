@@ -320,7 +320,8 @@ public class RDDCollection<T> implements BatchCollection<T> {
         try {
           sink.run(sparkPluginContext, countedRDD);
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     };

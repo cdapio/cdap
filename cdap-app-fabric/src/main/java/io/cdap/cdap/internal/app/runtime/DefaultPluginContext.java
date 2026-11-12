@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.InvalidPluginConfigException;
@@ -77,7 +76,7 @@ public class DefaultPluginContext implements PluginContext {
       throw new IllegalArgumentException("Plugin class not found", e);
     } catch (IOException e) {
       // This is fatal, since jar cannot be expanded.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -102,7 +101,7 @@ public class DefaultPluginContext implements PluginContext {
       throw new IllegalArgumentException("Plugin class not found", e);
     } catch (IOException e) {
       // This is fatal, since jar cannot be expanded.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

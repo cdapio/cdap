@@ -56,12 +56,12 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
 
   @Override
   protected void startUp() throws Exception {
-    delegate.startAndWait();
+    delegate.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    delegate.stopAsync().awaitTerminated();
   }
 
   @Override

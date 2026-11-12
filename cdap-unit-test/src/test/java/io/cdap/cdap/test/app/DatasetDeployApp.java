@@ -115,7 +115,8 @@ public class DatasetDeployApp extends AbstractApplication {
         schema = Schema.recordOf("record", schema.getFields());
         return schema.toString();
       } catch (ClassNotFoundException | UnsupportedTypeException | IOException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -129,7 +130,8 @@ public class DatasetDeployApp extends AbstractApplication {
       try {
         return new RecordDataset(spec, kvTable);
       } catch (ClassNotFoundException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

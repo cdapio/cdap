@@ -131,7 +131,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     // Tx Manager to support working with datasets
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StoreDefinition.createAllTables(structuredTableAdmin);
@@ -155,7 +155,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
                                                      discoveryService, commonNettyHttpServiceFactory, handlers);
-    opExecutorService.startAndWait();
+    opExecutorService.startAsync().awaitRunning();
 
     AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
 
@@ -182,7 +182,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  new HashSet<>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
       () -> discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),

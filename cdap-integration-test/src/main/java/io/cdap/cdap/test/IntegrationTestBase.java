@@ -198,11 +198,13 @@ public abstract class IntegrationTestBase {
         try {
           accessToken = fetchAccessToken();
         } catch (IOException ex) {
-          throw Throwables.propagate(ex);
+          Throwables.throwIfUnchecked(ex);
+          throw new RuntimeException(ex);
         }
         checkServicesWithRetry(cdapAvailable, errorMessage);
       } else {
-        throw Throwables.propagate(rootCause);
+        Throwables.throwIfUnchecked(rootCause);
+        throw new RuntimeException(rootCause);
       }
     }
     LOG.info("CDAP Services are up and running!");
@@ -259,7 +261,8 @@ public abstract class IntegrationTestBase {
         Throwable rootCause = Throwables.getRootCause(e);
         if (!(rootCause instanceof IOException)) {
           // Throw if root cause is any other exception e.g. UnauthenticatedException
-          throw Throwables.propagate(rootCause);
+          Throwables.throwIfUnchecked(rootCause);
+          throw new RuntimeException(rootCause);
         }
       }
       TimeUnit.SECONDS.sleep(1);
@@ -288,7 +291,8 @@ public abstract class IntegrationTestBase {
     try {
       return new IntegrationTestManager(clientConfig, restClient, TEMP_FOLDER.newFolder());
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -18,7 +18,6 @@ package io.cdap.cdap.scheduler;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -51,10 +50,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -96,22 +93,19 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
         1, Threads.createDaemonThreadFactory("scheduler-notification-subscriber-%d"));
 
     // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
-    Futures.successfulAsList(
-        subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
+    subscriberServices.forEach(Service::startAsync);
   }
 
   @Override
   protected void shutDown() throws Exception {
     // This never throw
-    Futures.successfulAsList(
-        subscriberServices.stream().map(Service::stop).collect(Collectors.toList())).get();
+    subscriberServices.forEach(Service::stopAsync);
 
     for (Service service : subscriberServices) {
-      // The service must have been stopped, and calling stop again will just return immediate with the
-      // future that carries the stop state.
+      // The service must have been stopped, and calling stopAsync again is a no-op.
       try {
-        service.stop().get();
-      } catch (ExecutionException e) {
+        service.awaitTerminated();
+      } catch (IllegalStateException e) {
         LOG.warn("Exception raised when stopping service {}", service, e.getCause());
       }
     }

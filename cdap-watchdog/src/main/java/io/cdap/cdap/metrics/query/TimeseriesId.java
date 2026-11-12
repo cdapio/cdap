@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metrics.query;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 /**
@@ -54,7 +55,7 @@ public final class TimeseriesId {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("context", context)
         .add("metric", metric)
         .add("tag", tag)

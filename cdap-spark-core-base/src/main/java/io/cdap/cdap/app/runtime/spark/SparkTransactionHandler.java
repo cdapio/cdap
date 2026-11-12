@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.http.AbstractHttpHandler;
@@ -256,12 +256,12 @@ public final class SparkTransactionHandler extends AbstractHttpHandler {
               LOG.error("Failed to start transaction for job {}", jobId, t);
               // Set the transaction to an absent Optional to indicate the starting of transaction failed.
               // This will prevent future call to this method to attempt to start a transaction again
-              tx = transaction = Optional.absent();
+              tx = transaction = Optional.empty();
             }
           }
         }
       }
-      return tx.orNull();
+      return tx.orElse(null);
     }
 
     /**
@@ -316,7 +316,7 @@ public final class SparkTransactionHandler extends AbstractHttpHandler {
       return "JobTransaction{"
         + "jobId=" + jobId
         + ", stageIds=" + stageIds
-        + ", transaction=" + (transaction == null ? null : transaction.orNull())
+        + ", transaction=" + (transaction == null ? null : transaction.orElse(null))
         + '}';
     }
   }

@@ -93,7 +93,7 @@ public class OperationNotificationSubscriberService extends AbstractIdleService 
         .forEach(i -> children.add(createChildService("operation.status." + i, topicPrefix + i)));
     delegate = new CompositeService(children);
 
-    delegate.startAndWait();
+    delegate.startAsync().awaitRunning();
   }
 
   // Sends STARTING notification for all STARTING operations
@@ -130,7 +130,7 @@ public class OperationNotificationSubscriberService extends AbstractIdleService 
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    delegate.stopAsync().awaitTerminated();
   }
 
   private OperationNotificationSingleTopicSubscriberService createChildService(
