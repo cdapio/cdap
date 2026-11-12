@@ -59,6 +59,7 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
+    validateNoSystemOnlyProperties(properties);
     // Creates the DataprocConf for validation
     DataprocConf.create(properties);
 

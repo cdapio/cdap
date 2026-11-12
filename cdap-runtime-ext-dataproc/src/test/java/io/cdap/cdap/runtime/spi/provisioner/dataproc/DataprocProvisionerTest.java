@@ -790,6 +790,38 @@ public class DataprocProvisionerTest {
     provisioner.validateProperties(props);
   }
 
+  @Test
+  public void testValidatePropertiesRejectsTokenEndpoint() {
+    Map<String, String> props = baseProps();
+    props.put(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
+
+    IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+        () -> provisioner.validateProperties(props));
+    Assert.assertTrue(e.getMessage().contains("cannot be set in a compute profile"));
+  }
+
+  @Test
+  public void testCreateContextPropertiesUsesSystemTokenEndpoint() {
+    context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
+
+    Map<String, String> properties = provisioner.createContextProperties(context);
+
+    Assert.assertEquals(tokTOKEN_ENDPOINTnEndpoint,
+        properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
+  }
+
+  @Test
+  public void testCreateContextPropertiesIgnoresTokenEndpointWithoutSystemValue() {
+    DataprocProvisioner noEndpointProvisioner =
+        new DataprocProvisioner((conf, requireSsh, errorCategory) -> dataprocClient);
+    noEndpointProvisioner.initialize(new MockProvisionerSystemContext());
+    context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
+
+    Map<String, String> properties = noEndpointProvisioner.createContextProperties(context);
+
+    Assert.assertNull(properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
+  }
+
   private static Map<String, String> baseProps() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");

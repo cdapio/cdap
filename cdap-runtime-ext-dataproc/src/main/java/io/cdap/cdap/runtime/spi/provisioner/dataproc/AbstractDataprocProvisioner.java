@@ -268,11 +268,27 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       contextProperties.put(DataprocConf.PROJECT_ID_KEY, projectId);
     }
 
+    // The token endpoint may only come from system configuration.
+    contextProperties.remove(DataprocConf.TOKEN_ENDPOINT_KEY);
+
     // Add default properties
     getDefaultContextProperties().entrySet().stream()
         .filter(e -> !contextProperties.containsKey(e.getKey()))
         .forEach(e -> contextProperties.put(e.getKey(), e.getValue()));
     return contextProperties;
+  }
+
+  /**
+   * Validates that the given profile properties do not contain properties that may only be set
+   * through system configuration.
+   *
+   * @throws IllegalArgumentException if a system-only property is present
+   */
+  protected static void validateNoSystemOnlyProperties(Map<String, String> properties) {
+    if (properties.containsKey(DataprocConf.TOKEN_ENDPOINT_KEY)) {
+      throw new IllegalArgumentException(String.format(
+          "Property '%s' cannot be set in a compute profile.", DataprocConf.TOKEN_ENDPOINT_KEY));
+    }
   }
 
   /**
