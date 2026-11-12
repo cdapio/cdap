@@ -43,6 +43,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.operation.OperationRun;
 import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -50,6 +51,7 @@ import io.cdap.cdap.proto.sourcecontrol.PullMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.PushMultipleAppsRequest;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -169,6 +171,7 @@ public class SourceControlManagementService {
       throws NamespaceNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.UPDATE_REPOSITORY_METADATA);
+    enforceSecureKeyAccess(namespace, repository);
 
     return TransactionRunners.run(transactionRunner, context -> {
       NamespaceTable nsTable = getNamespaceTable(context);
@@ -227,8 +230,25 @@ public class SourceControlManagementService {
       throws RemoteRepositoryValidationException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.UPDATE_REPOSITORY_METADATA);
+    enforceSecureKeyAccess(namespace, repoConfig);
     RepositoryManager.validateConfig(secureStore,
         new SourceControlConfig(namespace, repoConfig, cConf));
+  }
+
+  /**
+   * Ensures the caller can read the secure key referenced by the repository config, so that a
+   * repository link cannot be bound to a credential the caller is not allowed to read.
+   */
+  private void enforceSecureKeyAccess(NamespaceId namespace, RepositoryConfig repoConfig) {
+    String passwordName = repoConfig.getAuth().getPatConfig().getPasswordName();
+    SecureKeyId secureKeyId;
+    try {
+      secureKeyId = new SecureKeyId(namespace.getNamespace(), passwordName);
+    } catch (IllegalArgumentException e) {
+      throw new RepositoryConfigValidationException(e.getMessage(), e);
+    }
+    accessEnforcer.enforce(secureKeyId, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
   }
 
   /**
