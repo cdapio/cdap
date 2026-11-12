@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.authorization;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.security.AuthEnforceUtil;
 import io.cdap.cdap.proto.element.EntityType;
@@ -54,7 +53,7 @@ public class AuthorizerWrapper implements AccessController {
     try {
       authorizer.initialize(context);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -117,7 +116,7 @@ public class AuthorizerWrapper implements AccessController {
     try {
       authorizer.destroy();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

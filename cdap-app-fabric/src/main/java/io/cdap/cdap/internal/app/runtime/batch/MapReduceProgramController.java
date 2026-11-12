@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.internal.app.runtime.batch;
 
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.workflow.WorkflowToken;
@@ -53,7 +52,7 @@ final class MapReduceProgramController extends ProgramControllerServiceAdapter i
       workflowTokenFromContext.setMapReduceCounters(((Job) context.getHadoopJob()).getCounters());
       return workflowTokenFromContext;
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

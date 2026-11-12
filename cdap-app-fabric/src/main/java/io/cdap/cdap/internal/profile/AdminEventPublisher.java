@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.profile;
 
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -151,7 +150,7 @@ public class AdminEventPublisher {
             } catch (TopicNotFoundException | ServiceUnavailableException e) {
               throw new RetryableException(e);
             } catch (IOException | AccessException e) {
-              throw Throwables.propagate(e);
+              throw new RuntimeException(e);
             }
             return null;
           },

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import io.cdap.cdap.api.SQLEngineContext;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -344,7 +345,7 @@ public class BatchSQLEngineAdapter implements Closeable {
     SQLPullDataset<StructuredRecord, ?, ?> sqlPullDataset = sqlEngine.getPullProvider(pullRequest);
 
     // Run operation to read from the InputFormatProvider supplied by this operation.
-    ClassLoader classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+    ClassLoader classLoader = MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                    getClass().getClassLoader());
     JavaPairRDD pairRDD = RDDUtils.readUsingInputFormat(jsc, sqlPullDataset, classLoader, Object.class,
                                                         Object.class);

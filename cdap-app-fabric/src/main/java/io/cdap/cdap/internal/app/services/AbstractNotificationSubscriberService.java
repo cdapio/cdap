@@ -81,7 +81,7 @@ public abstract class AbstractNotificationSubscriberService extends
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return name;
   }
 

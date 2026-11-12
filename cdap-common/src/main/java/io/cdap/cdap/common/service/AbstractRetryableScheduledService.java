@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.retry.RetriesExhaustedException;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
@@ -24,7 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,10 +56,22 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    */
   protected AbstractRetryableScheduledService(RetryStrategy retryStrategy) {
     this.retryStrategy = retryStrategy;
-    addListener(new ServiceListenerAdapter() {
+    addListener(new Service.Listener() {
+      @Override
+      public void starting() {}
+
+      @Override
+      public void running() {}
+
+      @Override
+      public void stopping(State from) {}
+
+      @Override
+      public void terminated(State from) {}
+
       @Override
       public void failed(State from, Throwable failure) {
-        LOG.error("Scheduled service {} terminated due to failure", getServiceName(), failure);
+        LOG.error("Scheduled service {} terminated due to failure", serviceName(), failure);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
   }
@@ -99,7 +111,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * @throws Exception if startup of this service failed
    */
   protected void doStartUp() throws Exception {
-    LOG.debug("Starting scheduled service {}", getServiceName());
+    LOG.debug("Starting scheduled service {}", serviceName());
   }
 
   /**
@@ -109,20 +121,20 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * @throws Exception if shutdown of this service failed
    */
   protected void doShutdown() throws Exception {
-    LOG.debug("Stopping scheduled service {}", getServiceName());
+    LOG.debug("Stopping scheduled service {}", serviceName());
   }
 
   /**
    * Returns the name of this service.
    */
-  protected String getServiceName() {
+  protected String serviceName() {
     return getClass().getSimpleName();
   }
 
   @Override
   protected ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-        Threads.createDaemonThreadFactory(getServiceName()));
+        Threads.createDaemonThreadFactory(serviceName()));
     return executor;
   }
 
@@ -191,7 +203,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         this.delayMillis = delayMillis;
       }
     } catch (Throwable t) {
-      LOG.error("Aborting service {} due to non-retryable error", getServiceName(), t);
+      LOG.error("Aborting service {} due to non-retryable error", serviceName(), t);
       throw t;
     }
   }
@@ -210,6 +222,6 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * Logs an exception raised by {@link #runTask()}.
    */
   protected void logTaskFailure(Throwable t) {
-    outageLog.warn("Failed to execute task for scheduled service {}", getServiceName(), t);
+    outageLog.warn("Failed to execute task for scheduled service {}", serviceName(), t);
   }
 }

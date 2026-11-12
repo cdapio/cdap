@@ -16,7 +16,8 @@
 
 package io.cdap.cdap.common.internal.remote;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
@@ -39,6 +40,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
@@ -90,7 +93,7 @@ public class RemoteTaskExecutorTest {
   public void beforeTest() {
     metricCollectors = new HashMap<>();
     mockMetricsCollector = createMockMetricsCollectionService();
-    mockMetricsCollector.startAndWait();
+    mockMetricsCollector.startAsync().awaitRunning();
     registered = discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
   }
 
@@ -110,39 +113,69 @@ public class RemoteTaskExecutorTest {
 
   private MetricsCollectionService createMockMetricsCollectionService() {
     return new MetricsCollectionService() {
+      private final AbstractService delegate = new AbstractService() {
+        @Override
+        protected void doStart() {
+          notifyStarted();
+        }
+
+        @Override
+        protected void doStop() {
+          notifyStopped();
+        }
+      };
 
       @Override
-      public ListenableFuture<State> start() {
-        return null;
-      }
-
-      @Override
-      public State startAndWait() {
-        return null;
+      public Service startAsync() {
+        delegate.startAsync();
+        return this;
       }
 
       @Override
       public boolean isRunning() {
-        return false;
+        return delegate.isRunning();
       }
 
       @Override
       public State state() {
-        return null;
+        return delegate.state();
       }
 
       @Override
-      public ListenableFuture<State> stop() {
-        return null;
+      public Service stopAsync() {
+        delegate.stopAsync();
+        return this;
       }
 
       @Override
-      public State stopAndWait() {
-        return null;
+      public void awaitRunning() {
+        delegate.awaitRunning();
       }
 
       @Override
-      public void addListener(final Listener listener, final Executor executor) {}
+      public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+        delegate.awaitRunning(timeout, unit);
+      }
+
+      @Override
+      public void awaitTerminated() {
+        delegate.awaitTerminated();
+      }
+
+      @Override
+      public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+        delegate.awaitTerminated(timeout, unit);
+      }
+
+      @Override
+      public Throwable failureCause() {
+        return delegate.failureCause();
+      }
+
+      @Override
+      public void addListener(final Listener listener, final Executor executor) {
+        delegate.addListener(listener, executor);
+      }
 
       @Override
       public MetricsContext getContext(Map<String, String> context) {
@@ -205,7 +238,7 @@ public class RemoteTaskExecutorTest {
       // Exception thrown in the task executor should be in the exception message in the caller
       Assert.assertEquals("Invalid", e.getMessage());
     }
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
@@ -224,7 +257,7 @@ public class RemoteTaskExecutorTest {
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").withNamespace("testNamespace").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
@@ -249,7 +282,7 @@ public class RemoteTaskExecutorTest {
     } catch (Exception e) {
       // expected
     }
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present

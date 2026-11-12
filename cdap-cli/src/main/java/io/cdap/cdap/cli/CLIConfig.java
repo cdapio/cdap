@@ -310,7 +310,8 @@ public class CLIConfig implements TableRendererConfig {
       }
       return Resources.toString(version, StandardCharsets.UTF_8);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

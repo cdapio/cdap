@@ -17,7 +17,6 @@
 package io.cdap.cdap.spi.data.sql;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -197,7 +196,7 @@ public class PostgreSqlStorageProvider implements StorageProvider {
       JDBCDriverShim driverShim = new JDBCDriverShim(driver);
       DriverManager.registerDriver(driverShim);
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | SQLException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     LOG.info("Successfully loaded {} from {}", driverName, driverExtensionPath);

@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.common.service;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +53,36 @@ public class Services {
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit,
       @Nullable String timeoutErrorMessage)
       throws TimeoutException, InterruptedException, ExecutionException {
-    ListenableFuture<Service.State> startFuture = service.start();
+    CountDownLatch runningLatch = new CountDownLatch(1);
+    AtomicReference<Throwable> failedThrowable = new AtomicReference<>();
+    service.addListener(new Service.Listener() {
+      @Override
+      public void running() {
+        runningLatch.countDown();
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        failedThrowable.set(failure);
+        runningLatch.countDown();
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        runningLatch.countDown();
+      }
+    }, MoreExecutors.directExecutor());
     try {
-      startFuture.get(timeout, timeoutUnit);
+      service.startAsync();
+      if (!runningLatch.await(timeout, timeoutUnit)) {
+        throw new TimeoutException(timeoutErrorMessage);
+      }
+      if (failedThrowable.get() != null) {
+        throw new ExecutionException(failedThrowable.get());
+      }
+      if (service.state() != Service.State.RUNNING) {
+        throw new ExecutionException(new IllegalStateException("Service failed to start"));
+      }
     } catch (TimeoutException e) {
       LOG.error(timeoutErrorMessage != null ? timeoutErrorMessage
           : "Timeout while waiting to start service.", e);
@@ -62,7 +91,7 @@ public class Services {
         timeoutException.setStackTrace(e.getStackTrace());
       }
       try {
-        service.stop();
+        service.stopAsync();
       } catch (Exception stopException) {
         LOG.error("Error while trying to stop service: ", stopException);
       }
@@ -70,7 +99,23 @@ public class Services {
     } catch (InterruptedException e) {
       LOG.error("Interrupted while waiting to start service.", e);
       try {
-        service.stop();
+        service.stopAsync();
+      } catch (Exception stopException) {
+        LOG.error("Error while trying to stop service:", stopException);
+      }
+      throw e;
+    } catch (IllegalStateException e) {
+      LOG.error("Failed to start service.", e);
+      try {
+        service.stopAsync();
+      } catch (Exception stopException) {
+        LOG.error("Error while trying to stop service:", stopException);
+      }
+      throw new ExecutionException(e);
+    } catch (ExecutionException e) {
+      LOG.error("Failed to start service.", e);
+      try {
+        service.stopAsync();
       } catch (Exception stopException) {
         LOG.error("Error while trying to stop service:", stopException);
       }

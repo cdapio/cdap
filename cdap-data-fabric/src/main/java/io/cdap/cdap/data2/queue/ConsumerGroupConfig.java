@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.queue;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 /**
@@ -58,7 +59,7 @@ public class ConsumerGroupConfig {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("groupId", groupId)
         .add("groupSize", groupSize)
         .add("dequeueStrategy", dequeueStrategy)

@@ -17,7 +17,6 @@
 package io.cdap.cdap.data2.dataset2;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -159,7 +158,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
       return perThreadMap.get(Thread.currentThread());
     } catch (ExecutionException e) {
       // this should never happen because all we do in the cache loader is crete a new entry.
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

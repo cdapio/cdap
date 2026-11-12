@@ -160,7 +160,7 @@ public final class SparkExecutionService extends AbstractIdleService {
    */
   public void shutdownNow() {
     stopLatch.countDown();
-    stopAndWait();
+    stopAsync().awaitTerminated();
   }
 
   /**

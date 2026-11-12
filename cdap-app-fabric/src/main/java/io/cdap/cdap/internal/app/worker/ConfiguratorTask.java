@@ -14,8 +14,8 @@
 
 package io.cdap.cdap.internal.app.worker;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
@@ -184,7 +184,7 @@ public class ConfiguratorTask implements RunnableTask {
         // We don't need the ExecutionException being reported back to the RemoteTaskExecutor, hence only
         // propagating the actual cause.
         Throwables.propagateIfPossible(e.getCause(), Exception.class);
-        throw Throwables.propagate(e.getCause());
+        throw new RuntimeException(e.getCause());
       }
     }
   }

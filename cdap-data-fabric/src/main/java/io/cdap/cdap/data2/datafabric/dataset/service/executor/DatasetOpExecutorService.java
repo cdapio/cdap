@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -105,7 +105,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("bindAddress", httpService.getBindAddress())
         .toString();
   }

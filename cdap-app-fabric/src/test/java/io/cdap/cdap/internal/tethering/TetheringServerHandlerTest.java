@@ -174,21 +174,21 @@ public class TetheringServerHandlerTest {
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
     messagingProgramStatePublisher = injector.getInstance(MessagingProgramStatePublisher.class);
     profileService = injector.getInstance(ProfileService.class);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void teardown() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 

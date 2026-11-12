@@ -102,7 +102,7 @@ public class InternalServiceRoutingHandlerTest {
     );
 
     internalRouterService = injector.getInstance(InternalRouterService.class);
-    internalRouterService.startAndWait();
+    internalRouterService.startAsync().awaitRunning();
 
     mockService = NettyHttpService.builder(MOCK_SERVICE)
         .setHost(InetAddress.getLocalHost().getCanonicalHostName())
@@ -118,7 +118,7 @@ public class InternalServiceRoutingHandlerTest {
   public void afterTest() throws Exception {
     mockServiceCancellable.cancel();
     mockService.stop();
-    internalRouterService.stopAndWait();
+    internalRouterService.stopAsync().awaitTerminated();
   }
 
   @Test

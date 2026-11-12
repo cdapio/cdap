@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.server;
 
-import com.google.common.base.Throwables;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -76,7 +75,7 @@ public class LdapLoginModule extends org.eclipse.jetty.jaas.spi.LdapLoginModule 
         trustAllFactory = sc.getSocketFactory();
       } catch (GeneralSecurityException e) {
         LOG.error("Could not disable certificate verification for connections to LDAP.", e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 

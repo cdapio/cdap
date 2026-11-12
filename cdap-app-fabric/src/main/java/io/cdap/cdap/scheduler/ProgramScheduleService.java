@@ -16,19 +16,14 @@
 
 package io.cdap.cdap.scheduler;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
-import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.ConflictException;
-import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
-import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
 import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
@@ -43,7 +38,6 @@ import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -153,13 +147,13 @@ public class ProgramScheduleService {
         ApplicationPermission.EXECUTE);
     ProgramSchedule existing = scheduler.getSchedule(scheduleId);
 
-    String description = Objects.firstNonNull(scheduleDetail.getDescription(),
+    String description = MoreObjects.firstNonNull(scheduleDetail.getDescription(),
         existing.getDescription());
     ProgramId programId = scheduleDetail.getProgram() == null ? existing.getProgramId()
         : existing.getProgramId().getParent().program(
             scheduleDetail.getProgram().getProgramType() == null ? existing.getProgramId().getType()
                 : ProgramType.valueOfSchedulableType(scheduleDetail.getProgram().getProgramType()),
-            Objects.firstNonNull(scheduleDetail.getProgram().getProgramName(),
+            MoreObjects.firstNonNull(scheduleDetail.getProgram().getProgramName(),
                 existing.getProgramId().getProgram()));
     if (!programId.equals(existing.getProgramId())) {
       throw new BadRequestException(
@@ -167,12 +161,12 @@ public class ProgramScheduleService {
                   + "To change the program in a schedule, please delete the schedule and create a new one.",
               existing.getName(), existing.getProgramId().toString()));
     }
-    Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(),
+    Map<String, String> properties = MoreObjects.firstNonNull(scheduleDetail.getProperties(),
         existing.getProperties());
-    Trigger trigger = Objects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
+    Trigger trigger = MoreObjects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
     List<? extends Constraint> constraints =
-        Objects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
-    Long timeoutMillis = Objects.firstNonNull(scheduleDetail.getTimeoutMillis(),
+        MoreObjects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
+    Long timeoutMillis = MoreObjects.firstNonNull(scheduleDetail.getTimeoutMillis(),
         existing.getTimeoutMillis());
     ProgramSchedule updatedSchedule = new ProgramSchedule(existing.getName(), description,
         programId, properties,

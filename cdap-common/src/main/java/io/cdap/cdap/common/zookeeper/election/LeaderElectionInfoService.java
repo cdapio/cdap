@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -81,9 +82,9 @@ public class LeaderElectionInfoService extends AbstractIdleService {
   public SortedMap<Integer, Participant> getParticipants(long timeout,
       TimeUnit unit) throws InterruptedException, TimeoutException {
     try {
-      Stopwatch stopwatch = new Stopwatch().start();
+      Stopwatch stopwatch = Stopwatch.createStarted();
       CountDownLatch readyLatch = readyFuture.get(timeout, unit);
-      long latchTimeout = Math.max(0, stopwatch.elapsedTime(unit) - timeout);
+      long latchTimeout = Math.max(0, stopwatch.elapsed(unit) - timeout);
       readyLatch.await(latchTimeout, unit);
     } catch (ExecutionException e) {
       // The ready future never throw on get. If this happen, just return an empty map
@@ -237,7 +238,8 @@ public class LeaderElectionInfoService extends AbstractIdleService {
           readyLatch.countDown();
         }
       }
-    });
+    },
+        MoreExecutors.directExecutor());
   }
 
   /**

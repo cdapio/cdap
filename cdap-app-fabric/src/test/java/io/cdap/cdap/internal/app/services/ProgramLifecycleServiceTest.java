@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.SleepingWorkflowApp;
@@ -77,12 +78,14 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
+    if (provisioningService.state() == Service.State.NEW) {
+      provisioningService.startAsync().awaitRunning();
+    }
   }
 
   @AfterClass
   public static void shutdown() {
-    provisioningService.stopAndWait();
+    provisioningService.stopAsync().awaitTerminated();
   }
 
   @Test

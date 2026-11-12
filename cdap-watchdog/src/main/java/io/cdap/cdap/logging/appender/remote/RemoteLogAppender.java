@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.logging.appender.remote;
 
-
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
@@ -75,8 +75,8 @@ public class RemoteLogAppender extends LogAppender {
   public void start() {
     RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, remoteClientFactory);
     Optional.ofNullable(this.publisher.getAndSet(publisher))
-        .ifPresent(RemoteLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(p -> p.stopAsync().awaitTerminated());
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -84,7 +84,7 @@ public class RemoteLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(RemoteLogPublisher::stopAndWait);
+    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(p -> p.stopAsync().awaitTerminated());
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -177,8 +177,9 @@ public class RemoteLogAppender extends LogAppender {
    * Similar to StringPartitioner, but StringPartitioner class implements kafka Partitioner. As we
    * do not want kafka dependencies in this class, this method is added here.
    */
-  private static int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key).asInt()) % numPartitions;
+  @VisibleForTesting
+  static int partition(String key, int numPartitions) {
+    return Math.abs(Hashing.md5().hashUnencodedChars(key).asInt()) % numPartitions;
   }
 
   private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,
