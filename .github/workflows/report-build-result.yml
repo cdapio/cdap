@@ -11,6 +11,7 @@
 
 name: Report Build Result
 on:
+  # zizmor: ignore[dangerous-triggers] - runs only for push builds of this repo
   workflow_run:
     workflows:
       - Build with unit tests
@@ -20,15 +21,37 @@ on:
       - 'release/**'
       - 'develop'
 
+permissions: {}
+
 jobs:
 
   report:
+    if: github.event.workflow_run.event == 'push'
     runs-on: cdapio-hub-k8-runner
 
     steps:
       - name: Write result to BigQuery
+        shell: bash
         env:
+          REPOSITORY: ${{ github.repository }}
+          BUILD_NAME: ${{ github.event.workflow.name }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          STARTED_AT: ${{ github.event.workflow_run.created_at }}
+          ENDED_AT: ${{ github.event.workflow_run.updated_at }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          BUILD_HISTORY_TABLE: ${{ vars.BUILD_HISTORY_TABLE }}
         run: |
-          echo "{ \"repository\": \"${{ github.repository }}\", \"build_name\": \"${{ github.event.workflow.name }}\", \"branch\": \"$HEAD_BRANCH\", \"conclusion\": \"${{ github.event.workflow_run.conclusion }}\", \"started_at\": \"${{ github.event.workflow_run.created_at }}\", \"ended_at\": \"${{ github.event.workflow_run.updated_at }}\", \"url\": \"${{ github.event.workflow_run.html_url }}\", \"run_id\": \"${{ github.event.workflow_run.id }}\", \"run_attempt\": \"${{ github.event.workflow_run.run_attempt }}\" }" | bq insert ${{ vars.BUILD_HISTORY_TABLE }}
-
+          jq -cn \
+            --arg repository "$REPOSITORY" \
+            --arg build_name "$BUILD_NAME" \
+            --arg branch "$HEAD_BRANCH" \
+            --arg conclusion "$CONCLUSION" \
+            --arg started_at "$STARTED_AT" \
+            --arg ended_at "$ENDED_AT" \
+            --arg url "$RUN_URL" \
+            --arg run_id "$RUN_ID" \
+            --arg run_attempt "$RUN_ATTEMPT" \
+            '$ARGS.named' | bq insert "$BUILD_HISTORY_TABLE"
