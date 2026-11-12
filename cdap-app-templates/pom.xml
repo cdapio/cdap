@@ -32,7 +32,6 @@
 
   <modules>
     <module>cdap-etl</module>
-    <module>cdap-program-report</module>
   </modules>
 
 </project>

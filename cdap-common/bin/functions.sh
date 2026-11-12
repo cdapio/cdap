@@ -1121,8 +1121,6 @@ cdap_cli() {
     __lib=${__path}/lib
     __version=$(cdap_version)
   fi
-  CLI_CP=${__libexec}/io.cdap.cdap.cdap-cli-${__version}.jar
-  CLI_CP+=:${__lib}/io.cdap.cdap.cdap-cli-${__version}.jar
   if [[ ${CLASSPATH} == '' ]]; then
     CLASSPATH=${CLI_CP}
   else

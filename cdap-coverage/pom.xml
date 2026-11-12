@@ -235,11 +235,6 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-cli</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-gateway</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -280,17 +275,7 @@
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-kafka</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-unit-test-spark3_2.12</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.cdap.cdap</groupId>
-      <artifactId>cdap-kms</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
