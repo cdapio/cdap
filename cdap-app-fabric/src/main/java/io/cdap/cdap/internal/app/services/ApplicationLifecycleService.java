@@ -1682,6 +1682,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
     }
 
+    Principal principal = authenticationContext.getPrincipal();
+    for (ApplicationId appId : appIds) {
+      accessEnforcer.enforce(appId, principal, StandardPermission.UPDATE);
+    }
+
     store.markApplicationsLatest(appIds);
   }
 
@@ -1698,6 +1703,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void updateSourceControlMeta(NamespaceId namespace, UpdateMultiSourceControlMetaReqeust appsRequest)
       throws IOException, BadRequestException {
     Map<ApplicationId, SourceControlMeta> updateScmMetaRequests = new HashMap<>();
+    Principal principal = authenticationContext.getPrincipal();
     for (UpdateSourceControlMetaRequest appRequest : appsRequest.getApps()) {
       ApplicationId appId;
       try {
@@ -1705,6 +1711,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       } catch (IllegalArgumentException | NullPointerException e) {
         throw new BadRequestException(e.getMessage(), e);
       }
+      accessEnforcer.enforce(appId, principal, StandardPermission.UPDATE);
 
       if (appRequest.getGitFileHash() == null || appRequest.getGitFileHash().isEmpty()) {
         throw new BadRequestException(String.format(
