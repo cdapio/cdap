@@ -139,10 +139,6 @@
       <artifactId>quartz-jobs</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ning</groupId>
-      <artifactId>async-http-client</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.cdap.twill</groupId>
       <artifactId>twill-yarn</artifactId>
     </dependency>

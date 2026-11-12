@@ -234,6 +234,11 @@
       <version>4.0.3</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -302,19 +307,7 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-runtime-ext-emr</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-dataproc</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -366,7 +359,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
-      </dependencies>
+        <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 
       <build>
         <plugins>
@@ -408,46 +406,6 @@
                       </directory>
                       <includes>
                         <include>cdap-data-streams3_2.12-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-etl-tools</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.libexec.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-tools/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-tools-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-dq</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-data-quality/target
-                      </directory>
-                      <includes>
-                        <include>cdap-data-quality-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -970,7 +928,12 @@
           <artifactId>commons-io</artifactId>
           <version>${commons-io.version}</version>
         </dependency>
-      </dependencies>
+        <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 
       <build>
         <plugins>
