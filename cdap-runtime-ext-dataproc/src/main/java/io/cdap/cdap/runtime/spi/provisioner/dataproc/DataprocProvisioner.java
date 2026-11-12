@@ -99,6 +99,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
+    validateNoSystemOnlyProperties(properties);
     DataprocConf conf = DataprocConf.create(properties);
     boolean privateInstance = Boolean.parseBoolean(
         getSystemContext().getProperties().get(PRIVATE_INSTANCE));
@@ -160,7 +161,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   public Optional<String> getTotalProcessingCpusLabel(Map<String, String> properties) {
-    DataprocConf conf = DataprocConf.create(properties);
+    DataprocConf conf = DataprocConf.create(removeSystemOnlyProperties(properties));
     StringBuilder label = new StringBuilder();
 
     if (conf.isPredefinedAutoScaleEnabled()) {
