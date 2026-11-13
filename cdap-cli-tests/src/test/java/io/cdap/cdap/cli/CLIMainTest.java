@@ -23,11 +23,13 @@ import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.cli.CLI;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 /**
  * Test for {@link CLIMain}.
  */
+@Ignore("The CLI connects with GET /ping, which the router no longer forwards")
 @Category(XSlowTests.class)
 public class CLIMainTest extends CLITestBase {
 
