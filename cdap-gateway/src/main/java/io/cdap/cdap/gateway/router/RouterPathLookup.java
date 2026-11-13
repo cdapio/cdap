@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.http.AbstractHttpHandler;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -35,6 +36,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
   }
+
+  private static final String NAMESPACES = "namespaces";
+  private static final String VERSIONS = "versions";
 
   public static final RouteDestination APP_FABRIC_HTTP = new RouteDestination(
       Constants.Service.APP_FABRIC_HTTP);
@@ -70,12 +74,24 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   @Nullable
   public RouteDestination getRoutingService(String requestPath, HttpRequest httpRequest) {
     try {
-      String method = httpRequest.method().name();
-      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StreamSupport
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
+      if (uriParts.length == 0) {
+        return APP_FABRIC_HTTP;
+      }
+
+      if (isInternalApiPath(uriParts)
+          && !isTetheredPeerArtifactRead(uriParts, httpRequest.method())) {
+        return DONT_ROUTE;
+      }
+      if (isMetadataInternalsPath(uriParts)) {
+        return DONT_ROUTE;
+      }
+
+      String method = httpRequest.method().name();
+      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
       }
@@ -83,6 +99,26 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // Ignore exception. Default routing to app-fabric.
     }
     return APP_FABRIC_HTTP;
+  }
+
+  private static boolean isInternalApiPath(String[] uriParts) {
+    return beginsWith(uriParts, Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN);
+  }
+
+  private static boolean isTetheredPeerArtifactRead(String[] uriParts, HttpMethod method) {
+    if (!HttpMethod.GET.equals(method)) {
+      return false;
+    }
+    boolean isDetail = uriParts.length == 7;
+    boolean isDownload = uriParts.length == 8 && uriParts[7].equals("download");
+    return (isDetail || isDownload)
+        && beginsWith(uriParts, Constants.Gateway.INTERNAL_API_VERSION_3_TOKEN, NAMESPACES, null,
+            "artifacts", null, VERSIONS, null);
+  }
+
+  private static boolean isMetadataInternalsPath(String[] uriParts) {
+    return uriParts.length == 3
+        && beginsWith(uriParts, Constants.Gateway.API_VERSION_3_TOKEN, "metadata-internals");
   }
 
   private boolean isUserServiceType(String uriPart) {
@@ -259,10 +295,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "support", "bundles")) {
       // Support Bundle Handler Path /v3/support/bundles
       return SUPPORT_BUNDLE_SERVICE;
-    } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
-      // we don't want to expose endpoints for direct metadata mutation from CDAP master
-      // /v3/metadata-internals/{mutation-type}
-      return DONT_ROUTE;
     } else if ((uriParts.length == 2) && beginsWith(uriParts, "v3", "dashboard")) {
       return APP_FABRIC_PROCESSOR;
     }
