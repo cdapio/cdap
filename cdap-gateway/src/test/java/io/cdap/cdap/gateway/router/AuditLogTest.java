@@ -124,25 +124,25 @@ public class AuditLogTest {
 
   @Test
   public void testAuditLog() throws IOException {
-    HttpURLConnection urlConn = createURLConnection("/get", HttpMethod.GET);
+    HttpURLConnection urlConn = createURLConnection("/v3/test/get", HttpMethod.GET);
     Assert.assertEquals(200, urlConn.getResponseCode());
     urlConn.getInputStream().close();
 
-    urlConn = createURLConnection("/put", HttpMethod.PUT);
+    urlConn = createURLConnection("/v3/test/put", HttpMethod.PUT);
     urlConn.getOutputStream().write("Test Put".getBytes(StandardCharsets.UTF_8));
     Assert.assertEquals(200, urlConn.getResponseCode());
     Assert.assertEquals("Test Put",
         new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     urlConn.getInputStream().close();
 
-    urlConn = createURLConnection("/post", HttpMethod.POST);
+    urlConn = createURLConnection("/v3/test/post", HttpMethod.POST);
     urlConn.getOutputStream().write("Test Post".getBytes(StandardCharsets.UTF_8));
     Assert.assertEquals(200, urlConn.getResponseCode());
     Assert.assertEquals("Test Post",
         new String(ByteStreams.toByteArray(urlConn.getInputStream()), "UTF-8"));
     urlConn.getInputStream().close();
 
-    urlConn = createURLConnection("/postHeaders", HttpMethod.POST);
+    urlConn = createURLConnection("/v3/test/postHeaders", HttpMethod.POST);
     urlConn.setRequestProperty("user-id", "cdap");
     urlConn.getOutputStream().write("Post Headers".getBytes(StandardCharsets.UTF_8));
     Assert.assertEquals(200, urlConn.getResponseCode());
@@ -153,13 +153,13 @@ public class AuditLogTest {
     List<String> loggedMessages = TestLogAppender.INSTANCE.getLoggedMessages();
     Assert.assertEquals(4, loggedMessages.size());
 
-    Assert.assertTrue(loggedMessages.get(0).endsWith("\"GET /get HTTP/1.1\" - - 200 0 -"));
-    Assert.assertTrue(loggedMessages.get(1).endsWith("\"PUT /put HTTP/1.1\" - Test Put 200 8 -"));
+    Assert.assertTrue(loggedMessages.get(0).endsWith("\"GET /v3/test/get HTTP/1.1\" - - 200 0 -"));
+    Assert.assertTrue(loggedMessages.get(1).endsWith("\"PUT /v3/test/put HTTP/1.1\" - Test Put 200 8 -"));
     Assert.assertTrue(
-        loggedMessages.get(2).endsWith("\"POST /post HTTP/1.1\" - Test Post 200 9 Test Post"));
+        loggedMessages.get(2).endsWith("\"POST /v3/test/post HTTP/1.1\" - Test Post 200 9 Test Post"));
     Assert.assertTrue(
         loggedMessages.get(3).endsWith(
-            "\"POST /postHeaders HTTP/1.1\" {user-id=cdap} Post Headers 200 12 Post Headers"));
+            "\"POST /v3/test/postHeaders HTTP/1.1\" {user-id=cdap} Post Headers 200 12 Post Headers"));
   }
 
   private HttpURLConnection createURLConnection(String path, HttpMethod method) throws IOException {
@@ -177,13 +177,13 @@ public class AuditLogTest {
    */
   public static final class TestHandler extends AbstractHttpHandler {
 
-    @Path("/get")
+    @Path("/v3/test/get")
     @GET
     public void get(HttpRequest request, HttpResponder responder, @QueryParam("q") String query) {
       responder.sendString(HttpResponseStatus.OK, query);
     }
 
-    @Path("/put")
+    @Path("/v3/test/put")
     @PUT
     @AuditPolicy(AuditDetail.REQUEST_BODY)
     public void put(FullHttpRequest request, HttpResponder responder) {
@@ -191,7 +191,7 @@ public class AuditLogTest {
           EmptyHttpHeaders.INSTANCE);
     }
 
-    @Path("/post")
+    @Path("/v3/test/post")
     @POST
     @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY})
     public void post(FullHttpRequest request, HttpResponder responder) {
@@ -199,7 +199,7 @@ public class AuditLogTest {
           EmptyHttpHeaders.INSTANCE);
     }
 
-    @Path("/postHeaders")
+    @Path("/v3/test/postHeaders")
     @POST
     @AuditPolicy({AuditDetail.REQUEST_BODY, AuditDetail.RESPONSE_BODY, AuditDetail.HEADERS})
     public void postHeaders(FullHttpRequest request, HttpResponder responder,

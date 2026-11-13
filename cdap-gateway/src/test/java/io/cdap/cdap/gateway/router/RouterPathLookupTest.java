@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.util.EnumSet;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,6 +38,9 @@ public class RouterPathLookupTest {
   private static RouterPathLookup pathLookup;
   private static final HttpVersion VERSION = HttpVersion.HTTP_1_1;
   private static final String API_KEY = "SampleTestApiKey";
+  private static final List<HttpMethod> ALL_HTTP_METHODS = ImmutableList.of(
+      HttpMethod.GET, HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE, HttpMethod.PATCH,
+      HttpMethod.OPTIONS, HttpMethod.HEAD, HttpMethod.TRACE, HttpMethod.CONNECT);
 
   @BeforeClass
   public static void init() {
@@ -131,7 +135,7 @@ public class RouterPathLookupTest {
     path = "/status";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
+    Assert.assertEquals(RouterPathLookup.DONT_ROUTE, result);
 
     path = "/v3/monitor///abcd/";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
@@ -427,7 +431,16 @@ public class RouterPathLookupTest {
   @Test
   public void testProgramLifecycleInternalAndAppLifecycleInternalPaths() {
     assertRouting("v3Internal/namespaces//apps//versions//workflows/DataPipelineWorkflow/runs/",
-        RouterPathLookup.APP_FABRIC_HTTP);
+        RouterPathLookup.DONT_ROUTE);
+  }
+
+  @Test
+  public void testNonV3PathsAreNotRouted() {
+    for (String path : ImmutableList.of("", "/",
+        "/v3Internal/location/cdap/twill/app/run/launcher.jar",
+        "/ping", "/v1/namespaces/default")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
+    }
   }
 
   @Test
@@ -525,6 +538,14 @@ public class RouterPathLookupTest {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
       RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
       Assert.assertEquals(destination,  result);
+    }
+  }
+
+  private void assertRoutingForAllMethods(String path, RouteDestination destination) {
+    for (HttpMethod method : ALL_HTTP_METHODS) {
+      HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
+      RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
+      Assert.assertEquals(method + " '" + path + "'", destination, result);
     }
   }
 }
