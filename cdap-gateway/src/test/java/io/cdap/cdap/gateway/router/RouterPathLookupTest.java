@@ -25,6 +25,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.util.EnumSet;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,6 +38,12 @@ public class RouterPathLookupTest {
   private static RouterPathLookup pathLookup;
   private static final HttpVersion VERSION = HttpVersion.HTTP_1_1;
   private static final String API_KEY = "SampleTestApiKey";
+  private static final List<HttpMethod> ALL_HTTP_METHODS = ImmutableList.of(
+      HttpMethod.GET, HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE, HttpMethod.PATCH,
+      HttpMethod.OPTIONS, HttpMethod.HEAD, HttpMethod.TRACE, HttpMethod.CONNECT);
+  private static final List<HttpMethod> NON_GET_HTTP_METHODS = ImmutableList.of(
+      HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE, HttpMethod.PATCH, HttpMethod.OPTIONS,
+      HttpMethod.HEAD, HttpMethod.TRACE, HttpMethod.CONNECT);
 
   @BeforeClass
   public static void init() {
@@ -425,9 +432,103 @@ public class RouterPathLookupTest {
   }
 
   @Test
-  public void testProgramLifecycleInternalAndAppLifecycleInternalPaths() {
-    assertRouting("v3Internal/namespaces//apps//versions//workflows/DataPipelineWorkflow/runs/",
-        RouterPathLookup.APP_FABRIC_HTTP);
+  public void testInternalApiPathsAreNotRouted() {
+    for (String path : ImmutableList.of(
+        "/v3Internal/location/cdap/twill/app/run/launcher.jar",
+        "/v3Internal/namespaces/default/apps/app/states/key",
+        "/v3Internal/namespaces/default/apps/app/workflows/wf/preferences",
+        "v3Internal/namespaces//apps//versions//workflows/DataPipelineWorkflow/runs/",
+        "/v3Internal/namespaces/default/credentials/identities/id/provision",
+        "/v3Internal/namespaces/default/artifacts/art/versions/1.0.0/location",
+        "/v3Internal/peers/p/namespaces/default/artifacts/art/versions/1.0.0/download",
+        "/v3Internal/router/services/appfabric/v3/namespaces",
+        "/v3Internal/worker/token")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
+    }
+  }
+
+  @Test
+  public void testInternalApiIsNotRoutedRegardlessOfSlashes() {
+    for (String path : ImmutableList.of("/v3Internal", "/v3Internal/", "v3Internal/location/x",
+        "/v3Internal//location/x", "///v3Internal/location/x")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
+    }
+  }
+
+  @Test
+  public void testPathsThatOnlyResembleTheInternalApiAreStillRouted() {
+    for (String path : ImmutableList.of("/v3Internalx/a", "/v3internal/a", "/V3Internal/a",
+        "/x/v3Internal/a", "/a/v3Internal")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.APP_FABRIC_HTTP);
+    }
+  }
+
+  @Test
+  public void testV3InternalSegmentInUserServiceMethodPathIsStillRouted() {
+    String path = "/v3/namespaces/n/apps/a/services/s/methods/v3Internal/location/x";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, HttpMethod.GET, path);
+    RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
+    Assert.assertEquals(path, ServiceDiscoverable.getName("n", "a", ProgramType.SERVICE, "s"),
+        result.getServiceName());
+  }
+
+  @Test
+  public void testTetheredPeerArtifactReadsAreStillRouted() {
+    for (String path : ImmutableList.of(
+        "/v3Internal/namespaces/default/artifacts/cdap-data-pipeline/versions/6.12.0",
+        "/v3Internal/namespaces/default/artifacts/cdap-data-pipeline/versions/6.12.0/download",
+        "/v3Internal/namespaces/system/artifacts/cdap-data-pipeline/versions/6.12.0/download")) {
+      HttpRequest httpRequest = new DefaultHttpRequest(VERSION, HttpMethod.GET, path);
+      Assert.assertEquals(path, RouterPathLookup.APP_FABRIC_HTTP,
+          pathLookup.getRoutingService(path, httpRequest));
+    }
+  }
+
+  @Test
+  public void testTetheredPeerArtifactPathsAreNotRoutedForNonGetMethods() {
+    for (String path : ImmutableList.of(
+        "/v3Internal/namespaces/default/artifacts/art/versions/1.0.0",
+        "/v3Internal/namespaces/default/artifacts/art/versions/1.0.0/download")) {
+      for (HttpMethod method : NON_GET_HTTP_METHODS) {
+        HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
+        Assert.assertEquals(method + " '" + path + "'", RouterPathLookup.DONT_ROUTE,
+            pathLookup.getRoutingService(path, httpRequest));
+      }
+    }
+  }
+
+  @Test
+  public void testPathsThatOnlyResembleTetheredPeerArtifactReadsAreNotRouted() {
+    for (String path : ImmutableList.of(
+        "/v3Internal/namespaces/default/artifacts",
+        "/v3Internal/namespaces/default/artifacts/art/versions",
+        "/v3Internal/namespaces/default/artifacts/art/versions/1.0.0/download/x",
+        "/v3Internal/namespaces/default/artifacts/art/versions/1.0.0/x",
+        "/v3Internal/peers/default/artifacts/art/versions/1.0.0",
+        "/v3Internal/namespaces/default/apps/art/versions/1.0.0/download",
+        "/v3Internal/namespaces/default/artifacts/art/x/1.0.0/download")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
+    }
+  }
+
+  @Test
+  public void testEmptyPathIsStillRoutedToAppFabric() {
+    assertRoutingForAllMethods("", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRoutingForAllMethods("/", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  @Test
+  public void testMetadataInternalsPathsAreNotRoutedForAnyMethod() {
+    for (String path : ImmutableList.of("/v3/metadata-internals/create",
+        "/v3/metadata-internals/update", "/v3/metadata-internals/drop",
+        "/v3/metadata-internals/remove", "/v3/metadata-internals/batch")) {
+      assertRoutingForAllMethods(path, RouterPathLookup.DONT_ROUTE);
+    }
+  }
+
+  @Test
+  public void testMetadataInternalsPathEndingInMetadataIsNotRouted() {
+    assertRoutingForAllMethods("/v3/metadata-internals/metadata", RouterPathLookup.DONT_ROUTE);
   }
 
   @Test
@@ -525,6 +626,14 @@ public class RouterPathLookupTest {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
       RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
       Assert.assertEquals(destination,  result);
+    }
+  }
+
+  private void assertRoutingForAllMethods(String path, RouteDestination destination) {
+    for (HttpMethod method : ALL_HTTP_METHODS) {
+      HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
+      RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
+      Assert.assertEquals(method + " '" + path + "'", destination, result);
     }
   }
 }
