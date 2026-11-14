@@ -141,14 +141,9 @@ public final class InMemoryConfigurator implements Configurator {
             classLoaderImpersonator)) {
       SettableFuture<ConfigResponse> result = SettableFuture.create();
 
-      Object appMain = classLoader.loadClass(appClassName).newInstance();
-      if (!(appMain instanceof Application)) {
-        throw new IllegalStateException(
-            String.format("Application main class is of invalid type: %s",
-                appMain.getClass().getName()));
-      }
-
-      Application<?> app = (Application<?>) appMain;
+      Class<? extends Application> appClass =
+          Artifacts.loadApplicationClass(classLoader, appClassName);
+      Application<?> app = Artifacts.instantiateApplication(appClass);
       ConfigResponse response = createResponse(app, classLoader);
       result.set(response);
 
