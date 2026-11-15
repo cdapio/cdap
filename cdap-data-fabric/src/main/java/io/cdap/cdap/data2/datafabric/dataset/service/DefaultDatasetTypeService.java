@@ -171,6 +171,11 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   public BodyConsumer addModule(final DatasetModuleId datasetModuleId, final String className,
       final boolean forceUpdate) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
+    if (!NamespaceId.SYSTEM.equals(namespaceId)
+        && !cConf.getBoolean(Constants.Dataset.CUSTOM_MODULE_ENABLED)) {
+      throw new UnsupportedOperationException(
+          "Deploying custom dataset modules is disabled.");
+    }
     ensureNamespaceExists(namespaceId);
 
     // It is now determined that a new dataset module will be deployed. First grant privileges, then deploy the module.
