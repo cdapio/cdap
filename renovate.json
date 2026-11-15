@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Automated weekly non-downgrade security dependency updates",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":SemanticCommits"
+  ],
+  "baseBranches": [
+    "develop",
+    "release/6.11",
+    "release/6.10"
+  ],
+  "schedule": [
+    "before 9am on monday"
+  ],
+  "timezone": "America/Los_Angeles",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "dependencies", "build"]
+  },
+  "packageRules": [
+    {
+      "description": "Group Maven and npm security patch/minor updates per branch without downgrades",
+      "matchManagers": ["maven", "npm"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "weekly-security-and-minor-deps"
+    }
+  ]
+}
