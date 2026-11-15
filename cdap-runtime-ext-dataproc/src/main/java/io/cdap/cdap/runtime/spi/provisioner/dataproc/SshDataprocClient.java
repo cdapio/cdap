@@ -50,7 +50,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings. Creates Dataproc
  * clusters that are accessible through SSH.
+ *
+ * @deprecated SSH-based Dataproc job execution is deprecated in favor of the Dataproc Job API
+ *     ({@link RuntimeMonitorDataprocClient}).
  */
+@Deprecated
 class SshDataprocClient extends DataprocClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(SshDataprocClient.class);
