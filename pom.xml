@@ -132,7 +132,7 @@
     <httpcore.version>4.4.16</httpcore.version>
     <jackson.version>2.15.1</jackson.version>
     <jsch.version>0.1.54</jsch.version>
-    <jetty9.version>9.4.51.v20230217</jetty9.version>
+    <jetty9.version>9.4.58.v20250814</jetty9.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <hamcrest.version>2.2</hamcrest.version>
@@ -140,7 +140,7 @@
     <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.10.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
-    <logback.version>1.2.11</logback.version>
+    <logback.version>1.2.13</logback.version>
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>3.9.0</mockito.version>
     <mysql.version>5.1.21</mysql.version>
@@ -148,7 +148,7 @@
     <netty.version>4.1.75.Final</netty.version>
     <powermock.version>2.0.9</powermock.version>
     <quartz.version>2.2.0</quartz.version>
-    <resteasy.version>3.0.8.Final</resteasy.version>
+    <resteasy.version>3.0.26.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
     <scala2.12.version>2.12.15</scala2.12.version>
@@ -1142,6 +1142,13 @@
             <artifactId>netty</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-bom</artifactId>
+        <version>${jetty9.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
