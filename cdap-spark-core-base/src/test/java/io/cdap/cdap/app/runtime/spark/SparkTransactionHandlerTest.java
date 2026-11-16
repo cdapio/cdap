@@ -205,6 +205,52 @@ public class SparkTransactionHandlerTest {
   }
 
   /**
+   * Verifies that a failed {@code startLong()} caches an absent {@code Optional} so subsequent stage requests do not
+   * invoke {@code startLong()} a second time.
+   */
+  @Test
+  public void testFailedStartLongCachedAsAbsentAndNotRetried() throws Exception {
+    final AtomicInteger startLongCalls = new AtomicInteger();
+    TransactionManager failingTxManager = new TransactionManager(new Configuration()) {
+      @Override
+      public Transaction startLong() {
+        startLongCalls.incrementAndGet();
+        throw new IllegalStateException("Cannot start long transaction");
+      }
+    };
+    failingTxManager.startAndWait();
+    try {
+      SparkTransactionHandler txHandler = new SparkTransactionHandler(new InMemoryTxSystemClient(failingTxManager));
+      SparkDriverHttpService localHttp = new SparkDriverHttpService(
+          "test", InetAddress.getLoopbackAddress().getCanonicalHostName(), txHandler);
+      localHttp.startAndWait();
+      try {
+        txHandler.jobStarted(99, ImmutableSet.of(100));
+        // Duplicate jobStarted exercises JobTransaction.toString() when transaction is still null.
+        txHandler.jobStarted(99, ImmutableSet.of(100));
+
+        SparkTransactionClient client = new SparkTransactionClient(localHttp.getBaseURI(), 10L);
+        for (int attempt = 0; attempt < 2; attempt++) {
+          try {
+            client.getTransaction(100, 100L, TimeUnit.MILLISECONDS);
+            Assert.fail("Expected TransactionFailureException");
+          } catch (TransactionFailureException expected) {
+            // expected
+          }
+        }
+        Assert.assertEquals(1, startLongCalls.get());
+        // Duplicate jobStarted now exercises JobTransaction.toString() when transaction is absent Optional.
+        txHandler.jobStarted(99, ImmutableSet.of(100));
+        txHandler.jobEnded(99, false);
+      } finally {
+        localHttp.stopAndWait();
+      }
+    } finally {
+      failingTxManager.stopAndWait();
+    }
+  }
+
+  /**
    * Tests the retry timeout logic in the {@link SparkTransactionClient}.
    */
   @Test

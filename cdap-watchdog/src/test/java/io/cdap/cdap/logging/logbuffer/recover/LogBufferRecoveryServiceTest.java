@@ -94,6 +94,45 @@ public class LogBufferRecoveryServiceTest {
     loggerContext.stop();
   }
 
+  @Test
+  public void testServiceNameAndFastCompletionWithoutBaseDir() throws Exception {
+    java.io.File missingDir = new java.io.File(TMP_FOLDER.newFolder(), "missing");
+    AtomicBoolean startCleanup = new AtomicBoolean(false);
+    final java.util.concurrent.atomic.AtomicReference<String> executionThreadName =
+        new java.util.concurrent.atomic.AtomicReference<>();
+
+    MockCheckpointManager checkpointManager = new MockCheckpointManager() {
+      @Override
+      public io.cdap.cdap.logging.meta.Checkpoint<io.cdap.cdap.logging.logbuffer.LogBufferFileOffset>
+          getCheckpoint(int partition) throws java.io.IOException {
+        executionThreadName.set(Thread.currentThread().getName());
+        return super.getCheckpoint(partition);
+      }
+    };
+
+    // Exercise fast completion when baseDir does not exist
+    LogBufferRecoveryService fastService = new LogBufferRecoveryService(
+        ImmutableList.of(), ImmutableList.of(checkpointManager),
+        missingDir.getAbsolutePath(), 10, startCleanup);
+    org.junit.Assert.assertTrue(fastService.toString().startsWith("log.buffer.recovery ["));
+    fastService.startAndWait();
+    fastService.stopAndWait();
+    org.junit.Assert.assertTrue(startCleanup.get());
+    org.junit.Assert.assertEquals("log.buffer.recovery [TERMINATED]", fastService.toString());
+
+    // Exercise execution thread naming when baseDir exists with a valid buffer file
+    String existingBufDir = TMP_FOLDER.newFolder().getAbsolutePath();
+    try (LogBufferWriter bufWriter = new LogBufferWriter(existingBufDir, 10000L, () -> { })) {
+      bufWriter.write(getLoggingEvents().iterator());
+    }
+    LogBufferRecoveryService namedService = new LogBufferRecoveryService(
+        ImmutableList.of(), ImmutableList.of(checkpointManager),
+        existingBufDir, 10, new AtomicBoolean(false));
+    namedService.startAndWait();
+    namedService.stopAndWait();
+    org.junit.Assert.assertEquals("log.buffer.recovery", executionThreadName.get());
+  }
+
   private ImmutableList<byte[]> getLoggingEvents() {
     WorkerLoggingContext loggingContext =
       new WorkerLoggingContext("default", "app1", "worker1", "run1", "instance1");

@@ -42,20 +42,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.curator.test.TestingCluster;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.zookeeper.OperationFuture;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Tests covering the {@link DistributedKeyManager} implementation.
  */
-public class
-DistributedKeyManagerTest extends TestTokenManager {
+public class DistributedKeyManagerTest extends TestTokenManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
   private static TestingCluster zkCluster;
@@ -152,6 +155,37 @@ DistributedKeyManagerTest extends TestTokenManager {
     CConfiguration noKerbConf = CConfiguration.create();
     noKerbConf.unset(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, DistributedKeyManager.getACLs(noKerbConf));
+  }
+
+  @Test
+  public void testDoInitInterruptedExceptionPropagation() throws Exception {
+    ZKClient mockZkClient = Mockito.mock(ZKClient.class);
+    @SuppressWarnings("unchecked")
+    OperationFuture<Stat> mockExistsFuture = Mockito.mock(OperationFuture.class);
+    InterruptedException interrupted = new InterruptedException("interrupted during init");
+    Mockito.when(mockExistsFuture.get()).thenThrow(interrupted);
+    Mockito.when(mockZkClient.exists(Mockito.anyString())).thenReturn(mockExistsFuture);
+
+    DistributedKeyManager manager = new DistributedKeyManager(
+        CConfiguration.create(),
+        injector1.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
+        })),
+        mockZkClient,
+        ZooDefs.Ids.OPEN_ACL_UNSAFE);
+    try {
+      manager.doInit();
+      Assert.fail("Expected RuntimeException wrapping InterruptedException");
+    } catch (RuntimeException e) {
+      Assert.assertSame(interrupted, e.getCause());
+    }
+  }
+
+  @Test
+  public void testStartAndShutdownStopsLeaderElection() throws Exception {
+    DistributedKeyManager manager = getKeyManager(injector1, true);
+    Assert.assertTrue(manager.isRunning());
+    manager.stopAndWait();
+    Assert.assertFalse(manager.isRunning());
   }
 
   @Override

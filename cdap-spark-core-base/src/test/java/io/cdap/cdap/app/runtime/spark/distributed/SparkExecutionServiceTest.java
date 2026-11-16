@@ -230,4 +230,18 @@ public class SparkExecutionServiceTest {
       service.stopAndWait();
     }
   }
+
+  @Test
+  public void testShutdownNow() {
+    ProgramRunId programRunId = new ProgramRunId("ns", "app", ProgramType.SPARK, "test", RunIds.generate().getId());
+    SparkExecutionService service = new SparkExecutionService(
+        locationFactory, InetAddress.getLoopbackAddress().getCanonicalHostName(), programRunId, null);
+    service.setShutdownWaitSeconds(30L);
+    service.startAndWait();
+    Assert.assertTrue(service.isRunning());
+
+    // shutdownNow() counts down stopLatch and calls stopAndWait() without waiting 30s for client.completed().
+    service.shutdownNow();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+  }
 }

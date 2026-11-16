@@ -64,6 +64,8 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.NoopAdmin;
 import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
+import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
+import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.io.File;
@@ -94,6 +96,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -588,6 +591,31 @@ public class HttpHandlerGeneratorTest {
     } finally {
       service.stop();
     }
+  }
+
+  @Test
+  public void testGeneratedClassNameMd5AndLoadable() throws Exception {
+    HttpHandlerGenerator generator = new HttpHandlerGenerator(TransactionControl.IMPLICIT);
+    ClassDefinition def1 = generator.generate(TypeToken.of(MyHttpHandler.class), "/prefix");
+    ClassDefinition def2 = generator.generate(TypeToken.of(MyHttpHandler.class), "/prefix");
+    ClassDefinition otherDef = generator.generate(TypeToken.of(NoAnnotationHandler.class), "/prefix");
+
+    String binaryPrefix = Type.getInternalName(MyHttpHandler.class).replace('/', '.');
+    Assert.assertTrue(def1.getClassName().startsWith(binaryPrefix));
+    String md5Suffix = def1.getClassName().substring(binaryPrefix.length());
+    Assert.assertTrue("Expected 32-char hex MD5 suffix, got: " + md5Suffix,
+        md5Suffix.matches("[0-9a-f]{32}"));
+    Assert.assertEquals(def1.getClassName(), def2.getClassName());
+
+    String otherBinaryPrefix = Type.getInternalName(NoAnnotationHandler.class).replace('/', '.');
+    String otherMd5Suffix = otherDef.getClassName().substring(otherBinaryPrefix.length());
+    Assert.assertNotEquals(md5Suffix, otherMd5Suffix);
+
+    ByteCodeClassLoader classLoader = new ByteCodeClassLoader(HttpHandlerGeneratorTest.class.getClassLoader());
+    classLoader.addClass(def1);
+    Class<?> loaded = classLoader.loadClass(def1.getClassName());
+    Assert.assertTrue(HttpHandler.class.isAssignableFrom(loaded));
+    Assert.assertTrue(AbstractHttpHandlerDelegator.class.isAssignableFrom(loaded));
   }
 
   private abstract static class AbstractDelegatorContext<T extends HttpServiceHandler> implements DelegatorContext<T> {

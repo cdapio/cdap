@@ -1,0 +1,66 @@
+/*
+ * Copyright © 2026 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package io.cdap.cdap.security.auth;
+
+import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import java.lang.reflect.Field;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+/**
+ * Unit tests for {@link AuditLogSubscriberService}.
+ */
+public class AuditLogSubscriberServiceTest {
+
+  @Test
+  public void testStartUpAndShutDownDelegatesToCompositeService() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AuditLogging.AUDIT_LOG_EVENT_NUM_PARTITIONS, 2);
+    cConf.setInt(Constants.AuditLogging.AUDIT_LOG_POLL_DELAY_MILLIS, 50);
+
+    MessagingService messagingService = Mockito.mock(MessagingService.class);
+    TransactionRunner transactionRunner = Mockito.mock(TransactionRunner.class);
+    AccessControllerInstantiator instantiator = Mockito.mock(AccessControllerInstantiator.class);
+
+    AuditLogSubscriberService service = new AuditLogSubscriberService(
+        cConf,
+        messagingService,
+        new NoOpMetricsCollectionService(),
+        transactionRunner,
+        instantiator);
+
+    service.startAndWait();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
+
+    Field delegateField = AuditLogSubscriberService.class.getDeclaredField("delegate");
+    delegateField.setAccessible(true);
+    Service delegate = (Service) delegateField.get(service);
+    Assert.assertNotNull(delegate);
+    Assert.assertEquals(Service.State.RUNNING, delegate.state());
+
+    service.stopAndWait();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+    Assert.assertEquals(Service.State.TERMINATED, delegate.state());
+  }
+}

@@ -23,6 +23,7 @@ import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metadata.Metadata;
@@ -42,13 +43,21 @@ import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.api.spark.dynamic.SparkInterpreter;
 import io.cdap.cdap.api.workflow.WorkflowInfo;
 import io.cdap.cdap.api.workflow.WorkflowToken;
+import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.api.Transform;
+import io.cdap.cdap.etl.api.engine.sql.SQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.dataset.SQLDataset;
+import io.cdap.cdap.etl.api.engine.sql.dataset.SQLPullDataset;
 import io.cdap.cdap.etl.engine.SQLEngineJob;
+import io.cdap.cdap.etl.engine.SQLEngineJobKey;
+import io.cdap.cdap.etl.engine.SQLEngineJobType;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.tephra.TransactionFailureException;
@@ -59,11 +68,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Proxy;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class BatchSQLEngineAdapterTest {
 
@@ -147,29 +160,123 @@ public class BatchSQLEngineAdapterTest {
 
   @Test
   public void testNonSchemaReturnsEmpty() {
-    BatchSQLEngineAdapter batchSQLEngineAdapter = new BatchSQLEngineAdapter(
-      "conditonal.connector", null, new MockJavaSparkExecutionContext(),
-      new JavaSparkContext("local","mock"), null, false);
+    SparkConf conf = new SparkConf()
+      .setMaster("local[1]")
+      .setAppName("mock")
+      .set("spark.ui.enabled", "false");
+    JavaSparkContext jsc = new JavaSparkContext(conf);
+    try {
+      BatchSQLEngineAdapter batchSQLEngineAdapter = new BatchSQLEngineAdapter(
+        "conditonal.connector", null, new MockJavaSparkExecutionContext(),
+        jsc, null, false);
+      try {
+        Schema schema = Schema.recordOf(
+          "rec",
+          Schema.Field.of("bool_field", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
+          Schema.Field.of("int_field", Schema.of(Schema.Type.INT)),
+          Schema.Field.of("long_field", Schema.of(Schema.Type.LONG))
+        );
 
-    Schema schema = Schema.recordOf(
-      "rec",
-      Schema.Field.of("bool_field", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
-      Schema.Field.of("int_field", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("long_field", Schema.of(Schema.Type.LONG))
-    );
+        StageSpec stageSpec = new StageSpec.Builder(
+          "conditonal.connector",
+          new PluginSpec("mock", "mock", new HashMap<>(), null))
+          .addInputSchema("conditonal", schema).build();
 
-    StageSpec stageSpec = new StageSpec.Builder("conditonal.connector",
-                                                new PluginSpec("mock", "mock", new HashMap<>(), null))
-                                        .addInputSchema("conditonal", schema).build();
+        Map<String, SparkCollection<Object>> inputs = new HashMap<String, SparkCollection<Object>>() {{
+          put("conditonal.connector", null);
+        }};
 
-    Map<String, SparkCollection<Object>> inputs = new HashMap<String, SparkCollection<Object>>() {{
-      put("conditonal.connector", null);
-    }};
+        Optional<SQLEngineJob<SQLDataset>> result =
+          batchSQLEngineAdapter.tryRelationalTransform(stageSpec, null, inputs);
 
-    Optional<SQLEngineJob<SQLDataset>> result =
-      batchSQLEngineAdapter.tryRelationalTransform(stageSpec, null, inputs);
+        Assert.assertFalse(result.isPresent());
+      } finally {
+        batchSQLEngineAdapter.close();
+      }
+    } finally {
+      jsc.close();
+    }
+  }
 
-    Assert.assertFalse(result.isPresent());
+  @Test
+  public void testPullUsesContextAndFallbackClassLoader() {
+    SparkConf conf = new SparkConf()
+      .setMaster("local[1]")
+      .setAppName("pull-test")
+      .set("spark.ui.enabled", "false");
+    JavaSparkContext jsc = new JavaSparkContext(conf);
+    try {
+      SQLPullDataset<?, ?, ?> pullDataset = (SQLPullDataset<?, ?, ?>) Proxy.newProxyInstance(
+        SQLPullDataset.class.getClassLoader(),
+        new Class<?>[]{SQLPullDataset.class},
+        (proxy, method, args) -> {
+          String name = method.getName();
+          if ("getInputFormatClassName".equals(name)) {
+            return TextInputFormat.class.getName();
+          }
+          if ("getInputFormatConfiguration".equals(name)) {
+            return Collections.singletonMap("mapreduce.input.fileinputformat.inputdir", "/tmp/pull");
+          }
+          if ("fromKeyValue".equals(name)) {
+            return new SerializableNoOpTransform();
+          }
+          if ("getDatasetName".equals(name)) {
+            return "pullStage";
+          }
+          if ("getNumRows".equals(name)) {
+            return 5L;
+          }
+          return null;
+        });
+
+      SQLEngine<?, ?, ?, ?> sqlEngine = (SQLEngine<?, ?, ?, ?>) Proxy.newProxyInstance(
+        SQLEngine.class.getClassLoader(),
+        new Class<?>[]{SQLEngine.class},
+        (proxy, method, args) -> {
+          String name = method.getName();
+          if ("getPullCapabilities".equals(name)) {
+            return Collections.emptySet();
+          }
+          if ("getPullProvider".equals(name)) {
+            return pullDataset;
+          }
+          return null;
+        });
+
+      Metrics noOpMetrics = new SerializableNoOpMetrics();
+
+      JavaSparkExecutionContext sec = new MockJavaSparkExecutionContext() {
+        @Override
+        public Metrics getMetrics() {
+          return noOpMetrics;
+        }
+      };
+
+      SQLEngineJob<SQLDataset> upstreamJob = new SQLEngineJob<>(
+        new SQLEngineJobKey("pullStage", SQLEngineJobType.EXECUTE),
+        CompletableFuture.completedFuture(pullDataset));
+
+      // 1. Non-null context ClassLoader
+      try (BatchSQLEngineAdapter adapter = new BatchSQLEngineAdapter(
+        "engine", sqlEngine, sec, jsc, Collections.emptyMap(), false)) {
+        SQLEngineJob<BatchCollectionFactory<Object>> pullJob = adapter.pull(upstreamJob);
+        Assert.assertNotNull(pullJob.waitFor());
+      }
+
+      // 2. Null context ClassLoader captured by worker threads -> falls back to getClass().getClassLoader()
+      ClassLoader previous = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(null);
+      try (BatchSQLEngineAdapter fallbackAdapter = new BatchSQLEngineAdapter(
+        "engine", sqlEngine, sec, jsc, Collections.emptyMap(), false)) {
+        Thread.currentThread().setContextClassLoader(previous);
+        SQLEngineJob<BatchCollectionFactory<Object>> pullJob = fallbackAdapter.pull(upstreamJob);
+        Assert.assertNotNull(pullJob.waitFor());
+      } finally {
+        Thread.currentThread().setContextClassLoader(previous);
+      }
+    } finally {
+      jsc.close();
+    }
   }
 
   class MockJavaSparkExecutionContext extends JavaSparkExecutionContext {
@@ -383,6 +490,39 @@ public class BatchSQLEngineAdapterTest {
     @Override
     public WorkflowInfo getWorkflowInfo() {
       return null;
+    }
+  }
+
+  private static final class SerializableNoOpTransform
+      extends Transform<KeyValue<Object, Object>, Object> implements Serializable {
+
+    @Override
+    public void transform(KeyValue<Object, Object> input, Emitter<Object> emitter) {
+    }
+  }
+
+  static final class SerializableNoOpMetrics implements Metrics, Serializable {
+
+    @Override
+    public void count(String metricName, int delta) {
+    }
+
+    @Override
+    public void countLong(String metricName, long delta) {
+    }
+
+    @Override
+    public void gauge(String metricName, long value) {
+    }
+
+    @Override
+    public Metrics child(Map<String, String> tags) {
+      return this;
+    }
+
+    @Override
+    public Map<String, String> getTags() {
+      return Collections.emptyMap();
     }
   }
 }

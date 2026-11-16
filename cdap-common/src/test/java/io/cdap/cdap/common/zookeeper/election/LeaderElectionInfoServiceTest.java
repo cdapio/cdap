@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedMap;
@@ -31,6 +32,7 @@ import org.apache.twill.internal.zookeeper.DefaultZKClientService;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.CreateMode;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -41,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Unit tests for {@link LeaderElectionInfoService}.
  */
 public class LeaderElectionInfoServiceTest {
 
@@ -70,26 +72,25 @@ public class LeaderElectionInfoServiceTest {
 
     List<ZKClientService> zkClients = new ArrayList<>();
 
-    ZKClientService infoZKClient = DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    infoZKClient.startAndWait();
-    zkClients.add(infoZKClient);
+    ZKClientService infoZkClient =
+        DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    infoZkClient.startAndWait();
+    zkClients.add(infoZkClient);
 
-    // Start the LeaderElectionInfoService
-    LeaderElectionInfoService infoService = new LeaderElectionInfoService(infoZKClient, prefix);
+    LeaderElectionInfoService infoService = new LeaderElectionInfoService(infoZkClient, prefix);
     infoService.startAndWait();
 
-    // This will timeout as there is no leader election node created yet
     try {
-      infoService.getParticipants(1, TimeUnit.SECONDS);
+      infoService.getParticipants(200, TimeUnit.MILLISECONDS);
       Assert.fail("Expected timeout");
-    } catch (TimeoutException e) {
-      // Expected
+    } catch (TimeoutException expected) {
+      // expected
     }
 
-    // Starts multiple leader elections
     List<LeaderElection> leaderElections = new ArrayList<>();
     for (int i = 0; i < size; i++) {
-      ZKClientService zkClient = DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+      ZKClientService zkClient =
+          DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
       zkClient.startAndWait();
       zkClients.add(zkClient);
 
@@ -109,28 +110,27 @@ public class LeaderElectionInfoServiceTest {
       leaderElections.add(leaderElection);
     }
 
-    // Get the dynamic participants map
     final SortedMap<Integer, LeaderElectionInfoService.Participant> participants =
-      infoService.getParticipants(5, TimeUnit.SECONDS);
+        infoService.getParticipants(5, TimeUnit.SECONDS);
 
-    // Expects to set all participants with hostname information
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
-      public Boolean call() throws Exception {
+      public Boolean call() {
         if (participants.size() != size) {
           return false;
         }
-        return Iterables.all(participants.values(), new Predicate<LeaderElectionInfoService.Participant>() {
-          @Override
-          public boolean apply(LeaderElectionInfoService.Participant input) {
-            return input.getHostname() != null;
-          }
-        });
+        return Iterables.all(participants.values(),
+            new Predicate<LeaderElectionInfoService.Participant>() {
+              @Override
+              public boolean apply(LeaderElectionInfoService.Participant input) {
+                return input.getHostname() != null;
+              }
+            });
       }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
 
-    // Fetch the static snapshot. It should be the same as the dynamic participants.
-    SortedMap<Integer, LeaderElectionInfoService.Participant> snapshot = infoService.fetchCurrentParticipants();
+    SortedMap<Integer, LeaderElectionInfoService.Participant> snapshot =
+        infoService.fetchCurrentParticipants();
     Assert.assertEquals(size, snapshot.size());
     Assert.assertEquals(participants, snapshot);
 
@@ -139,13 +139,12 @@ public class LeaderElectionInfoServiceTest {
       leaderElection.stopAndWait();
       Tasks.waitFor(--expectedSize, new Callable<Integer>() {
         @Override
-        public Integer call() throws Exception {
+        public Integer call() {
           return participants.size();
         }
-      }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
     }
 
-    // Fetch the static snapshot again. It should be empty and the same as the dynamic one.
     snapshot = infoService.fetchCurrentParticipants();
     Assert.assertTrue(snapshot.isEmpty());
     Assert.assertEquals(participants, snapshot);
@@ -153,6 +152,44 @@ public class LeaderElectionInfoServiceTest {
     infoService.stopAndWait();
 
     for (ZKClientService zkClient : zkClients) {
+      zkClient.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testNonSlashedPathAndParticipantMetadataCallbacks() throws Exception {
+    ZKClientService zkClient =
+        DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    zkClient.startAndWait();
+    try {
+      String relativePath = "customElectionPath";
+      zkClient.create("/" + relativePath + "/invalidNoDash", null,
+          CreateMode.PERSISTENT, true).get(5, TimeUnit.SECONDS);
+      zkClient.create("/" + relativePath + "/guid-notAnInt", null,
+          CreateMode.PERSISTENT, true).get(5, TimeUnit.SECONDS);
+      zkClient.create("/" + relativePath + "/guid-0000000001",
+          "host-a.local".getBytes(StandardCharsets.UTF_8),
+          CreateMode.PERSISTENT, true).get(5, TimeUnit.SECONDS);
+
+      LeaderElectionInfoService infoService =
+          new LeaderElectionInfoService(zkClient, relativePath);
+      infoService.startAndWait();
+      try {
+        SortedMap<Integer, LeaderElectionInfoService.Participant> map =
+            infoService.getParticipants(5, TimeUnit.SECONDS);
+        Tasks.waitFor("host-a.local", () -> {
+          LeaderElectionInfoService.Participant p = map.get(1);
+          return p == null ? null : p.getHostname();
+        }, 5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
+
+        LeaderElectionInfoService.Participant participant = map.get(1);
+        Assert.assertEquals("/customElectionPath/guid-0000000001", participant.getZkPath());
+        Assert.assertEquals("host-a.local", participant.getHostname());
+        Assert.assertTrue(participant.toString().contains("host-a.local"));
+      } finally {
+        infoService.stopAndWait();
+      }
+    } finally {
       zkClient.stopAndWait();
     }
   }

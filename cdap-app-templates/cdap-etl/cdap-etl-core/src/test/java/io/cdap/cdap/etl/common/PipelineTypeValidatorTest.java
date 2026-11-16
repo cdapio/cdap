@@ -53,6 +53,15 @@ public class PipelineTypeValidatorTest {
     PipelineTypeValidator.validateTypes(typeList);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testSupertypeToSubtypeInvalidMatch() throws Exception {
+    // Parent --> Child should fail because SomeImplementation cannot accept SomeInterface
+    ArrayList<Type> typeList = Lists.newArrayList();
+    typeList.add(SomeInterface.class);
+    typeList.add(SomeImplementation.class);
+    PipelineTypeValidator.validateTypes(typeList);
+  }
+
   @Test
   public void testSimpleValidType() throws Exception {
     // Child --> Parent | Integer --> Object
