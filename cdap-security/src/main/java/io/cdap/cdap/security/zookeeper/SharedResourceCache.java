@@ -79,22 +79,46 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     this.listeners = new ListenerManager();
   }
 
+  /**
+   * Initializes the parent znode if absent and starts watching child znodes for updates.
+   */
   public void init() throws InterruptedException {
     this.watcher = new ZKWatcher();
     try {
       LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
-      if (zookeeper.exists(parentZnode).get() == null) {
-        // may be created in parallel by another instance
-        // Also the child nodes are secure even without adding any ACLs to parent node.
-        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT),
-            KeeperException.NodeExistsException.class, null).get();
-      }
+      createParentIfAbsent();
     } catch (ExecutionException ee) {
-      // recheck if already created
-      throw Throwables.propagate(ee.getCause());
+      if (!(ee.getCause() instanceof KeeperException.InvalidACLException) || !hasAuthSchemeAcl()) {
+        throw Throwables.propagate(ee.getCause());
+      }
+      // Never fall back to an open parent: that is the vulnerability this ACL closes.
+      LOG.warn("ZooKeeper rejected ACLs {} for parent znode {} because this session is not "
+          + "authenticated. Not creating it; entries will only load once an authenticated "
+          + "client creates it with ACLs readable by this session.", znodeACL, parentZnode);
     }
     this.resources = reloadAll();
     listeners.notifyUpdate();
+  }
+
+  private void createParentIfAbsent() throws ExecutionException, InterruptedException {
+    if (zookeeper.exists(parentZnode).get() == null) {
+      // May be created in parallel by another instance. Use the children's ACLs so that only
+      // authorized clients can add entries; an existing parent's ACL is left unchanged.
+      ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, znodeACL),
+          KeeperException.NodeExistsException.class, null).get();
+    }
+  }
+
+  private boolean hasAuthSchemeAcl() {
+    if (znodeACL == null) {
+      return false;
+    }
+    for (ACL acl : znodeACL) {
+      if (acl != null && acl.getId() != null && "auth".equals(acl.getId().getScheme())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Map<String, T> reloadAll() {
@@ -171,35 +195,51 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   @Override
   public void put(final String name, final T instance) {
     final String znode = joinZNode(parentZnode, name);
+    LOG.debug("Setting value for node {}", znode);
+    // Ensure parentZnode exists with znodeACL before ZKExtOperations.createOrSet runs;
+    // otherwise ZKExtOperations would recreate a missing parent with OPEN_ACL_UNSAFE.
     try {
-      LOG.debug("Setting value for node {}", znode);
+      createParentIfAbsent();
+    } catch (ExecutionException ee) {
+      Throwable cause = ee.getCause() != null ? ee.getCause() : ee;
+      LOG.error("Failed to create parent znode {} while setting value for node {}",
+          parentZnode, znode, cause);
+      listeners.notifyError(name, cause);
+      throw Throwables.propagate(ee);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(ie);
+    }
 
-      final SettableFuture<T> completion = SettableFuture.create();
-      Futures.addCallback(
-          ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec,
-              MAX_RETRIES, znodeACL),
-          new FutureCallback<T>() {
-            @Override
-            public void onSuccess(T result) {
-              LOG.debug("Created or set node {}", znode);
-              resources.put(name, result);
-              completion.set(result);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-              LOG.error("Failed to set value for node {}", znode, t);
-              listeners.notifyError(name, t);
-              completion.setException(t);
-            }
+    final SettableFuture<T> completion = SettableFuture.create();
+    Futures.addCallback(
+        ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec,
+            MAX_RETRIES, znodeACL),
+        new FutureCallback<T>() {
+          @Override
+          public void onSuccess(T result) {
+            LOG.debug("Created or set node {}", znode);
+            resources.put(name, result);
+            completion.set(result);
           }
-      );
 
-      // Block until it is done
+          @Override
+          public void onFailure(Throwable t) {
+            LOG.error("Failed to set value for node {}", znode, t);
+            listeners.notifyError(name, t);
+            completion.setException(t);
+          }
+        }
+    );
+
+    // Block until it is done
+    try {
       completion.get();
-
-    } catch (Exception ioe) {
-      throw Throwables.propagate(ioe);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+      throw Throwables.propagate(ie);
+    } catch (ExecutionException ee) {
+      throw Throwables.propagate(ee);
     }
   }
 
