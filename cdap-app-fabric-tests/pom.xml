@@ -123,11 +123,6 @@ the License.
       <artifactId>avro</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.avro</groupId>
-      <artifactId>avro-mapred</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>

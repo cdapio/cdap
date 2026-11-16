@@ -186,11 +186,6 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-configuration2</artifactId>
-        <version>${commons-configuration2.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
@@ -333,11 +328,6 @@
         <version>${snappy.version}</version>
       </dependency>
       <dependency>
-        <groupId>jline</groupId>
-        <artifactId>jline</artifactId>
-        <version>${jline.version}</version>
-      </dependency>
-      <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>${findbugs.jsr305.version}</version>
@@ -373,49 +363,6 @@
           <exclusion>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro-mapred</artifactId>
-        <version>${avro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.zookeeper</groupId>
-        <artifactId>zookeeper</artifactId>
-        <version>${zookeeper.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <artifactId>slf4j-api</artifactId>
-            <groupId>org.slf4j</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>slf4j-log4j12</artifactId>
-            <groupId>org.slf4j</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>log4j</artifactId>
-            <groupId>log4j</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>junit</artifactId>
-            <groupId>junit</groupId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -484,11 +431,6 @@
         <groupId>org.scala-lang</groupId>
         <artifactId>scala-library</artifactId>
         <version>${scala2.12.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-clients</artifactId>
-        <version>${kafka.version}</version>
       </dependency>
       <dependency>
         <groupId>org.iq80.leveldb</groupId>
@@ -1030,11 +972,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
-        <version>${mysql.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>${quartz.version}</version>
@@ -1153,21 +1090,6 @@
       <!-- Manage dropwizard to version compatible with tephra -->
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-jvm</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-json</artifactId>
-        <version>${dropwizard.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-graphite</artifactId>
         <version>${dropwizard.version}</version>
       </dependency>
@@ -1240,12 +1162,6 @@
         <groupId>org.apache.directory.jdbm</groupId>
         <artifactId>apacheds-jdbm1</artifactId>
         <version>${apache.jdbm1.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.hsqldb</groupId>
-        <artifactId>hsqldb</artifactId>
-        <version>${hsql.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -1458,16 +1374,6 @@
         <groupId>com.fasterxml.jackson.dataformat</groupId>
         <artifactId>jackson-dataformat-cbor</artifactId>
         <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.module</groupId>
-        <artifactId>jackson-module-scala_2.12</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>commons-collections</groupId>
-        <artifactId>commons-collections</artifactId>
-        <version>${commons.collections.version}</version>
       </dependency>
       <dependency>
         <!-- Overwrite Apache Ivy version to 2.5.1 for remediating CVE-2022-37866-->
@@ -2553,7 +2459,6 @@
       <modules>
         <module>cdap-data-fabric-tests</module>
         <module>cdap-tms-tests</module>
-        <module>cdap-cli-tests</module>
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>
         <module>cdap-e2e-tests</module>
@@ -2582,9 +2487,7 @@
         <module>cdap-error-api</module>
         <module>cdap-kubernetes</module>
         <module>cdap-common</module>
-        <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>
-        <module>cdap-kafka</module>
         <module>cdap-data-fabric</module>
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
@@ -2593,7 +2496,6 @@
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-metadata-spi</module>
-        <module>cdap-metadata-ext-spanner</module>
         <module>cdap-storage-ext-spanner</module>
         <module>cdap-storage-spi</module>
         <module>cdap-system-app-api</module>
@@ -2604,14 +2506,11 @@
         <module>cdap-gateway</module>
         <module>cdap-unit-test</module>
         <module>cdap-unit-test-spark3_2.12</module>
-        <module>cdap-kms</module>
         <module>cdap-master-spi</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>
         <module>cdap-credential-ext-gcp-wi</module>
         <module>cdap-runtime-ext-dataproc</module>
-        <module>cdap-runtime-ext-emr</module>
-        <module>cdap-runtime-ext-remote-hadoop</module>
         <module>cdap-runtime-spi</module>
         <module>cdap-securestore-ext-cloudkms</module>
         <module>cdap-securestore-ext-gcp-secretstore</module>
@@ -2619,7 +2518,6 @@
         <module>cdap-support-bundle</module>
         <module>cdap-operational-stats-core</module>
         <module>cdap-client</module>
-        <module>cdap-cli</module>
         <module>cdap-standalone</module>
         <module>cdap-distributions</module>
         <module>cdap-test</module>

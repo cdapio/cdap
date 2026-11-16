@@ -213,7 +213,7 @@ GOTO FINALLY
 
 :CLI
 REM See TX_DEBUGGER for notes on setting CLASSPATH
-SET "CLASSPATH=%CDAP_HOME%\libexec\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
+SET "CLASSPATH=%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
 
