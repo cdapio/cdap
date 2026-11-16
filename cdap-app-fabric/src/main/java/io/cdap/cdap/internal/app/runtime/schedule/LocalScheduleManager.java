@@ -28,18 +28,26 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +59,17 @@ public class LocalScheduleManager extends ScheduleManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(LocalScheduleManager.class);
   private final TimeSchedulerService timeSchedulerService;
+  @Nullable
+  private final AccessEnforcer accessEnforcer;
+  @Nullable
+  private final AuthenticationContext authenticationContext;
+  @Nullable
+  private final PropertiesResolver propertiesResolver;
+
+  public LocalScheduleManager(TransactionRunner transactionRunner, MessagingService messagingService,
+      CConfiguration cConf, TimeSchedulerService timeSchedulerService) {
+    this(transactionRunner, messagingService, cConf, timeSchedulerService, null, null, null);
+  }
 
   /**
    * Parameterized constructor for LocalScheduleManager.
@@ -59,12 +78,21 @@ public class LocalScheduleManager extends ScheduleManager {
    * @param messagingService MessagingService
    * @param cConf CConfiguration
    * @param timeSchedulerService TimeSchedulerService
+   * @param accessEnforcer AccessEnforcer
+   * @param authenticationContext AuthenticationContext
+   * @param propertiesResolver PropertiesResolver
    */
   @Inject
   public LocalScheduleManager(TransactionRunner transactionRunner, MessagingService messagingService,
-      CConfiguration cConf, TimeSchedulerService timeSchedulerService) {
+      CConfiguration cConf, TimeSchedulerService timeSchedulerService,
+      @Nullable AccessEnforcer accessEnforcer,
+      @Nullable AuthenticationContext authenticationContext,
+      @Nullable PropertiesResolver propertiesResolver) {
     super(transactionRunner, messagingService, cConf);
     this.timeSchedulerService = timeSchedulerService;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
+    this.propertiesResolver = propertiesResolver;
   }
 
   @Override
@@ -75,6 +103,21 @@ public class LocalScheduleManager extends ScheduleManager {
         throw new BadRequestException(String.format(
             "Cannot schedule program %s of type %s: Only workflows can be scheduled",
             schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
+      }
+      ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+          accessEnforcer, authenticationContext, schedule.getProperties());
+      if (propertiesResolver != null) {
+        try {
+          Map<String, String> effectiveUserArgs =
+              new HashMap<>(propertiesResolver.getUserProperties(schedule.getProgramId()));
+          if (schedule.getProperties() != null) {
+            effectiveUserArgs.putAll(schedule.getProperties());
+          }
+          ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+              accessEnforcer, authenticationContext, effectiveUserArgs);
+        } catch (UnauthorizedException e) {
+          throw e;
+        }
       }
     }
 
