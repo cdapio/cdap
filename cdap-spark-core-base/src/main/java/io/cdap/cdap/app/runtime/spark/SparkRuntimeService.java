@@ -46,6 +46,7 @@ import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.JvmOptionsValidator;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
@@ -636,6 +637,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     SparkConf sparkConf = context.getSparkConf();
     if (sparkConf != null) {
       for (Tuple2<String, String> tuple : sparkConf.getAll()) {
+        if (JvmOptionsValidator.isJvmOptionConfigKey(tuple._1())) {
+          JvmOptionsValidator.validateUserJvmOptions(tuple._2());
+        }
         configs.put(tuple._1(), tuple._2());
       }
     }
@@ -649,6 +653,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     // Prepend the extra java opts
     if (!Strings.isNullOrEmpty(jvmOpts)) {
+      JvmOptionsValidator.validateUserJvmOptions(jvmOpts);
       prependConfig(configs, "spark.driver.extraJavaOptions", jvmOpts, " ");
       prependConfig(configs, "spark.executor.extraJavaOptions", jvmOpts, " ");
     }

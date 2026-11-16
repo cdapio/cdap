@@ -234,7 +234,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                           schedulerQueue, launchMode);
       }
 
-      String jvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
+      String jvmOpts = SystemArguments.getJvmOpts(options.getUserArguments().asMap());
       SparkRuntimeService sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                                         jvmOpts, runtimeContext, submitter,
                                                                         locationFactory, isLocal,

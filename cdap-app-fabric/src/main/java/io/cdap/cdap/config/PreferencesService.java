@@ -106,6 +106,12 @@ public class PreferencesService {
       Map<String, String> propertyMap)
       throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
 
+    try {
+      SystemArguments.validateJvmOpts(propertyMap);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+
     boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
     NamespaceId namespaceId = isInstanceLevel
         ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();

@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.JvmOptionsValidator;
 import io.cdap.cdap.common.utils.HashUtils;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -111,38 +112,18 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
   @VisibleForTesting
   static Map<String, String> parseJvmProperties(String jvmOpts) {
     Map<String, String> jvmProperties = new LinkedHashMap<>();
-    int idx = jvmOpts.indexOf("-D");
-    while (idx >= 0) {
-      int equalIdx = jvmOpts.indexOf('=', idx);
+    for (String token : JvmOptionsValidator.splitJvmOptions(jvmOpts)) {
+      if (!token.startsWith("-D")) {
+        continue;
+      }
+      int equalIdx = token.indexOf('=', 2);
       if (equalIdx < 0) {
         throw new IllegalArgumentException(
             "Java properties must be in -Dkey=value format: " + jvmOpts);
       }
-      String key = jvmOpts.substring(idx + 2, equalIdx);
-
-      // Reached end of string, the value must be empty
-      if (equalIdx + 1 == jvmOpts.length()) {
-        jvmProperties.put(key, "");
-        break;
-      }
-      int startIdx = equalIdx + 1;
-      int endIdx;
-      // Quoted value
-      if (jvmOpts.charAt(startIdx) == '"') {
-        startIdx++;
-        endIdx = jvmOpts.indexOf('"', startIdx);
-        if (endIdx < 0) {
-          throw new IllegalArgumentException(
-              "Missing end quote in Java property " + key + ": " + jvmOpts);
-        }
-      } else {
-        endIdx = jvmOpts.indexOf(' ', equalIdx);
-        if (endIdx < 0) {
-          endIdx = jvmOpts.length();
-        }
-      }
-      jvmProperties.put(key, jvmOpts.substring(startIdx, endIdx));
-      idx = jvmOpts.indexOf("-D", endIdx);
+      String key = token.substring(2, equalIdx);
+      String value = token.substring(equalIdx + 1);
+      jvmProperties.put(key, value);
     }
     return jvmProperties;
   }

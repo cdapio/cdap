@@ -36,6 +36,7 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.JvmOptionsValidator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
@@ -258,6 +259,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
    */
   private Configuration setCustomMapReduceConfig(Configuration hConf, Arguments options) {
     Map<String, String> systemArgs = options.asMap();
+    JvmOptionsValidator.validateJvmOptsMap(systemArgs);
     for (String name : systemArgs.keySet()) {
       if (!name.startsWith(MAPREDUCE_CUSTOM_CONFIG_PREFIX)) {
         continue;
@@ -265,6 +267,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       String value = systemArgs.get(name);
       String key = name.substring(MAPREDUCE_CUSTOM_CONFIG_PREFIX.length());
       if (key != null && value != null) {
+        if (JvmOptionsValidator.isJvmOptionConfigKey(key)) {
+          JvmOptionsValidator.validateUserJvmOptions(value);
+        }
         hConf.set(key, value);
       }
     }

@@ -75,17 +75,17 @@ test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 
 # Main script, handles options and Does the Right Thing™
 case ${1} in
-  apply-pack) shift; cdap_apply_pack ${@}; __ret=${?} ;;
-  auth-server|kafka-server|master|router|ui) CDAP_SERVICE=${1}; shift; cdap_service ${CDAP_SERVICE} ${@}; __ret=${?} ;;
+  apply-pack) shift; cdap_apply_pack "${@}"; __ret=${?} ;;
+  auth-server|kafka-server|master|router|ui) CDAP_SERVICE=${1}; shift; cdap_service "${CDAP_SERVICE}" "${@}"; __ret=${?} ;;
   classpath) cdap_service master classpath; __ret=${?} ;;
   cli) shift; cdap_cli "${@}"; __ret=${?} ;;
-  config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
-  upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
-  version) shift; cdap_version_command ${@}; __ret=${?} ;;
-  run) shift; cdap_exec_class ${@}; __ret=${?} ;;
-  sandbox) shift; cdap_sdk ${@}; __ret=${?} ;;
-  setup) shift; cdap_setup ${@}; __ret=${?} ;;
-  debug) shift; cdap_debug ${@}; __ret=${?} ;;
+  config-tool) shift; cdap_config_tool "${@}"; __ret=${?} ;;
+  upgrade) shift; cdap_upgrade_tool "${@}"; __ret=${?} ;;
+  version) shift; cdap_version_command "${@}"; __ret=${?} ;;
+  run) shift; cdap_exec_class "${@}"; __ret=${?} ;;
+  sandbox) shift; cdap_sdk "${@}"; __ret=${?} ;;
+  setup) shift; cdap_setup "${@}"; __ret=${?} ;;
+  debug) shift; cdap_debug "${@}"; __ret=${?} ;;
   *)
     echo
     echo "Usage: ${0} <command> [arguments]"

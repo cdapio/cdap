@@ -27,10 +27,13 @@ public class RuntimeJobTwillPreparerTest {
 
   @Test
   public void testParseJvmProperties() {
-    Map<String, String> props = RuntimeJobTwillPreparer.parseJvmProperties("-Dkey1=value1 -Dkey2=\"value with space\"");
+    Map<String, String> props = RuntimeJobTwillPreparer.parseJvmProperties(
+        "-Dkey1=value1 -Dkey2=\"value with space\" -Dkey3='single quoted' \"-Dkey4=whole quoted\"");
 
     Assert.assertEquals("value1", props.get("key1"));
     Assert.assertEquals("value with space", props.get("key2"));
+    Assert.assertEquals("single quoted", props.get("key3"));
+    Assert.assertEquals("whole quoted", props.get("key4"));
   }
 
   @Test(expected = IllegalArgumentException.class)

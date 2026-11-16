@@ -227,6 +227,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             "Cannot schedule program %s of type %s: Only workflows can be scheduled",
             schedule.getProgramId().getProgram(), schedule.getProgramId().getType()));
       }
+      if (schedule.getProperties() != null) {
+        try {
+          SystemArguments.validateJvmOpts(schedule.getProperties());
+        } catch (IllegalArgumentException e) {
+          throw new BadRequestException(e.getMessage(), e);
+        }
+      }
     }
     try {
       execute((StoreAndProfileTxRunnable<Void, Exception>) (store, profileDataset) -> {

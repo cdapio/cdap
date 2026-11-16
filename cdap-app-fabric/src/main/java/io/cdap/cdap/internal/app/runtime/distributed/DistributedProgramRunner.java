@@ -159,6 +159,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   protected void validateOptions(Program program, ProgramOptions options) {
     // this will throw an exception if the custom tx timeout is invalid
     SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(), cConf);
+    SystemArguments.validateJvmOpts(options.getUserArguments().asMap());
   }
 
   /**
@@ -465,7 +466,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   void setJvmOpts(TwillPreparer twillPreparer, ProgramOptions options,
       @Nullable URI logbackUri, Map<String, RunnableDefinition> twillRunnables) {
     String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
-    String runtimeJvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);
+    String runtimeJvmOpts = SystemArguments.getJvmOpts(options.getUserArguments().asMap());
     if (!Strings.isNullOrEmpty(runtimeJvmOpts)) {
       if (!Strings.isNullOrEmpty(jvmOpts)) {
         jvmOpts = jvmOpts + " " + runtimeJvmOpts;
