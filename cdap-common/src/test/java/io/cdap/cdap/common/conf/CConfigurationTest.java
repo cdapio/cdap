@@ -19,18 +19,26 @@ package io.cdap.cdap.common.conf;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Map;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.xml.sax.SAXException;
 
 /**
  * Testing CConfiguration.
  */
 public class CConfigurationTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final String DEPRECATED_PROPERTY_VALUE = "Value of deprecated property";
 
@@ -239,6 +247,146 @@ public class CConfigurationTest {
 
     cConf.addResource("test-override.xml");
     Assert.assertEquals(3, cConf.getInt("conf.test.activate"));
+  }
+
+  @Test
+  public void testRejectsExternalGeneralEntity() throws Exception {
+    File secretFile = TEMP_FOLDER.newFile("secret-general.txt");
+    Files.write(secretFile.toPath(), "SENSITIVE_TOKEN_VALUE".getBytes(StandardCharsets.UTF_8));
+    String xml =
+        "<?xml version=\"1.0\"?>\n"
+            + "<!DOCTYPE configuration [\n"
+            + "  <!ENTITY xxe SYSTEM \""
+            + secretFile.toURI()
+            + "\">\n"
+            + "]>\n"
+            + "<configuration>\n"
+            + "  <property><name>xxe.key</name><value>&xxe;</value></property>\n"
+            + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      cConf.get("xxe.key");
+      Assert.fail("Expected RuntimeException when parsing XML with DOCTYPE and external entity");
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof SAXException);
+      Assert.assertFalse(e.getMessage().contains("SENSITIVE_TOKEN_VALUE"));
+    }
+
+    File xmlFile = TEMP_FOLDER.newFile("xxe-config.xml");
+    Files.write(xmlFile.toPath(), xml.getBytes(StandardCharsets.UTF_8));
+    CConfiguration urlConf = CConfiguration.create();
+    urlConf.addResource(xmlFile.toURI().toURL());
+    try {
+      urlConf.get("xxe.key");
+      Assert.fail("Expected RuntimeException when parsing URL resource with DOCTYPE");
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof SAXException);
+      Assert.assertFalse(e.getMessage().contains("SENSITIVE_TOKEN_VALUE"));
+    }
+  }
+
+  @Test
+  public void testRejectsExternalParameterEntityAndDtd() throws Exception {
+    File dtdFile = TEMP_FOLDER.newFile("external.dtd");
+    Files.write(
+        dtdFile.toPath(), "<!ENTITY extParam \"LEAKED\">".getBytes(StandardCharsets.UTF_8));
+    String paramEntityXml =
+        "<?xml version=\"1.0\"?>\n"
+            + "<!DOCTYPE configuration [\n"
+            + "  <!ENTITY % pe SYSTEM \""
+            + dtdFile.toURI()
+            + "\">\n"
+            + "  %pe;\n"
+            + "]>\n"
+            + "<configuration>\n"
+            + "  <property><name>pe.key</name><value>val</value></property>\n"
+            + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(paramEntityXml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      cConf.get("pe.key");
+      Assert.fail("Expected RuntimeException when parsing XML with external parameter entity");
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof SAXException);
+    }
+
+    String externalDtdXml =
+        "<?xml version=\"1.0\"?>\n"
+            + "<!DOCTYPE configuration SYSTEM \""
+            + dtdFile.toURI()
+            + "\">\n"
+            + "<configuration>\n"
+            + "  <property><name>dtd.key</name><value>val</value></property>\n"
+            + "</configuration>";
+
+    CConfiguration dtdConf = CConfiguration.create();
+    dtdConf.addResource(new ByteArrayInputStream(externalDtdXml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      dtdConf.get("dtd.key");
+      Assert.fail("Expected RuntimeException when parsing XML with external DTD");
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof SAXException);
+    }
+  }
+
+  @Test
+  public void testRejectsXinclude() throws Exception {
+    File secretFile = TEMP_FOLDER.newFile("secret-xinclude.txt");
+    Files.write(secretFile.toPath(), "XINCLUDE_SECRET".getBytes(StandardCharsets.UTF_8));
+    String xincludeInValueXml =
+        "<?xml version=\"1.0\"?>\n"
+            + "<configuration>\n"
+            + "  <property>\n"
+            + "    <name>xinclude.key</name>\n"
+            + "    <value><xi:include xmlns:xi=\"http://www.w3.org/2001/XInclude\" href=\""
+            + secretFile.toURI()
+            + "\" parse=\"text\"/></value>\n"
+            + "  </property>\n"
+            + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(
+        new ByteArrayInputStream(xincludeInValueXml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      cConf.get("xinclude.key");
+      Assert.fail("Expected RuntimeException when parsing XML with xi:include in value");
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof SAXException);
+      Assert.assertFalse(e.getMessage().contains("XINCLUDE_SECRET"));
+    }
+
+    String xincludeInRootXml =
+        "<?xml version=\"1.0\"?>\n"
+            + "<configuration>\n"
+            + "  <include xmlns=\"http://www.w3.org/2001/XInclude\" href=\""
+            + secretFile.toURI()
+            + "\"/>\n"
+            + "</configuration>";
+    CConfiguration rootConf = CConfiguration.create();
+    rootConf.addResource(
+        new ByteArrayInputStream(xincludeInRootXml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      rootConf.get("any.key");
+      Assert.fail("Expected RuntimeException when parsing XML with XInclude element");
+    } catch (RuntimeException e) {
+      Assert.assertTrue(e.getCause() instanceof SAXException);
+      Assert.assertFalse(e.getMessage().contains("XINCLUDE_SECRET"));
+    }
+  }
+
+  @Test
+  public void testStandardPredefinedEntitiesStillParse() {
+    String validXml =
+        "<?xml version=\"1.0\"?>\n"
+            + "<configuration>\n"
+            + "  <property><name>valid.key</name><value>a &amp; b &lt; c &gt; d</value></property>\n"
+            + "</configuration>";
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(validXml.getBytes(StandardCharsets.UTF_8)));
+    Assert.assertEquals("a & b < c > d", cConf.get("valid.key"));
   }
 
   private enum TestEnum {FIRST}
