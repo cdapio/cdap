@@ -99,6 +99,47 @@ public class LogBufferProcessorPipelineTest {
     loggerContext.stop();
   }
 
+  @Test
+  public void testServiceNameThreadNameAndLifecycle() throws Exception {
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext(
+        "WARN", ImmutableMap.of("test.logger", "INFO"), MockAppender.class.getName());
+    final java.util.concurrent.atomic.AtomicReference<String> startupThreadName =
+        new java.util.concurrent.atomic.AtomicReference<>();
+    CheckpointManager<LogBufferFileOffset> checkpointManager =
+        new CheckpointManager<LogBufferFileOffset>() {
+          @Override
+          public void saveCheckpoints(
+              Map<Integer, ? extends Checkpoint<LogBufferFileOffset>> checkpoints) {
+          }
+
+          @Override
+          public Map<Integer, Checkpoint<LogBufferFileOffset>> getCheckpoint(
+              Set<Integer> partitions) {
+            return Collections.emptyMap();
+          }
+
+          @Override
+          public Checkpoint<LogBufferFileOffset> getCheckpoint(int partition) {
+            startupThreadName.set(Thread.currentThread().getName());
+            return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
+          }
+        };
+
+    LogBufferPipelineConfig config = new LogBufferPipelineConfig(1024L, 100L, 500L, 4);
+    LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
+        new LogProcessorPipelineContext(
+            CConfiguration.create(), "auditBuffer", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+        config, checkpointManager, 0);
+
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer [NEW]", pipeline.toString());
+    pipeline.startAndWait();
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer [RUNNING]", pipeline.toString());
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer", startupThreadName.get());
+
+    pipeline.stopAndWait();
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer [TERMINATED]", pipeline.toString());
+  }
+
   private ImmutableList<ILoggingEvent> getLoggingEvents() {
     long now = System.currentTimeMillis();
     return ImmutableList.of(

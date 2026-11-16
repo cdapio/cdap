@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
@@ -40,12 +43,17 @@ import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlug
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -244,6 +252,48 @@ public class DefaultArtifactInspectorTest {
     Assert.assertFalse(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("prefix/my/package/my.class/some.class"));
+  }
+
+  @Test
+  public void testInspectPluginWithMissingSuperclassPropagatesNoClassDefFoundError()
+      throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(
+        ManifestFields.EXPORT_PACKAGE, BrokenPluginSubclass.class.getPackage().getName());
+
+    File incompleteJar = new File(TMP_FOLDER.newFolder(), "BrokenPlugin-1.0.0.jar");
+    String classResource = BrokenPluginSubclass.class.getName().replace('.', '/') + ".class";
+    try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(incompleteJar), manifest);
+        InputStream classBytes = getClass().getClassLoader().getResourceAsStream(classResource)) {
+      Assert.assertNotNull(classBytes);
+      jos.putNextEntry(new JarEntry(classResource));
+      ByteStreams.copy(classBytes, jos);
+      jos.closeEntry();
+    }
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "BrokenPlugin", "1.0.0");
+    InvalidArtifactException thrown = Assert.assertThrows(
+        InvalidArtifactException.class,
+        () -> artifactInspector.inspectArtifact(
+            artifactId, incompleteJar, Collections.emptyList(), Collections.emptySet()));
+    Assert.assertTrue(
+        "Expected NoClassDefFoundError cause, but got: " + thrown.getCause(),
+        thrown.getCause() instanceof NoClassDefFoundError);
+  }
+
+  /**
+   * Unpackaged base class omitted from the incomplete plugin test jar.
+   */
+  public static class OmittedPluginSuperclass {
+  }
+
+  /**
+   * Annotated plugin class whose superclass is omitted from the test jar to trigger NoClassDefFoundError.
+   */
+  @Plugin(type = "dummy")
+  @Name("brokenSubclass")
+  public static class BrokenPluginSubclass extends OmittedPluginSuperclass {
   }
 
   private File getAppFile() throws IOException {

@@ -307,6 +307,61 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     }
   }
 
+  @Test
+  public void testUncheckedExceptionPropagatedDirectlyWithoutWrapping() throws IOException {
+    Location externalAuthJar = createValidAuthExtensionJar();
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+
+    final IllegalStateException expectedException = new IllegalStateException("context factory failure");
+    AuthorizationContextFactory failingFactory = new AuthorizationContextFactory() {
+      @Override
+      public AuthorizationContext create(Properties extensionProperties) {
+        throw expectedException;
+      }
+    };
+
+    try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(cConfCopy, failingFactory)) {
+      try {
+        instantiator.get();
+        Assert.fail("Expected IllegalStateException to be thrown");
+      } catch (RuntimeException caught) {
+        Assert.assertSame(expectedException, caught);
+      }
+    }
+  }
+
+  @Test
+  public void testCloseClosesClassLoaderEvenWhenDestroyThrowsAndWhenUninitialized() throws Exception {
+    CConfiguration cConfUnused = CConfiguration.copy(CCONF);
+    try (AccessControllerInstantiator uninitialized =
+             new AccessControllerInstantiator(cConfUnused, AUTH_CONTEXT_FACTORY)) {
+      // Closing before get() when accessControllerClassLoader is null must succeed quietly.
+      uninitialized.close();
+    }
+
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ExceptionInDestroyAccessController.class.getName());
+    Location externalAuthJar = AppJarHelper.createDeploymentJar(
+        locationFactory, ExceptionInDestroyAccessController.class, manifest);
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+
+    AccessControllerInstantiator instantiator = new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY);
+    AccessControllerSpi controller = instantiator.get();
+    ClassLoader extClassLoader = controller.getClass().getClassLoader();
+
+    // close() must swallow the exception thrown by destroy() and close the underlying URLClassLoader.
+    instantiator.close();
+
+    try {
+      extClassLoader.loadClass(UnloadedHelperInExtensionJar.class.getName());
+      Assert.fail("Expected ClassNotFoundException after AccessControllerClassLoader was closed");
+    } catch (ClassNotFoundException expected) {
+      // expected once URLClassLoader is closed
+    }
+  }
+
   private Location createInvalidExternalAuthJar(@Nullable Manifest manifest) throws IOException {
     String jarName = "external-accessController";
     Location externalAuthJar = locationFactory.create(jarName).getTempFile(".jar");
@@ -333,6 +388,27 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     public void initialize(AuthorizationContext context) {
       throw new IllegalStateException("Testing exception during initialize");
     }
+  }
+
+  /**
+   * Test controller whose destroy throws an unchecked exception and references a helper class packaged in the jar.
+   */
+  public static final class ExceptionInDestroyAccessController extends NoOpAccessControllerV2 {
+    @SuppressWarnings("unused")
+    private Class<?> helperRef() {
+      return UnloadedHelperInExtensionJar.class;
+    }
+
+    @Override
+    public void destroy() {
+      throw new IllegalStateException("Simulated destroy failure");
+    }
+  }
+
+  /**
+   * Helper class packaged into the extension jar but not loaded prior to {@code close()}.
+   */
+  public static final class UnloadedHelperInExtensionJar {
   }
 
   public static class ValidExternalAccessControllerBase extends NoOpAccessControllerV2 {

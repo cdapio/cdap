@@ -181,6 +181,36 @@ public class LoggingEventSerializerTest {
     Assert.assertEquals(timestamp, serializer.decodeEventTimestamp(ByteBuffer.wrap(bytes)));
   }
 
+  @Test
+  public void testToBytesPropagatesExceptionsCorrectly() {
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+
+    // 1. Unchecked RuntimeException from event accessor is NOT double-wrapped
+    final IllegalStateException uncheckedFailure = new IllegalStateException("event failure");
+    ILoggingEvent runtimeFailingEvent = org.mockito.Mockito.mock(ILoggingEvent.class);
+    org.mockito.Mockito.when(runtimeFailingEvent.getThreadName()).thenThrow(uncheckedFailure);
+    try {
+      serializer.toBytes(runtimeFailingEvent);
+      Assert.fail("Expected IllegalStateException");
+    } catch (IllegalStateException actual) {
+      Assert.assertSame(uncheckedFailure, actual);
+    }
+
+    // 2. Checked IOException inside try block is wrapped in RuntimeException via Throwables.propagate
+    final IOException checkedIoFailure = new IOException("simulated avro write failure");
+    ILoggingEvent ioFailingEvent = org.mockito.Mockito.mock(ILoggingEvent.class);
+    org.mockito.Mockito.when(ioFailingEvent.getThreadName()).thenAnswer(invocation -> {
+      throw checkedIoFailure;
+    });
+    try {
+      serializer.toBytes(ioFailingEvent);
+      Assert.fail("Expected RuntimeException wrapping IOException");
+    } catch (RuntimeException actual) {
+      Assert.assertEquals(RuntimeException.class, actual.getClass());
+      Assert.assertSame(checkedIoFailure, actual.getCause());
+    }
+  }
+
   static void assertLoggingEventEquals(ILoggingEvent expected, ILoggingEvent actual) {
     expected.getMDCPropertyMap().putAll(
       ImmutableMap.of(".namespaceId", "TEST_ACCT_ID1", ".applicationId", "TEST_APP_ID1", ".runId", "RUN1",

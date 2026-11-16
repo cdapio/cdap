@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -26,10 +27,16 @@ import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.credential.CredentialProviderLoader;
+import io.cdap.cdap.internal.namespace.credential.NamespaceCredentialProviderService;
 import io.cdap.cdap.security.server.LdapLoginModule;
+import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLSocket;
@@ -37,6 +44,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  *
@@ -93,6 +101,49 @@ public class AppFabricServerTest {
       socket.startHandshake();
       appFabricServer.stopAndWait();
     } finally {
+      AppFabricTestHelper.shutdown();
+    }
+  }
+
+  @Test
+  public void testStartStopWithNamespacedServiceAccountsEnabled() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean("feature." + Feature.NAMESPACED_SERVICE_ACCOUNTS.getFeatureFlagString(), true);
+    Injector injector = AppFabricTestHelper.getInjector(cConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CredentialProviderLoader.class).toInstance(
+            () -> Collections.singletonMap(
+                "gcp-wi-credential-provider", Mockito.mock(CredentialProvider.class)));
+      }
+    });
+    AppFabricServer server = null;
+    try {
+      server = injector.getInstance(AppFabricServer.class);
+      Field nsCredentialField =
+          AppFabricServer.class.getDeclaredField("namespaceCredentialProviderService");
+      nsCredentialField.setAccessible(true);
+      NamespaceCredentialProviderService nsCredentialService =
+          (NamespaceCredentialProviderService) nsCredentialField.get(server);
+      Field lifecycleField =
+          AppFabricServer.class.getDeclaredField("applicationLifecycleService");
+      lifecycleField.setAccessible(true);
+      ApplicationLifecycleService lifecycleService =
+          (ApplicationLifecycleService) lifecycleField.get(server);
+
+      Service.State state = server.startAndWait();
+      Assert.assertSame(Service.State.RUNNING, state);
+      Assert.assertSame(Service.State.RUNNING, nsCredentialService.state());
+      Assert.assertSame(Service.State.RUNNING, lifecycleService.state());
+
+      state = server.stopAndWait();
+      Assert.assertSame(Service.State.TERMINATED, state);
+      Assert.assertSame(Service.State.TERMINATED, nsCredentialService.state());
+      Assert.assertSame(Service.State.TERMINATED, lifecycleService.state());
+    } finally {
+      if (server != null && server.isRunning()) {
+        server.stopAndWait();
+      }
       AppFabricTestHelper.shutdown();
     }
   }

@@ -274,6 +274,108 @@ public class DirectRuntimeRequestValidatorTest {
     Assert.assertEquals(terminateTs, programRunInfo.getTerminateTimestamp());
   }
 
+  @Test
+  public void testFetcherSuspendedStoppingAndTerminalTimestampDefaults() throws Exception {
+    // 1. SUSPENDED with null runTs and null suspendTs falls back to current time via firstNonNull
+    ProgramRunId suspendedRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    RunRecordDetail suspendedRecord = RunRecordDetail.builder()
+      .setProgramRunId(suspendedRunId)
+      .setStartTime(System.currentTimeMillis())
+      .setArtifactId(ARTIFACT_ID)
+      .setStatus(ProgramRunStatus.SUSPENDED)
+      .setSystemArgs(ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, "default",
+        SystemArguments.PROFILE_PROVISIONER, "native"))
+      .setProfileId(NamespaceId.DEFAULT.profile("native"))
+      .setSourceId(new byte[MessageId.RAW_ID_SIZE])
+      .build();
+
+    MockProgramRunRecordFetcher fetcher = new MockProgramRunRecordFetcher().setRunRecord(suspendedRecord);
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(
+      cConf, txRunner, fetcher, accessEnforcer, authenticationContext);
+    ProgramRunInfo suspendedInfo = validator.getProgramRunStatus(
+      suspendedRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    Assert.assertEquals(ProgramRunStatus.SUSPENDED, suspendedInfo.getProgramRunStatus());
+
+    // Subsequent lookup reads the persisted SUSPENDED record from local AppMetadataStore
+    fetcher.setRunRecord(null);
+    Assert.assertEquals(ProgramRunStatus.SUSPENDED, validator.getProgramRunStatus(
+      suspendedRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/")).getProgramRunStatus());
+
+    // 2. STOPPING with null stoppingTs and null terminateTs defaults terminateTs to Long.MAX_VALUE
+    ProgramRunId stoppingDefaultRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    RunRecordDetail stoppingDefaultRecord = RunRecordDetail.builder()
+      .setProgramRunId(stoppingDefaultRunId)
+      .setStartTime(System.currentTimeMillis())
+      .setRunTime(12345L)
+      .setArtifactId(ARTIFACT_ID)
+      .setStatus(ProgramRunStatus.STOPPING)
+      .setSystemArgs(ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, "default",
+        SystemArguments.PROFILE_PROVISIONER, "native"))
+      .setProfileId(NamespaceId.DEFAULT.profile("native"))
+      .setSourceId(new byte[MessageId.RAW_ID_SIZE])
+      .build();
+    fetcher.setRunRecord(stoppingDefaultRecord);
+    ProgramRunInfo stoppingDefaultInfo = validator.getProgramRunStatus(
+      stoppingDefaultRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    Assert.assertEquals(ProgramRunStatus.STOPPING, stoppingDefaultInfo.getProgramRunStatus());
+    Assert.assertEquals(Long.MAX_VALUE, stoppingDefaultInfo.getTerminateTimestamp());
+
+    fetcher.setRunRecord(null);
+    ProgramRunInfo persistedStoppingInfo = validator.getProgramRunStatus(
+      stoppingDefaultRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    Assert.assertEquals(ProgramRunStatus.STOPPING, persistedStoppingInfo.getProgramRunStatus());
+    Assert.assertEquals(Long.MAX_VALUE, persistedStoppingInfo.getTerminateTimestamp());
+
+    // 3. STOPPING with explicit stoppingTs and terminateTs preserves explicit timestamps
+    ProgramRunId stoppingExplicitRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    long explicitTerminateTs = 987654321L;
+    RunRecordDetail stoppingExplicitRecord = RunRecordDetail.builder()
+      .setProgramRunId(stoppingExplicitRunId)
+      .setStartTime(1000L)
+      .setRunTime(2000L)
+      .setStoppingTime(3000L)
+      .setTerminateTs(explicitTerminateTs)
+      .setArtifactId(ARTIFACT_ID)
+      .setStatus(ProgramRunStatus.STOPPING)
+      .setSystemArgs(ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, "default",
+        SystemArguments.PROFILE_PROVISIONER, "native"))
+      .setProfileId(NamespaceId.DEFAULT.profile("native"))
+      .setSourceId(new byte[MessageId.RAW_ID_SIZE])
+      .build();
+    fetcher.setRunRecord(stoppingExplicitRecord);
+    validator.getProgramRunStatus(
+      stoppingExplicitRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    fetcher.setRunRecord(null);
+    ProgramRunInfo persistedExplicitStopping = validator.getProgramRunStatus(
+      stoppingExplicitRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+    Assert.assertEquals(explicitTerminateTs, persistedExplicitStopping.getTerminateTimestamp());
+
+    // 4. COMPLETED with null stopTs records stop and deletes terminal run from local store
+    ProgramRunId completedRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    RunRecordDetail completedRecord = RunRecordDetail.builder()
+      .setProgramRunId(completedRunId)
+      .setStartTime(1000L)
+      .setArtifactId(ARTIFACT_ID)
+      .setStatus(ProgramRunStatus.COMPLETED)
+      .setSystemArgs(ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, "default",
+        SystemArguments.PROFILE_PROVISIONER, "native"))
+      .setProfileId(NamespaceId.DEFAULT.profile("native"))
+      .setSourceId(new byte[MessageId.RAW_ID_SIZE])
+      .build();
+    fetcher.setRunRecord(completedRecord);
+    try {
+      validator.getProgramRunStatus(
+        completedRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+      Assert.fail("Expected BadRequestException for remotely fetched terminal run");
+    } catch (BadRequestException expected) {
+      // expected since remotely fetched terminal run returns Optional.empty() and deletes local record
+    }
+  }
+
   private byte[] createSourceId(int value) {
     return Bytes.toBytes(value);
   }

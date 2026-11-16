@@ -17,9 +17,14 @@
 package io.cdap.cdap.data2.dataset2;
 
 import io.cdap.cdap.api.dataset.Dataset;
+import io.cdap.cdap.api.dataset.DatasetContext;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,6 +46,34 @@ public class SingleTypeModuleTest {
     assertBad(Bad7.class);
     assertBad(Bad8.class);
     assertBad(Bad9.class);
+  }
+
+  @Test
+  public void testRegisterAndGetDataset() throws IOException {
+    InMemoryDatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
+    new SingleTypeModule(Good1.class).register(registry);
+    DatasetDefinition<Good1, ?> def = registry.get(Good1.class.getName());
+    DatasetSpecification spec = def.configure("g1", DatasetProperties.EMPTY);
+    Good1 dataset = def.getDataset(
+        DatasetContext.from("default"), spec, Collections.emptyMap(), getClass().getClassLoader());
+    Assert.assertNotNull(dataset);
+  }
+
+  @Test
+  public void testGetDatasetConstructorFailurePropagatesAsRuntimeException() throws IOException {
+    InMemoryDatasetDefinitionRegistry registry = new InMemoryDatasetDefinitionRegistry();
+    new SingleTypeModule(ThrowingCtorDataset.class).register(registry);
+    DatasetDefinition<ThrowingCtorDataset, ?> def =
+        registry.get(ThrowingCtorDataset.class.getName());
+    DatasetSpecification spec = def.configure("failDs", DatasetProperties.EMPTY);
+    try {
+      def.getDataset(DatasetContext.from("default"), spec, Collections.emptyMap(),
+          getClass().getClassLoader());
+      Assert.fail("Expected RuntimeException wrapping InvocationTargetException");
+    } catch (RuntimeException actual) {
+      Assert.assertTrue(actual.getCause() instanceof InvocationTargetException);
+      Assert.assertEquals("ctor boom", actual.getCause().getCause().getMessage());
+    }
   }
 
   private void assertGood(Class<? extends Dataset> cl) {
@@ -119,6 +152,12 @@ public class SingleTypeModuleTest {
     public Bad9(DatasetSpecification spec,
                 DatasetSpecification spec2,
                 @EmbeddedDataset("foo") Dataset ds) {
+    }
+  }
+
+  public static final class ThrowingCtorDataset extends AbstractDataset {
+    public ThrowingCtorDataset(DatasetSpecification spec) {
+      throw new IllegalStateException("ctor boom");
     }
   }
 

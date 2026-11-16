@@ -16,9 +16,15 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.common.utils.Tasks;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,4 +41,28 @@ public class ProgramRunnersTest {
     Assert.assertEquals(logbackFile.toURI().toURL(), ProgramRunners.getLogbackURL(p));
   }
 
+  @Test
+  public void testStartAsUserStartsServiceUnderTargetUser() throws Exception {
+    AtomicReference<String> startThreadUser = new AtomicReference<>();
+    Service service = new AbstractIdleService() {
+      @Override
+      protected void startUp() throws Exception {
+        startThreadUser.set(UserGroupInformation.getCurrentUser().getShortUserName());
+      }
+
+      @Override
+      protected void shutDown() {
+        // no-op
+      }
+    };
+
+    ProgramRunners.startAsUser("impersonatedUser", service);
+    Tasks.waitFor(Service.State.RUNNING, service::state, 5, TimeUnit.SECONDS,
+        20, TimeUnit.MILLISECONDS);
+    try {
+      Assert.assertEquals("impersonatedUser", startThreadUser.get());
+    } finally {
+      service.stopAndWait();
+    }
+  }
 }

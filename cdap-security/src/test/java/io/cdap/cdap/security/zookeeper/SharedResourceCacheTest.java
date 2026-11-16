@@ -17,7 +17,11 @@
 package io.cdap.cdap.security.zookeeper;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
@@ -31,17 +35,27 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.io.Codec;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.curator.test.TestingCluster;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.common.Threads;
+import org.apache.twill.internal.zookeeper.SettableOperationFuture;
+import org.apache.twill.zookeeper.NodeChildren;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,6 +187,113 @@ public class SharedResourceCacheTest {
 
     // verify that cache contents are equal
     assertEquals(cache1, cache2);
+  }
+
+  @Test
+  public void testInitAndPutRemoveErrorPropagationAndListenerExceptions() throws Exception {
+    ZKClient failingInitZk = Mockito.mock(ZKClient.class);
+    SettableOperationFuture<Stat> failedExists =
+        SettableOperationFuture.create("/failInit", Threads.SAME_THREAD_EXECUTOR);
+    IllegalStateException expectedInitCause = new IllegalStateException("zk exists failed");
+    failedExists.setException(expectedInitCause);
+    Mockito.when(failingInitZk.exists("/failInit")).thenReturn(failedExists);
+
+    SharedResourceCache<String> failingInitCache = new SharedResourceCache<>(
+        failingInitZk, new StringCodec(), "/failInit", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+    try {
+      failingInitCache.init();
+      fail("Expected IllegalStateException propagated from ExecutionException cause");
+    } catch (RuntimeException caught) {
+      assertSame(expectedInitCause, caught);
+    }
+
+    ZKClient mockZk = Mockito.mock(ZKClient.class);
+    SettableOperationFuture<Stat> okExists =
+        SettableOperationFuture.create("/unitCache", Threads.SAME_THREAD_EXECUTOR);
+    okExists.set(new Stat());
+    Mockito.when(mockZk.exists("/unitCache")).thenReturn(okExists);
+
+    NodeChildren emptyChildren = Mockito.mock(NodeChildren.class);
+    Mockito.when(emptyChildren.getChildren()).thenReturn(Collections.<String>emptyList());
+    SettableOperationFuture<NodeChildren> childrenFuture =
+        SettableOperationFuture.create("/unitCache", Threads.SAME_THREAD_EXECUTOR);
+    childrenFuture.set(emptyChildren);
+    Mockito.when(mockZk.getChildren(Mockito.eq("/unitCache"), Mockito.any(Watcher.class))).thenReturn(childrenFuture);
+
+    SharedResourceCache<String> unitCache = new SharedResourceCache<>(
+        mockZk, new StringCodec(), "/unitCache", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+
+    final CountDownLatch secondListenerUpdateLatch = new CountDownLatch(1);
+    final CountDownLatch errorNotifiedLatch = new CountDownLatch(2);
+    final AtomicBoolean listenerAfterFatalCalled = new AtomicBoolean(false);
+
+    // First listener throws RuntimeException on onUpdate; ListenerManager must swallow it and still notify next.
+    unitCache.addListener(new BaseResourceListener<String>() {
+      @Override
+      public void onUpdate() {
+        throw new IllegalStateException("listener runtime error");
+      }
+    });
+    unitCache.addListener(new BaseResourceListener<String>() {
+      @Override
+      public void onUpdate() {
+        secondListenerUpdateLatch.countDown();
+      }
+
+      @Override
+      public void onError(String name, Throwable throwable) {
+        errorNotifiedLatch.countDown();
+      }
+    });
+
+    unitCache.init();
+    assertTrue(secondListenerUpdateLatch.await(5, TimeUnit.SECONDS));
+
+    // Failing put() notifies onError and propagates exception.
+    SettableOperationFuture<String> failedCreate =
+        SettableOperationFuture.create("/unitCache/badKey", Threads.SAME_THREAD_EXECUTOR);
+    IOException createIoError = new IOException("create failed");
+    failedCreate.setException(createIoError);
+    Mockito.when(mockZk.create(
+        Mockito.eq("/unitCache/badKey"), Mockito.any(byte[].class),
+        Mockito.eq(CreateMode.PERSISTENT), Mockito.eq(true), Mockito.anyList())).thenReturn(failedCreate);
+    try {
+      unitCache.put("badKey", "val");
+      fail("Expected RuntimeException on put failure");
+    } catch (RuntimeException expected) {
+      assertTrue(expected.getCause() != null);
+    }
+
+    // Failing remove() notifies onError via callback.
+    SettableOperationFuture<String> failedDelete =
+        SettableOperationFuture.create("/unitCache/badKey", Threads.SAME_THREAD_EXECUTOR);
+    failedDelete.setException(new IOException("delete failed"));
+    Mockito.when(mockZk.delete("/unitCache/badKey")).thenReturn(failedDelete);
+    unitCache.remove("badKey");
+
+    assertTrue(errorNotifiedLatch.await(5, TimeUnit.SECONDS));
+
+    // Listener throwing Error aborts the ListenerManager notification loop via propagateIfInstanceOf(t, Error.class).
+    SharedResourceCache<String> fatalListenerCache = new SharedResourceCache<>(
+        mockZk, new StringCodec(), "/unitCache", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+    final CountDownLatch fatalListenerEntered = new CountDownLatch(1);
+    fatalListenerCache.addListener(new BaseResourceListener<String>() {
+      @Override
+      public void onUpdate() {
+        fatalListenerEntered.countDown();
+        throw new AssertionError("fatal listener error");
+      }
+    });
+    fatalListenerCache.addListener(new BaseResourceListener<String>() {
+      @Override
+      public void onUpdate() {
+        listenerAfterFatalCalled.set(true);
+      }
+    });
+    fatalListenerCache.init();
+    assertTrue(fatalListenerEntered.await(5, TimeUnit.SECONDS));
+    TimeUnit.MILLISECONDS.sleep(50);
+    assertFalse(listenerAfterFatalCalled.get());
   }
 
 

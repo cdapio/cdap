@@ -16,13 +16,16 @@
 
 package io.cdap.cdap.app.runtime;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
 import org.junit.Assert;
@@ -94,5 +97,59 @@ public class DelayedProgramControllerTest {
 
     controller.stop();
     Assert.assertTrue(killedLatch.await(5, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void testCallDelegateFutureCallbackSuccessAndFailure() throws Exception {
+    ProgramRunId programRunId =
+        new ProgramRunId("ns", "app", ProgramType.SPARK, "program", RunIds.generate().getId());
+    DelayedProgramController controller = new DelayedProgramController(programRunId);
+    Assert.assertEquals(ProgramController.State.STARTING, controller.getState());
+
+    AtomicReference<String> receivedCommand = new AtomicReference<>();
+    ListenableFuture<ProgramController> pendingCommand = controller.command("scale", 4);
+
+    ProgramController delegate = new AbstractProgramController(programRunId) {
+      {
+        started();
+      }
+
+      @Override
+      protected void doSuspend() {
+        // no-op
+      }
+
+      @Override
+      protected void doResume() {
+        // no-op
+      }
+
+      @Override
+      protected void doStop() {
+        // no-op
+      }
+
+      @Override
+      protected void doCommand(String name, Object value) {
+        if ("fail".equals(name)) {
+          throw new IllegalArgumentException("command failed");
+        }
+        receivedCommand.set(name + "=" + value);
+      }
+    };
+
+    controller.setProgramController(delegate);
+    Assert.assertSame(delegate, pendingCommand.get(5, TimeUnit.SECONDS));
+    Assert.assertEquals("scale=4", receivedCommand.get());
+
+    Assert.assertSame(delegate, controller.suspend().get(5, TimeUnit.SECONDS));
+    Assert.assertSame(delegate, controller.resume().get(5, TimeUnit.SECONDS));
+
+    // Verify FutureCallback.onFailure propagates the exact failure cause to resultFuture.
+    ListenableFuture<ProgramController> failingCommand = controller.command("fail", 0);
+    ExecutionException thrown = Assert.assertThrows(
+        ExecutionException.class, () -> failingCommand.get(5, TimeUnit.SECONDS));
+    Assert.assertTrue(thrown.getCause() instanceof IllegalArgumentException);
+    Assert.assertEquals("command failed", thrown.getCause().getMessage());
   }
 }
