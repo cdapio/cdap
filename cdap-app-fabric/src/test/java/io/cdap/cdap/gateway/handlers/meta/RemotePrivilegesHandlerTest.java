@@ -40,6 +40,7 @@ import io.cdap.http.NettyHttpService;
 import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -113,15 +114,20 @@ public class RemotePrivilegesHandlerTest {
     // Finds the id classes independently of the handler, so an id class added to cdap-proto
     // without updating the handler makes this test fail.
     ClassLoader classLoader = EntityId.class.getClassLoader();
-    ClassPath classPath = ClassPath.from(
-        EntityId.class.getProtectionDomain().getCodeSource().getLocation().toURI(), classLoader);
+    CodeSource codeSource = EntityId.class.getProtectionDomain().getCodeSource();
+    Assert.assertNotNull("EntityId code source is null", codeSource);
+    URL location = codeSource.getLocation();
+    Assert.assertNotNull("EntityId code source location is null", location);
+    ClassPath classPath = ClassPath.from(location.toURI(), classLoader);
     List<Class<?>> idClasses = new ArrayList<>();
     for (ClassPath.ClassInfo classInfo : classPath.getAllClasses()) {
       if (!ENTITY_ID_PACKAGE.equals(classInfo.getPackageName())) {
         continue;
       }
       Class<?> cls = Class.forName(classInfo.getName(), false, classLoader);
-      if (EntityId.class.isAssignableFrom(cls) && !Modifier.isAbstract(cls.getModifiers())) {
+      if (EntityId.class.isAssignableFrom(cls)
+          && !Modifier.isAbstract(cls.getModifiers())
+          && !cls.isSynthetic()) {
         idClasses.add(cls);
       }
     }
