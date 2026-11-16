@@ -83,6 +83,9 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
             Names.named(AllowlistAccessEnforcer.ALLOWLIST_DELEGATE_ACCESS_ENFORCER)).to(
                 RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
         bind(AccessEnforcer.class).to(AllowlistAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(
+                Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+            .to(NoOpAccessController.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
             .in(Scopes.SINGLETON);
       }
@@ -99,6 +102,9 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(
+                Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+            .to(NoOpAccessController.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
             .in(Scopes.SINGLETON);
       }
@@ -133,6 +139,9 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(
+                Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+            .to(NoOpAccessController.class).in(Scopes.SINGLETON);
         bind(ContextAccessEnforcer.class).toInstance(new ContextAccessEnforcer() {
           @Override
           public void enforce(EntityId entity, Set<? extends Permission> permissions) {

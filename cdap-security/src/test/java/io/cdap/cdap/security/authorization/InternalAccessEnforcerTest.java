@@ -20,7 +20,10 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.io.Codec;
@@ -33,7 +36,10 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
@@ -287,5 +293,38 @@ public class InternalAccessEnforcerTest {
     Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
+  }
+
+  @Test
+  public void testInternalAccessEnforcerBindingsAcrossRuntimeModules() {
+    Key<AccessEnforcer> internalEnforcerKey =
+        Key.get(AccessEnforcer.class, Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER));
+    AuthorizationEnforcementModule authModule = new AuthorizationEnforcementModule();
+
+    Injector noOpInjector = Guice.createInjector(authModule.getNoOpModules());
+    Assert.assertTrue(
+        noOpInjector.getInstance(internalEnforcerKey) instanceof NoOpAccessController);
+
+    CConfiguration cConfDisabled = CConfiguration.create();
+    cConfDisabled.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, false);
+    Injector masterDisabledInjector = Guice.createInjector(
+        new IOModule(), new ConfigModule(cConfDisabled),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new AuthorizationTestModule(),
+        authModule.getMasterModule());
+    Assert.assertTrue(
+        masterDisabledInjector.getInstance(internalEnforcerKey) instanceof NoOpAccessController);
+
+    CConfiguration cConfEnabled = CConfiguration.create();
+    cConfEnabled.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
+    Injector masterEnabledInjector = Guice.createInjector(
+        new IOModule(), new ConfigModule(cConfEnabled),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new AuthorizationTestModule(),
+        authModule.getMasterModule());
+    Assert.assertTrue(
+        masterEnabledInjector.getInstance(internalEnforcerKey) instanceof InternalAccessEnforcer);
   }
 }

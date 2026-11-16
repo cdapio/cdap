@@ -83,10 +83,20 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
   @Override
   public ProvisionedCredential provision(String namespace, String scopes)
       throws CredentialProvisioningException, IOException, NotFoundException {
-    contextAccessEnforcer.enforce(new NamespaceId(namespace),
-        NamespacePermission.PROVISION_CREDENTIAL);
+    NamespaceId namespaceId;
+    try {
+      namespaceId = new NamespaceId(namespace);
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new CredentialProvisioningException(
+          String.format("Invalid namespace '%s'.", namespace), e);
+    }
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+      throw new CredentialProvisioningException(
+          String.format("Cannot provision workload identity credential for '%s' namespace.",
+              namespace));
+    }
+    contextAccessEnforcer.enforce(namespaceId, NamespacePermission.PROVISION_CREDENTIAL);
     NamespaceMeta namespaceMeta;
-    NamespaceId namespaceId = new NamespaceId(namespace);
     try {
       namespaceMeta = namespaceAdmin.get(namespaceId);
     } catch (Exception e) {
@@ -104,9 +114,20 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
   @Override
   public void validateIdentity(String namespace, String serviceAccount)
       throws IdentityValidationException, IOException {
+    NamespaceId namespaceId;
+    try {
+      namespaceId = new NamespaceId(namespace);
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new IdentityValidationException(
+          String.format("Invalid namespace '%s'.", namespace), e);
+    }
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+      throw new IdentityValidationException(
+          String.format("Cannot validate workload identity in '%s' namespace.", namespace));
+    }
     NamespaceMeta namespaceMeta;
     try {
-      namespaceMeta = namespaceAdmin.get(new NamespaceId(namespace));
+      namespaceMeta = namespaceAdmin.get(namespaceId);
     } catch (Exception e) {
       throw new IOException(String.format("Failed to get namespace '%s' metadata",
           namespace), e);

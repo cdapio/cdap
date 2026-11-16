@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.retry.RetryableException;
@@ -51,6 +52,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -189,6 +191,50 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
           .format("Provisioning tokens for credential identities in non-system namespace '%s' is "
               + "disallowed.", namespace));
     }
+    if (identity == null || Strings.isNullOrEmpty(identity.getIdentity())) {
+      throw new CredentialProvisioningException(
+          "Credential identity cannot be null or have an empty identity name.");
+    }
+    if (context == null || context.getProperties() == null) {
+      throw new CredentialProvisioningException(
+          "Credential provision context properties cannot be null.");
+    }
+    String cdapWrappedNamespace =
+        context.getProperties().get(GCP_WRAPPED_CDAP_NAMESPACE_PROPERTY);
+    if (Strings.isNullOrEmpty(cdapWrappedNamespace)) {
+      throw new CredentialProvisioningException(
+          String.format("Missing required provisioning property '%s'.",
+              GCP_WRAPPED_CDAP_NAMESPACE_PROPERTY));
+    }
+    NamespaceId wrappedNamespaceId;
+    try {
+      wrappedNamespaceId = new NamespaceId(cdapWrappedNamespace);
+    } catch (IllegalArgumentException e) {
+      throw new CredentialProvisioningException(
+          String.format("Invalid wrapped CDAP namespace '%s'.", cdapWrappedNamespace), e);
+    }
+    if (NamespaceId.SYSTEM.equals(wrappedNamespaceId)) {
+      throw new CredentialProvisioningException(
+          String.format("Provisioning workload identity tokens for '%s' namespace is disallowed.",
+              cdapWrappedNamespace));
+    }
+    String expectedK8sServiceAccount = computeExpectedK8sServiceAccount(wrappedNamespaceId);
+    if (!expectedK8sServiceAccount.equals(identity.getIdentity())) {
+      throw new CredentialProvisioningException(
+          String.format("Identity '%s' does not match expected workload identity '%s' for "
+              + "namespace '%s'.", identity.getIdentity(), expectedK8sServiceAccount,
+              cdapWrappedNamespace));
+    }
+    String k8sNamespace = NamespaceId.DEFAULT.getNamespace();
+    if (!NamespaceId.DEFAULT.equals(wrappedNamespaceId)
+        && credentialProviderContext.isNamespaceCreationHookEnabled()) {
+      k8sNamespace = context.getProperties().get(K8S_NAMESPACE_PROPERTY);
+      if (Strings.isNullOrEmpty(k8sNamespace)) {
+        throw new CredentialProvisioningException(
+            String.format("Missing required provisioning property '%s' for namespace '%s'.",
+                K8S_NAMESPACE_PROPERTY, cdapWrappedNamespace));
+      }
+    }
 
     // Provision the credential with exponential delay on retryable failure.
     long delay = Long.parseLong(
@@ -206,15 +252,6 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     try {
       while (stopWatch.elapsed(TimeUnit.SECONDS) < timeout) {
         try {
-          // Get k8s namespace from namespace metadata if using a non-default namespace and
-          // namespace creation hook is enabled.
-          String k8sNamespace = NamespaceId.DEFAULT.getNamespace();
-          String cdapWrappedNamespace = context.getProperties().get(
-              GCP_WRAPPED_CDAP_NAMESPACE_PROPERTY);
-          if (!cdapWrappedNamespace.equals(NamespaceId.DEFAULT.getNamespace())
-              && credentialProviderContext.isNamespaceCreationHookEnabled()) {
-            k8sNamespace = context.getProperties().get(K8S_NAMESPACE_PROPERTY);
-          }
           return getCredentialLoadingCache().get(new ProvisionedCredentialCacheKey(k8sNamespace,
               identity, context.getProperties().get(GCP_OAUTH_SCOPES_PROPERTY)));
         } catch (Exception e) {
@@ -242,6 +279,19 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
             String.format("Timed out while provisioning the credential for identity '%s'",
                 identity.getIdentity())
         ));
+  }
+
+  private String computeExpectedK8sServiceAccount(NamespaceId namespaceId) {
+    if (NamespaceId.DEFAULT.equals(namespaceId)
+        || (credentialProviderContext != null
+        && credentialProviderContext.isNamespaceCreationHookEnabled())) {
+      return NamespaceId.DEFAULT.getNamespace();
+    }
+    String namespace = namespaceId.getNamespace();
+    String sha256Hex = Hashing.sha256().hashString(namespace, StandardCharsets.UTF_8).toString();
+    sha256Hex = sha256Hex.length() > 15 ? sha256Hex.substring(0, 15) : sha256Hex;
+    namespace = namespace.length() > 15 ? namespace.substring(0, 15) : namespace;
+    return String.format("%s-%s", namespace, sha256Hex).toLowerCase().replace('_', '-');
   }
 
   @VisibleForTesting
