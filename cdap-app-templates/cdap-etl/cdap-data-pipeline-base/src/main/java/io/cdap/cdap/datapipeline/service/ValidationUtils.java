@@ -41,7 +41,9 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 
 /**
  * Utility functions for common pipeline validation code
@@ -69,6 +71,25 @@ public final class ValidationUtils {
       PluginConfigurer pluginConfigurer,
       Function<Map<String, String>, Map<String, String>> macroFn,
       FeatureFlagsProvider featureFlagsProvider) {
+    return validate(namespace, validationRequest, pluginConfigurer, macroFn,
+        featureFlagsProvider, Collections.emptySet());
+  }
+
+  /**
+   * Validate plugin based on the {@link StageValidationRequest} and configured disabled plugin types.
+   *
+   * @param validationRequest {@link StageValidationRequest} with plugin properties
+   * @param pluginConfigurer  {@link PluginConfigurer} for using the plugin
+   * @param macroFn           {@link Function} for evaluating macros
+   * @param disabledTypes     disabled plugin or connection types
+   * @return {@link StageValidationResponse} in json format
+   */
+  public static StageValidationResponse validate(String namespace,
+      StageValidationRequest validationRequest,
+      PluginConfigurer pluginConfigurer,
+      Function<Map<String, String>, Map<String, String>> macroFn,
+      FeatureFlagsProvider featureFlagsProvider,
+      @Nullable Set<String> disabledTypes) {
 
     ETLStage stageConfig = validationRequest.getStage();
     ValidatingConfigurer validatingConfigurer =
@@ -77,6 +98,7 @@ public final class ValidationUtils {
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
       new BatchPipelineSpecGenerator(namespace, validatingConfigurer, null,
           Collections.emptySet(), Collections.emptySet(), Engine.SPARK, featureFlagsProvider);
+    pipelineSpecGenerator.setDisabledTypes(disabledTypes);
 
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
@@ -87,11 +109,12 @@ public final class ValidationUtils {
       new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK,
                                     stageConfigurer, featureFlagsProvider);
 
-    // evaluate macros
-    Map<String, String> evaluatedProperties =
-        macroFn.apply(stageConfig.getPlugin().getProperties());
-
     ETLPlugin originalConfig = stageConfig.getPlugin();
+    Map<String, String> evaluatedProperties =
+        PipelineSpecGenerator.isPluginTypeDisabled(disabledTypes, originalConfig.getName())
+            ? originalConfig.getProperties()
+            : macroFn.apply(originalConfig.getProperties());
+
     ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),
         evaluatedProperties, originalConfig.getArtifactConfig());
     try {

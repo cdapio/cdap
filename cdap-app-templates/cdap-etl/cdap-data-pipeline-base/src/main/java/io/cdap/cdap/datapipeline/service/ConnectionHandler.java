@@ -64,6 +64,7 @@ import io.cdap.cdap.etl.proto.connection.SampleResponseCodec;
 import io.cdap.cdap.etl.proto.connection.SpecGenerationRequest;
 import io.cdap.cdap.etl.proto.v2.ConnectionConfig;
 import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
+import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
 import io.cdap.cdap.etl.spec.TrackedPluginSelector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
@@ -124,7 +125,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
     contextAccessEnforcer = context.getContextAccessEnforcer();
     store = new ConnectionStore(context);
     String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
-    this.disabledTypes = GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
+    Set<String> configuredDisabledTypes =
+        disabledTypesStr == null ? null : GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
+    this.disabledTypes = configuredDisabledTypes == null ? Collections.emptySet() : configuredDisabledTypes;
+  }
+
+  private void checkDisabledType(@Nullable String connType) throws ConnectionBadRequestException {
+    if (PipelineSpecGenerator.isPluginTypeDisabled(disabledTypes, connType)) {
+      throw new ConnectionBadRequestException(
+        String.format("Connection type %s is disabled, connection cannot be used", connType));
+    }
   }
 
   /**
@@ -167,6 +177,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
                                     StandardPermission.GET);
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
+      checkDisabledType(conn.getConnectionType());
       Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
                                                     Constants.CONNECTION_SERVICE_NAME,
                                                     Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
@@ -198,7 +209,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       ConnectionCreationRequest creationRequest =
         GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(), ConnectionCreationRequest.class);
       String connType = creationRequest.getPlugin().getName();
-      if (disabledTypes.contains(connType)) {
+      if (PipelineSpecGenerator.isPluginTypeDisabled(disabledTypes, connType)) {
         throw new ConnectionBadRequestException(
           String.format("Connection type %s is disabled, connection cannot be created", connType));
       }
@@ -261,6 +272,9 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
       String testRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       ConnectionCreationRequest testRequest = GSON.fromJson(testRequestString, ConnectionCreationRequest.class);
+      if (testRequest != null && testRequest.getPlugin() != null) {
+        checkDisabledType(testRequest.getPlugin().getName());
+      }
 
       if (getContext().isRemoteTaskEnabled()) {
         executeRemotely(namespace, testRequestString, null, RemoteConnectionTestTask.class, responder);
@@ -325,6 +339,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
+      checkDisabledType(conn.getConnectionType());
 
       if (getContext().isRemoteTaskEnabled()) {
         executeRemotely(namespace, browseRequestString, conn, RemoteConnectionBrowseTask.class, responder);
@@ -391,6 +406,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
       }
 
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
+      checkDisabledType(conn.getConnectionType());
 
       if (getContext().isRemoteTaskEnabled()) {
         executeRemotely(namespace, sampleRequestString, conn, RemoteConnectionSampleTask.class, responder);
@@ -470,6 +486,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
+      checkDisabledType(conn.getConnectionType());
 
       if (getContext().isRemoteTaskEnabled()) {
         executeRemotely(namespace, specGenerationRequestString, conn, RemoteConnectionSpecTask.class, responder);

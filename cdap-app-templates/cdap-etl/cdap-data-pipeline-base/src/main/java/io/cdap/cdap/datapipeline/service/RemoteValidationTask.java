@@ -109,8 +109,9 @@ public class RemoteValidationTask implements RunnableTask {
       macroProperties -> systemAppContext
         .evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     PluginConfigurer pluginConfigurer = systemAppContext.createPluginConfigurer(namespace);
-    StageValidationResponse validationResponse = ValidationUtils.validate(namespace, validationRequest,
-                                                                          pluginConfigurer, macroFn, systemAppContext);
+    StageValidationResponse validationResponse = ValidationUtils.validate(
+      namespace, validationRequest, pluginConfigurer, macroFn, systemAppContext,
+      remoteValidationRequest.getDisabledTypes());
 
     // If the validation success and if it only involves system artifacts, then we don't need to restart task runner
     if (validationResponse.getFailures().isEmpty()) {
