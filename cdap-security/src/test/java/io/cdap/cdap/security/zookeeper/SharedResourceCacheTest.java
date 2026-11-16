@@ -18,8 +18,11 @@ package io.cdap.cdap.security.zookeeper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
@@ -30,15 +33,27 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 import org.apache.curator.test.TestingCluster;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.zookeeper.OperationFuture;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -51,6 +66,8 @@ import org.slf4j.LoggerFactory;
 public class SharedResourceCacheTest {
 
   private static final String ZK_NAMESPACE = "/SharedResourceCacheTest";
+  private static final String OWNER_AUTH = "cdap:secret";
+  private static final long TIMEOUT_SECONDS = 10;
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCacheTest.class);
   private static TestingCluster zkCluster;
   private static String zkConnectString;
@@ -173,6 +190,282 @@ public class SharedResourceCacheTest {
 
     // verify that cache contents are equal
     assertEquals(cache1, cache2);
+  }
+
+  @Test
+  public void testParentCreatedWithConfiguredAcl() throws Exception {
+    String parent = ZK_NAMESPACE + "/parentAcl";
+    ZKClientService owner = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertEquals(digestAcl(OWNER_AUTH),
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+    } finally {
+      stopAll(owner);
+    }
+  }
+
+  @Test
+  public void testOtherClientCannotAddChildUnderRestrictedParent() throws Exception {
+    String parent = ZK_NAMESPACE + "/restrictedParent";
+    ZKClientService owner = null;
+    ZKClientService anonymous = null;
+    ZKClientService otherUser = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      anonymous = startClient(null);
+      otherUser = startClient("intruder:pw");
+      initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      for (ZKClientService intruder : Arrays.asList(anonymous, otherUser)) {
+        assertNoAuth(intruder.create(parent + "/injected", Bytes.toBytes("forged"),
+            CreateMode.PERSISTENT));
+      }
+      assertTrue(owner.getChildren(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+          .getChildren().isEmpty());
+    } finally {
+      stopAll(owner, anonymous, otherUser);
+    }
+  }
+
+  @Test
+  public void testSameAuthClientsShareEntriesUnderRestrictedParent() throws Exception {
+    String parent = ZK_NAMESPACE + "/sharedRestrictedParent";
+    ZKClientService client1 = null;
+    ZKClientService client2 = null;
+    try {
+      client1 = startClient(OWNER_AUTH);
+      client2 = startClient(OWNER_AUTH);
+      SharedResourceCache<String> cache1 = initCache(client1, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      SharedResourceCache<String> cache2 = initCache(client2, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+
+      cache1.put("key1", "value1");
+      waitForEntry(cache2, "key1", "value1", 10000);
+      cache2.put("key2", "value2");
+      waitForEntry(cache1, "key2", "value2", 10000);
+
+      // remove() is asynchronous; wait until the znode and both in-memory entries disappear.
+      cache2.remove("key1");
+      final ZKClientService reader = client1;
+      Tasks.waitFor(true,
+          () -> reader.exists(parent + "/key1").get(TIMEOUT_SECONDS, TimeUnit.SECONDS) == null
+              && cache1.get("key1") == null && cache2.get("key1") == null,
+          TIMEOUT_SECONDS, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      assertEquals("value2", cache1.get("key2"));
+    } finally {
+      stopAll(client1, client2);
+    }
+  }
+
+  @Test
+  public void testOpenAclParentStaysOpen() throws Exception {
+    String parent = ZK_NAMESPACE + "/openParent";
+    ZKClientService owner = null;
+    ZKClientService other = null;
+    try {
+      owner = startClient(null);
+      other = startClient(null);
+      initCache(owner, parent, ZooDefs.Ids.OPEN_ACL_UNSAFE);
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      other.create(parent + "/child", null, CreateMode.PERSISTENT)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    } finally {
+      stopAll(owner, other);
+    }
+  }
+
+  @Test
+  public void testInitDoesNotModifyExistingParentAcl() throws Exception {
+    String parent = ZK_NAMESPACE + "/preExistingParent";
+    ZKClientService owner = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      owner.create(parent, null, CreateMode.PERSISTENT).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+    } finally {
+      stopAll(owner);
+    }
+  }
+
+  @Test
+  public void testUnauthenticatedInitWithRestrictedAclDoesNotCreateOpenParent() throws Exception {
+    String parent = ZK_NAMESPACE + "/unauthenticatedInit";
+    ZKClientService anonymous = null;
+    ZKClientService owner = null;
+    try {
+      anonymous = startClient(null);
+      owner = startClient(OWNER_AUTH);
+      final SharedResourceCache<String> unauthenticatedCache =
+          initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertNull(anonymous.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+      SharedResourceCache<String> ownerCache =
+          initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertEquals(digestAcl(OWNER_AUTH),
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      ownerCache.put("key1", "value1");
+      assertNoAuth(anonymous.getChildren(parent));
+      assertNoAuth(anonymous.getData(parent + "/key1"));
+      assertNull(unauthenticatedCache.get("key1"));
+    } finally {
+      stopAll(anonymous, owner);
+    }
+  }
+
+  @Test
+  public void testUnauthenticatedInitLoadsEntriesOnceReadableParentIsCreated() throws Exception {
+    String parent = ZK_NAMESPACE + "/delayedReadableParent";
+    List<ACL> creatorWriteWorldRead = Arrays.asList(
+        new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS),
+        new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+    ZKClientService anonymous = null;
+    ZKClientService owner = null;
+    try {
+      anonymous = startClient(null);
+      owner = startClient(OWNER_AUTH);
+      SharedResourceCache<String> readerCache = initCache(anonymous, parent, creatorWriteWorldRead);
+      assertNull(anonymous.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+      SharedResourceCache<String> ownerCache = initCache(owner, parent, creatorWriteWorldRead);
+      ownerCache.put("key1", "value1");
+      waitForEntry(readerCache, "key1", "value1", 10000);
+      assertNoAuth(anonymous.create(parent + "/injected", Bytes.toBytes("forged"),
+          CreateMode.PERSISTENT));
+    } finally {
+      stopAll(anonymous, owner);
+    }
+  }
+
+  @Test
+  public void testInitPropagatesNonAuthErrorsAndMalformedAcls() throws Exception {
+    String restrictedRoot = ZK_NAMESPACE + "/restrictedRoot";
+    ZKClientService owner = null;
+    ZKClientService otherUser = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      otherUser = startClient("intruder:pw");
+      owner.create(restrictedRoot, null, CreateMode.PERSISTENT, ZooDefs.Ids.CREATOR_ALL_ACL)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+      try {
+        initCache(otherUser, restrictedRoot + "/cache", ZooDefs.Ids.OPEN_ACL_UNSAFE);
+        fail("Expected NoAuthException when ancestor znode denies CREATE");
+      } catch (RuntimeException expected) {
+        assertTrue("Unexpected cause: " + expected.getCause(),
+            expected.getCause() instanceof KeeperException.NoAuthException);
+      }
+
+      try {
+        initCache(owner, ZK_NAMESPACE + "/emptyAclParent", Collections.emptyList());
+        fail("Expected InvalidACLException when ACL list is empty");
+      } catch (RuntimeException expected) {
+        assertTrue("Unexpected cause: " + expected.getCause(),
+            expected.getCause() instanceof KeeperException.InvalidACLException);
+      }
+    } finally {
+      stopAll(owner, otherUser);
+    }
+  }
+
+  @Test
+  public void testUnauthenticatedPutOnMissingParentDoesNotCreateOpenParent() throws Exception {
+    String parent = ZK_NAMESPACE + "/unauthenticatedPut";
+    ZKClientService anonymous = null;
+    ZKClientService owner = null;
+    try {
+      anonymous = startClient(null);
+      owner = startClient(OWNER_AUTH);
+      final SharedResourceCache<String> unauthenticatedCache =
+          initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      AtomicReference<Throwable> reportedError = new AtomicReference<>();
+      CountDownLatch errorLatch = new CountDownLatch(1);
+      unauthenticatedCache.addListener(new BaseResourceListener<String>() {
+        @Override
+        public void onError(String name, Throwable throwable) {
+          if ("key1".equals(name)) {
+            reportedError.set(throwable);
+            errorLatch.countDown();
+          }
+        }
+      });
+
+      try {
+        unauthenticatedCache.put("key1", "value1");
+        fail("Expected unauthenticated put with CREATOR_ALL_ACL to fail");
+      } catch (RuntimeException expected) {
+        assertTrue("Expected InvalidACLException in causal chain, got: " + expected,
+            Throwables.getCausalChain(expected).stream()
+                .anyMatch(KeeperException.InvalidACLException.class::isInstance));
+      }
+
+      assertTrue(errorLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      assertTrue(reportedError.get() instanceof KeeperException.InvalidACLException);
+      assertNull(unauthenticatedCache.get("key1"));
+      assertNull(anonymous.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+      // An authenticated writer on a missing parent creates the parent with the configured ACL.
+      SharedResourceCache<String> ownerCache =
+          initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      owner.delete(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertNull(owner.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      ownerCache.put("key1", "value1");
+      assertEquals(digestAcl(OWNER_AUTH),
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals(digestAcl(OWNER_AUTH),
+          owner.getACL(parent + "/key1").get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals("value1", ownerCache.get("key1"));
+    } finally {
+      stopAll(anonymous, owner);
+    }
+  }
+
+  private static ZKClientService startClient(@Nullable String digestAuth) {
+    ZKClientService.Builder builder = ZKClientService.Builder.of(zkConnectString);
+    if (digestAuth != null) {
+      builder.addAuthInfo("digest", Bytes.toBytes(digestAuth));
+    }
+    ZKClientService client = builder.build();
+    client.startAndWait();
+    return client;
+  }
+
+  private static SharedResourceCache<String> initCache(ZKClientService client, String parent,
+      List<ACL> acl) throws InterruptedException {
+    SharedResourceCache<String> cache =
+        new SharedResourceCache<>(client, new StringCodec(), parent, acl);
+    cache.init();
+    return cache;
+  }
+
+  private static List<ACL> digestAcl(String auth) throws NoSuchAlgorithmException {
+    return Collections.singletonList(new ACL(ZooDefs.Perms.ALL,
+        new Id("digest", DigestAuthenticationProvider.generateDigest(auth))));
+  }
+
+  private static void assertNoAuth(OperationFuture<?> future) throws Exception {
+    try {
+      future.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      fail("Expected NoAuthException");
+    } catch (ExecutionException e) {
+      assertTrue("Unexpected cause: " + e.getCause(),
+          e.getCause() instanceof KeeperException.NoAuthException);
+    }
+  }
+
+  private static void stopAll(ZKClientService... clients) {
+    for (ZKClientService client : clients) {
+      if (client == null) {
+        continue;
+      }
+      try {
+        client.stopAndWait();
+      } catch (Exception e) {
+        LOG.warn("Failed to stop test ZKClientService", e);
+      }
+    }
   }
 
 
