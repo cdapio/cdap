@@ -46,7 +46,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.apache.curator.test.TestingCluster;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.zookeeper.ACLData;
+import org.apache.twill.zookeeper.ForwardingZKClient;
 import org.apache.twill.zookeeper.OperationFuture;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -283,15 +286,128 @@ public class SharedResourceCacheTest {
   }
 
   @Test
-  public void testInitDoesNotModifyExistingParentAcl() throws Exception {
-    String parent = ZK_NAMESPACE + "/preExistingParent";
+  public void testInitRestrictsExistingOpenParentAcl() throws Exception {
+    String parent = ZK_NAMESPACE + "/preExistingOpenParent";
+    ZKClientService owner = null;
+    ZKClientService anonymous = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      anonymous = startClient(null);
+      // Older versions created the parent writable by any client.
+      owner.create(parent, null, CreateMode.PERSISTENT).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertEquals(digestAcl(OWNER_AUTH),
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertNoAuth(anonymous.create(parent + "/injected", Bytes.toBytes("forged"),
+          CreateMode.PERSISTENT));
+    } finally {
+      stopAll(owner, anonymous);
+    }
+  }
+
+  @Test
+  public void testInitDoesNotModifyExistingCustomParentAcl() throws Exception {
+    String parent = ZK_NAMESPACE + "/preExistingCustomParent";
+    ZKClientService owner = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      // An operator-managed ACL that differs from both the open ACL and the configured ACL.
+      List<ACL> customAcl = Arrays.asList(
+          new ACL(ZooDefs.Perms.ALL, new Id("digest",
+              DigestAuthenticationProvider.generateDigest(OWNER_AUTH))),
+          new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+      owner.create(parent, null, CreateMode.PERSISTENT, customAcl)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertEquals(customAcl, owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+    } finally {
+      stopAll(owner);
+    }
+  }
+
+  @Test
+  public void testUnauthenticatedInitLeavesExistingOpenParentUnchanged() throws Exception {
+    String parent = ZK_NAMESPACE + "/preExistingOpenParentAnonymous";
+    ZKClientService anonymous = null;
+    try {
+      anonymous = startClient(null);
+      anonymous.create(parent, null, CreateMode.PERSISTENT).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      // ZooKeeper rejects the restricted ACL for a session without credentials; init must
+      // still succeed.
+      initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          anonymous.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+    } finally {
+      stopAll(anonymous);
+    }
+  }
+
+  @Test
+  public void testInitIgnoresConcurrentParentAclChange() throws Exception {
+    String parent = ZK_NAMESPACE + "/concurrentAclChangeParent";
+    ZKClientService owner = null;
+    ZKClientService other = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      other = startClient(null);
+      owner.create(parent, null, CreateMode.PERSISTENT).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      final ZKClientService concurrentWriter = other;
+      // Another instance changes the ACL version right after this cache reads the ACL, so the
+      // cache's version-checked setACL fails and must be ignored.
+      ZKClient racingClient = new ForwardingZKClient(owner) {
+        @Override
+        public OperationFuture<ACLData> getACL(String path) {
+          OperationFuture<ACLData> result = super.getACL(path);
+          try {
+            result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            concurrentWriter.setACL(path, ZooDefs.Ids.OPEN_ACL_UNSAFE)
+                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+          return result;
+        }
+      };
+      SharedResourceCache<String> cache =
+          new SharedResourceCache<>(racingClient, new StringCodec(), parent,
+              ZooDefs.Ids.CREATOR_ALL_ACL);
+      cache.init();
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+    } finally {
+      stopAll(owner, other);
+    }
+  }
+
+  @Test
+  public void testInitSurvivesParentDeletedBeforeAclRestriction() throws Exception {
+    String parent = ZK_NAMESPACE + "/deletedBeforeRestrictParent";
     ZKClientService owner = null;
     try {
       owner = startClient(OWNER_AUTH);
       owner.create(parent, null, CreateMode.PERSISTENT).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-      initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
-      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      final ZKClientService deleter = owner;
+      // The parent disappears between reading its ACL and restricting it, so setACL fails with
+      // NoNodeException. That is neither InvalidACL nor BadVersion, and init must still succeed.
+      ZKClient racingClient = new ForwardingZKClient(owner) {
+        @Override
+        public OperationFuture<ACLData> getACL(String path) {
+          OperationFuture<ACLData> result = super.getACL(path);
+          try {
+            result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            deleter.delete(path).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+          return result;
+        }
+      };
+      SharedResourceCache<String> cache =
+          new SharedResourceCache<>(racingClient, new StringCodec(), parent,
+              ZooDefs.Ids.CREATOR_ALL_ACL);
+      cache.init();
+      assertNull(owner.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      assertNull(cache.get("key1"));
     } finally {
       stopAll(owner);
     }
