@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.zookeeper.ZKExtOperations;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,7 +35,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.ACLData;
 import org.apache.twill.zookeeper.NodeChildren;
@@ -94,14 +92,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
       createParentIfAbsent();
     } catch (ExecutionException ee) {
-      if (!isRejectedAsUnauthenticated(ee.getCause())) {
+      if (!(ee.getCause() instanceof KeeperException.InvalidACLException) || !hasAuthSchemeAcl()) {
         throw Throwables.propagate(ee.getCause());
       }
       // Never fall back to an open parent: that is the vulnerability this ACL closes.
       LOG.warn("ZooKeeper rejected ACLs {} for parent znode {} because this session is not "
           + "authenticated. Not creating it; entries will only load once an authenticated "
-          + "client creates it with ACLs readable by this session.", formatAcls(znodeACL),
-          parentZnode);
+          + "client creates it with ACLs readable by this session.", znodeACL, parentZnode);
     }
     restrictOpenParentAcl();
     this.resources = reloadAll();
@@ -143,18 +140,17 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       LOG.warn("Restricted ACLs of parent znode {} from {} to {}. Older versions created it "
           + "writable by any ZooKeeper client. Its {} existing entries were kept; review them, as "
           + "they may have been added while it was writable.", parentZnode,
-          formatAcls(ZooDefs.Ids.OPEN_ACL_UNSAFE), describeParentAcl(),
-          aclData.getStat().getNumChildren());
+          ZooDefs.Ids.OPEN_ACL_UNSAFE, describeParentAcl(), aclData.getStat().getNumChildren());
     } catch (ExecutionException ee) {
-      if (isRejectedAsUnauthenticated(ee.getCause())) {
+      if (ee.getCause() instanceof KeeperException.InvalidACLException && hasAuthSchemeAcl()) {
         LOG.info("Parent znode {} is writable by any ZooKeeper client. This session is not "
             + "authenticated, so an authenticated CDAP service must restrict its ACLs to {}.",
-            parentZnode, formatAcls(znodeACL));
+            parentZnode, znodeACL);
         return;
       }
       LOG.warn("Parent znode {} is writable by any ZooKeeper client and its ACLs could not be "
           + "restricted to {}. Restrict them manually, for example with zkCli.sh setAcl.",
-          parentZnode, formatAcls(znodeACL), ee.getCause());
+          parentZnode, znodeACL, ee.getCause());
     }
   }
 
@@ -164,28 +160,10 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
    */
   private String describeParentAcl() throws InterruptedException {
     try {
-      return formatAcls(zookeeper.getACL(parentZnode).get().getACL());
+      return zookeeper.getACL(parentZnode).get().getACL().toString();
     } catch (ExecutionException ee) {
-      return formatAcls(znodeACL);
+      return String.valueOf(znodeACL);
     }
-  }
-
-  /**
-   * Formats ACLs as {@code [scheme:id:perms, ...]} on one line; {@code ACL.toString()} spans lines.
-   */
-  private static String formatAcls(@Nullable List<ACL> acls) {
-    if (acls == null) {
-      return "null";
-    }
-    List<String> formatted = new ArrayList<>(acls.size());
-    for (ACL acl : acls) {
-      if (acl == null || acl.getId() == null) {
-        formatted.add(String.valueOf(acl));
-        continue;
-      }
-      formatted.add(acl.getId().getScheme() + ":" + acl.getId().getId() + ":" + acl.getPerms());
-    }
-    return formatted.toString();
   }
 
   private void createParentIfAbsent() throws ExecutionException, InterruptedException {
@@ -200,21 +178,12 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
   }
 
-  /**
-   * Returns whether ZooKeeper rejected {@code znodeACL} only because this session is not
-   * authenticated, which happens when the ACLs use the {@code auth} scheme.
-   */
-  private boolean isRejectedAsUnauthenticated(Throwable cause) {
-    return cause instanceof KeeperException.InvalidACLException && hasAuthSchemeAcl();
-  }
-
   private boolean hasAuthSchemeAcl() {
     if (znodeACL == null) {
       return false;
     }
     for (ACL acl : znodeACL) {
-      if (acl != null && acl.getId() != null
-          && ZooDefs.Ids.AUTH_IDS.getScheme().equals(acl.getId().getScheme())) {
+      if (acl != null && acl.getId() != null && "auth".equals(acl.getId().getScheme())) {
         return true;
       }
     }
@@ -295,51 +264,38 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   @Override
   public void put(final String name, final T instance) {
     final String znode = joinZNode(parentZnode, name);
-    LOG.debug("Setting value for node {}", znode);
-    // Ensure parentZnode exists with znodeACL before ZKExtOperations.createOrSet runs;
-    // otherwise ZKExtOperations would recreate a missing parent with OPEN_ACL_UNSAFE.
     try {
+      LOG.debug("Setting value for node {}", znode);
+      // Ensure parentZnode exists with znodeACL before ZKExtOperations.createOrSet runs;
+      // otherwise ZKExtOperations would recreate a missing parent with OPEN_ACL_UNSAFE.
       createParentIfAbsent();
-    } catch (ExecutionException ee) {
-      Throwable cause = ee.getCause() != null ? ee.getCause() : ee;
-      LOG.error("Failed to create parent znode {} while setting value for node {}",
-          parentZnode, znode, cause);
-      listeners.notifyError(name, cause);
-      throw Throwables.propagate(ee);
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-      throw Throwables.propagate(ie);
-    }
 
-    final SettableFuture<T> completion = SettableFuture.create();
-    Futures.addCallback(
-        ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec,
-            MAX_RETRIES, znodeACL),
-        new FutureCallback<T>() {
-          @Override
-          public void onSuccess(T result) {
-            LOG.debug("Created or set node {}", znode);
-            resources.put(name, result);
-            completion.set(result);
+      final SettableFuture<T> completion = SettableFuture.create();
+      Futures.addCallback(
+          ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec,
+              MAX_RETRIES, znodeACL),
+          new FutureCallback<T>() {
+            @Override
+            public void onSuccess(T result) {
+              LOG.debug("Created or set node {}", znode);
+              resources.put(name, result);
+              completion.set(result);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+              LOG.error("Failed to set value for node {}", znode, t);
+              listeners.notifyError(name, t);
+              completion.setException(t);
+            }
           }
+      );
 
-          @Override
-          public void onFailure(Throwable t) {
-            LOG.error("Failed to set value for node {}", znode, t);
-            listeners.notifyError(name, t);
-            completion.setException(t);
-          }
-        }
-    );
-
-    // Block until it is done
-    try {
+      // Block until it is done
       completion.get();
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-      throw Throwables.propagate(ie);
-    } catch (ExecutionException ee) {
-      throw Throwables.propagate(ee);
+
+    } catch (Exception ioe) {
+      throw Throwables.propagate(ioe);
     }
   }
 
