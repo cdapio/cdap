@@ -92,6 +92,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
       createParentIfAbsent();
     } catch (ExecutionException ee) {
+      // Sessions without ZooKeeper credentials (e.g. YARN program containers) get InvalidACL for
+      // "auth"-scheme ACLs. Tolerate only that so they can still start; rethrow anything else.
       if (!(ee.getCause() instanceof KeeperException.InvalidACLException) || !hasAuthSchemeAcl()) {
         throw Throwables.propagate(ee.getCause());
       }
