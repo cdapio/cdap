@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.support.services;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -252,7 +253,9 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     try {
       List<String> invalidPaths = new ArrayList<>(Arrays.asList(
           "../" + outsideFile.getName(), "app/../../" + outsideFile.getName(), "./../" + outsideFile.getName(),
-          ".", "..", "", "app", "app/", "status.json\0", null));
+          ".", "..", "", "app", "app/", "status.json\0", null,
+          // Longer than the filesystem path limit, so it cannot be canonicalized.
+          String.join("/", Collections.nCopies(25, Strings.repeat("b", 200)))));
       if (createSymlink(new File(uuidFile, "link"), outsideFile)) {
         invalidPaths.add("link");
       }

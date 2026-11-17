@@ -361,7 +361,13 @@ public class SupportBundleGenerator {
     if (filePath == null || filePath.indexOf('\0') >= 0) {
       throw new BadRequestException(invalidPathMessage);
     }
-    File requestFile = new File(bundleDir.toFile(), filePath).getCanonicalFile();
+    File requestFile;
+    try {
+      requestFile = new File(bundleDir.toFile(), filePath).getCanonicalFile();
+    } catch (IOException e) {
+      // Thrown for paths the filesystem cannot resolve, such as names that are too long.
+      throw new BadRequestException(invalidPathMessage, e);
+    }
     if (!requestFile.toPath().startsWith(bundleDir) || requestFile.isDirectory()) {
       throw new BadRequestException(invalidPathMessage);
     }
