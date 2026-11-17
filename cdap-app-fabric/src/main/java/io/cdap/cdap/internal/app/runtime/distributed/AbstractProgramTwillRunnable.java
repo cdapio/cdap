@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
@@ -70,6 +72,7 @@ import java.lang.reflect.Type;
 import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.Security;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
@@ -96,7 +99,6 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-import sun.net.InetAddressCachePolicy;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -105,6 +107,10 @@ import sun.net.InetAddressCachePolicy;
  */
 public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements
     TwillRunnable {
+
+  static final String NETWORKADDRESS_CACHE_TTL = "networkaddress.cache.ttl";
+  static final String SUN_NET_INETADDR_TTL = "sun.net.inetaddr.ttl";
+  static final String DEFAULT_DNS_CACHE_TTL_SECONDS = "30";
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillRunnable.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
@@ -164,6 +170,19 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   /**
+   * Sets a default DNS cache TTL unless the user already set one. Without an explicit TTL,
+   * {@code InetAddressCachePolicy} caches DNS lookups forever once a {@link SecurityManager} is
+   * installed, so this must run before {@link System#setSecurityManager}. See CDAP-20781.
+   */
+  @VisibleForTesting
+  static void initializeDnsCachePolicy() {
+    if (Strings.nullToEmpty(Security.getProperty(NETWORKADDRESS_CACHE_TTL)).trim().isEmpty()
+        && Strings.nullToEmpty(System.getProperty(SUN_NET_INETADDR_TTL)).trim().isEmpty()) {
+      Security.setProperty(NETWORKADDRESS_CACHE_TTL, DEFAULT_DNS_CACHE_TTL_SECONDS);
+    }
+  }
+
+  /**
    * Prepares this instance to execute a program.
    *
    * @param programOptionFile a json file containing the serialized {@link ProgramOptions}
@@ -173,15 +192,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controllerFuture = new CompletableFuture<>();
     programCompletion = new CompletableFuture<>();
 
-    // Make sure InetAddressCachePolicy is not set to FOREVER.
-    // This is needed because if InetAddressCachePolicy is loaded after System#setSecurityManager() call,
-    // caching policy is set to FOREVER. With FOREVER, caching policy, this twill runnable will not be able to
-    // reach out to other services within the cluster as IP is cached forever.
-    // Look at CDAP-20781 for more information.
-    if (InetAddressCachePolicy.get() == InetAddressCachePolicy.FOREVER) {
-      LOG.warn("InetAddress cache policy is set to FOREVER. This will ips to be cached forever. "
-              + "Ensure cache policy is not set to FOREVER.");
-    }
+    // Must run before installing the SecurityManager below (CDAP-20781).
+    initializeDnsCachePolicy();
 
     // Setup process wide settings
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());

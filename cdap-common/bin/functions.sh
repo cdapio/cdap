@@ -335,6 +335,7 @@ cdap_kinit() {
 #
 cdap_set_java () {
   local readonly __java __java_version
+  local __java_version_raw
   # Check JAVA_HOME, first
   if [[ -n ${JAVA_HOME} ]] && [[ -d ${JAVA_HOME} ]]; then
     __java="${JAVA_HOME}"/bin/java
@@ -345,13 +346,16 @@ cdap_set_java () {
       die "JAVA_HOME is not set and 'java' was not found in your PATH. Please set JAVA_HOME to the location of your Java install"
     fi
   fi
-  __java_version_raw=$("${__java}" -version 2>&1 | awk -F '"' '/version/ {print $2}')
-  __java_version=$(echo "$__java_version_raw" | awk -F. '{if ($1 == "1") print $2; else print $1}')
-  if [[ -z ${__java_version} ]]; then
+  __java_version_raw=$("${__java}" -version 2>&1 | awk -F '"' '!/^Picked up / && /version "/ {print $2; exit}')
+  __java_version=$(echo "$__java_version_raw" | awk -F '[._+-]' '{if ($1 == "1") print $2; else print $1}')
+  if [[ -z ${__java_version} ]] || [[ ! "${__java_version}" =~ ^[0-9]+$ ]]; then
     die "Could not detect Java version. Aborting..."
   fi
   export JAVA_VERSION=${__java_version}
   export JAVA=${__java}
+  if [[ "${JAVA_VERSION}" -lt 11 ]]; then
+    die "Java 11+ is required (found Java ${JAVA_VERSION})"
+  fi
   return 0
 }
 
@@ -661,7 +665,7 @@ cdap_start_java() {
   if [ "$JAVA_VERSION" -le 8 ]; then
       __defines+=" -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
   else
-      __defines+="-Xlog:gc*:file=${__gc_log_and_heapdump_dir}/gc.log:time,uptime,level,tags:filecount=10,filesize=1M"
+      __defines+=" -Xlog:gc*:file=${__gc_log_and_heapdump_dir}/gc.log:time,uptime,level,tags:filecount=10,filesize=1M"
   fi
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
