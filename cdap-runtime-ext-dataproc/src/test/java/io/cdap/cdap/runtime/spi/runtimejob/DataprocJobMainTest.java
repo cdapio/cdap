@@ -61,4 +61,39 @@ public class DataprocJobMainTest {
             "z-last.jar"),
         resolvedNames);
   }
+
+  @Test
+  public void testExecuteWithDestroyPreservesPrimaryFailure() throws Exception {
+    NoSuchMethodError primary = new NoSuchMethodError("primary initialize failure");
+    NoSuchMethodError secondary = new NoSuchMethodError("destroy stopAndWait failure");
+    try {
+      DataprocJobMain.executeWithDestroy(
+          () -> {
+            throw primary;
+          },
+          () -> {
+            throw secondary;
+          });
+      Assert.fail("Expected primary NoSuchMethodError");
+    } catch (NoSuchMethodError thrown) {
+      Assert.assertSame(primary, thrown);
+      Assert.assertEquals(1, thrown.getSuppressed().length);
+      Assert.assertSame(secondary, thrown.getSuppressed()[0]);
+    }
+  }
+
+  @Test
+  public void testExecuteWithDestroyPropagatesDestroyFailureOnSuccess() throws Exception {
+    IllegalStateException destroyError = new IllegalStateException("destroy failure");
+    try {
+      DataprocJobMain.executeWithDestroy(
+          () -> {},
+          () -> {
+            throw destroyError;
+          });
+      Assert.fail("Expected destroy IllegalStateException");
+    } catch (IllegalStateException thrown) {
+      Assert.assertSame(destroyError, thrown);
+    }
+  }
 }

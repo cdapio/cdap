@@ -122,7 +122,7 @@ public class DataprocJobMain {
       Class<?> dataprocEnvClass = newCl.loadClass(dataprocEnvClassName);
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
-      try {
+      executeWithDestroy(() -> {
         // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class,
             String.class);
@@ -151,12 +151,12 @@ public class DataprocJobMain {
 
         LOG.info("Invoking run() on {}", runtimeJobClassName);
         runMethod.invoke(runner, newDataprocEnvInstance);
-      } finally {
+      }, () -> {
         // call destroy() method on envProviderClass
         Method closeMethod = dataprocEnvClass.getMethod("destroy");
         LOG.info("Invoking destroy() on {}", dataprocEnvClassName);
         closeMethod.invoke(newDataprocEnvInstance);
-      }
+      });
 
       LOG.info("Runtime job completed.");
       completion.complete(null);
@@ -165,6 +165,36 @@ public class DataprocJobMain {
       LOG.error("Runtime job failed", t);
       completion.completeExceptionally(t);
       throw t;
+    }
+  }
+
+  @FunctionalInterface
+  interface ThrowingRunnable {
+    void run() throws Exception;
+  }
+
+  /**
+   * Executes the job action and ensures cleanup runs without masking any primary failure.
+   */
+  static void executeWithDestroy(ThrowingRunnable runAction, ThrowingRunnable destroyAction)
+      throws Exception {
+    Throwable primary = null;
+    try {
+      runAction.run();
+    } catch (Throwable t) {
+      primary = t;
+      throw t;
+    } finally {
+      try {
+        destroyAction.run();
+      } catch (Throwable destroyEx) {
+        if (primary != null) {
+          primary.addSuppressed(destroyEx);
+          LOG.error("Suppressing exception raised in destroy() after job failure", destroyEx);
+        } else {
+          throw destroyEx;
+        }
+      }
     }
   }
 

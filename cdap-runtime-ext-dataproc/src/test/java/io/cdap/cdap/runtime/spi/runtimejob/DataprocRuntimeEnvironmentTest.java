@@ -46,6 +46,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
   "javax.xml.*",
   "org.xml.*",
   "org.w3c.*",
+  "com.sun.org.apache.xerces.*",
+  "jdk.xml.*",
   "ch.qos.logback.*",
   "org.slf4j.*"
 })
