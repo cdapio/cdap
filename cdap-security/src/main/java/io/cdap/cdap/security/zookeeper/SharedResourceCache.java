@@ -170,8 +170,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
   private void createParentIfAbsent() throws ExecutionException, InterruptedException {
     if (zookeeper.exists(parentZnode).get() == null) {
-      // May be created in parallel by another instance. Use the children's ACLs so that only
-      // authorized clients can add entries. init() separately restricts an existing open parent.
+      // Create the parent with znodeACL, the same ACLs as the entries under it, so only
+      // authorized clients can add entries. Another instance may create it at the same time, so
+      // NodeExistsException is ignored. restrictOpenParentAcl() handles an existing open parent.
       OperationFuture<String> createFuture = (znodeACL == null)
           ? zookeeper.create(parentZnode, null, CreateMode.PERSISTENT)
           : zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, znodeACL);
