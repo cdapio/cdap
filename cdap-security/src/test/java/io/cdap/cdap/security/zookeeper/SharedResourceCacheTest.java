@@ -260,6 +260,7 @@ public class SharedResourceCacheTest {
   @Test
   public void testOpenAclParentStaysOpen() throws Exception {
     String parent = ZK_NAMESPACE + "/openParent";
+    String nullAclParent = ZK_NAMESPACE + "/nullAclParent";
     ZKClientService owner = null;
     ZKClientService other = null;
     try {
@@ -270,6 +271,12 @@ public class SharedResourceCacheTest {
           owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
       other.create(parent + "/child", null, CreateMode.PERSISTENT)
           .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+      SharedResourceCache<String> nullAclCache = initCache(owner, nullAclParent, null);
+      nullAclCache.put("key1", "value1");
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          owner.getACL(nullAclParent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals("value1", nullAclCache.get("key1"));
     } finally {
       stopAll(owner, other);
     }
@@ -318,9 +325,10 @@ public class SharedResourceCacheTest {
   @Test
   public void testUnauthenticatedInitLoadsEntriesOnceReadableParentIsCreated() throws Exception {
     String parent = ZK_NAMESPACE + "/delayedReadableParent";
+    // Place READ_ACL_UNSAFE first so hasAuthSchemeAcl() iterates past a non-"auth" entry.
     List<ACL> creatorWriteWorldRead = Arrays.asList(
-        new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS),
-        new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE));
+        new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE),
+        new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS));
     ZKClientService anonymous = null;
     ZKClientService owner = null;
     try {
@@ -365,8 +373,122 @@ public class SharedResourceCacheTest {
         assertTrue("Unexpected cause: " + expected.getCause(),
             expected.getCause() instanceof KeeperException.InvalidACLException);
       }
+
+      List<ACL> malformedAcls = Arrays.asList(
+          new ACL(ZooDefs.Perms.ALL, new Id("unknown", "id")),
+          new ACL(ZooDefs.Perms.ALL, new Id("digest", "missing-colon")));
+      int index = 0;
+      for (ACL malformedAcl : malformedAcls) {
+        try {
+          initCache(owner, ZK_NAMESPACE + "/malformedAclParent" + index++,
+              Collections.singletonList(malformedAcl));
+          fail("Expected InvalidACLException for malformed ACL: " + malformedAcl);
+        } catch (RuntimeException expected) {
+          assertTrue("Unexpected cause for " + malformedAcl + ": " + expected.getCause(),
+              expected.getCause() instanceof KeeperException.InvalidACLException);
+        }
+      }
     } finally {
       stopAll(owner, otherUser);
+    }
+  }
+
+  @Test
+  public void testUnauthorizedPutOnExistingRestrictedParentFailsAndNotifiesError()
+      throws Exception {
+    String parent = ZK_NAMESPACE + "/unauthorizedPutExistingParent";
+    ZKClientService owner = null;
+    ZKClientService otherUser = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      otherUser = startClient("intruder:pw");
+      final SharedResourceCache<String> ownerCache =
+          initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      ownerCache.put("key1", "value1");
+
+      SharedResourceCache<String> intruderCache =
+          initCache(otherUser, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      AtomicReference<Throwable> reportedError = new AtomicReference<>();
+      CountDownLatch errorLatch = new CountDownLatch(1);
+      intruderCache.addListener(new BaseResourceListener<String>() {
+        @Override
+        public void onError(String name, Throwable throwable) {
+          if ("injected".equals(name)) {
+            reportedError.set(throwable);
+            errorLatch.countDown();
+          }
+        }
+      });
+
+      try {
+        intruderCache.put("injected", "forged");
+        fail("Expected put by differently authenticated client under restricted parent to fail");
+      } catch (RuntimeException expected) {
+        assertTrue("Expected ExecutionException cause, got: " + expected.getCause(),
+            expected.getCause() instanceof ExecutionException);
+        assertTrue("Expected NoAuthException root cause, got: " + expected.getCause().getCause(),
+            expected.getCause().getCause() instanceof KeeperException.NoAuthException);
+      }
+
+      assertTrue(errorLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      assertTrue(reportedError.get() instanceof KeeperException.NoAuthException);
+      assertNull(intruderCache.get("injected"));
+      assertNull(ownerCache.get("injected"));
+      assertEquals("value1", ownerCache.get("key1"));
+      assertEquals(Collections.singletonList("key1"),
+          owner.getChildren(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getChildren());
+    } finally {
+      stopAll(owner, otherUser);
+    }
+  }
+
+  @Test
+  public void testPutRestoresInterruptFlagWhenInterrupted() throws Exception {
+    String parent = ZK_NAMESPACE + "/interruptedPut";
+    ZKClientService owner = null;
+    try {
+      owner = startClient(OWNER_AUTH);
+      SharedResourceCache<String> cache = initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+
+      // 1. Interrupt before put(): hits createParentIfAbsent() catch (InterruptedException).
+      Thread.currentThread().interrupt();
+      try {
+        cache.put("key1", "value1");
+        fail("Expected put() to fail when thread is interrupted before createParentIfAbsent()");
+      } catch (RuntimeException expected) {
+        assertTrue("Expected InterruptedException cause, got: " + expected.getCause(),
+            expected.getCause() instanceof InterruptedException);
+        assertTrue("Expected interrupt flag to remain set", Thread.interrupted());
+      }
+
+      // 2. Interrupt during encode(): hits completion.get() catch (InterruptedException).
+      Codec<String> interruptingEncodeCodec = new Codec<String>() {
+        @Override
+        public byte[] encode(String object) {
+          Thread.currentThread().interrupt();
+          return Bytes.toBytes(object);
+        }
+
+        @Override
+        public String decode(byte[] data) {
+          return Bytes.toString(data);
+        }
+      };
+      SharedResourceCache<String> completionInterruptCache =
+          new SharedResourceCache<>(owner, interruptingEncodeCodec, parent,
+              ZooDefs.Ids.CREATOR_ALL_ACL);
+      completionInterruptCache.init();
+      try {
+        completionInterruptCache.put("key2", "value2");
+        fail("Expected put() to fail when thread is interrupted before completion.get()");
+      } catch (RuntimeException expected) {
+        assertTrue("Expected InterruptedException cause, got: " + expected.getCause(),
+            expected.getCause() instanceof InterruptedException);
+        assertTrue("Expected interrupt flag to remain set", Thread.interrupted());
+      }
+    } finally {
+      Thread.interrupted();
+      stopAll(owner);
     }
   }
 
