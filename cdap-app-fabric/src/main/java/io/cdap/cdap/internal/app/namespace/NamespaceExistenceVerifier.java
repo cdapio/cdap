@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.namespace;
 
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -43,6 +44,7 @@ public class NamespaceExistenceVerifier implements EntityExistenceVerifier<Names
       try {
         exists = namespaceQueryAdmin.exists(namespaceId);
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
       if (!exists) {

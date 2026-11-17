@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import org.apache.hadoop.conf.Configuration;
@@ -62,6 +63,7 @@ public final class WrapperUtil {
       return delegate;
     } catch (Exception e) {
       LOG.error("Failed to initialize delegate with {}", basicMapReduceContext, e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);

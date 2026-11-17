@@ -17,6 +17,7 @@
 package io.cdap.cdap.logging.read;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -86,6 +87,7 @@ public class FileLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -132,6 +134,7 @@ public class FileLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -203,6 +206,7 @@ public class FileLogReader implements LogReader {
       return concat(closeableIterator);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

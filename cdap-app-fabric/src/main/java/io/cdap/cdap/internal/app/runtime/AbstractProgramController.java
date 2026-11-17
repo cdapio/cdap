@@ -246,6 +246,7 @@ public abstract class AbstractProgramController implements ProgramController {
       // Not expecting exception since the Callable only do action on Map and calling caller.init, which
       // already have exceptions handled inside the method. Also, we never shutdown the executor explicitly,
       // there shouldn't be interrupted exception as well.
+      Throwables.throwIfUnchecked(Throwables.getRootCause(e));
       throw new RuntimeException(Throwables.getRootCause(e));
     }
   }

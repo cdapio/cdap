@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.batch;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -172,6 +173,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           TypeToken.of(program.<MapReduce>getMainClass())).create();
     } catch (Exception e) {
       LOG.error("Failed to instantiate MapReduce class for {}", spec.getClassName(), e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
 
@@ -237,6 +239,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

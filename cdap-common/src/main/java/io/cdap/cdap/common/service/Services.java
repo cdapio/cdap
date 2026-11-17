@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -54,10 +55,12 @@ public class Services {
       @Nullable String timeoutErrorMessage)
       throws TimeoutException, InterruptedException, ExecutionException {
     CountDownLatch runningLatch = new CountDownLatch(1);
+    AtomicBoolean started = new AtomicBoolean(false);
     AtomicReference<Throwable> failedThrowable = new AtomicReference<>();
     service.addListener(new Service.Listener() {
       @Override
       public void running() {
+        started.set(true);
         runningLatch.countDown();
       }
 
@@ -73,14 +76,42 @@ public class Services {
       }
     }, MoreExecutors.directExecutor());
     try {
-      service.startAsync();
+      Service.State currentState = service.state();
+      if (currentState == Service.State.RUNNING) {
+        return;
+      }
+      if (currentState == Service.State.FAILED) {
+        throw new ExecutionException(service.failureCause());
+      }
+      if (currentState == Service.State.NEW) {
+        try {
+          service.startAsync();
+        } catch (IllegalStateException e) {
+          Service.State racedState = service.state();
+          if (racedState == Service.State.RUNNING) {
+            return;
+          }
+          if (racedState != Service.State.STARTING && !started.get()) {
+            throw e;
+          }
+        }
+      } else if (currentState != Service.State.STARTING && !started.get()) {
+        throw new ExecutionException(
+            new IllegalStateException("Service cannot be started from state " + currentState));
+      }
+      if (service.state() == Service.State.RUNNING || started.get()) {
+        return;
+      }
+      if (service.state() == Service.State.FAILED) {
+        throw new ExecutionException(service.failureCause());
+      }
       if (!runningLatch.await(timeout, timeoutUnit)) {
         throw new TimeoutException(timeoutErrorMessage);
       }
       if (failedThrowable.get() != null) {
         throw new ExecutionException(failedThrowable.get());
       }
-      if (service.state() != Service.State.RUNNING) {
+      if (!started.get() && service.state() != Service.State.RUNNING) {
         throw new ExecutionException(new IllegalStateException("Service failed to start"));
       }
     } catch (TimeoutException e) {

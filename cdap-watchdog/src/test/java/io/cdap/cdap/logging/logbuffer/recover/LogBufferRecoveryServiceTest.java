@@ -115,7 +115,14 @@ public class LogBufferRecoveryServiceTest {
         ImmutableList.of(), ImmutableList.of(checkpointManager),
         missingDir.getAbsolutePath(), 10, startCleanup);
     org.junit.Assert.assertTrue(fastService.toString().startsWith("log.buffer.recovery ["));
-    fastService.startAsync().awaitRunning();
+    try {
+      fastService.startAsync().awaitRunning();
+    } catch (IllegalStateException e) {
+      if (fastService.state() != com.google.common.util.concurrent.Service.State.STOPPING
+          && fastService.state() != com.google.common.util.concurrent.Service.State.TERMINATED) {
+        throw e;
+      }
+    }
     fastService.stopAsync().awaitTerminated();
     org.junit.Assert.assertTrue(startCleanup.get());
     org.junit.Assert.assertEquals("log.buffer.recovery [TERMINATED]", fastService.toString());

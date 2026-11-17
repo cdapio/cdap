@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.workflow;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataReader;
@@ -154,6 +155,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

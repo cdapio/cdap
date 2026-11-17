@@ -17,6 +17,7 @@
 package io.cdap.cdap.data2.datafabric.dataset;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -399,6 +400,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
       } catch (Exception e) {
         LOG.error("Was not able to load dataset module class {} while trying to load type {}",
             moduleMeta.getClassName(), datasetTypeMeta, e);
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

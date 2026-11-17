@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.service.http;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -87,6 +88,7 @@ public final class HttpHandlerFactory {
       return constructor.newInstance(context, metricsContext);
     } catch (Exception e) {
       LOG.error("Failed to instantiate generated HttpHandler {}", handlerClass, e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

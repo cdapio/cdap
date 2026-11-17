@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.operation;
 
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -185,6 +186,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
         LOG.trace("Published operation status notification: {}", notification);
         done = true;
       } catch (IOException | AccessException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       } catch (TopicNotFoundException | ServiceUnavailableException e) {
         // These exceptions are retry-able due to TMS not completely started
@@ -194,6 +196,7 @@ public class MessagingOperationStatePublisher implements OperationStatePublisher
         long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
         if (retryMillis < 0) {
           LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
         LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",

@@ -112,7 +112,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.startAsync().awaitRunning();
+      service.startAsync();
       return controller;
     };
 
@@ -409,7 +409,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.startAsync().awaitRunning();
+      service.startAsync();
       return controller;
     };
   }

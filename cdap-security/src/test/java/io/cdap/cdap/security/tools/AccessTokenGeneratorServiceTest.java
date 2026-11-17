@@ -72,7 +72,6 @@ public class AccessTokenGeneratorServiceTest {
             .build());
 
     service.start();
-    service.getTokenManager().startAsync().awaitRunning();
     Assert.assertTrue(service.getTokenManager().isRunning());
 
     service.stop();

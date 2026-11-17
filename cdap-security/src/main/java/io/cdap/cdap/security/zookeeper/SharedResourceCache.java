@@ -92,6 +92,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       }
     } catch (ExecutionException ee) {
       // recheck if already created
+      Throwables.throwIfUnchecked(ee.getCause());
       throw new RuntimeException(ee.getCause());
     }
     this.resources = reloadAll();
@@ -201,6 +202,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       completion.get();
 
     } catch (Exception ioe) {
+      Throwables.throwIfUnchecked(ioe);
       throw new RuntimeException(ioe);
     }
   }

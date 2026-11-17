@@ -15,6 +15,7 @@
  */
 package io.cdap.cdap.common.twill;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
@@ -138,6 +139,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           new ProgramStateWriterWithHeartBeat(programRunId, programStateWriter, messagingService,
               cConf);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

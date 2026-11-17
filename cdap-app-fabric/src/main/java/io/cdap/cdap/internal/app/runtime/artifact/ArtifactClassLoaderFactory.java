@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -144,6 +145,7 @@ final class ArtifactClassLoaderFactory {
         }
       });
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -187,6 +189,7 @@ final class ArtifactClassLoaderFactory {
         }
       });
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.data2.dataset2.lib.table;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -149,6 +150,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         return deserialize(id, value, typeOfT);
       }
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -459,6 +461,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         }
       }
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -472,6 +475,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       table.delete(id.getKey(), COLUMN);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -486,6 +490,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -500,6 +505,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       table.increment(id.getKey(), COLUMN, amount);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -530,6 +536,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         return map;
       }
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -565,6 +572,7 @@ public class MetadataStoreDataset extends AbstractDataset {
         return map;
       }
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

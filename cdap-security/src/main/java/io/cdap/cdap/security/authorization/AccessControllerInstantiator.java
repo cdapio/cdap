@@ -19,6 +19,7 @@ package io.cdap.cdap.security.authorization;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -156,6 +157,7 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
             accessControllerClassLoader);
         return accessController;
       } catch (Exception e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

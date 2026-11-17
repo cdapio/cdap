@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -168,6 +169,7 @@ public class PluginInstantiator implements Closeable {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
       }
+      Throwables.throwIfUnchecked(e.getCause());
       throw new RuntimeException(e.getCause());
     }
   }
@@ -199,6 +201,7 @@ public class PluginInstantiator implements Closeable {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
       }
+      Throwables.throwIfUnchecked(e.getCause());
       throw new RuntimeException(e.getCause());
     }
   }
@@ -497,6 +500,7 @@ public class PluginInstantiator implements Closeable {
           return (T) constructor.newInstance(config);
         } catch (InvocationTargetException e) {
           // If there is exception thrown from the constructor, propagate it.
+          Throwables.throwIfUnchecked(e.getCause());
           throw new RuntimeException(e.getCause());
         } catch (Exception e) {
           // Failed to instantiate. Resort to field injection

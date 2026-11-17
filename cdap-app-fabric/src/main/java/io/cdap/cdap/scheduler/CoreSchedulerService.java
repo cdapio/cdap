@@ -17,6 +17,7 @@
 package io.cdap.cdap.scheduler;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -275,6 +276,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
       throw e;
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -319,6 +321,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedule " + scheduleId, e);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -343,6 +346,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedule " + scheduleId, e);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -564,6 +568,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedules", e);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

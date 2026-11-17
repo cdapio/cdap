@@ -17,6 +17,7 @@
 package io.cdap.cdap.logging.write;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -417,6 +418,7 @@ public class LogLocation {
         throw e;
       } catch (Exception e) {
         // should not happen
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
 

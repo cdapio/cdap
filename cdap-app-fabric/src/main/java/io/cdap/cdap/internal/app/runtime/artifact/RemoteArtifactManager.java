@@ -16,6 +16,7 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -123,6 +124,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     } catch (UnauthorizedException | IOException e) {
       throw e;
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

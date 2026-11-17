@@ -18,6 +18,7 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -853,6 +854,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
       // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
       // Hence, this should never happen.
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
 

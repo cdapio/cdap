@@ -172,6 +172,11 @@ public class LocalLogAppender extends LogAppender {
     }
 
     @Override
+    protected String serviceName() {
+      return "LocalLogProcessor-" + getName();
+    }
+
+    @Override
     protected Executor executor() {
       // Copy from parent, but using a different thread name
       // Using custom thread name instead of serviceName().

@@ -18,6 +18,7 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -264,6 +265,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
       // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
       // Hence, this should never happen.
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
     return namespace;

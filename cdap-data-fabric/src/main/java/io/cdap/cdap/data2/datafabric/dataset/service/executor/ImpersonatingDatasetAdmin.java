@@ -124,6 +124,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
       // catch statement. So, no checked exceptions should be wrapped by the following statement. However, we need it
       // because ImpersonationUtils#doAs declares 'throws Exception', because it can throw other checked exceptions
       // in the general case
+      Throwables.throwIfUnchecked(t);
       throw new RuntimeException(t);
     }
   }

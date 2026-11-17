@@ -56,6 +56,8 @@ public class DataprocRuntimeEnvironmentTest {
     InMemoryZKServer.Builder mockBuilder = Mockito.mock(InMemoryZKServer.Builder.class);
     InMemoryZKServer mockZkServer = Mockito.mock(InMemoryZKServer.class);
     Mockito.when(mockBuilder.build()).thenReturn(mockZkServer);
+    Mockito.when(mockZkServer.startAsync()).thenReturn(mockZkServer);
+    Mockito.when(mockZkServer.stopAsync()).thenReturn(mockZkServer);
     Mockito.when(mockZkServer.getLocalAddress())
         .thenReturn(new InetSocketAddress("127.0.0.1", 21819));
 
@@ -78,7 +80,8 @@ public class DataprocRuntimeEnvironmentTest {
     DataprocRuntimeEnvironment env = new DataprocRuntimeEnvironment();
     env.initialize("spark3_2.12", "CLIENT");
 
-    Mockito.verify(mockZkServer).startAsync().awaitRunning();
+    Mockito.verify(mockZkServer).startAsync();
+    Mockito.verify(mockZkServer).awaitRunning();
     Mockito.verify(mockTwillRunner).start();
     Assert.assertEquals(LaunchMode.CLIENT, env.getLaunchMode());
     Assert.assertSame(mockLocationFactory, env.getLocationFactory());
@@ -94,7 +97,8 @@ public class DataprocRuntimeEnvironmentTest {
     env.destroy();
 
     Mockito.verify(mockTwillRunner).stop();
-    Mockito.verify(mockZkServer).stopAsync().awaitTerminated();
+    Mockito.verify(mockZkServer).stopAsync();
+    Mockito.verify(mockZkServer).awaitTerminated();
     Mockito.verify(mockLocationFactory).create("/");
     Mockito.verify(mockRootLocation).delete(true);
   }

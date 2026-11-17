@@ -71,10 +71,12 @@ public class RetryOnStartFailureService extends AbstractService {
         while (!stopped) {
           try {
             CountDownLatch runningLatch = new CountDownLatch(1);
+            AtomicBoolean delegateStarted = new AtomicBoolean(false);
             AtomicReference<Throwable> failedThrowable = new AtomicReference<>();
             currentDelegate.addListener(new Service.Listener() {
               @Override
               public void running() {
+                delegateStarted.set(true);
                 runningLatch.countDown();
               }
 
@@ -94,7 +96,7 @@ public class RetryOnStartFailureService extends AbstractService {
             if (failedThrowable.get() != null) {
               throw new RuntimeException(failedThrowable.get());
             }
-            if (currentDelegate.state() != Service.State.RUNNING) {
+            if (!delegateStarted.get() && currentDelegate.state() != Service.State.RUNNING) {
               if (stopped) {
                 break;
               }

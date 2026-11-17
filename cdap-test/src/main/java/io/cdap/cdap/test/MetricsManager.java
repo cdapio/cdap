@@ -19,6 +19,7 @@ package io.cdap.cdap.test;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
 import io.cdap.cdap.api.metrics.MetricDataQuery;
@@ -238,6 +239,7 @@ public class MetricsManager {
       // since it is totals, we know there's one value only
       return timeValues.get(0).getValue();
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

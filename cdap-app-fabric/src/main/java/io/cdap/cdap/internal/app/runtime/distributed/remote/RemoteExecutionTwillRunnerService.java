@@ -427,7 +427,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
       String secret = Hashing.sha1().newHasher()
           .putBytes(salt)
-          .putString(programRunId.getRun(), StandardCharsets.UTF_8)
+          .putUnencodedChars(programRunId.getRun())
           .hash().toString();
 
       Location location = keysDir.append(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);

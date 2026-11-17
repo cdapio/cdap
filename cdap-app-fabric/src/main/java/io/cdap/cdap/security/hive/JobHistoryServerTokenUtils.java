@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.hive;
 
+import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import io.cdap.cdap.common.security.YarnTokenUtils;
 import java.io.IOException;
@@ -74,6 +75,7 @@ public final class JobHistoryServerTokenUtils {
       LOG.debug("Adding JobHistoryServer delegation token {}.", token);
       return credentials;
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

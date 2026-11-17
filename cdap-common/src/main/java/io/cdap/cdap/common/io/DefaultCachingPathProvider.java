@@ -25,7 +25,6 @@ import com.google.common.hash.Hashing;
 import io.cdap.cdap.common.utils.DirUtils;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -124,7 +123,7 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
   }
 
   String getCacheName(Location location) {
-    return Hashing.md5().hashString(location.toURI().getPath(), StandardCharsets.UTF_8).toString() + "-"
+    return Hashing.md5().hashUnencodedChars(location.toURI().getPath()).toString() + "-"
         + location.getName();
   }
 

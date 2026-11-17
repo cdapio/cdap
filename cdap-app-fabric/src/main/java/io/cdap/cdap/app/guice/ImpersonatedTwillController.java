@@ -183,6 +183,7 @@ final class ImpersonatedTwillController implements TwillController {
         }
       });
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -135,6 +136,7 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
       // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
       // In AppFabricServer, NamespaceAdmin is bound to DefaultNamespaceAdmin, which interacts directly with the MDS.
       // Hence, this exception will never be thrown
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
     return namespaceId;

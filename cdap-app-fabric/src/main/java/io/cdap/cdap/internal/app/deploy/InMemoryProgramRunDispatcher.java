@@ -87,7 +87,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -297,10 +296,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       if (artifactsComputeHash && (artifactsComputeHashSnapshot
           || !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
         Hasher hasher = Hashing.sha256().newHasher();
-        hasher.putString(artifactDescriptor.getNamespace(), StandardCharsets.UTF_8);
-        hasher.putString(artifactDescriptor.getArtifactId().getName(), StandardCharsets.UTF_8);
-        hasher.putString(artifactDescriptor.getArtifactId().getScope().name(), StandardCharsets.UTF_8);
-        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion(), StandardCharsets.UTF_8);
+        hasher.putUnencodedChars(artifactDescriptor.getNamespace());
+        hasher.putUnencodedChars(artifactDescriptor.getArtifactId().getName());
+        hasher.putUnencodedChars(artifactDescriptor.getArtifactId().getScope().name());
+        hasher.putUnencodedChars(artifactDescriptor.getArtifactId().getVersion().getVersion());
         Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
         arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
@@ -446,6 +445,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       throw ioe;
     } catch (Exception e) {
       // should not happen
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -561,9 +561,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private static void hashArtifactId(Hasher hasher, ArtifactId artifactId) {
-    hasher.putString(artifactId.getParent().toString(), StandardCharsets.UTF_8);
-    hasher.putString(artifactId.getArtifact(), StandardCharsets.UTF_8);
-    hasher.putString(artifactId.getVersion(), StandardCharsets.UTF_8);
+    hasher.putUnencodedChars(artifactId.getParent().toString());
+    hasher.putUnencodedChars(artifactId.getArtifact());
+    hasher.putUnencodedChars(artifactId.getVersion());
   }
 
   /**
@@ -676,6 +676,7 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       } catch (Exception e) {
         Throwables.propagateIfPossible(e, IOException.class);
         // should not happen
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     } else {

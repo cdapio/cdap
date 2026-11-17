@@ -47,7 +47,6 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -426,9 +425,9 @@ public class JobQueueTable implements JobQueue {
     // Similar to ScheduleId#hashCode, but that is not consistent across runtimes due to how Enum#hashCode works.
     // Ensure that the hash won't change across runtimes:
     int hash = Hashing.murmur3_32().newHasher()
-        .putString(scheduleId.getNamespace(), StandardCharsets.UTF_8)
-        .putString(scheduleId.getApplication(), StandardCharsets.UTF_8)
-        .putString(scheduleId.getSchedule(), StandardCharsets.UTF_8)
+        .putUnencodedChars(scheduleId.getNamespace())
+        .putUnencodedChars(scheduleId.getApplication())
+        .putUnencodedChars(scheduleId.getSchedule())
         .hash().asInt();
     return Math.abs(hash) % numPartitions;
   }

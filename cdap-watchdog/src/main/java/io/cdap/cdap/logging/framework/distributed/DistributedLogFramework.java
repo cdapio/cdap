@@ -117,7 +117,7 @@ public class DistributedLogFramework extends ResourceBalancerService {
           try {
             pipeline.awaitRunning();
           } catch (IllegalStateException e) {
-            failures.add(pipeline.failureCause());
+            failures.add(pipeline.state() == State.FAILED ? pipeline.failureCause() : e);
           }
         }
         throwIfNeeded(failures);
@@ -134,7 +134,7 @@ public class DistributedLogFramework extends ResourceBalancerService {
           try {
             pipeline.awaitTerminated();
           } catch (IllegalStateException e) {
-            failures.add(pipeline.failureCause());
+            failures.add(pipeline.state() == State.FAILED ? pipeline.failureCause() : e);
           }
         }
         throwIfNeeded(failures);

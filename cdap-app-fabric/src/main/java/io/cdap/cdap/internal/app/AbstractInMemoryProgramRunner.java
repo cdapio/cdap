@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app;
 
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -100,9 +101,11 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
                   }
                 })).get();
 
+        Throwables.throwIfUnchecked(t);
         throw new RuntimeException(t);
       } catch (Exception e) {
         LOG.error("Failed to stop all program instances upon startup failure.", e);
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

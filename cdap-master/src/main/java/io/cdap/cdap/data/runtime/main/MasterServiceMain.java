@@ -17,6 +17,7 @@
 package io.cdap.cdap.data.runtime.main;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -462,6 +463,7 @@ public class MasterServiceMain extends DaemonMain {
       SecurityUtil.loginForMasterService(cConf);
     } catch (Exception e) {
       LOG.error("Failed to login as CDAP user", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

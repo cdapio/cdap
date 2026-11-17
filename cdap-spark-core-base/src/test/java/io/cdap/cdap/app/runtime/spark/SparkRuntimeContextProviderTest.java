@@ -52,16 +52,29 @@ import org.apache.hadoop.conf.Configuration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
 /**
- * Unit tests for {@link SparkRuntimeContextProvider}.
+ * Unit tests for {@link SparkRuntimeContext}.
  */
 public class SparkRuntimeContextProviderTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+  @Rule
+  public final TestRule cwdLockRule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() throws Throwable {
+      synchronized (SparkRuntimeContextProvider.class) {
+        base.evaluate();
+      }
+    }
+  };
 
   @After
   public void resetStaticState() throws Exception {

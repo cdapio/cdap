@@ -94,6 +94,15 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
     subscriberServices.forEach(Service::startAsync);
+    for (Service service : subscriberServices) {
+      try {
+        service.awaitRunning();
+      } catch (IllegalStateException e) {
+        if (service.state() != State.STOPPING && service.state() != State.TERMINATED) {
+          LOG.warn("Exception raised when starting service {}", service, e);
+        }
+      }
+    }
   }
 
   @Override

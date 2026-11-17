@@ -144,6 +144,7 @@ public class DatasetTypeManager {
           LOG.error(
               "Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
               className, datasetModuleId, jarLocation);
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         } finally {
           // Close the ProgramClassLoader
@@ -220,9 +221,11 @@ public class DatasetTypeManager {
           throw new DatasetModuleConflictException(cause.getMessage(), cause);
         }
       }
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } catch (Exception e) {
       LOG.error("Operation failed", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -350,6 +353,7 @@ public class DatasetTypeManager {
           if (e instanceof IOException) {
             throw (IOException) e;
           }
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
 
@@ -361,9 +365,11 @@ public class DatasetTypeManager {
           throw (DatasetModuleConflictException) cause;
         }
       }
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } catch (Exception e) {
       LOG.error("Operation failed", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -399,6 +405,7 @@ public class DatasetTypeManager {
           });
         } catch (Exception e) {
           // the callable throws no checked exceptions
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
 
@@ -427,9 +434,11 @@ public class DatasetTypeManager {
         }
       }
       LOG.error("Failed to delete all modules from namespace {}", namespaceId);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     } catch (Exception e) {
       LOG.error("Operation failed", e);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -529,6 +538,7 @@ public class DatasetTypeManager {
             // are registered because modules only register their types and but not the module id. So here we
             // just assume that this may happen if the module was already loaded.
           } catch (Exception e) {
+            Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
           }
         }

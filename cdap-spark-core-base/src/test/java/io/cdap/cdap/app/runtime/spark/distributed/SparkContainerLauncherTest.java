@@ -22,6 +22,7 @@ import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextTest;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.common.app.RunIds;
@@ -54,8 +55,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestRule;
+import org.junit.runners.model.Statement;
 
 /**
  * Unit tests for {@link SparkContainerLauncher}.
@@ -64,6 +68,16 @@ public class SparkContainerLauncherTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+  @Rule
+  public final TestRule cwdLockRule = (base, description) -> new Statement() {
+    @Override
+    public void evaluate() throws Throwable {
+      synchronized (SparkRuntimeContextProvider.class) {
+        base.evaluate();
+      }
+    }
+  };
 
   private static final String LAUNCH_MARKER_PROP = "cdap.test.spark.container.launched";
 

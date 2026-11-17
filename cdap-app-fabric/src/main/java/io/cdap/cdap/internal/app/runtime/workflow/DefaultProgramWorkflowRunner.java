@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.workflow;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -100,6 +101,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       return getProgramRunnable(name, programRunner, program);
     } catch (Exception e) {
       closeProgramRunner(programRunner);
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -140,6 +142,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         try {
           runAndWait(programRunner, program, options);
         } catch (Exception e) {
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
       }
@@ -257,6 +260,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       if (cause instanceof Exception) {
         throw (Exception) cause;
       }
+      Throwables.throwIfUnchecked(cause);
       throw new RuntimeException(cause);
     } catch (InterruptedException e) {
       try {

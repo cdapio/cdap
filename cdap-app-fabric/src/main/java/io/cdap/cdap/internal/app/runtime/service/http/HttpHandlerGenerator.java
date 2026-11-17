@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import java.nio.charset.StandardCharsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
@@ -149,7 +148,7 @@ final class HttpHandlerGenerator {
     ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     String internalName = Type.getInternalName(rawType);
-    String className = internalName + Hashing.md5().hashString(internalName, StandardCharsets.UTF_8);
+    String className = internalName + Hashing.md5().hashUnencodedChars(internalName);
 
     // Generate the class
     Type classType = Type.getObjectType(className);

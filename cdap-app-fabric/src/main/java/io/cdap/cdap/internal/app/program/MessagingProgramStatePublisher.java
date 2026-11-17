@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.program;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -150,6 +151,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
         long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
         if (retryMillis < 0) {
           LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
+          Throwables.throwIfUnchecked(e);
           throw new RuntimeException(e);
         }
         LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
@@ -163,6 +165,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
           done = true;
         }
       } catch (AccessException | IOException e) {
+        Throwables.throwIfUnchecked(e);
         throw new RuntimeException(e);
       }
     }

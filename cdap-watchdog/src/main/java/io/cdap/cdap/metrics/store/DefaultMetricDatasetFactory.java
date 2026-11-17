@@ -18,6 +18,7 @@ package io.cdap.cdap.metrics.store;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetContext;
@@ -101,6 +102,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       // metrics tables are in the system namespace
       return getOrCreateTable(NamespaceId.SYSTEM.dataset(tableName), props);
     } catch (Exception e) {
+      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
