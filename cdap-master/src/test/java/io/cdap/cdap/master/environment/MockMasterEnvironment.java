@@ -42,7 +42,7 @@ public class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public void initialize(MasterEnvironmentContext context) {
     zkClient = ZKClientService.Builder.of(context.getConfigurations().get(Constants.Zookeeper.QUORUM)).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     discoveryService = new ZKDiscoveryService(zkClient);
     twillRunnerService = new NoopTwillRunnerService();
@@ -56,7 +56,7 @@ public class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public void destroy() {
     discoveryService.close();
-    zkClient.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
   }
 
   @Override

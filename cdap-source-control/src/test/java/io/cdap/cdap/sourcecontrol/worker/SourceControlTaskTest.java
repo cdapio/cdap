@@ -53,7 +53,7 @@ public class SourceControlTaskTest {
       Assert.assertEquals(Service.State.RUNNING, stateDuringDoRun.get());
     } finally {
       if (task.inMemoryOperationRunner.isRunning()) {
-        task.inMemoryOperationRunner.stopAndWait();
+        task.inMemoryOperationRunner.stopAsync().awaitTerminated();
       }
     }
   }

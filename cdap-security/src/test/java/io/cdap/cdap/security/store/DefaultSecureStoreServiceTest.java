@@ -51,7 +51,7 @@ public class DefaultSecureStoreServiceTest {
     DefaultSecureStoreService service = new DefaultSecureStoreService(accessEnforcer, authContext, backingService);
     Assert.assertFalse(backingService.isRunning());
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(service.isRunning());
     Assert.assertTrue(backingService.isRunning());
 
@@ -68,7 +68,7 @@ public class DefaultSecureStoreServiceTest {
       Mockito.verify(accessEnforcer).enforce(new SecureKeyId("ns1", "k1"), principal, StandardPermission.DELETE);
       Assert.assertTrue(service.list("ns1").isEmpty());
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(Service.State.TERMINATED, service.state());

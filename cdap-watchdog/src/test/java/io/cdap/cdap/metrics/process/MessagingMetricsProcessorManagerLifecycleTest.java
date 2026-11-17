@@ -85,11 +85,11 @@ public class MessagingMetricsProcessorManagerLifecycleTest {
     MessagingMetricsProcessorManagerService manager = createManager(
         cConf, () -> Collections.singletonMap(customWriter.getID(), customWriter));
 
-    manager.startAndWait();
+    manager.startAsync().awaitRunning();
     Assert.assertTrue(manager.isRunning());
     Assert.assertTrue(initialized.get());
 
-    manager.stopAndWait();
+    manager.stopAsync().awaitTerminated();
     Assert.assertFalse(manager.isRunning());
     Assert.assertTrue(closed.get());
   }
@@ -123,9 +123,9 @@ public class MessagingMetricsProcessorManagerLifecycleTest {
     MessagingMetricsProcessorManagerService manager = createManager(
         cConf, () -> Collections.singletonMap(failingWriter.getID(), failingWriter));
 
-    manager.startAndWait();
+    manager.startAsync().awaitRunning();
     try {
-      manager.stopAndWait();
+      manager.stopAsync().awaitTerminated();
       Assert.fail("Expected RuntimeException when MetricsWriter.close() fails");
     } catch (RuntimeException expected) {
       Throwable cause = expected.getCause();

@@ -41,7 +41,7 @@ public class TokenManagerTest {
     TokenManager tokenManager = new TokenManager(keyManager, injector.getInstance(UserIdentityCodec.class));
 
     Assert.assertFalse(keyManager.isRunning());
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
     Assert.assertTrue(tokenManager.isRunning());
     Assert.assertTrue(keyManager.isRunning());
 
@@ -51,7 +51,7 @@ public class TokenManagerTest {
     AccessToken token = tokenManager.signIdentifier(identity);
     tokenManager.validateSecret(token);
 
-    tokenManager.stopAndWait();
+    tokenManager.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, tokenManager.state());
     Assert.assertEquals(Service.State.TERMINATED, keyManager.state());
   }
@@ -73,7 +73,7 @@ public class TokenManagerTest {
     };
 
     TokenManager tokenManager = new TokenManager(keyManager, failingCodec);
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
     try {
       UserIdentity identity = new UserIdentity(
           "bob", UserIdentity.IdentifierType.EXTERNAL, Collections.emptyList(), 100L, 200L);
@@ -84,7 +84,7 @@ public class TokenManagerTest {
         Assert.assertSame(expectedIoException, e.getCause());
       }
     } finally {
-      tokenManager.stopAndWait();
+      tokenManager.stopAsync().awaitTerminated();
     }
   }
 }

@@ -76,28 +76,33 @@ public class TephraGuavaContractTest {
     // 1. Stopping InMemoryTransactionService directly from NEW state
     InMemoryTransactionService unstartedInMem = new InMemoryTransactionService(
         hConf, new InMemoryDiscoveryService(), () -> new TransactionManager(hConf));
-    Assert.assertEquals(Service.State.TERMINATED, unstartedInMem.stopAndWait());
+    unstartedInMem.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, unstartedInMem.state());
 
     // 2. Full startAndWait() / stopAndWait() on InMemoryTransactionService
     InMemoryTransactionService runningInMem = new InMemoryTransactionService(
         hConf, new InMemoryDiscoveryService(), () -> new TransactionManager(hConf));
-    Assert.assertEquals(Service.State.RUNNING, runningInMem.startAndWait());
-    Assert.assertEquals(Service.State.TERMINATED, runningInMem.stopAndWait());
+    runningInMem.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, runningInMem.state());
+    runningInMem.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, runningInMem.state());
 
     // 3. Distributed TransactionService: stop from NEW and full leader election start/stop
     InMemoryZKServer zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     try {
       ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-      zkClient.startAndWait();
+      zkClient.startAsync().awaitRunning();
       try {
         TransactionService unstartedDist = new TransactionService(
             hConf, zkClient, new InMemoryDiscoveryService(), () -> new TransactionManager(hConf));
-        Assert.assertEquals(Service.State.TERMINATED, unstartedDist.stopAndWait());
+        unstartedDist.stopAsync().awaitTerminated();
+        Assert.assertEquals(Service.State.TERMINATED, unstartedDist.state());
 
         TransactionService runningDist = new TransactionService(
             hConf, zkClient, new InMemoryDiscoveryService(), () -> new TransactionManager(hConf));
-        Assert.assertEquals(Service.State.RUNNING, runningDist.startAndWait());
+        runningDist.startAsync().awaitRunning();
+        Assert.assertEquals(Service.State.RUNNING, runningDist.state());
         // Wait briefly for leader election callback to start underlying TransactionManager
         long deadline = System.currentTimeMillis() + 5000L;
         while ((runningDist.getTransactionManager() == null
@@ -107,12 +112,13 @@ public class TephraGuavaContractTest {
         }
         Assert.assertNotNull(runningDist.getTransactionManager());
         Assert.assertEquals(Service.State.RUNNING, runningDist.getTransactionManager().state());
-        Assert.assertEquals(Service.State.TERMINATED, runningDist.stopAndWait());
+        runningDist.stopAsync().awaitTerminated();
+        Assert.assertEquals(Service.State.TERMINATED, runningDist.state());
       } finally {
-        zkClient.stopAndWait();
+        zkClient.stopAsync().awaitTerminated();
       }
     } finally {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
   }
 
@@ -126,7 +132,8 @@ public class TephraGuavaContractTest {
 
     TransactionManager txManager =
         new TransactionManager(hConf, storage, new TxMetricsCollector());
-    Assert.assertEquals(Service.State.RUNNING, txManager.startAndWait());
+    txManager.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, txManager.state());
     try {
       Transaction tx1 = txManager.startShort("clientA");
       Transaction checkpointed = txManager.checkpoint(tx1);
@@ -165,7 +172,8 @@ public class TephraGuavaContractTest {
               100L, 90L, System.currentTimeMillis() + 10000L, TransactionType.SHORT);
       Assert.assertTrue(caskEdit.toString().contains("INPROGRESS"));
     } finally {
-      Assert.assertEquals(Service.State.TERMINATED, txManager.stopAndWait());
+      txManager.stopAsync().awaitTerminated();
+      Assert.assertEquals(Service.State.TERMINATED, txManager.state());
     }
   }
 
@@ -179,11 +187,13 @@ public class TephraGuavaContractTest {
     SnapshotCodecProvider codecProvider = new SnapshotCodecProvider(hConf);
     HDFSTransactionStateStorage unstartedHdfsStorage =
         new HDFSTransactionStateStorage(hConf, codecProvider, new TxMetricsCollector());
-    Assert.assertEquals(Service.State.TERMINATED, unstartedHdfsStorage.stopAndWait());
+    unstartedHdfsStorage.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, unstartedHdfsStorage.state());
 
     HDFSTransactionStateStorage hdfsStorage =
         new HDFSTransactionStateStorage(hConf, codecProvider, new TxMetricsCollector());
-    Assert.assertEquals(Service.State.RUNNING, hdfsStorage.startAndWait());
+    hdfsStorage.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, hdfsStorage.state());
     try {
       hdfsStorage.setupStorage();
       TransactionSnapshot snapshot = new TransactionSnapshot(
@@ -203,7 +213,8 @@ public class TephraGuavaContractTest {
       Assert.assertNotNull(visState);
       Assert.assertEquals(10L, visState.getReadPointer());
     } finally {
-      Assert.assertEquals(Service.State.TERMINATED, hdfsStorage.stopAndWait());
+      hdfsStorage.stopAsync().awaitTerminated();
+      Assert.assertEquals(Service.State.TERMINATED, hdfsStorage.state());
     }
   }
 
@@ -211,7 +222,8 @@ public class TephraGuavaContractTest {
   public void testDefaultTransactionExecutorAndDefaultFenceWait() throws Exception {
     Configuration hConf = createBaseTxConf(TEMP_FOLDER.newFolder());
     TransactionManager txManager = new TransactionManager(hConf);
-    Assert.assertEquals(Service.State.RUNNING, txManager.startAndWait());
+    txManager.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, txManager.state());
     try {
       TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
       TransactionAware emptyAware = TransactionAwares.of(Collections.emptyList());
@@ -283,7 +295,8 @@ public class TephraGuavaContractTest {
         // expected
       }
     } finally {
-      Assert.assertEquals(Service.State.TERMINATED, txManager.stopAndWait());
+      txManager.stopAsync().awaitTerminated();
+      Assert.assertEquals(Service.State.TERMINATED, txManager.state());
     }
   }
 

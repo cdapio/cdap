@@ -68,7 +68,7 @@ public class WorkflowProgramControllerTest {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    driver.start();
+    driver.startAsync();
     Assert.assertTrue(aliveLatch.await(5, TimeUnit.SECONDS));
     Assert.assertTrue(completedLatch.await(5, TimeUnit.SECONDS));
     Assert.assertEquals(ProgramController.State.COMPLETED, controller.getState());
@@ -104,7 +104,7 @@ public class WorkflowProgramControllerTest {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    driver.start();
+    driver.startAsync();
     Assert.assertTrue(aliveLatch.await(5, TimeUnit.SECONDS));
 
     controller.suspend().get(5, TimeUnit.SECONDS);
@@ -143,7 +143,7 @@ public class WorkflowProgramControllerTest {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    driver.start();
+    driver.startAsync();
     Assert.assertTrue(errorLatch.await(5, TimeUnit.SECONDS));
     Assert.assertEquals(ProgramController.State.ERROR, controller.getState());
     Assert.assertNotNull(recordedFailure.get());

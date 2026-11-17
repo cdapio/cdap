@@ -48,7 +48,7 @@ public class AccessTokenValidatorTest {
     AccessTokenValidator validator = new AccessTokenValidator(tokenManager, accessTokenCodec);
 
     Assert.assertFalse(tokenManager.isRunning());
-    validator.startAndWait();
+    validator.startAsync().awaitRunning();
     Assert.assertTrue(validator.isRunning());
     Assert.assertTrue(tokenManager.isRunning());
 
@@ -71,7 +71,7 @@ public class AccessTokenValidatorTest {
       String corruptToken = Base64.getEncoder().encodeToString("not-a-valid-token".getBytes(StandardCharsets.UTF_8));
       Assert.assertEquals(TokenState.INVALID, validator.validate(corruptToken));
     } finally {
-      validator.stopAndWait();
+      validator.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(Service.State.TERMINATED, validator.state());

@@ -61,12 +61,12 @@ public class ZKExtOperationsTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -75,8 +75,8 @@ public class ZKExtOperationsTest {
     ZKClientService zkClient1 = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
     ZKClientService zkClient2 = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
 
-    zkClient1.startAndWait();
-    zkClient2.startAndWait();
+    zkClient1.startAsync().awaitRunning();
+    zkClient2.startAsync().awaitRunning();
 
     ZKExtOperations.updateOrCreate(zkClient1, path, new Function<Integer, Integer>() {
       @Nullable
@@ -133,15 +133,15 @@ public class ZKExtOperationsTest {
 
     Assert.assertNull(result);
 
-    zkClient1.stopAndWait();
-    zkClient2.stopAndWait();
+    zkClient1.stopAsync().awaitTerminated();
+    zkClient2.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testCreateOrSet() throws Exception {
     String path = "/parent/testCreateOrSet";
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     Assert.assertEquals(1, ZKExtOperations.createOrSet(zkClient, path,
         Suppliers.ofInstance(1), INT_CODEC, 0).get().intValue());
@@ -151,14 +151,14 @@ public class ZKExtOperationsTest {
         Suppliers.ofInstance(2), INT_CODEC, 0).get().intValue());
     Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
 
-    zkClient.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testSetOrCreate() throws Exception {
     String path = "/parent/testSetOrCreate";
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     Assert.assertEquals(1, ZKExtOperations.setOrCreate(zkClient, path,
         Suppliers.ofInstance(1), INT_CODEC, 0).get().intValue());
@@ -168,13 +168,13 @@ public class ZKExtOperationsTest {
         Suppliers.ofInstance(2), INT_CODEC, 0).get().intValue());
     Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
 
-    zkClient.stopAndWait();
+    zkClient.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testCreateOrSetRetryCallbackAndExhaustion() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     try {
       AtomicInteger encodeAttempts = new AtomicInteger(0);
       Codec<Integer> flakyCodec = new Codec<Integer>() {
@@ -220,7 +220,7 @@ public class ZKExtOperationsTest {
         Assert.assertEquals("permanent encode failure", e.getCause().getMessage());
       }
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 }

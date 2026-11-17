@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -73,7 +72,7 @@ public class SystemWorkerServiceUnitTest {
         new InMemoryDiscoveryModule());
     TokenManager tokenManager = securityInjector.getInstance(TokenManager.class);
     List<String> lifecycleEvents = Collections.synchronizedList(new ArrayList<>());
-    tokenManager.addListener(new ServiceListenerAdapter() {
+    tokenManager.addListener(new Service.Listener() {
       @Override
       public void running() {
         lifecycleEvents.add("tokenManager.running");
@@ -107,14 +106,16 @@ public class SystemWorkerServiceUnitTest {
         new AuthenticationTestContext(),
         new NoOpAccessController());
 
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(Service.State.RUNNING, tokenManager.state());
     Assert.assertNotNull(service.getBindAddress());
     Assert.assertEquals(
         ImmutableList.of("tokenManager.running", "provisioningService.init"),
         lifecycleEvents);
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(Service.State.TERMINATED, tokenManager.state());
     Assert.assertEquals(
         ImmutableList.of(

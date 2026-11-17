@@ -81,11 +81,11 @@ public class LocalMetricsCollectionServiceTest {
     LocalMetricsCollectionService service =
         new LocalMetricsCollectionService(cConf, metricStore, cleanUpService);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(cleanUpService.isRunning());
 
     service.getContext(ImmutableMap.of("ns", "default")).increment("processed", 3L);
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
 
     Assert.assertFalse(cleanUpService.isRunning());
     Assert.assertFalse(persisted.isEmpty());
@@ -136,12 +136,12 @@ public class LocalMetricsCollectionServiceTest {
         new LocalMetricsCollectionService(cConf, metricStore, cleanUpService);
     service.setMessagingMetricsProcessorFactory(factory);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(managerService.isRunning());
     Assert.assertTrue(cleanUpService.isRunning());
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected stopAndWait to propagate processor shutdown exception");
     } catch (RuntimeException expected) {
       Assert.assertTrue(extensionWriterClosed.get());

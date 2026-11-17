@@ -56,7 +56,7 @@ public class RouterMainTest {
   @Test
   public void testInitStartAndStop() throws Exception {
     InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     try {
       String siteXml = "<configuration>"
           + "<property><name>" + Constants.Zookeeper.QUORUM + "</name><value>"
@@ -80,7 +80,7 @@ public class RouterMainTest {
         }
       });
     } finally {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
   }
 

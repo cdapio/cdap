@@ -520,10 +520,10 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
         .collect(Collectors.toList());
     Hasher hasher = Hashing.md5().newHasher();
     for (String name : classList) {
-      hasher.putString(name);
+      hasher.putString(name, StandardCharsets.UTF_8);
     }
     // Add cdap version to the hash so that application jars are distinguishable when upgrade happens.
-    hasher.putString(ProjectInfo.getVersion().toString());
+    hasher.putString(ProjectInfo.getVersion().toString(), StandardCharsets.UTF_8);
     // Only depends on class list and cdap version so that it can be reused across different launches
     String hashVal = hasher.hash().toString();
     String name = hashVal + "-" + Constants.Files.APPLICATION_JAR;

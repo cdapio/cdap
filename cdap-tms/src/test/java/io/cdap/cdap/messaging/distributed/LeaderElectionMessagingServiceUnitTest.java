@@ -71,7 +71,7 @@ public class LeaderElectionMessagingServiceUnitTest {
     InMemoryZKServer zkServer = InMemoryZKServer.builder()
         .setDataDir(TEMP_FOLDER.newFolder())
         .build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     try {
       CConfiguration baseConf = CConfiguration.create();
       baseConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -93,14 +93,16 @@ public class LeaderElectionMessagingServiceUnitTest {
 
       ZKClientService zkClient1 = leaderInjector.getInstance(ZKClientService.class);
       ZKClientService zkClient2 = followerInjector.getInstance(ZKClientService.class);
-      zkClient1.startAndWait();
-      zkClient2.startAndWait();
+      zkClient1.startAsync().awaitRunning();
+      zkClient2.startAsync().awaitRunning();
       try {
         MessagingService leader = leaderInjector.getInstance(MessagingService.class);
         MessagingService follower = followerInjector.getInstance(MessagingService.class);
 
-        Assert.assertEquals(Service.State.RUNNING, ((Service) leader).startAndWait());
-        Assert.assertEquals(Service.State.RUNNING, ((Service) follower).startAndWait());
+        ((Service) leader).startAsync().awaitRunning();
+        Assert.assertEquals(Service.State.RUNNING, ((Service) leader).state());
+        ((Service) follower).startAsync().awaitRunning();
+        Assert.assertEquals(Service.State.RUNNING, ((Service) follower).state());
 
         TopicId topicId = NamespaceId.SYSTEM.topic("topic");
         leader.publish(StoreRequestBuilder.of(topicId).addPayload("msg").build());
@@ -114,16 +116,18 @@ public class LeaderElectionMessagingServiceUnitTest {
 
         // Stopping leader exercises DelegateService.shutDown() -> httpService.stopAndWait(),
         // messagingService.stopAndWait(), cacheProvider.clear(), and leaderElection.stopAndWait()
-        Assert.assertEquals(Service.State.TERMINATED, ((Service) leader).stopAndWait());
+        ((Service) leader).stopAsync().awaitTerminated();
+        Assert.assertEquals(Service.State.TERMINATED, ((Service) leader).state());
         Assert.assertTrue(cacheCleared.get());
-        Assert.assertEquals(Service.State.TERMINATED, ((Service) follower).stopAndWait());
+        ((Service) follower).stopAsync().awaitTerminated();
+        Assert.assertEquals(Service.State.TERMINATED, ((Service) follower).state());
       } finally {
-        zkClient2.stopAndWait();
-        zkClient1.stopAndWait();
+        zkClient2.stopAsync().awaitTerminated();
+        zkClient1.stopAsync().awaitTerminated();
         levelDbFactory.close();
       }
     } finally {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
   }
 

@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.io;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;

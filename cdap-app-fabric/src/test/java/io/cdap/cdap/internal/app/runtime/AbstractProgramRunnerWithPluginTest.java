@@ -88,11 +88,11 @@ public class AbstractProgramRunnerWithPluginTest {
     };
     service.addListener(runner.createListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(0, firstClosed.get());
     Assert.assertEquals(0, secondClosed.get());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Tasks.waitFor(1, secondClosed::get, 5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
     Assert.assertEquals(1, firstClosed.get());
     Assert.assertEquals(1, secondClosed.get());
@@ -124,7 +124,7 @@ public class AbstractProgramRunnerWithPluginTest {
     };
     failingService.addListener(runner.createListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
-    Assert.assertThrows(RuntimeException.class, failingService::startAndWait);
+    Assert.assertThrows(RuntimeException.class, () -> failingService.startAsync().awaitRunning());
     Tasks.waitFor(1, secondClosed::get, 5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
     Assert.assertEquals(1, firstClosed.get());
     Assert.assertEquals(1, secondClosed.get());

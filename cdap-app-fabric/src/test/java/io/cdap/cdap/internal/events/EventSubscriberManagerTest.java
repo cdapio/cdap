@@ -76,11 +76,13 @@ public class EventSubscriberManagerTest {
 
     EventSubscriberManager manager =
         new EventSubscriberManager(cConf, Collections.singleton(subscriber));
-    Assert.assertEquals(Service.State.RUNNING, manager.startAndWait());
+    manager.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, manager.state());
     Assert.assertFalse(subscriber.initialized.get());
     Assert.assertEquals(Service.State.NEW, subscriber.state());
 
-    Assert.assertEquals(Service.State.TERMINATED, manager.stopAndWait());
+    manager.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, manager.state());
     Assert.assertEquals(Service.State.NEW, subscriber.state());
   }
 
@@ -95,12 +97,14 @@ public class EventSubscriberManagerTest {
         new LinkedHashSet<>(Arrays.asList(failingSubscriber, slowSubscriber));
 
     EventSubscriberManager manager = new EventSubscriberManager(cConf, subscribers);
-    Assert.assertEquals(Service.State.RUNNING, manager.startAndWait());
+    manager.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, manager.state());
     Assert.assertTrue(slowSubscriber.initialized.get());
     Assert.assertEquals(Service.State.RUNNING, slowSubscriber.state());
     Assert.assertEquals(Service.State.NEW, failingSubscriber.state());
 
-    Assert.assertEquals(Service.State.TERMINATED, manager.stopAndWait());
+    manager.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, manager.state());
     Assert.assertEquals(Service.State.TERMINATED, slowSubscriber.state());
   }
 }

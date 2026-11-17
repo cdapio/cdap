@@ -144,9 +144,9 @@ public class MessagingMetricsProcessorServiceTest {
         new DefaultMetadataHandler("metrics.processor.0", keyProvider),
         keyProvider);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(service.isRunning());
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertFalse(service.isRunning());
   }
 }

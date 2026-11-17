@@ -70,7 +70,7 @@ public class SparkContainerDriverLauncherTest {
     Location bundleLocation = (Location) createBundleMethod.invoke(null, workDir.toPath());
 
     ArtifactFetcherService fetcherService = new ArtifactFetcherService(cConf, bundleLocation, nettyFactory);
-    fetcherService.startAndWait();
+    fetcherService.startAsync().awaitRunning();
     try {
       Assert.assertTrue(fetcherService.isRunning());
       Field httpServiceField = ArtifactFetcherService.class.getDeclaredField("httpService");
@@ -86,7 +86,7 @@ public class SparkContainerDriverLauncherTest {
         conn.disconnect();
       }
     } finally {
-      fetcherService.stopAndWait();
+      fetcherService.stopAsync().awaitTerminated();
     }
     Assert.assertEquals(Service.State.TERMINATED, fetcherService.state());
   }

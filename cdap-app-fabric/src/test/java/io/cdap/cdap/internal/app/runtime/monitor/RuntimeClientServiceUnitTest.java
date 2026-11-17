@@ -107,7 +107,7 @@ public class RuntimeClientServiceUnitTest {
         Mockito.mock(DatumWriterFactory.class),
         Mockito.mock(DatumReaderFactory.class));
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Tasks.waitFor(Service.State.TERMINATED, service::state, 5, TimeUnit.SECONDS);
     Assert.assertNotNull(service.getProgramCompletionDetails());
     Assert.assertEquals(

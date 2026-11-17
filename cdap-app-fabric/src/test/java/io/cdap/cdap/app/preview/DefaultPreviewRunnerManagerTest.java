@@ -107,7 +107,7 @@ public class DefaultPreviewRunnerManagerTest {
     QueuePreviewRequestFetcher fetcher = new QueuePreviewRequestFetcher();
     DefaultPreviewRunnerManager manager = createManager(cConf, previewRunner, fetcher);
 
-    manager.startAndWait();
+    manager.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, previewRunner.state());
     Assert.assertEquals(Service.State.RUNNING, manager.state());
 
@@ -143,7 +143,7 @@ public class DefaultPreviewRunnerManagerTest {
     QueuePreviewRequestFetcher fetcher = new QueuePreviewRequestFetcher();
     DefaultPreviewRunnerManager manager = createManager(cConf, previewRunner, fetcher);
 
-    manager.startAndWait();
+    manager.startAsync().awaitRunning();
     try {
       ApplicationId unknownApp = NamespaceId.DEFAULT.app("missing");
       Assert.assertThrows(NotFoundException.class, () -> manager.stop(unknownApp));
@@ -163,7 +163,7 @@ public class DefaultPreviewRunnerManagerTest {
       Tasks.waitFor(true, () -> fetcher.fetchCount.get() > fetchesBeforeStop,
           5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
     } finally {
-      manager.stopAndWait();
+      manager.stopAsync().awaitTerminated();
     }
     Assert.assertEquals(Service.State.TERMINATED, previewRunner.state());
   }
@@ -178,11 +178,11 @@ public class DefaultPreviewRunnerManagerTest {
     QueuePreviewRequestFetcher fetcher = new QueuePreviewRequestFetcher();
     DefaultPreviewRunnerManager manager = createManager(cConf, failingStopRunner, fetcher);
 
-    manager.startAndWait();
+    manager.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, failingStopRunner.state());
 
     // stopQuietly should swallow the exception from failingStopRunner.shutDown().
-    manager.stopAndWait();
+    manager.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, manager.state());
     Assert.assertTrue(failingStopRunner.shutDownCalled.get());
   }

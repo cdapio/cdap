@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,9 +46,9 @@ public class RetryOnStartFailureServiceTest {
     Service service = new RetryOnStartFailureService(
         createServiceSupplier(3, startLatch, new CountDownLatch(1), false),
         RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -60,14 +59,14 @@ public class RetryOnStartFailureServiceTest {
         RetryStrategies.limit(10, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS)));
 
     final CountDownLatch failureLatch = new CountDownLatch(1);
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void failed(Service.State from, Throwable failure) {
         failureLatch.countDown();
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    service.start();
+    service.startAsync();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
     Assert.assertFalse(startLatch.await(100, TimeUnit.MILLISECONDS));
   }
@@ -78,9 +77,9 @@ public class RetryOnStartFailureServiceTest {
     Service service = new RetryOnStartFailureService(
         createServiceSupplier(1000, new CountDownLatch(1), failureLatch, false),
         RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -90,7 +89,7 @@ public class RetryOnStartFailureServiceTest {
     final RetryOnStartFailureService service = new RetryOnStartFailureService(
         createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
         RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -99,7 +98,7 @@ public class RetryOnStartFailureServiceTest {
       }
     }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected failure in stopping");
     } catch (Exception e) {
       Assert.assertEquals("Intentional failure to shutdown",
@@ -129,12 +128,12 @@ public class RetryOnStartFailureServiceTest {
           }
         }, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(enteredStartLatch.await(5, TimeUnit.SECONDS));
     Assert.assertEquals("EndureService{RetryOnStartFailureServiceTest}", service.toString());
     Assert.assertNull(service.getStartedService());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertTrue(delegateShutDown.get());
     Assert.assertEquals(Service.State.TERMINATED, service.state());
   }
@@ -160,10 +159,10 @@ public class RetryOnStartFailureServiceTest {
           }
         }, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(enteredStartLatch.await(5, TimeUnit.SECONDS));
     // Unstarted delegate failure should not fail RetryOnStartFailureService when stopped.
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, service.state());
   }
 
@@ -180,7 +179,7 @@ public class RetryOnStartFailureServiceTest {
     }, RetryStrategies.noRetry());
 
     Assert.assertEquals("EndureService{FastExecutionThreadService}", service.toString());
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     Tasks.waitFor(true, () -> service.getStartedService() != null,
         5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
@@ -189,7 +188,7 @@ public class RetryOnStartFailureServiceTest {
     Assert.assertEquals(1, supplierCount.get());
 
     // Stopping when startedService has already terminated should succeed cleanly.
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, service.state());
   }
 
@@ -210,7 +209,7 @@ public class RetryOnStartFailureServiceTest {
       return runtimeFailingService;
     }, RetryStrategies.noRetry());
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Tasks.waitFor(true, () -> service.getStartedService() != null,
         5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
@@ -219,7 +218,7 @@ public class RetryOnStartFailureServiceTest {
         5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected stopAndWait to propagate delegate failure");
     } catch (Exception e) {
       Assert.assertEquals("delegate failed while running",

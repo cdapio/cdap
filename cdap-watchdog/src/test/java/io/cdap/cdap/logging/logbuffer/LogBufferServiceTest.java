@@ -83,12 +83,12 @@ public class LogBufferServiceTest {
         createNoOpTxRunner());
 
     // LogBufferRecoveryService finishes run() immediately because nonExistentBufferDir does not exist
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertFalse(Iterables.isEmpty(discoveryService.discover(Constants.Service.LOGSAVER)));
     Tasks.waitFor(true, () -> started.contains("cdap") && started.contains("extraBufPipe"),
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertTrue(Iterables.isEmpty(discoveryService.discover(Constants.Service.LOGSAVER)));
     Assert.assertTrue(stopped.contains("cdap"));
     Assert.assertTrue(stopped.contains("extraBufPipe"));
@@ -128,12 +128,12 @@ public class LogBufferServiceTest {
             cConf, new NoOpMetricsCollectionService(), entry -> { }, null),
         createNoOpTxRunner());
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Tasks.waitFor(true, () -> started.contains("cdap"),
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     } catch (Exception ignored) {
       // If a future fix propagates pipeline failure on shutdown, allow it as long as remaining
       // healthy pipelines are still stopped.

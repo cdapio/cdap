@@ -63,7 +63,7 @@ public class KafkaClientModuleTest {
   @Before
   public void beforeTest() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
 
     CConfiguration cConf = CConfiguration.create();
     String kafkaZkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
@@ -72,21 +72,21 @@ public class KafkaClientModuleTest {
     if (kafkaZkNamespace != null) {
       ZKClientService zkClient = new DefaultZKClientService(zkServer.getConnectionStr(), 2000, null,
           ImmutableMultimap.of());
-      zkClient.startAndWait();
+      zkClient.startAsync().awaitRunning();
       zkClient.create("/" + kafkaZkNamespace, null, CreateMode.PERSISTENT);
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
 
       kafkaZkConnect += "/" + kafkaZkNamespace;
     }
 
     kafkaServer = createKafkaServer(kafkaZkConnect, TEMP_FOLDER.newFolder());
-    kafkaServer.startAndWait();
+    kafkaServer.startAsync().awaitRunning();
   }
 
   @After
   public void afterTest() {
-    kafkaServer.stopAndWait();
-    zkServer.stopAndWait();
+    kafkaServer.stopAsync().awaitTerminated();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -101,7 +101,7 @@ public class KafkaClientModuleTest {
     );
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.startAndWait();
+    zkClientService.startAsync().awaitRunning();
 
     final int baseZkConns = getZkConnections();
 
@@ -110,8 +110,8 @@ public class KafkaClientModuleTest {
     Assert.assertSame(kafkaClientService, kafkaClient);
     final BrokerService brokerService = injector.getInstance(BrokerService.class);
 
-    kafkaClientService.startAndWait();
-    brokerService.startAndWait();
+    kafkaClientService.startAsync().awaitRunning();
+    brokerService.startAsync().awaitRunning();
 
     Assert.assertTrue(zkClientService.isRunning());
     Assert.assertEquals(baseZkConns, getZkConnections());
@@ -123,13 +123,13 @@ public class KafkaClientModuleTest {
       }
     }, 5L, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    kafkaClientService.stopAndWait();
-    brokerService.stopAndWait();
+    kafkaClientService.stopAsync().awaitTerminated();
+    brokerService.stopAsync().awaitTerminated();
 
     Assert.assertTrue(zkClientService.isRunning());
     Assert.assertEquals(baseZkConns, getZkConnections());
 
-    zkClientService.stopAndWait();
+    zkClientService.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -145,17 +145,17 @@ public class KafkaClientModuleTest {
     );
 
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.startAndWait();
+    zkClientService.startAsync().awaitRunning();
 
     int baseZkConns = getZkConnections();
 
     KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
     final BrokerService brokerService = injector.getInstance(BrokerService.class);
 
-    kafkaClientService.startAndWait();
+    kafkaClientService.startAsync().awaitRunning();
     Assert.assertEquals(baseZkConns + 1, getZkConnections());
 
-    brokerService.startAndWait();
+    brokerService.startAsync().awaitRunning();
     Assert.assertEquals(baseZkConns + 1, getZkConnections());
 
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -167,15 +167,15 @@ public class KafkaClientModuleTest {
 
     Assert.assertTrue(zkClientService.isRunning());
 
-    brokerService.stopAndWait();
+    brokerService.stopAsync().awaitTerminated();
     Assert.assertEquals(baseZkConns + 1, getZkConnections());
 
-    kafkaClientService.stopAndWait();
+    kafkaClientService.stopAsync().awaitTerminated();
     Assert.assertEquals(baseZkConns, getZkConnections());
 
     Assert.assertTrue(zkClientService.isRunning());
 
-    zkClientService.stopAndWait();
+    zkClientService.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -193,14 +193,14 @@ public class KafkaClientModuleTest {
     KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
     BrokerService brokerService = injector.getInstance(BrokerService.class);
 
-    brokerService.startAndWait();
-    kafkaClientService.startAndWait();
+    brokerService.startAsync().awaitRunning();
+    kafkaClientService.startAsync().awaitRunning();
 
     // Stop kafkaClientService first while brokerService still holds a ref count > 0.
-    kafkaClientService.stopAndWait();
+    kafkaClientService.stopAsync().awaitTerminated();
     Assert.assertTrue(brokerService.isRunning());
 
-    brokerService.stopAndWait();
+    brokerService.stopAsync().awaitTerminated();
     Assert.assertFalse(brokerService.isRunning());
   }
 

@@ -84,12 +84,12 @@ public class DistributedMapReduceTaskContextProviderTest {
     };
     setField(provider, "logAppenderInitializer", failingCloseInitializer);
 
-    provider.startAndWait();
+    provider.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, provider.state());
     Assert.assertEquals(Service.State.RUNNING, service1.state());
     Assert.assertEquals(Service.State.RUNNING, service2.state());
 
-    provider.stopAndWait();
+    provider.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, provider.state());
     Assert.assertTrue(logClosed.get());
     Assert.assertEquals(
@@ -109,7 +109,7 @@ public class DistributedMapReduceTaskContextProviderTest {
     setField(provider, "logAppenderInitializer", Mockito.mock(LogAppenderInitializer.class));
 
     try {
-      provider.startAndWait();
+      provider.startAsync().awaitRunning();
       Assert.fail("Expected Service startAndWait to fail when service2 fails to start");
     } catch (RuntimeException expected) {
       Assert.assertEquals(Service.State.FAILED, provider.state());

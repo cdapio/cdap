@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.batch;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.ProgramLifecycle;
 import io.cdap.cdap.api.RuntimeContext;
 import io.cdap.cdap.common.lang.ClassLoaders;
@@ -89,7 +88,7 @@ public class ReducerWrapper extends Reducer {
           new DataSetFieldSetter(basicMapReduceContext));
     } catch (Throwable t) {
       LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
-      throw Throwables.propagate(t);
+      throw new RuntimeException(t);
     }
 
     ClassLoader oldClassLoader;
@@ -100,7 +99,7 @@ public class ReducerWrapper extends Reducer {
             new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
         LOG.error("Failed to initialize reducer with {}", basicMapReduceContext, e);
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -119,7 +118,7 @@ public class ReducerWrapper extends Reducer {
       basicMapReduceContext.flushOperations();
     } catch (Exception e) {
       LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext, e);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
 
     // Close all writers created by MultipleOutputs
@@ -162,7 +161,7 @@ public class ReducerWrapper extends Reducer {
             basicMapReduceContext.flushOperations();
           } catch (Exception e) {
             LOG.error("Failed to persist changes", e);
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
           processedRecords = 0;
         }
@@ -182,7 +181,7 @@ public class ReducerWrapper extends Reducer {
       return (Reducer) classLoader.loadClass(userReducer).newInstance();
     } catch (Exception e) {
       LOG.error("Failed to create instance of the user-defined Reducer class: " + userReducer);
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 }

@@ -47,13 +47,13 @@ public class LogSaverStatusServiceTest {
 
     Assert.assertEquals("LogSaverStatusService{bindAddress=/127.0.0.1:0}", service.toString());
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Discoverable discovered =
         Iterables.getOnlyElement(discoveryService.discover(Constants.Service.LOGSAVER));
     Assert.assertEquals("LogSaverStatusService{bindAddress=" + discovered.getSocketAddress() + "}",
         service.toString());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertTrue(Iterables.isEmpty(discoveryService.discover(Constants.Service.LOGSAVER)));
   }
 }

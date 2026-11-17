@@ -60,10 +60,12 @@ public class ProgramNotificationSubscriberServiceUnitTest {
         store,
         flowControlService);
 
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Mockito.verify(store).scanActiveRuns(Mockito.anyInt(), Mockito.any());
     Mockito.verify(flowControlService).emitFlowControlMetrics();
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
   }
 }

@@ -50,7 +50,7 @@ public class AuditLogSubscriberServiceTest {
         transactionRunner,
         instantiator);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, service.state());
 
     Field delegateField = AuditLogSubscriberService.class.getDeclaredField("delegate");
@@ -59,7 +59,7 @@ public class AuditLogSubscriberServiceTest {
     Assert.assertNotNull(delegate);
     Assert.assertEquals(Service.State.RUNNING, delegate.state());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(Service.State.TERMINATED, delegate.state());
   }

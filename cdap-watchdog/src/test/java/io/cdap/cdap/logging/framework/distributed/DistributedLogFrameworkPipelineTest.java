@@ -71,11 +71,11 @@ public class DistributedLogFrameworkPipelineTest {
         cConf, createTrackingProvider(startedContexts, stoppedContexts, Collections.emptySet()));
 
     Service compositeService = framework.createService(Collections.singleton(0));
-    compositeService.startAndWait();
+    compositeService.startAsync().awaitRunning();
     Tasks.waitFor(true, () -> startedContexts.containsAll(ImmutableSet.of("cdap", "extra1", "extra2")),
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
-    compositeService.stopAndWait();
+    compositeService.stopAsync().awaitTerminated();
     Assert.assertTrue(stoppedContexts.containsAll(ImmutableSet.of("cdap", "extra1", "extra2")));
   }
 
@@ -127,7 +127,7 @@ public class DistributedLogFrameworkPipelineTest {
     });
 
     Service compositeService = framework.createService(Collections.singleton(0));
-    compositeService.startAndWait();
+    compositeService.startAsync().awaitRunning();
 
     // Wait for healthy cdap pipeline to start and both failing RetryOnStartFailureService wrappers
     // to transition to FAILED (since retry policy is none).
@@ -136,7 +136,7 @@ public class DistributedLogFrameworkPipelineTest {
     TimeUnit.MILLISECONDS.sleep(100);
 
     try {
-      compositeService.stopAndWait();
+      compositeService.stopAsync().awaitTerminated();
       Assert.fail("Expected composite service stopAndWait to fail when two pipelines failed");
     } catch (RuntimeException expected) {
       Throwable failureCause = expected.getCause();

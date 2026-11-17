@@ -106,10 +106,10 @@ public class MasterServiceMainTest {
   @Test
   public void testStartAndStopFollowerAndCloseQuietly() throws Exception {
     InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     try {
       ZKClientService preLeaderZk = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-      preLeaderZk.startAndWait();
+      preLeaderZk.startAsync().awaitRunning();
       try {
         CountDownLatch leaderElected = new CountDownLatch(1);
         LeaderElection primaryLeader = new LeaderElection(
@@ -125,7 +125,7 @@ public class MasterServiceMainTest {
               public void follower() {
               }
             });
-        primaryLeader.startAndWait();
+        primaryLeader.startAsync().awaitRunning();
         try {
           Assert.assertTrue(leaderElected.await(10, TimeUnit.SECONDS));
 
@@ -152,13 +152,13 @@ public class MasterServiceMainTest {
           Mockito.verify(failingAppender).initialize();
           Mockito.verify(failingAppender).close();
         } finally {
-          primaryLeader.stopAndWait();
+          primaryLeader.stopAsync().awaitTerminated();
         }
       } finally {
-        preLeaderZk.stopAndWait();
+        preLeaderZk.stopAsync().awaitTerminated();
       }
     } finally {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
   }
 
@@ -187,7 +187,7 @@ public class MasterServiceMainTest {
     Assert.assertEquals(Service.State.TERMINATED, started.state());
 
     TestIdleService failingStopService = new TestIdleService(true);
-    failingStopService.startAndWait();
+    failingStopService.startAsync().awaitRunning();
     stopQuietly.invoke(null, failingStopService);
     Assert.assertEquals(Service.State.FAILED, failingStopService.state());
   }
@@ -286,7 +286,7 @@ public class MasterServiceMainTest {
     @SuppressWarnings("unchecked")
     List<Service> services = (List<Service>) getField(handler, "services");
     TestIdleService runningSvc = new TestIdleService(false);
-    runningSvc.startAndWait();
+    runningSvc.startAsync().awaitRunning();
     services.add(runningSvc);
 
     Method handlerStop = handler.getClass().getDeclaredMethod("stop", boolean.class);

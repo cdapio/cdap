@@ -76,14 +76,16 @@ public class DatasetServiceTest {
         typeService,
         instanceService);
 
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(Service.State.RUNNING, typeService.state());
     Assert.assertTrue(reporterStarted.await(5, TimeUnit.SECONDS));
 
     String str = service.toString();
     Assert.assertTrue("Unexpected toString: " + str, str.startsWith("DatasetService{bindAddress="));
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(Service.State.TERMINATED, typeService.state());
     Assert.assertTrue(reporterStopped.await(5, TimeUnit.SECONDS));
   }

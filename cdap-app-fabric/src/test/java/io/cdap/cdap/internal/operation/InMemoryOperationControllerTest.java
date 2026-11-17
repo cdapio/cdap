@@ -48,7 +48,7 @@ public class InMemoryOperationControllerTest {
     InMemoryOperationController controller =
         new InMemoryOperationController(runId, publisher, driver);
 
-    driver.start();
+    driver.startAsync();
     OperationController completed = controller.complete().get(5, TimeUnit.SECONDS);
 
     Assert.assertSame(controller, completed);
@@ -78,7 +78,7 @@ public class InMemoryOperationControllerTest {
     InMemoryOperationController controller =
         new InMemoryOperationController(runId, publisher, driver);
 
-    driver.start();
+    driver.startAsync();
     Assert.assertTrue(startedLatch.await(5, TimeUnit.SECONDS));
 
     OperationController stopped = controller.stop().get(5, TimeUnit.SECONDS);
@@ -103,7 +103,7 @@ public class InMemoryOperationControllerTest {
     InMemoryOperationController controller1 =
         new InMemoryOperationController(runId1, publisher1, driver1);
 
-    driver1.start();
+    driver1.startAsync();
     controller1.complete().get(5, TimeUnit.SECONDS);
 
     ArgumentCaptor<OperationError> errorCaptor1 = ArgumentCaptor.forClass(OperationError.class);
@@ -121,7 +121,7 @@ public class InMemoryOperationControllerTest {
     InMemoryOperationController controller2 =
         new InMemoryOperationController(runId2, publisher2, driver2);
 
-    driver2.start();
+    driver2.startAsync();
     controller2.complete().get(5, TimeUnit.SECONDS);
 
     ArgumentCaptor<OperationError> errorCaptor2 = ArgumentCaptor.forClass(OperationError.class);

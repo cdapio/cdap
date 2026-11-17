@@ -64,15 +64,15 @@ public class TwillAppLifecycleEventHandlerTest {
         // no-op
       }
     };
-    backingService.startAndWait();
+    backingService.startAsync().awaitRunning();
 
     ZKClientService zkClientService = Mockito.mock(ZKClientService.class, invocation -> {
       String methodName = invocation.getMethod().getName();
       if ("stop".equals(methodName)) {
-        return backingService.stop();
+        return backingService.stopAsync();
       }
       if ("stopAsync".equals(methodName)) {
-        backingService.stop();
+        backingService.stopAsync();
         return invocation.getMock();
       }
       if ("state".equals(methodName)) {

@@ -56,14 +56,14 @@ public class NettyRouterTest {
         new InMemoryDiscoveryService(),
         new NoOpAeadCipher());
 
-    router.startAndWait();
+    router.startAsync().awaitRunning();
     try {
       Assert.assertEquals(Service.State.RUNNING, router.state());
       Assert.assertTrue(router.getBoundAddress().isPresent());
       Assert.assertTrue(tokenValidator.started.get());
       Assert.assertTrue(tokenValidator.isRunning());
     } finally {
-      router.stopAndWait();
+      router.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(Service.State.TERMINATED, router.state());
@@ -91,8 +91,8 @@ public class NettyRouterTest {
         new InMemoryDiscoveryService(),
         new NoOpAeadCipher());
 
-    router.startAndWait();
-    router.stopAndWait();
+    router.startAsync().awaitRunning();
+    router.stopAsync().awaitTerminated();
 
     Assert.assertFalse(tokenValidator.started.get());
     Assert.assertFalse(tokenValidator.stopped.get());

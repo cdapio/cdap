@@ -56,7 +56,7 @@ public class SystemAuthenticationContextTest {
         new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
     AccessTokenCodec accessTokenCodec = injector.getInstance(AccessTokenCodec.class);
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
 
     try {
       final SystemAuthenticationContext context = new SystemAuthenticationContext(accessTokenCodec, tokenManager);
@@ -87,7 +87,7 @@ public class SystemAuthenticationContextTest {
       Assert.assertEquals("systemServiceUser", decodedToken.getIdentifier().getUsername());
       Assert.assertEquals(UserIdentity.IdentifierType.INTERNAL, decodedToken.getIdentifier().getIdentifierType());
     } finally {
-      tokenManager.stopAndWait();
+      tokenManager.stopAsync().awaitTerminated();
     }
   }
 }

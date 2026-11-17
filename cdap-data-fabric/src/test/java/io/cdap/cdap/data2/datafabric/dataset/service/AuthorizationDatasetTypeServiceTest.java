@@ -58,11 +58,13 @@ public class AuthorizationDatasetTypeServiceTest {
     AuthorizationDatasetTypeService service = new AuthorizationDatasetTypeService(
         delegate, new NoOpAccessController(), Mockito.mock(AuthenticationContext.class));
 
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertTrue(started.get());
     Assert.assertEquals(Service.State.RUNNING, delegate.state());
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertTrue(stopped.get());
     Assert.assertEquals(Service.State.TERMINATED, delegate.state());
   }

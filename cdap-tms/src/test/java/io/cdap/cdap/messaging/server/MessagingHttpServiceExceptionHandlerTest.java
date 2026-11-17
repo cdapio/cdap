@@ -76,7 +76,7 @@ public class MessagingHttpServiceExceptionHandlerTest {
         });
 
     MessagingHttpService httpService = injector.getInstance(MessagingHttpService.class);
-    httpService.startAndWait();
+    httpService.startAsync().awaitRunning();
     try {
       MessagingService client = new DefaultClientMessagingService(
           injector.getInstance(RemoteClientFactory.class), false);
@@ -105,7 +105,7 @@ public class MessagingHttpServiceExceptionHandlerTest {
         SecurityRequestContext.setUserId(previousUser);
       }
     } finally {
-      httpService.stopAndWait();
+      httpService.stopAsync().awaitTerminated();
     }
   }
 }

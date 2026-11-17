@@ -126,7 +126,7 @@ public class SystemWorkerTwillRunnableTest {
         new FileBasedCoreSecurityModule(),
         new InMemoryDiscoveryModule());
     MetricsCollectionService metrics = new NoOpMetricsCollectionService();
-    metrics.startAndWait();
+    metrics.startAsync().awaitRunning();
 
     InMemoryDiscoveryService discovery = new InMemoryDiscoveryService();
     SystemWorkerService workerService = new SystemWorkerService(

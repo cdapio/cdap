@@ -48,7 +48,8 @@ public class DatasetOpExecutorServiceUnitTest {
 
     Assert.assertEquals("DatasetOpExecutorService{bindAddress=/127.0.0.1:0}", service.toString());
 
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     try {
       int boundPort = service.getHttpService().getBindAddress().getPort();
       Assert.assertTrue(boundPort > 0);
@@ -57,7 +58,8 @@ public class DatasetOpExecutorServiceUnitTest {
           runningStr.startsWith("DatasetOpExecutorService{bindAddress="));
       Assert.assertTrue(runningStr.contains(String.valueOf(boundPort)));
     } finally {
-      Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+      service.stopAsync().awaitTerminated();
+      Assert.assertEquals(Service.State.TERMINATED, service.state());
     }
   }
 }

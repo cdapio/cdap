@@ -308,8 +308,8 @@ public class CoreMessagingServiceTest {
     cConf.set(Constants.MessagingSystem.SYSTEM_TOPICS, "");
     CoreMessagingService service = new CoreMessagingService(
         cConf, tableFactory, TimeProvider.SYSTEM_TIME, new NoOpMetricsCollectionService());
-    service.startAndWait();
-    service.stopAndWait();
+    service.startAsync().awaitRunning();
+    service.stopAsync().awaitTerminated();
     Assert.assertTrue(closeCalled.get());
   }
 

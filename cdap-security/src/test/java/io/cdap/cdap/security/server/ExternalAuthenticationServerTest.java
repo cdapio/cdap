@@ -88,7 +88,7 @@ public class ExternalAuthenticationServerTest {
         cConf, SConfiguration.create(), discoveryService, handlers,
         new AuditLogHandler(LoggerFactory.getLogger(ExternalAuthenticationServerTest.class)));
 
-    Executor executor = server.executor(Service.State.STARTING);
+    Executor executor = server.executor();
     final AtomicReference<String> threadName = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     executor.execute(new Runnable() {
@@ -101,7 +101,7 @@ public class ExternalAuthenticationServerTest {
     Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
     Assert.assertEquals("ExternalAuthenticationServer-1", threadName.get());
 
-    server.startAndWait();
+    server.startAsync().awaitRunning();
     try {
       Assert.assertTrue(server.isRunning());
       InetSocketAddress address = server.getSocketAddress();
@@ -125,7 +125,7 @@ public class ExternalAuthenticationServerTest {
         connection.disconnect();
       }
     } finally {
-      server.stopAndWait();
+      server.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(Service.State.TERMINATED, server.state());

@@ -134,7 +134,7 @@ public class DefaultPreviewManagerTest {
       }
     };
 
-    manager.startAndWait();
+    manager.startAsync().awaitRunning();
     Tasks.waitFor(Service.State.RUNNING, metricsService::state, 5, TimeUnit.SECONDS,
         20, TimeUnit.MILLISECONDS);
     Assert.assertTrue(appenderStarted.get());
@@ -142,7 +142,7 @@ public class DefaultPreviewManagerTest {
     Assert.assertEquals(Service.State.RUNNING, dataSubscriber.state());
     Assert.assertEquals(Service.State.RUNNING, cleanupService.state());
 
-    manager.stopAndWait();
+    manager.stopAsync().awaitTerminated();
     Assert.assertTrue(appenderStopped.get());
     Assert.assertEquals(Service.State.TERMINATED, cleanupService.state());
     Assert.assertEquals(Service.State.TERMINATED, dataSubscriber.state());
@@ -205,8 +205,8 @@ public class DefaultPreviewManagerTest {
       }
     };
 
-    manager.startAndWait();
-    manager.stopAndWait();
+    manager.startAsync().awaitRunning();
+    manager.stopAsync().awaitTerminated();
 
     Assert.assertEquals(Service.State.TERMINATED, cleanupService.state());
     Assert.assertEquals(Service.State.FAILED, dataSubscriber.state());

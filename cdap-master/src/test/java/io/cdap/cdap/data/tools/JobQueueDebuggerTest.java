@@ -48,18 +48,18 @@ public class JobQueueDebuggerTest {
   @Test
   public void testStartStopAndScanJobQueue() throws Exception {
     InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     try {
       ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
       TransactionRunner txRunner = Mockito.mock(TransactionRunner.class);
       CConfiguration cConf = CConfiguration.create();
 
       JobQueueDebugger debugger = new JobQueueDebugger(cConf, zkClient, txRunner);
-      debugger.startAndWait();
+      debugger.startAsync().awaitRunning();
       Assert.assertEquals(Service.State.RUNNING, debugger.state());
       Assert.assertEquals(Service.State.RUNNING, zkClient.state());
 
-      debugger.stopAndWait();
+      debugger.stopAsync().awaitTerminated();
       Assert.assertEquals(Service.State.TERMINATED, debugger.state());
       Assert.assertEquals(Service.State.TERMINATED, zkClient.state());
 
@@ -117,7 +117,7 @@ public class JobQueueDebuggerTest {
       getTotal.setAccessible(true);
       Assert.assertEquals(3, ((Integer) getTotal.invoke(stats)).intValue());
     } finally {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
   }
 

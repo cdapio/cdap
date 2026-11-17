@@ -107,7 +107,8 @@ public class DefaultDatasetTypeServiceTest {
         txRunner,
         Collections.singletonMap("testModule1", new TestModule1()));
 
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(Service.State.RUNNING, txClientService.state());
     Mockito.verify(typeManager).addModule(
         NamespaceId.SYSTEM.datasetModule("testModule1"), TestModule1.class.getName(), null, false);
@@ -131,7 +132,8 @@ public class DefaultDatasetTypeServiceTest {
     Assert.assertEquals(jarBytes.length, archiveCaptor.getValue().length());
     Mockito.verify(responder).sendStatus(HttpResponseStatus.OK);
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(Service.State.TERMINATED, txClientService.state());
   }
 
@@ -206,7 +208,7 @@ public class DefaultDatasetTypeServiceTest {
         Collections.singletonMap("badDefault", new TestModule1()));
 
     try {
-      service.startAndWait();
+      service.startAsync().awaitRunning();
       Assert.fail("Expected startup failure");
     } catch (RuntimeException e) {
       Assert.assertSame(expectedFailure, e.getCause());

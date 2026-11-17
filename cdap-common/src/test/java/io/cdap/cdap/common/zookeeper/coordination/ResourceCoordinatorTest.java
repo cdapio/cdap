@@ -76,12 +76,12 @@ public class ResourceCoordinatorTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -95,18 +95,18 @@ public class ResourceCoordinatorTest {
         new ZkClientModule(),
         new ZkDiscoveryModule());
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     try {
       ResourceCoordinator coordinator = new ResourceCoordinator(zkClient,
           injector.getInstance(DiscoveryServiceClient.class),
           new BalancedAssignmentStrategy());
-      coordinator.startAndWait();
+      coordinator.startAsync().awaitRunning();
 
       try {
         ResourceCoordinatorClient client = new ResourceCoordinatorClient(zkClient);
-        client.startAndWait();
+        client.startAsync().awaitRunning();
 
         try {
           ResourceRequirement requirement = ResourceRequirement.builder(serviceName)
@@ -174,20 +174,20 @@ public class ResourceCoordinatorTest {
 
           cancelDiscoverable2.cancel();
         } finally {
-          client.stopAndWait();
+          client.stopAsync().awaitTerminated();
         }
       } finally {
-        coordinator.stopAndWait();
+        coordinator.stopAsync().awaitTerminated();
       }
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void testSaveAssignmentFailureNotifiesFailed() throws Exception {
     ZKClientService rawZkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    rawZkClient.startAndWait();
+    rawZkClient.startAsync().awaitRunning();
     try {
       ZKClient namespaced = ZKClients.namespace(rawZkClient, "/save-fail-ns");
       ZKClient failingSaveZk = new ForwardingZKClient(namespaced) {
@@ -221,7 +221,7 @@ public class ResourceCoordinatorTest {
       try {
         ResourceCoordinator coordinator = new ResourceCoordinator(
             failingSaveZk, discovery, new BalancedAssignmentStrategy());
-        coordinator.startAndWait();
+        coordinator.startAsync().awaitRunning();
 
         ResourceCoordinatorClient client = new ResourceCoordinatorClient(namespaced);
         client.submitRequirement(
@@ -233,7 +233,7 @@ public class ResourceCoordinatorTest {
         reg.cancel();
       }
     } finally {
-      rawZkClient.stopAndWait();
+      rawZkClient.stopAsync().awaitTerminated();
     }
   }
 

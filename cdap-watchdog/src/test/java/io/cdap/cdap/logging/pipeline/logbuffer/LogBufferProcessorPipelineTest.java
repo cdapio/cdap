@@ -67,7 +67,7 @@ public class LogBufferProcessorPipelineTest {
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // start thread to write to incomingEventQueue
     List<ILoggingEvent> events = getLoggingEvents();
@@ -95,7 +95,7 @@ public class LogBufferProcessorPipelineTest {
     // wait for pipeline to append all the logs to appender. The DEBUG message should get filtered out.
     Tasks.waitFor(200, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     executorService.shutdown();
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 
@@ -132,11 +132,11 @@ public class LogBufferProcessorPipelineTest {
         config, checkpointManager, 0);
 
     org.junit.Assert.assertEquals("LogPipeline-auditBuffer [NEW]", pipeline.toString());
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
     org.junit.Assert.assertEquals("LogPipeline-auditBuffer [RUNNING]", pipeline.toString());
     org.junit.Assert.assertEquals("LogPipeline-auditBuffer", startupThreadName.get());
 
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     org.junit.Assert.assertEquals("LogPipeline-auditBuffer [TERMINATED]", pipeline.toString());
   }
 

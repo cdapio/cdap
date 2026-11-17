@@ -46,23 +46,23 @@ public class ResourceCoordinatorClientTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testSubmitFetchModifyDeleteAndCorruptRequirement() throws Exception {
     ZKClientService zkClientService =
         ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClientService.startAndWait();
+    zkClientService.startAsync().awaitRunning();
     try {
       ZKClient zkClient = ZKClients.namespace(zkClientService, "/client-test");
       ResourceCoordinatorClient client = new ResourceCoordinatorClient(zkClient);
-      client.startAndWait();
+      client.startAsync().awaitRunning();
       try {
         // Fetching non-existent requirement returns null via NODE_DATA_TO_REQUIREMENT.
         Assert.assertNull(client.fetchRequirement("missing-res").get(5, TimeUnit.SECONDS));
@@ -100,10 +100,10 @@ public class ResourceCoordinatorClientTest {
           Assert.assertTrue(e.getCause() instanceof JsonSyntaxException);
         }
       } finally {
-        client.stopAndWait();
+        client.stopAsync().awaitTerminated();
       }
     } finally {
-      zkClientService.stopAndWait();
+      zkClientService.stopAsync().awaitTerminated();
     }
   }
 }

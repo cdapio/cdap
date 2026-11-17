@@ -130,14 +130,14 @@ public class OperationalStatsServiceTest {
     ObjectName expectedName = new ObjectName(OperationalStatsUtils.JMX_DOMAIN, props);
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       Assert.assertTrue(stats.initialized.get());
       Assert.assertTrue(mbs.isRegistered(expectedName));
       Assert.assertTrue(collectedLatch.await(5, TimeUnit.SECONDS));
       Assert.assertTrue(stats.getCollectedCount() >= 1);
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(Service.State.TERMINATED, service.state());
@@ -174,7 +174,7 @@ public class OperationalStatsServiceTest {
     map1.put(new OperationalExtensionId("svc4", "ds"), serviceUnavailableStats);
     injectExtensions(service1, map1);
 
-    service1.startAndWait();
+    service1.startAsync().awaitRunning();
     try {
       Method collectMethod =
           OperationalStatsService.class.getDeclaredMethod("collectOperationalStats");
@@ -183,7 +183,7 @@ public class OperationalStatsServiceTest {
       Assert.assertTrue(okStats.getCollectedCount() >= 1);
       // svc4 comes after svc3's TException early return, verifying TException caused return.
     } finally {
-      service1.stopAndWait();
+      service1.stopAsync().awaitTerminated();
     }
 
     // Case 2: Direct InterruptedException propagates out of collectOperationalStats.
@@ -198,7 +198,7 @@ public class OperationalStatsServiceTest {
     // Keep service2 RUNNING with a second service instance or test while service2 is running.
     OperationalStatsService runningService = new OperationalStatsService(cConf, injector);
     injectExtensions(runningService, ImmutableMap.of());
-    runningService.startAndWait();
+    runningService.startAsync().awaitRunning();
     try {
       injectExtensions(
           runningService,
@@ -214,7 +214,7 @@ public class OperationalStatsServiceTest {
       }
     } finally {
       injectExtensions(runningService, ImmutableMap.of());
-      runningService.stopAndWait();
+      runningService.stopAsync().awaitTerminated();
     }
   }
 

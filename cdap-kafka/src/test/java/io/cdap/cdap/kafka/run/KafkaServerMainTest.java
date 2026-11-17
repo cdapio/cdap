@@ -45,7 +45,7 @@ public class KafkaServerMainTest {
   @Test
   public void testInitStartAndStopWithZkNamespace() throws Exception {
     InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     try {
       int kafkaPort = Networks.getRandomPort();
       String logDir = TEMP_FOLDER.newFolder("kafka-logs").getAbsolutePath();
@@ -74,7 +74,7 @@ public class KafkaServerMainTest {
         }
       });
     } finally {
-      zkServer.stopAndWait();
+      zkServer.stopAsync().awaitTerminated();
     }
   }
 

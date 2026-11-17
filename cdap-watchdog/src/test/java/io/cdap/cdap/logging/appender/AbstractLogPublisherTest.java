@@ -55,11 +55,11 @@ public class AbstractLogPublisherTest {
       }
     };
 
-    publisher.startAndWait();
+    publisher.startAsync().awaitRunning();
     Assert.assertTrue(publisher.isRunning());
     publisher.addMessage(createLogMessage("first-msg"));
     Assert.assertTrue(firstPublishLatch.await(5, TimeUnit.SECONDS));
-    publisher.stopAndWait();
+    publisher.stopAsync().awaitTerminated();
 
     Assert.assertEquals(Collections.singletonList("first-msg"), published);
     Assert.assertNotNull(publishThreadName.get());
@@ -94,10 +94,10 @@ public class AbstractLogPublisherTest {
       }
     };
 
-    publisher.startAndWait();
+    publisher.startAsync().awaitRunning();
     publisher.addMessage(createLogMessage("failing-msg"));
     Assert.assertTrue(exhaustedLatch.await(5, TimeUnit.SECONDS));
-    publisher.stopAndWait();
+    publisher.stopAsync().awaitTerminated();
 
     Assert.assertFalse(recordedErrors.isEmpty());
     Assert.assertEquals("Failed to publish log message by TestLogPublisher", recordedErrors.get(0));
@@ -128,14 +128,14 @@ public class AbstractLogPublisherTest {
       }
     };
 
-    publisher.startAndWait();
+    publisher.startAsync().awaitRunning();
     publisher.addMessage(createLogMessage("in-flight"));
     Assert.assertTrue(blockInRunLatch.await(5, TimeUnit.SECONDS));
 
     publisher.addMessage(createLogMessage("queued-for-shutdown"));
     failOnShutdown.set(true);
     unblockRunLatch.countDown();
-    publisher.stopAndWait();
+    publisher.stopAsync().awaitTerminated();
 
     Assert.assertEquals(
         Collections.singletonList("Failed to publish log message by TestLogPublisher"),
@@ -159,7 +159,7 @@ public class AbstractLogPublisherTest {
     }
 
     @Override
-    protected String getServiceName() {
+    protected String serviceName() {
       return "TestLogPublisher";
     }
 

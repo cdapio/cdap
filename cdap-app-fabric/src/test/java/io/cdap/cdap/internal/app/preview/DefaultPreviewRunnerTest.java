@@ -248,7 +248,7 @@ public class DefaultPreviewRunnerTest {
         cConf,
         Mockito.mock(PreferencesFetcher.class));
 
-    runner.startAndWait();
+    runner.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, messagingBacking.state());
     Assert.assertEquals(Service.State.RUNNING, dsOpExecService.state());
     Assert.assertEquals(Service.State.RUNNING, datasetService.state());
@@ -259,7 +259,7 @@ public class DefaultPreviewRunnerTest {
     Assert.assertEquals(Service.State.RUNNING, stopSubscriberService.state());
     Mockito.verify(logInitializer).initialize();
 
-    runner.stopAndWait();
+    runner.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, runner.state());
     Mockito.verify(logInitializer).close();
     Mockito.verify(levelDbService).close();

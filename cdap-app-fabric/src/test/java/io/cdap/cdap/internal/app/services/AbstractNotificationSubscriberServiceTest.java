@@ -85,7 +85,7 @@ public class AbstractNotificationSubscriberServiceTest {
     TestNotificationSubscriberService service = new TestNotificationSubscriberService(
         "custom.notification.consumer", cConf, "testTopic", messagingService, txRunner);
 
-    Assert.assertEquals("custom.notification.consumer", service.getServiceName());
+    Assert.assertEquals("custom.notification.consumer", service.serviceName());
     Assert.assertNotNull(service.getMessagingContext());
     Assert.assertSame(txRunner, service.getTransactionRunner());
 

@@ -72,7 +72,7 @@ public class LogBufferRecoveryServiceTest {
       config, checkpointManager, 0);
 
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // write directly to log buffer
     LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
@@ -85,12 +85,12 @@ public class LogBufferRecoveryServiceTest {
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
                                                                     absolutePath, 2, new AtomicBoolean(true));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    service.stopAndWait();
-    pipeline.stopAndWait();
+    service.stopAsync().awaitTerminated();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 
@@ -115,8 +115,8 @@ public class LogBufferRecoveryServiceTest {
         ImmutableList.of(), ImmutableList.of(checkpointManager),
         missingDir.getAbsolutePath(), 10, startCleanup);
     org.junit.Assert.assertTrue(fastService.toString().startsWith("log.buffer.recovery ["));
-    fastService.startAndWait();
-    fastService.stopAndWait();
+    fastService.startAsync().awaitRunning();
+    fastService.stopAsync().awaitTerminated();
     org.junit.Assert.assertTrue(startCleanup.get());
     org.junit.Assert.assertEquals("log.buffer.recovery [TERMINATED]", fastService.toString());
 
@@ -128,8 +128,8 @@ public class LogBufferRecoveryServiceTest {
     LogBufferRecoveryService namedService = new LogBufferRecoveryService(
         ImmutableList.of(), ImmutableList.of(checkpointManager),
         existingBufDir, 10, new AtomicBoolean(false));
-    namedService.startAndWait();
-    namedService.stopAndWait();
+    namedService.startAsync().awaitRunning();
+    namedService.stopAsync().awaitTerminated();
     org.junit.Assert.assertEquals("log.buffer.recovery", executionThreadName.get());
   }
 

@@ -86,7 +86,7 @@ public class RemoteExecutionTwillControllerTest {
     CountDownLatch terminatedLatch = new CountDownLatch(1);
     controller.onTerminated(terminatedLatch::countDown, Threads.SAME_THREAD_EXECUTOR);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertNull(controller.getTerminationStatus());
 
     controller.complete();
@@ -112,7 +112,7 @@ public class RemoteExecutionTwillControllerTest {
         cConf, runId, CompletableFuture.completedFuture(null),
         processController, scheduler, service, false);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     controller.release();
 
     Tasks.waitFor(
@@ -142,7 +142,7 @@ public class RemoteExecutionTwillControllerTest {
         cConf, runId, CompletableFuture.completedFuture(null),
         processController, scheduler, failingService, false);
 
-    failingService.start();
+    failingService.startAsync();
     try {
       controller.awaitTerminated(5, TimeUnit.SECONDS);
       Assert.fail("Expected ExecutionException when executionService fails");

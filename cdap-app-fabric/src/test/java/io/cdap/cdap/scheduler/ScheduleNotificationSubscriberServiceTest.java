@@ -78,14 +78,14 @@ public class ScheduleNotificationSubscriberServiceTest {
     children.set(1, failingStopChild);
     Service defaultChild = children.get(2);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     try {
       // Immediately upon startAndWait() returning, all child subscriber services MUST be RUNNING.
       Assert.assertEquals(Service.State.RUNNING, slowChild.state());
       Assert.assertEquals(Service.State.RUNNING, failingStopChild.state());
       Assert.assertEquals(Service.State.RUNNING, defaultChild.state());
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(Service.State.TERMINATED, service.state());

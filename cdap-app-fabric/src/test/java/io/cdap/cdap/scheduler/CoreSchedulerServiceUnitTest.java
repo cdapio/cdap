@@ -211,14 +211,14 @@ public class CoreSchedulerServiceUnitTest {
       // Expected.
     }
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     service.waitUntilFunctional(5, TimeUnit.SECONDS);
     Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(
         ImmutableList.of("start:time", "start:constraint", "start:subscriber"),
         events);
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(
         ImmutableList.of(
@@ -266,7 +266,7 @@ public class CoreSchedulerServiceUnitTest {
         impersonator,
         txRunner);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     service.waitUntilFunctional(5, TimeUnit.SECONDS);
     try {
       // Non-workflow program type throws BadRequestException directly.
@@ -350,7 +350,7 @@ public class CoreSchedulerServiceUnitTest {
       }
     } finally {
       txExceptionRef.set(null);
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 }

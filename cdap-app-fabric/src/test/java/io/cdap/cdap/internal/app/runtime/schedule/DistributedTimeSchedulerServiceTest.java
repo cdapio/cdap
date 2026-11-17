@@ -49,12 +49,14 @@ public class DistributedTimeSchedulerServiceTest {
         new NoOpMetricsCollectionService());
 
     DistributedTimeSchedulerService service = new DistributedTimeSchedulerService(timeScheduler);
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(2, attempts.get());
     Assert.assertTrue(timeScheduler.isStarted());
     Mockito.verify(quartzScheduler).start();
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
     Mockito.verify(quartzScheduler).shutdown();
   }
 }

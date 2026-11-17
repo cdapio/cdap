@@ -57,14 +57,16 @@ public class AppFabricServerTest {
     try {
       AppFabricServer server = injector.getInstance(AppFabricServer.class);
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-      Service.State state = server.startAndWait();
+      server.startAsync().awaitRunning();
+      Service.State state = server.state();
       Assert.assertSame(state, Service.State.RUNNING);
 
       final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
         () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
       Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
 
-      state = server.stopAndWait();
+      server.stopAsync().awaitTerminated();
+      state = server.state();
       Assert.assertSame(state, Service.State.TERMINATED);
 
       Tasks.waitFor(true, () -> endpointStrategy.pick() == null, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -82,7 +84,7 @@ public class AppFabricServerTest {
     try {
       final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AppFabricServer appFabricServer = injector.getInstance(AppFabricServer.class);
-      appFabricServer.startAndWait();
+      appFabricServer.startAsync().awaitRunning();
       Assert.assertTrue(appFabricServer.isRunning());
 
       Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(
@@ -99,7 +101,7 @@ public class AppFabricServerTest {
       // Would throw exception if the server does not support ssl.
       // "javax.net.ssl.SSLException: Unrecognized SSL message, plaintext connection?"
       socket.startHandshake();
-      appFabricServer.stopAndWait();
+      appFabricServer.stopAsync().awaitTerminated();
     } finally {
       AppFabricTestHelper.shutdown();
     }
@@ -131,18 +133,20 @@ public class AppFabricServerTest {
       ApplicationLifecycleService lifecycleService =
           (ApplicationLifecycleService) lifecycleField.get(server);
 
-      Service.State state = server.startAndWait();
+      server.startAsync().awaitRunning();
+      Service.State state = server.state();
       Assert.assertSame(Service.State.RUNNING, state);
       Assert.assertSame(Service.State.RUNNING, nsCredentialService.state());
       Assert.assertSame(Service.State.RUNNING, lifecycleService.state());
 
-      state = server.stopAndWait();
+      server.stopAsync().awaitTerminated();
+      state = server.state();
       Assert.assertSame(Service.State.TERMINATED, state);
       Assert.assertSame(Service.State.TERMINATED, nsCredentialService.state());
       Assert.assertSame(Service.State.TERMINATED, lifecycleService.state());
     } finally {
       if (server != null && server.isRunning()) {
-        server.stopAndWait();
+        server.stopAsync().awaitTerminated();
       }
       AppFabricTestHelper.shutdown();
     }

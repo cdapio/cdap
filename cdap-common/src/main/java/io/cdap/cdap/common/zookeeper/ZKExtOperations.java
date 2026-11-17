@@ -369,8 +369,7 @@ public final class ZKExtOperations {
               resultFuture.setException(t);
             }
           }
-        }, Threads.SAME_THREAD_EXECUTOR
-    );
+        }, Threads.SAME_THREAD_EXECUTOR);
 
     return resultFuture;
   }

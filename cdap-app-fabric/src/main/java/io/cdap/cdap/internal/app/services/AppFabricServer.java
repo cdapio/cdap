@@ -16,10 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -143,20 +140,26 @@ public class AppFabricServer extends AbstractIdleService {
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.APP_FABRIC_HTTP));
-    List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      futuresList.add(namespaceCredentialProviderService.start());
+      startIfNotRunning(namespaceCredentialProviderService);
     }
-    futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        credentialProviderService.start(),
-        sourceControlOperationRunner.start(),
-        repositoryCleanupService.start()
-    ));
-    Futures.allAsList(futuresList).get();
+    startIfNotRunning(provisioningService);
+    startIfNotRunning(applicationLifecycleService);
+    startIfNotRunning(bootstrapService);
+    startIfNotRunning(credentialProviderService);
+    startIfNotRunning(sourceControlOperationRunner);
+    startIfNotRunning(repositoryCleanupService);
+
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+      namespaceCredentialProviderService.awaitRunning();
+    }
+    provisioningService.awaitRunning();
+    applicationLifecycleService.awaitRunning();
+    bootstrapService.awaitRunning();
+    credentialProviderService.awaitRunning();
+    sourceControlOperationRunner.awaitRunning();
+    repositoryCleanupService.awaitRunning();
 
     // Create handler hooks
     List<AbstractHandlerHook> handlerHooks = handlerHookNames.stream()
@@ -212,13 +215,13 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     cancelHttpService.cancel();
-    applicationLifecycleService.stopAndWait();
-    bootstrapService.stopAndWait();
-    provisioningService.stopAndWait();
-    sourceControlOperationRunner.stopAndWait();
-    repositoryCleanupService.stopAndWait();
-    credentialProviderService.stopAndWait();
-    namespaceCredentialProviderService.stopAndWait();
+    applicationLifecycleService.stopAsync().awaitTerminated();
+    bootstrapService.stopAsync().awaitTerminated();
+    provisioningService.stopAsync().awaitTerminated();
+    sourceControlOperationRunner.stopAsync().awaitTerminated();
+    repositoryCleanupService.stopAsync().awaitTerminated();
+    credentialProviderService.stopAsync().awaitTerminated();
+    namespaceCredentialProviderService.stopAsync().awaitTerminated();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
@@ -259,5 +262,11 @@ public class AppFabricServer extends AbstractIdleService {
 
       LOG.info("AppFabric HTTP service stopped.");
     };
+  }
+
+  private void startIfNotRunning(com.google.common.util.concurrent.Service service) {
+    if (service.state() == State.NEW) {
+      service.startAsync();
+    }
   }
 }

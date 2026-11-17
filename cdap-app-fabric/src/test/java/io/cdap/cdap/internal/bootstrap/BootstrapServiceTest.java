@@ -236,12 +236,14 @@ public class BootstrapServiceTest {
 
     BootstrapService service = new BootstrapService(
         provider, bootstrapStore, executors, sysAppService, capabilityService, sysProgramService);
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
     Tasks.waitFor(Service.State.RUNNING, sysAppService::state, 5, TimeUnit.SECONDS);
     Tasks.waitFor(Service.State.RUNNING, capabilityService::state, 5, TimeUnit.SECONDS);
     Tasks.waitFor(Service.State.RUNNING, sysProgramService::state, 5, TimeUnit.SECONDS);
 
-    Assert.assertEquals(Service.State.TERMINATED, service.stopAndWait());
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(Service.State.TERMINATED, sysAppService.state());
     Assert.assertEquals(Service.State.TERMINATED, capabilityService.state());
     Assert.assertEquals(Service.State.TERMINATED, sysProgramService.state());

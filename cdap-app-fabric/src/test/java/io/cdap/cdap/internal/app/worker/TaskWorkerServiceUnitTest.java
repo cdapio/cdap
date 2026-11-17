@@ -81,7 +81,8 @@ public class TaskWorkerServiceUnitTest {
         new CommonNettyHttpServiceFactory(cConf, metrics, contexts -> { }, new NoOpAeadCipher()));
 
     CompletableFuture<Service.State> completion = TaskWorkerTestUtil.getServiceCompletionFuture(service);
-    Assert.assertEquals(Service.State.RUNNING, service.startAndWait());
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
 
     InetSocketAddress addr = service.getBindAddress();
     URI uri = URI.create(String.format("http://%s:%d", addr.getHostName(), addr.getPort()));

@@ -77,7 +77,6 @@ import javax.annotation.Nullable;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -134,7 +133,7 @@ public class WorkflowDriverTest {
         cConf, program, wfSpec, programType -> null, pluginInstantiator);
 
     CompletableFuture<Service.State> done = attachTerminalListener(driver);
-    driver.start();
+    driver.startAsync();
     Assert.assertNotNull(done.get(5, TimeUnit.SECONDS));
     Assert.assertEquals(Service.State.TERMINATED, driver.state());
     Assert.assertTrue(pluginClosed.get());
@@ -156,7 +155,7 @@ public class WorkflowDriverTest {
 
     WorkflowDriver driver = createDriver(cConf, program, wfSpec, failingFactory, null);
     CompletableFuture<Service.State> done = attachTerminalListener(driver);
-    driver.start();
+    driver.startAsync();
 
     try {
       done.get(5, TimeUnit.SECONDS);
@@ -184,7 +183,7 @@ public class WorkflowDriverTest {
 
     WorkflowDriver driver = createDriver(cConf, program, wfSpec, programType -> null, null);
     CompletableFuture<Service.State> done = attachTerminalListener(driver);
-    driver.start();
+    driver.startAsync();
 
     try {
       done.get(5, TimeUnit.SECONDS);
@@ -284,7 +283,7 @@ public class WorkflowDriverTest {
 
   private static CompletableFuture<Service.State> attachTerminalListener(Service service) {
     CompletableFuture<Service.State> future = new CompletableFuture<>();
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         future.complete(from);

@@ -76,7 +76,7 @@ public class NoopTwillControllerTest {
     assertUnsupported(controller.resetRunnableLogLevels("r", "ROOT"));
 
     // Start and kill controller lifecycle.
-    controller.startAndWait();
+    controller.startAsync().awaitRunning();
     Assert.assertTrue(runningLatch.await(5, TimeUnit.SECONDS));
     controller.kill();
     Assert.assertTrue(terminatedLatch.await(5, TimeUnit.SECONDS));

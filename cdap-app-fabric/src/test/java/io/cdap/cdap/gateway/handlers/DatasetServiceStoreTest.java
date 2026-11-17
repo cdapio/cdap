@@ -52,7 +52,7 @@ public class DatasetServiceStoreTest {
         .thenReturn(kvTable);
 
     DatasetServiceStore store = new DatasetServiceStore(dsFramework);
-    store.startAndWait();
+    store.startAsync().awaitRunning();
     try {
       // 1. Unset service instance count (null -> 0) produces an empty instances set.
       Assert.assertNull(store.getServiceInstance("unsetService"));
@@ -91,7 +91,7 @@ public class DatasetServiceStoreTest {
       Assert.assertThrows(IllegalStateException.class,
           () -> store.getLatestRestartInstancesRequest("neverRestarted"));
     } finally {
-      store.stopAndWait();
+      store.stopAsync().awaitTerminated();
     }
     Assert.assertTrue(kvTable.closed.get());
   }

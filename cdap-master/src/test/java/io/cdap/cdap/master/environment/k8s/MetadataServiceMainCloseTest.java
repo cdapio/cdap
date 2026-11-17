@@ -61,10 +61,10 @@ public class MetadataServiceMainCloseTest {
 
     Assert.assertEquals(4, services.size());
     Service storageCloserService = services.get(services.size() - 1);
-    storageCloserService.startAndWait();
+    storageCloserService.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, storageCloserService.state());
 
-    storageCloserService.stopAndWait();
+    storageCloserService.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, storageCloserService.state());
     Mockito.verify(failingStorage).close();
   }

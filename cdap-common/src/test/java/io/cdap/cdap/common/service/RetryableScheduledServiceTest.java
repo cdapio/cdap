@@ -49,9 +49,9 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -64,13 +64,13 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     // Wait for the service to fail
     Tasks.waitFor(Service.State.FAILED, service::state, 5, TimeUnit.SECONDS,
         10, TimeUnit.MILLISECONDS);
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected exception on stopAndWait");
     } catch (Exception e) {
       // The root cause should be the one thrown from runTask, suppressing RetriesExhaustedException.
@@ -99,13 +99,13 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     // Wait for the service to fail
     Tasks.waitFor(Service.State.FAILED, service::state, 5, TimeUnit.SECONDS,
         10, TimeUnit.MILLISECONDS);
 
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected exception on stopAndWait");
     } catch (Exception e) {
       Throwable rootCause = Throwables.getRootCause(e);
@@ -130,9 +130,9 @@ public class RetryableScheduledServiceTest {
         return 1L;
       }
     };
-    service.start();
+    service.startAsync();
     Assert.assertTrue(latch.await(3, TimeUnit.SECONDS));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -141,13 +141,13 @@ public class RetryableScheduledServiceTest {
     NamedScheduledService service = new NamedScheduledService(strategy);
     Assert.assertSame(strategy, service.exposedRetryStrategy());
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(service.taskLatch.await(5, TimeUnit.SECONDS));
     Assert.assertTrue(service.startedUp.get());
     Assert.assertTrue(service.threadName.get().startsWith("NamedScheduledService"));
     Assert.assertTrue(service.isDaemon.get());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertTrue(service.shutDownCalled.get());
     Assert.assertEquals(Service.State.TERMINATED, service.state());
   }
@@ -175,10 +175,10 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertTrue(successLatch.await(5, TimeUnit.SECONDS));
     Assert.assertEquals(2, exhaustedCalls.get());
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -196,11 +196,11 @@ public class RetryableScheduledServiceTest {
       }
     };
 
-    service.start();
+    service.startAsync();
     Tasks.waitFor(Service.State.FAILED, service::state, 5, TimeUnit.SECONDS,
         10, TimeUnit.MILLISECONDS);
     try {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
       Assert.fail("Expected exception from startup failure");
     } catch (Exception e) {
       Assert.assertEquals("startup boom", Throwables.getRootCause(e).getMessage());

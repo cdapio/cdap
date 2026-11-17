@@ -30,7 +30,6 @@
   <packaging>jar</packaging>
 
   <properties>
-    <guava.version>31.1-jre</guava.version>
     <k8s.version>16.0.2</k8s.version>
     <!-- Needs to bump the okhttp version for fixing https://github.com/square/okhttp/issues/4029 that hangs on exit -->
     <okhttp.version>4.9.1</okhttp.version>

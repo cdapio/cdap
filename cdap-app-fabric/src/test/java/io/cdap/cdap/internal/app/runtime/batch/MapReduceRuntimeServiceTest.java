@@ -66,7 +66,7 @@ public class MapReduceRuntimeServiceTest {
       Location jarLocation = Locations.toLocation(tempFolder.newFile("empty.jar"));
       MapReduceRuntimeService service = createService(context, jarLocation);
 
-      Assert.assertEquals("MapReduceRunner-wordCountMr", service.getServiceName());
+      Assert.assertEquals("MapReduceRunner-wordCountMr", service.serviceName());
 
       CountDownLatch latch = new CountDownLatch(1);
       AtomicReference<String> threadName = new AtomicReference<>();

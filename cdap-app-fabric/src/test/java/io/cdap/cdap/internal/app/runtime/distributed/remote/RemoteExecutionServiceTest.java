@@ -75,9 +75,9 @@ public class RemoteExecutionServiceTest {
     RemoteExecutionService service = new RemoteExecutionService(
         cConf, runId, scheduler, processController, stateWriter);
 
-    Assert.assertEquals("runtime-service-" + runId.getRun(), service.getServiceName());
+    Assert.assertEquals("runtime-service-" + runId.getRun(), service.serviceName());
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Tasks.waitFor(
         Service.State.TERMINATED, service::state, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 

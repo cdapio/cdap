@@ -65,7 +65,7 @@ public class CommandPortServiceTest {
       // expected
     }
 
-    server.startAndWait();
+    server.startAsync().awaitRunning();
     try {
       for (int i = 0; i < 10; i++) {
         List<String> lines = sendCommand(server.getPort(), "increment");
@@ -73,7 +73,7 @@ public class CommandPortServiceTest {
         Assert.assertEquals(i + 1, Integer.parseInt(lines.get(0)));
       }
     } finally {
-      server.stopAndWait();
+      server.stopAsync().awaitTerminated();
     }
 
     Assert.assertEquals(10, handler.getCounter());
@@ -97,7 +97,7 @@ public class CommandPortServiceTest {
         })
         .build();
 
-    server.startAndWait();
+    server.startAsync().awaitRunning();
     try {
       int port = server.getPort();
       List<String> helpLines = sendCommand(port, "help");
@@ -111,7 +111,7 @@ public class CommandPortServiceTest {
       List<String> afterBoom = sendCommand(port, "increment");
       Assert.assertEquals("1", afterBoom.get(0));
     } finally {
-      server.stopAndWait();
+      server.stopAsync().awaitTerminated();
     }
     Assert.assertEquals(Service.State.TERMINATED, server.state());
   }
@@ -125,13 +125,13 @@ public class CommandPortServiceTest {
         })
         .build();
 
-    customHelpServer.startAndWait();
+    customHelpServer.startAsync().awaitRunning();
     try {
       List<String> lines = sendCommand(customHelpServer.getPort(), "help");
       Assert.assertEquals(1, lines.size());
       Assert.assertEquals("custom-help-output", lines.get(0));
     } finally {
-      customHelpServer.stopAndWait();
+      customHelpServer.stopAsync().awaitTerminated();
     }
 
     try (ServerSocket occupied = new ServerSocket(0, 0, InetAddress.getByName("localhost"))) {
@@ -139,7 +139,7 @@ public class CommandPortServiceTest {
           .setPort(occupied.getLocalPort())
           .build();
       try {
-        conflicting.startAndWait();
+        conflicting.startAsync().awaitRunning();
         Assert.fail("Expected port bind failure");
       } catch (RuntimeException expected) {
         Assert.assertEquals(Service.State.FAILED, conflicting.state());

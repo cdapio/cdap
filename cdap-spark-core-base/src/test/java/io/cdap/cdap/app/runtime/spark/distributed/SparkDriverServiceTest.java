@@ -60,7 +60,7 @@ public class SparkDriverServiceTest {
     SparkExecutionService executionService = new SparkExecutionService(
         locationFactory, InetAddress.getLoopbackAddress().getCanonicalHostName(), programRunId, null);
     executionService.setShutdownWaitSeconds(5L);
-    executionService.startAndWait();
+    executionService.startAsync().awaitRunning();
 
     try {
       final SparkDriverService driverService = new SparkDriverService(executionService.getBaseURI(), runtimeContext);
@@ -79,13 +79,13 @@ public class SparkDriverServiceTest {
       updaterField.setAccessible(true);
       updaterField.set(driverService, updater);
 
-      driverService.startAndWait();
+      driverService.startAsync().awaitRunning();
       Assert.assertTrue(driverService.isRunning());
       Assert.assertTrue(updater.isRunning());
 
       // Initiating stop on SparkExecutionService causes the next heartbeat to return a STOP SparkCommand,
       // which triggers SparkDriverService.stop() and sets runtimeContext.getTerminationTime().
-      executionService.stop();
+      executionService.stopAsync();
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() {

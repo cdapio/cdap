@@ -84,12 +84,12 @@ public class MasterEnvironmentMainTest {
       Assert.assertNotNull(manager);
       Assert.assertEquals(Service.State.RUNNING, manager.state());
 
-      manager.stopAndWait();
+      manager.stopAsync().awaitTerminated();
       Assert.assertEquals(Service.State.TERMINATED, manager.state());
     } finally {
       TokenManager manager = (TokenManager) tokenManagerField.get(null);
       if (manager != null && manager.isRunning()) {
-        manager.stopAndWait();
+        manager.stopAsync().awaitTerminated();
       }
       tokenManagerField.set(null, null);
     }

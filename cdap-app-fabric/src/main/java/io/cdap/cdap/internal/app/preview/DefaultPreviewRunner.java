@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
@@ -329,10 +328,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     LOG.debug("Starting preview runner service");
     StoreDefinition.createAllTables(structuredTableAdmin);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
-    dsOpExecService.startAndWait();
-    datasetService.startAndWait();
+    dsOpExecService.startAsync().awaitRunning();
+    datasetService.startAsync().awaitRunning();
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -342,13 +341,16 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
         new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
-    Futures.allAsList(
-        applicationLifecycleService.start(),
-        programRuntimeService.start(),
-        metricsCollectionService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start()
-    ).get();
+    applicationLifecycleService.startAsync();
+    programRuntimeService.startAsync();
+    metricsCollectionService.startAsync();
+    programNotificationSubscriberService.startAsync();
+    programStopSubscriberService.startAsync();
+    applicationLifecycleService.awaitRunning();
+    programRuntimeService.awaitRunning();
+    metricsCollectionService.awaitRunning();
+    programNotificationSubscriberService.awaitRunning();
+    programStopSubscriberService.awaitRunning();
 
     Files.createDirectories(previewIdDirPath);
 
@@ -375,16 +377,16 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Stopping preview runner service");
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
+    programRuntimeService.stopAsync().awaitTerminated();
+    applicationLifecycleService.stopAsync().awaitTerminated();
     logAppenderInitializer.close();
-    metricsCollectionService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpExecService.stopAndWait();
+    metricsCollectionService.stopAsync().awaitTerminated();
+    programNotificationSubscriberService.stopAsync().awaitTerminated();
+    programStopSubscriberService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    dsOpExecService.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
     levelDBTableService.close();
   }

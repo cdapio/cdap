@@ -53,7 +53,7 @@ public class ProgramControllerServiceAdapterTest {
     ProgramControllerServiceAdapter controller =
         new ProgramControllerServiceAdapter(shortLivedService, newRunId());
 
-    shortLivedService.startAndWait();
+    shortLivedService.startAsync().awaitRunning();
     Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
   }
@@ -64,7 +64,7 @@ public class ProgramControllerServiceAdapterTest {
     ProgramControllerServiceAdapter controller =
         new ProgramControllerServiceAdapter(idleService, newRunId());
 
-    idleService.startAndWait();
+    idleService.startAsync().awaitRunning();
     Tasks.waitFor(ProgramController.State.ALIVE, controller::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
@@ -83,7 +83,7 @@ public class ProgramControllerServiceAdapterTest {
           }
         };
 
-    gracefulService.startAndWait();
+    gracefulService.startAsync().awaitRunning();
     Tasks.waitFor(ProgramController.State.ALIVE, gracefulController::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
@@ -99,11 +99,11 @@ public class ProgramControllerServiceAdapterTest {
     ProgramControllerServiceAdapter controller =
         new ProgramControllerServiceAdapter(idleService, newRunId());
 
-    idleService.startAndWait();
+    idleService.startAsync().awaitRunning();
     Tasks.waitFor(ProgramController.State.ALIVE, controller::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
-    idleService.stopAndWait();
+    idleService.stopAsync().awaitTerminated();
     Tasks.waitFor(ProgramController.State.KILLED, controller::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
   }
@@ -123,7 +123,7 @@ public class ProgramControllerServiceAdapterTest {
     ProgramControllerServiceAdapter controller =
         new ProgramControllerServiceAdapter(failingService, newRunId());
 
-    failingService.start();
+    failingService.startAsync();
     Tasks.waitFor(ProgramController.State.ERROR, controller::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
     Assert.assertSame(outerFailure, controller.getFailureCause());

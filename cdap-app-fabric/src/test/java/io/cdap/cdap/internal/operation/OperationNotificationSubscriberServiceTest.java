@@ -59,7 +59,7 @@ public class OperationNotificationSubscriberServiceTest {
             transactionRunner,
             lifecycleManager);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertTrue(txCalls.get() >= 1);
 
@@ -70,7 +70,7 @@ public class OperationNotificationSubscriberServiceTest {
     Assert.assertNotNull(delegate);
     Assert.assertEquals(Service.State.RUNNING, delegate.state());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, service.state());
     Assert.assertEquals(Service.State.TERMINATED, delegate.state());
   }

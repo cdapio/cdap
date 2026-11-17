@@ -102,7 +102,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     framework = injector.getInstance(DatasetFramework.class);
   }
@@ -110,7 +110,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   @Override
   protected void after() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
     if (tmpFolder != null) {
       tmpFolder.delete();

@@ -114,7 +114,7 @@ public class DatasetTypeManagerTest {
         });
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     txRunner = injector.getInstance(TransactionRunner.class);
     locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
@@ -123,7 +123,7 @@ public class DatasetTypeManagerTest {
   @AfterClass
   public static void tearDownClass() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 

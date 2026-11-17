@@ -144,9 +144,9 @@ public class SparkRuntimeServiceTest {
           cConf, pySpark, null, null, runtimeContext, blockingSubmitter,
           mockLocationFactory, false, Mockito.mock(FieldLineageWriter.class), masterEnv, nettyFactory);
 
-      Assert.assertEquals("Spark - testSpark", service.getServiceName());
+      Assert.assertEquals("Spark - testSpark", service.serviceName());
 
-      service.startAndWait();
+      service.startAsync().awaitRunning();
       Assert.assertTrue(submittedLatch.await(5, TimeUnit.SECONDS));
       Assert.assertEquals(expectedPyContent, copiedContent.get());
 
@@ -225,7 +225,7 @@ public class SparkRuntimeServiceTest {
           cConf, pySpark, null, null, runtimeContext, immediateSubmitter,
           mockLocationFactory, false, Mockito.mock(FieldLineageWriter.class), masterEnv, nettyFactory);
 
-      service.startAndWait();
+      service.startAsync().awaitRunning();
       Tasks.waitFor(Service.State.TERMINATED, new Callable<Service.State>() {
         @Override
         public Service.State call() {

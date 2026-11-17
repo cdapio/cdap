@@ -55,7 +55,7 @@ public class ServicesTest {
     Services.startAndWait(service, 5, TimeUnit.SECONDS);
     Assert.assertTrue(started.get());
     Assert.assertEquals(Service.State.RUNNING, service.state());
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertFalse(started.get());
     Assert.assertEquals(Service.State.TERMINATED, service.state());
 
@@ -74,7 +74,7 @@ public class ServicesTest {
     Services.startAndWait(secondService, 5, TimeUnit.SECONDS, "Timed out starting second service");
     Assert.assertTrue(secondStarted.get());
     Assert.assertEquals(Service.State.RUNNING, secondService.state());
-    secondService.stopAndWait();
+    secondService.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -92,7 +92,7 @@ public class ServicesTest {
       }
     };
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(1, startCount.get());
 
@@ -100,7 +100,7 @@ public class ServicesTest {
     Assert.assertEquals(Service.State.RUNNING, service.state());
     Assert.assertEquals(1, startCount.get());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
   }
 
   @Test

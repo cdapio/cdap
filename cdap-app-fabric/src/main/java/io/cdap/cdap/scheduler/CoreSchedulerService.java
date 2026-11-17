@@ -17,7 +17,6 @@
 package io.cdap.cdap.scheduler;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -115,25 +114,25 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
 
       @Override
-      protected Executor executor(final State state) {
-        return command -> new Thread(command, "core scheduler service " + state).start();
+      protected Executor executor() {
+        return command -> new Thread(command, "core scheduler service " + state()).start();
       }
 
       @Override
       protected void startUp() {
-        timeSchedulerService.startAndWait();
+        timeSchedulerService.startAsync().awaitRunning();
         cleanupJobs();
-        constraintCheckerService.startAndWait();
-        scheduleNotificationSubscriberService.startAndWait();
+        constraintCheckerService.startAsync().awaitRunning();
+        scheduleNotificationSubscriberService.startAsync().awaitRunning();
         startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
       @Override
       protected void shutDown() {
-        scheduleNotificationSubscriberService.stopAndWait();
-        constraintCheckerService.stopAndWait();
-        timeSchedulerService.stopAndWait();
+        scheduleNotificationSubscriberService.stopAsync().awaitTerminated();
+        constraintCheckerService.stopAsync().awaitTerminated();
+        timeSchedulerService.stopAsync().awaitTerminated();
         LOG.info("Stopped core scheduler service.");
       }
     }, io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000,
@@ -203,12 +202,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   protected void startUp() throws Exception {
-    internalService.startAndWait();
+    internalService.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    internalService.stopAndWait();
+    internalService.stopAsync().awaitTerminated();
   }
 
   @Override
@@ -276,7 +275,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
       throw e;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -320,7 +319,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedule " + scheduleId, e);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -344,7 +343,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedule " + scheduleId, e);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -565,7 +564,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedules", e);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

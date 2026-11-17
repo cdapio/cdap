@@ -57,23 +57,23 @@ public class ResourceBalancerServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
   public void testResourceBalancerService() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       final TestBalancerService balancerService = new TestBalancerService("test", 4, zkClient,
           discoveryService, discoveryService, false, false);
-      balancerService.startAndWait();
+      balancerService.startAsync().awaitRunning();
       try {
         Tasks.waitFor(ImmutableSet.of(0, 1, 2, 3), new Callable<Set<Integer>>() {
           @Override
@@ -96,23 +96,23 @@ public class ResourceBalancerServiceTest {
           cancellable.cancel();
         }
       } finally {
-        balancerService.stopAndWait();
+        balancerService.stopAsync().awaitTerminated();
       }
       Assert.assertEquals(Service.State.TERMINATED, balancerService.state());
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void testServiceStartFailure() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       final TestBalancerService startFailureService = new TestBalancerService("test-start-fail", 4,
           zkClient, discoveryService, discoveryService, true, false);
-      startFailureService.startAndWait();
+      startFailureService.startAsync().awaitRunning();
 
       Tasks.waitFor(Service.State.FAILED, new Callable<Service.State>() {
         @Override
@@ -121,19 +121,19 @@ public class ResourceBalancerServiceTest {
         }
       }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void testServiceStopFailure() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       final TestBalancerService stopFailureService = new TestBalancerService("test-stop-fail", 4,
           zkClient, discoveryService, discoveryService, false, true);
-      stopFailureService.startAndWait();
+      stopFailureService.startAsync().awaitRunning();
 
       Tasks.waitFor(ImmutableSet.of(0, 1, 2, 3), new Callable<Set<Integer>>() {
         @Override
@@ -156,14 +156,14 @@ public class ResourceBalancerServiceTest {
         cancellable.cancel();
       }
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void testLeaderFailoverAndShutdownErrorPropagation() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       // Start two instances so leader election exercises leader() and follower() transitions.
@@ -172,8 +172,8 @@ public class ResourceBalancerServiceTest {
       TestBalancerService second = new TestBalancerService("test-failover", 4,
           zkClient, discoveryService, discoveryService, false, true);
 
-      first.startAndWait();
-      second.startAndWait();
+      first.startAsync().awaitRunning();
+      second.startAsync().awaitRunning();
 
       Tasks.waitFor(2, () -> first.getPartitions().size(),
           10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
@@ -183,7 +183,7 @@ public class ResourceBalancerServiceTest {
       // Stopping first steps down leadership cleanly and assigns all 4 partitions to second.
       // Wait for second to finish stopping its 2-partition child (failOnStop=true) or let a clean
       // second instance take over. Let's verify shutDown() propagation on a dedicated instance below!
-      first.stopAndWait();
+      first.stopAsync().awaitTerminated();
       Assert.assertEquals(Service.State.TERMINATED, first.state());
 
       // Second fails during rebalance because failOnStop=true when switching from 2 -> 4 partitions.
@@ -193,18 +193,18 @@ public class ResourceBalancerServiceTest {
       // Now verify shutDown() itself propagating child stop failure via Throwables.propagate(throwable).
       TestBalancerService shutdownFail = new TestBalancerService("test-shutdown-propagate", 2,
           zkClient, discoveryService, discoveryService, false, true);
-      shutdownFail.startAndWait();
+      shutdownFail.startAsync().awaitRunning();
       Tasks.waitFor(ImmutableSet.of(0, 1), shutdownFail::getPartitions,
           10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
       try {
-        shutdownFail.stopAndWait();
+        shutdownFail.stopAsync().awaitTerminated();
         Assert.fail("Expected shutDown failure to propagate");
       } catch (Exception e) {
         Assert.assertEquals("exception", Throwables.getRootCause(e).getMessage());
       }
       Assert.assertEquals(Service.State.FAILED, shutdownFail.state());
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 

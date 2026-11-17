@@ -78,7 +78,7 @@ public class DataprocRuntimeEnvironmentTest {
     DataprocRuntimeEnvironment env = new DataprocRuntimeEnvironment();
     env.initialize("spark3_2.12", "CLIENT");
 
-    Mockito.verify(mockZkServer).startAndWait();
+    Mockito.verify(mockZkServer).startAsync().awaitRunning();
     Mockito.verify(mockTwillRunner).start();
     Assert.assertEquals(LaunchMode.CLIENT, env.getLaunchMode());
     Assert.assertSame(mockLocationFactory, env.getLocationFactory());
@@ -94,7 +94,7 @@ public class DataprocRuntimeEnvironmentTest {
     env.destroy();
 
     Mockito.verify(mockTwillRunner).stop();
-    Mockito.verify(mockZkServer).stopAndWait();
+    Mockito.verify(mockZkServer).stopAsync().awaitTerminated();
     Mockito.verify(mockLocationFactory).create("/");
     Mockito.verify(mockRootLocation).delete(true);
   }

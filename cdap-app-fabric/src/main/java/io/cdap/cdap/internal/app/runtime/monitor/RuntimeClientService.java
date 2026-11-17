@@ -141,7 +141,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         LOG.debug(
             "Program {} terminated. Shutting down runtime client service.",
             programRunId);
-        stop();
+        stopAsync();
       }
     }
 

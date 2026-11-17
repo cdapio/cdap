@@ -71,14 +71,14 @@ public class PreviewHttpServerTest {
         cConf, sConf, discoveryService, Collections.emptySet(), previewManager, factory);
     Assert.assertSame(previewManager, server.getPreviewManager());
 
-    server.startAndWait();
+    server.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, server.state());
     Assert.assertEquals(Service.State.RUNNING, previewManager.state());
 
     ServiceDiscovered discovered = discoveryService.discover(Constants.Service.PREVIEW_HTTP);
     Assert.assertTrue(discovered.iterator().hasNext());
 
-    server.stopAndWait();
+    server.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, server.state());
     Assert.assertEquals(Service.State.TERMINATED, previewManager.state());
     Assert.assertFalse(discovered.iterator().hasNext());
@@ -96,10 +96,10 @@ public class PreviewHttpServerTest {
     PreviewHttpServer server = new PreviewHttpServer(
         cConf, sConf, discoveryService, Collections.emptySet(), previewManager, factory);
 
-    server.startAndWait();
+    server.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, server.state());
 
-    server.stopAndWait();
+    server.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, server.state());
   }
 

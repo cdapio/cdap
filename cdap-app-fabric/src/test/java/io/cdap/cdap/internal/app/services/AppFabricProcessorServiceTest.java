@@ -37,10 +37,12 @@ public class AppFabricProcessorServiceTest {
     try {
       Injector injector = AppFabricTestHelper.getInjector();
       AppFabricProcessorService service = injector.getInstance(AppFabricProcessorService.class);
-      Service.State state = service.startAndWait();
+      service.startAsync().awaitRunning();
+      Service.State state = service.state();
       Assert.assertSame(state, Service.State.RUNNING);
 
-      state = service.stopAndWait();
+      service.stopAsync().awaitTerminated();
+      state = service.state();
       Assert.assertSame(state, Service.State.TERMINATED);
     } finally {
       AppFabricTestHelper.shutdown();
@@ -68,18 +70,20 @@ public class AppFabricProcessorServiceTest {
       ApplicationLifecycleService lifecycleService =
           (ApplicationLifecycleService) lifecycleField.get(service);
 
-      Service.State state = service.startAndWait();
+      service.startAsync().awaitRunning();
+      Service.State state = service.state();
       Assert.assertSame(Service.State.RUNNING, state);
       Assert.assertSame(Service.State.RUNNING, auditLogService.state());
       Assert.assertSame(Service.State.RUNNING, lifecycleService.state());
 
-      state = service.stopAndWait();
+      service.stopAsync().awaitTerminated();
+      state = service.state();
       Assert.assertSame(Service.State.TERMINATED, state);
       Assert.assertSame(Service.State.TERMINATED, auditLogService.state());
       Assert.assertSame(Service.State.TERMINATED, lifecycleService.state());
     } finally {
       if (service != null && service.isRunning()) {
-        service.stopAndWait();
+        service.stopAsync().awaitTerminated();
       }
       AppFabricTestHelper.shutdown();
     }

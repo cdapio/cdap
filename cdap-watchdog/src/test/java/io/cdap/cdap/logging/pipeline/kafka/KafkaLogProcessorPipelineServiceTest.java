@@ -74,11 +74,11 @@ public class KafkaLogProcessorPipelineServiceTest {
         pipelineContext, checkpointManager, Mockito.mock(BrokerService.class), config);
 
     Assert.assertEquals("LogPipeline-auditKafka [NEW]", pipeline.toString());
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
     Assert.assertEquals("LogPipeline-auditKafka [RUNNING]", pipeline.toString());
     Assert.assertEquals("LogPipeline-auditKafka", startupThreadName.get());
 
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     Assert.assertEquals("LogPipeline-auditKafka [TERMINATED]", pipeline.toString());
     Assert.assertNotNull(savedOnStop.get());
   }

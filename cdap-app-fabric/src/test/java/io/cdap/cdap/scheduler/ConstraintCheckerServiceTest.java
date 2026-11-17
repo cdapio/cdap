@@ -189,7 +189,7 @@ public class ConstraintCheckerServiceTest {
     cConf.setInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS, 0);
     ConstraintCheckerService service = createService(cConf);
 
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     Assert.assertEquals(Service.State.RUNNING, service.state());
 
     Class<?> threadClass =
@@ -234,7 +234,7 @@ public class ConstraintCheckerServiceTest {
     Assert.assertTrue(isEmpty);
     Assert.assertTrue(emptyClosed.get());
 
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
     Assert.assertEquals(Service.State.TERMINATED, service.state());
   }
 

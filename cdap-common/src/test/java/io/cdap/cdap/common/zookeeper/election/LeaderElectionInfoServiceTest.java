@@ -57,12 +57,12 @@ public class LeaderElectionInfoServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -74,11 +74,11 @@ public class LeaderElectionInfoServiceTest {
 
     ZKClientService infoZkClient =
         DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    infoZkClient.startAndWait();
+    infoZkClient.startAsync().awaitRunning();
     zkClients.add(infoZkClient);
 
     LeaderElectionInfoService infoService = new LeaderElectionInfoService(infoZkClient, prefix);
-    infoService.startAndWait();
+    infoService.startAsync().awaitRunning();
 
     try {
       infoService.getParticipants(200, TimeUnit.MILLISECONDS);
@@ -91,7 +91,7 @@ public class LeaderElectionInfoServiceTest {
     for (int i = 0; i < size; i++) {
       ZKClientService zkClient =
           DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-      zkClient.startAndWait();
+      zkClient.startAsync().awaitRunning();
       zkClients.add(zkClient);
 
       final int participantId = i;
@@ -106,7 +106,7 @@ public class LeaderElectionInfoServiceTest {
           LOG.info("Follow: {}", participantId);
         }
       });
-      leaderElection.start();
+      leaderElection.startAsync();
       leaderElections.add(leaderElection);
     }
 
@@ -136,7 +136,7 @@ public class LeaderElectionInfoServiceTest {
 
     int expectedSize = size;
     for (LeaderElection leaderElection : leaderElections) {
-      leaderElection.stopAndWait();
+      leaderElection.stopAsync().awaitTerminated();
       Tasks.waitFor(--expectedSize, new Callable<Integer>() {
         @Override
         public Integer call() {
@@ -149,10 +149,10 @@ public class LeaderElectionInfoServiceTest {
     Assert.assertTrue(snapshot.isEmpty());
     Assert.assertEquals(participants, snapshot);
 
-    infoService.stopAndWait();
+    infoService.stopAsync().awaitTerminated();
 
     for (ZKClientService zkClient : zkClients) {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
@@ -160,7 +160,7 @@ public class LeaderElectionInfoServiceTest {
   public void testNonSlashedPathAndParticipantMetadataCallbacks() throws Exception {
     ZKClientService zkClient =
         DefaultZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     try {
       String relativePath = "customElectionPath";
       zkClient.create("/" + relativePath + "/invalidNoDash", null,
@@ -173,7 +173,7 @@ public class LeaderElectionInfoServiceTest {
 
       LeaderElectionInfoService infoService =
           new LeaderElectionInfoService(zkClient, relativePath);
-      infoService.startAndWait();
+      infoService.startAsync().awaitRunning();
       try {
         SortedMap<Integer, LeaderElectionInfoService.Participant> map =
             infoService.getParticipants(5, TimeUnit.SECONDS);
@@ -187,10 +187,10 @@ public class LeaderElectionInfoServiceTest {
         Assert.assertEquals("host-a.local", participant.getHostname());
         Assert.assertTrue(participant.toString().contains("host-a.local"));
       } finally {
-        infoService.stopAndWait();
+        infoService.stopAsync().awaitTerminated();
       }
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 }

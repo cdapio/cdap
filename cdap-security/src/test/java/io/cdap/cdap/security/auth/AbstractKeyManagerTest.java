@@ -46,7 +46,7 @@ public class AbstractKeyManagerTest {
   @Test
   public void testGenerateAndValidateMac() throws Exception {
     InMemoryKeyManager keyManager = new InMemoryKeyManager(CConfiguration.create());
-    keyManager.startAndWait();
+    keyManager.startAsync().awaitRunning();
     try {
       String payload = "hello-cdap";
       KeyManager.DigestId digestId = keyManager.generateMAC(Bytes.toBytes(payload));
@@ -71,14 +71,14 @@ public class AbstractKeyManagerTest {
         // expected
       }
     } finally {
-      keyManager.stopAndWait();
+      keyManager.stopAsync().awaitTerminated();
     }
   }
 
   @Test
   public void testValidateMacPropagatesCodecIoException() throws Exception {
     InMemoryKeyManager keyManager = new InMemoryKeyManager(CConfiguration.create());
-    keyManager.startAndWait();
+    keyManager.startAsync().awaitRunning();
     try {
       KeyManager.DigestId digestId = keyManager.generateMAC(Bytes.toBytes("payload"));
       Signed<String> signedMessage = createSigned("payload", digestId.getId(), digestId.getDigest());
@@ -102,7 +102,7 @@ public class AbstractKeyManagerTest {
         Assert.assertSame(expectedIoException, e.getCause());
       }
     } finally {
-      keyManager.stopAndWait();
+      keyManager.stopAsync().awaitTerminated();
     }
   }
 

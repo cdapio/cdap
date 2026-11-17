@@ -62,7 +62,7 @@ public class ProgramRunnersTest {
     try {
       Assert.assertEquals("impersonatedUser", startThreadUser.get());
     } finally {
-      service.stopAndWait();
+      service.stopAsync().awaitTerminated();
     }
   }
 }

@@ -55,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URI;
@@ -324,9 +325,11 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertFalse(resultLocation.isDirectory());
 
     // read output and verify result
-    String line = CharStreams.readFirstLine(
-      CharStreams.newReaderSupplier(
-        Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
+    String line;
+    try (InputStreamReader reader = new InputStreamReader(Locations.newInputSupplier(resultLocation).getInput(),
+                                                          Charsets.UTF_8)) {
+      line = CharStreams.readLines(reader).stream().findFirst().orElse(null);
+    }
     Assert.assertNotNull(line);
     String[] fields = line.split(outputSeparator == null ? ":" : outputSeparator);
     Assert.assertEquals(2, fields.length);
