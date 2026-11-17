@@ -181,6 +181,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
   }
 
+  /**
+   * Returns whether znodeACL has an "auth" entry (as in CREATOR_ALL_ACL), which ZooKeeper replaces
+   * with the session's identity. For such ACLs, InvalidACLException means the session is not
+   * authenticated rather than that the ACLs are malformed.
+   */
   private boolean hasAuthSchemeAcl() {
     if (znodeACL == null) {
       return false;
