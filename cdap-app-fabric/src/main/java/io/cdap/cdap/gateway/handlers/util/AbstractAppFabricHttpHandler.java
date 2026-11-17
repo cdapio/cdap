@@ -40,6 +40,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -103,17 +104,15 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     if (!content.isReadable()) {
       return null;
     }
-    Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8);
-    try {
+    try (Reader reader =
+        new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
       return GSON.fromJson(reader, type);
+    } catch (IOException e) {
+      LOG.info("Failed to close body reader on {}", request.uri(), e);
+      throw new RuntimeException(e);
     } catch (RuntimeException e) {
       LOG.info("Failed to parse body on {} as {}", request.uri(), type, e);
       throw e;
-    } finally {
-      try {
-        reader.close();
-      } catch (Exception ignored) {
-      }
     }
   }
 

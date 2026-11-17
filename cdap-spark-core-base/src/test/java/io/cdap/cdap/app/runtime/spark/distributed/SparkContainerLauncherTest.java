@@ -22,7 +22,6 @@ import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
-import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextTest;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.common.app.RunIds;
@@ -73,8 +72,13 @@ public class SparkContainerLauncherTest {
   public final TestRule cwdLockRule = (base, description) -> new Statement() {
     @Override
     public void evaluate() throws Throwable {
-      synchronized (SparkRuntimeContextProvider.class) {
-        base.evaluate();
+      synchronized (System.class) {
+        File lockFile = new File(System.getProperty("java.io.tmpdir"), "cdap-spark-cwd-test.lock");
+        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(lockFile, "rw");
+             java.nio.channels.FileChannel ch = raf.getChannel();
+             java.nio.channels.FileLock ignored = ch.lock()) {
+          base.evaluate();
+        }
       }
     }
   };

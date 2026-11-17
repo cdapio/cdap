@@ -239,16 +239,15 @@ public class TransactionManager extends AbstractService {
   }
 
   public State startAndWait() {
-    if (!isRunning()) {
-      startAsync().awaitRunning();
+    if (state() == State.NEW) {
+      startAsync();
     }
+    awaitRunning();
     return state();
   }
 
   public State stopAndWait() {
-    if (isRunning()) {
-      stopAsync().awaitTerminated();
-    }
+    stopAsync().awaitTerminated();
     return state();
   }
 
@@ -440,7 +439,9 @@ public class TransactionManager extends AbstractService {
     if (now == lastSnapshotTime || (currentLog != null && now == currentLog.getTimestamp())) {
       try {
         TimeUnit.MILLISECONDS.sleep(1);
-      } catch (InterruptedException ie) { }
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
     }
     // copy in memory state
     snapshot = getCurrentState();
@@ -608,7 +609,6 @@ public class TransactionManager extends AbstractService {
       doSnapshot(false);
     } catch (IOException e) {
       LOG.error("Snapshot failed when resetting state!", e);
-      e.printStackTrace();
     } finally {
       this.logWriteLock.unlock();
     }

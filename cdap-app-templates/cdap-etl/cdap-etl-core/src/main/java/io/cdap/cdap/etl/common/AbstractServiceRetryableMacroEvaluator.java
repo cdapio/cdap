@@ -80,7 +80,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
         RETRY_DELAY_MULTIPLIER - RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
     double maxMultiplier =
         RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
-    Stopwatch stopWatch = Stopwatch.createUnstarted().start();
+    Stopwatch stopWatch = Stopwatch.createStarted();
     int retryCount = 0;
     RetryableException retryableException = null;
     try {
@@ -150,7 +150,7 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
     double minMultiplier = RETRY_DELAY_MULTIPLIER - RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
     double maxMultiplier = RETRY_DELAY_MULTIPLIER + RETRY_DELAY_MULTIPLIER * RETRY_RANDOMIZE_FACTOR;
     Exception ex = null;
-    Stopwatch stopWatch = Stopwatch.createUnstarted().start();
+    Stopwatch stopWatch = Stopwatch.createStarted();
     try {
       while (stopWatch.elapsed(TimeUnit.MILLISECONDS) < TIMEOUT_MILLIS) {
         try {

@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.appender.tms;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -94,8 +93,8 @@ public class TMSLogAppender extends LogAppender {
   // Based off of StringPartitioner, but that class can not be used in Standalone, as kafka dependencies do not exist
   // in Standalone
   @VisibleForTesting
-  static int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashUnencodedChars(key.toString()).asInt()) % numPartitions;
+  public static int partition(Object key, int numPartitions) {
+    return LogAppender.partition(key, numPartitions);
   }
 
   /**

@@ -298,6 +298,38 @@ public class TephraGuavaContractTest {
       txManager.stopAsync().awaitTerminated();
       Assert.assertEquals(Service.State.TERMINATED, txManager.state());
     }
+
+    // Verify startAndWait / stopAndWait state transitions on NEW and RUNNING instances (F11)
+    TransactionManager unstartedManager = new TransactionManager(createBaseTxConf(TEMP_FOLDER.newFolder()));
+    Assert.assertEquals(Service.State.TERMINATED, unstartedManager.stopAndWait());
+
+    TransactionManager waitManager = new TransactionManager(createBaseTxConf(TEMP_FOLDER.newFolder()));
+    Assert.assertEquals(Service.State.RUNNING, waitManager.startAndWait());
+    Assert.assertEquals(Service.State.RUNNING, waitManager.startAndWait());
+    Assert.assertEquals(Service.State.TERMINATED, waitManager.stopAndWait());
+
+    // Verify shaded TephraZKClientService nested parent creation callbacks (F2)
+    org.apache.twill.internal.zookeeper.InMemoryZKServer zkServer =
+        org.apache.twill.internal.zookeeper.InMemoryZKServer.builder()
+            .setDataDir(TEMP_FOLDER.newFolder())
+            .build();
+    zkServer.startAsync().awaitRunning();
+    try {
+      org.apache.tephra.zookeeper.TephraZKClientService tephraZk =
+          new org.apache.tephra.zookeeper.TephraZKClientService(
+              zkServer.getConnectionStr(), 10000, null, com.google.common.collect.ArrayListMultimap.create());
+      tephraZk.startAsync().awaitRunning();
+      try {
+        String createdPath = tephraZk.create(
+            "/tephra/nested/parent/child", "payload".getBytes(StandardCharsets.UTF_8),
+            org.apache.zookeeper.CreateMode.PERSISTENT, true).get(5, TimeUnit.SECONDS);
+        Assert.assertEquals("/tephra/nested/parent/child", createdPath);
+      } finally {
+        tephraZk.stopAsync().awaitTerminated();
+      }
+    } finally {
+      zkServer.stopAsync().awaitTerminated();
+    }
   }
 
   private static Configuration createBaseTxConf(File snapshotDir) {

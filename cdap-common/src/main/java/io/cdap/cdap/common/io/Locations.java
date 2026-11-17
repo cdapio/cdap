@@ -20,6 +20,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -112,10 +113,7 @@ public final class Locations {
           return new DFSSeekableInputStream(input,
               createDFSStreamSizeProvider(fs, false, path, input));
         } catch (Throwable t) {
-          try {
-            input.close();
-          } catch (Exception ignored) {
-          }
+          Closeables.closeQuietly(input);
           if (t instanceof IOException) {
             throw (IOException) t;
           }
@@ -171,10 +169,7 @@ public final class Locations {
 
           throw new IOException("Failed to create SeekableInputStream from location " + location);
         } catch (Throwable t) {
-          try {
-            input.close();
-          } catch (Exception ignored) {
-          }
+          Closeables.closeQuietly(input);
           if (t instanceof IOException) {
             throw (IOException) t;
           }

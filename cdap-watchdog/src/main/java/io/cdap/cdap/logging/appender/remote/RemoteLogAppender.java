@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.appender.remote;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.Hashing;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -179,7 +178,7 @@ public class RemoteLogAppender extends LogAppender {
    */
   @VisibleForTesting
   static int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashUnencodedChars(key).asInt()) % numPartitions;
+    return LogAppender.partition(key, numPartitions);
   }
 
   private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,

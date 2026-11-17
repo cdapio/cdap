@@ -53,7 +53,7 @@ public class ProgramControllerServiceAdapterTest {
     ProgramControllerServiceAdapter controller =
         new ProgramControllerServiceAdapter(shortLivedService, newRunId());
 
-    shortLivedService.startAsync().awaitRunning();
+    shortLivedService.startAsync();
     Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
         5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
   }

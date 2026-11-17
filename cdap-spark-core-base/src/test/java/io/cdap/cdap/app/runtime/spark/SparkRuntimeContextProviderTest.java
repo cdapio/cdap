@@ -70,8 +70,13 @@ public class SparkRuntimeContextProviderTest {
   public final TestRule cwdLockRule = (base, description) -> new Statement() {
     @Override
     public void evaluate() throws Throwable {
-      synchronized (SparkRuntimeContextProvider.class) {
-        base.evaluate();
+      synchronized (System.class) {
+        File lockFile = new File(System.getProperty("java.io.tmpdir"), "cdap-spark-cwd-test.lock");
+        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(lockFile, "rw");
+             java.nio.channels.FileChannel ch = raf.getChannel();
+             java.nio.channels.FileLock ignored = ch.lock()) {
+          base.evaluate();
+        }
       }
     }
   };

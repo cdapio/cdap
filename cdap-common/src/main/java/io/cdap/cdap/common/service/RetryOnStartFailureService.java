@@ -152,38 +152,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // the setting of the startedService field. When that happens, the stop failure state is not propagated.
     // Nevertheless, there won't be any service left behind without stopping.
     if (startedService != null) {
-      AtomicBoolean notified = new AtomicBoolean(false);
-      startedService.addListener(new Service.Listener() {
-        @Override
-        public void starting() {}
-
-        @Override
-        public void running() {}
-
-        @Override
-        public void stopping(State from) {}
-
-        @Override
-        public void terminated(State from) {
-          if (notified.compareAndSet(false, true)) {
-            notifyStopped();
-          }
-        }
-
-        @Override
-        public void failed(State from, Throwable failure) {
-          if (notified.compareAndSet(false, true)) {
-            notifyFailed(failure);
-          }
-        }
-      }, MoreExecutors.directExecutor());
-      startedService.stopAsync();
-      State delegateState = startedService.state();
-      if (delegateState == State.TERMINATED && notified.compareAndSet(false, true)) {
-        notifyStopped();
-      } else if (delegateState == State.FAILED && notified.compareAndSet(false, true)) {
-        notifyFailed(startedService.failureCause());
-      }
+      stopDelegate(startedService, true);
       return;
     }
 
@@ -191,42 +160,46 @@ public class RetryOnStartFailureService extends AbstractService {
     // because if the underlying service is not yet started due to failure, it shouldn't affect the stop state
     // of this retrying service.
     if (currentDelegate != null) {
-      AtomicBoolean notified = new AtomicBoolean(false);
-      currentDelegate.addListener(new Service.Listener() {
-        @Override
-        public void starting() {}
-
-        @Override
-        public void running() {}
-
-        @Override
-        public void stopping(State from) {}
-
-        @Override
-        public void terminated(State from) {
-          if (notified.compareAndSet(false, true)) {
-            notifyStopped();
-          }
-        }
-
-        @Override
-        public void failed(State from, Throwable failure) {
-          if (notified.compareAndSet(false, true)) {
-            notifyStopped();
-          }
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-      currentDelegate.stopAsync();
-      State delegateState = currentDelegate.state();
-      if ((delegateState == State.TERMINATED || delegateState == State.FAILED)
-          && notified.compareAndSet(false, true)) {
-        notifyStopped();
-      }
+      stopDelegate(currentDelegate, false);
       return;
     }
 
     // Otherwise, if nothing has been started yet, just notify this service is stopped
     notifyStopped();
+  }
+
+  private void stopDelegate(Service delegateService, boolean propagateFailure) {
+    AtomicBoolean notified = new AtomicBoolean(false);
+    delegateService.addListener(new Service.Listener() {
+      @Override
+      public void terminated(State from) {
+        if (notified.compareAndSet(false, true)) {
+          notifyStopped();
+        }
+      }
+
+      @Override
+      public void failed(State from, Throwable failure) {
+        if (notified.compareAndSet(false, true)) {
+          if (propagateFailure) {
+            notifyFailed(failure);
+          } else {
+            notifyStopped();
+          }
+        }
+      }
+    }, MoreExecutors.directExecutor());
+    delegateService.stopAsync();
+    State delegateState = delegateService.state();
+    if (delegateState == State.TERMINATED && notified.compareAndSet(false, true)) {
+      notifyStopped();
+    } else if (delegateState == State.FAILED && notified.compareAndSet(false, true)) {
+      if (propagateFailure) {
+        notifyFailed(delegateService.failureCause());
+      } else {
+        notifyStopped();
+      }
+    }
   }
 
   @Override

@@ -17,10 +17,10 @@
 package io.cdap.cdap.logging.appender.kafka;
 
 import com.google.common.base.Preconditions;
-import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.logging.appender.LogAppender;
 import kafka.producer.Partitioner;
 import kafka.utils.VerifiableProperties;
 
@@ -47,6 +47,6 @@ public final class StringPartitioner implements Partitioner {
 
   @Override
   public int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashUnencodedChars(key.toString()).asInt()) % this.numPartitions;
+    return LogAppender.partition(key, this.numPartitions);
   }
 }

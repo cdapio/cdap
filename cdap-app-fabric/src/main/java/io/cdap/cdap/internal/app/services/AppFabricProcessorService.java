@@ -144,41 +144,27 @@ public class AppFabricProcessorService extends AbstractIdleService {
             Service.APP_FABRIC_PROCESSOR));
     LOG.info("Starting AppFabric processor service.");
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    List<com.google.common.util.concurrent.Service> services = new ArrayList<>();
     // Only for RBAC instances
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
-      startIfNotRunning(auditLogSubscriberService);
+      services.add(auditLogSubscriberService);
     }
+    services.add(provisioningService);
+    services.add(applicationLifecycleService);
+    services.add(bootstrapService);
+    services.add(programRuntimeService);
+    services.add(programNotificationSubscriberService);
+    services.add(programStopSubscriberService);
+    services.add(runRecordCorrectorService);
+    services.add(programRunStatusMonitorService);
+    services.add(coreSchedulerService);
+    services.add(runRecordCounterService);
+    services.add(runDataTimeToLiveService);
+    services.add(operationNotificationSubscriberService);
 
-    startIfNotRunning(provisioningService);
-    startIfNotRunning(applicationLifecycleService);
-    startIfNotRunning(bootstrapService);
-    startIfNotRunning(programRuntimeService);
-    startIfNotRunning(programNotificationSubscriberService);
-    startIfNotRunning(programStopSubscriberService);
-    startIfNotRunning(runRecordCorrectorService);
-    startIfNotRunning(programRunStatusMonitorService);
-    startIfNotRunning(coreSchedulerService);
-    startIfNotRunning(runRecordCounterService);
-    startIfNotRunning(runDataTimeToLiveService);
-    startIfNotRunning(operationNotificationSubscriberService);
-
-    if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
-        && cConf.getBoolean(Constants.Security.ENABLED)) {
-      auditLogSubscriberService.awaitRunning();
-    }
-    provisioningService.awaitRunning();
-    applicationLifecycleService.awaitRunning();
-    bootstrapService.awaitRunning();
-    programRuntimeService.awaitRunning();
-    programNotificationSubscriberService.awaitRunning();
-    programStopSubscriberService.awaitRunning();
-    runRecordCorrectorService.awaitRunning();
-    programRunStatusMonitorService.awaitRunning();
-    coreSchedulerService.awaitRunning();
-    runRecordCounterService.awaitRunning();
-    runDataTimeToLiveService.awaitRunning();
-    operationNotificationSubscriberService.awaitRunning();
+    services.forEach(this::startIfNotRunning);
+    services.forEach(com.google.common.util.concurrent.Service::awaitRunning);
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory

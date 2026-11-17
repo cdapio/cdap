@@ -221,8 +221,7 @@ public class DatasetTypeManager {
           throw new DatasetModuleConflictException(cause.getMessage(), cause);
         }
       }
-      Throwables.throwIfUnchecked(e);
-      throw new RuntimeException(e);
+      throw e;
     } catch (Exception e) {
       LOG.error("Operation failed", e);
       Throwables.throwIfUnchecked(e);
@@ -365,8 +364,7 @@ public class DatasetTypeManager {
           throw (DatasetModuleConflictException) cause;
         }
       }
-      Throwables.throwIfUnchecked(e);
-      throw new RuntimeException(e);
+      throw e;
     } catch (Exception e) {
       LOG.error("Operation failed", e);
       Throwables.throwIfUnchecked(e);
@@ -434,8 +432,7 @@ public class DatasetTypeManager {
         }
       }
       LOG.error("Failed to delete all modules from namespace {}", namespaceId);
-      Throwables.throwIfUnchecked(e);
-      throw new RuntimeException(e);
+      throw e;
     } catch (Exception e) {
       LOG.error("Operation failed", e);
       Throwables.throwIfUnchecked(e);

@@ -196,7 +196,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
-      Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
+      Throwables.throwIfInstanceOf(cause, TopicNotFoundException.class);
+      Throwables.throwIfInstanceOf(cause, IOException.class);
+      Throwables.throwIfUnchecked(cause);
       throw new RuntimeException(e);
     }
   }
@@ -208,7 +210,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       payloadTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
       Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
-      Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
+      Throwables.throwIfInstanceOf(cause, TopicNotFoundException.class);
+      Throwables.throwIfInstanceOf(cause, IOException.class);
+      Throwables.throwIfUnchecked(cause);
       throw new RuntimeException(e);
     }
   }
@@ -445,8 +449,10 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       return topicCache.get(topicId);
     } catch (ExecutionException e) {
       Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
-      Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
-      throw new RuntimeException(e.getCause());
+      Throwables.throwIfInstanceOf(cause, TopicNotFoundException.class);
+      Throwables.throwIfInstanceOf(cause, IOException.class);
+      Throwables.throwIfUnchecked(cause);
+      throw new RuntimeException(cause);
     }
   }
 

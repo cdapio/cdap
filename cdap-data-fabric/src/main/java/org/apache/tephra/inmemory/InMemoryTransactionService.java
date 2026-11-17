@@ -99,16 +99,15 @@ public class InMemoryTransactionService extends AbstractService {
   }
 
   public State startAndWait() {
-    if (!isRunning()) {
-      startAsync().awaitRunning();
+    if (state() == State.NEW) {
+      startAsync();
     }
+    awaitRunning();
     return state();
   }
 
   public State stopAndWait() {
-    if (isRunning()) {
-      stopAsync().awaitTerminated();
-    }
+    stopAsync().awaitTerminated();
     return state();
   }
 

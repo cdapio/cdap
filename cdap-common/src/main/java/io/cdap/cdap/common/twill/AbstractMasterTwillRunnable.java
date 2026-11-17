@@ -172,13 +172,13 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
       @Override
       public void terminated(Service.State from) {
-        LOG.info("Service " + name + " terminated");
+        LOG.info("Service {} terminated", name);
         future.set(name);
       }
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        LOG.error("Service " + name + " failed", failure);
+        LOG.error("Service {} failed", name, failure);
         future.setException(failure);
       }
     };

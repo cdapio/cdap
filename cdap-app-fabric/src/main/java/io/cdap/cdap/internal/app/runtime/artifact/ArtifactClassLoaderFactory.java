@@ -32,6 +32,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
@@ -103,16 +104,10 @@ final class ArtifactClassLoaderFactory {
     final ClassLoader finalSparkClassLoader = sparkClassLoader;
     return new CloseableClassLoader(programClassLoader, () -> {
       if (finalProgramClassLoader instanceof Closeable) {
-        try {
-          ((Closeable) finalProgramClassLoader).close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly((Closeable) finalProgramClassLoader);
       }
       if (finalSparkClassLoader instanceof Closeable) {
-        try {
-          ((Closeable) finalSparkClassLoader).close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly((Closeable) finalSparkClassLoader);
       }
     });
   }
@@ -135,14 +130,8 @@ final class ArtifactClassLoaderFactory {
 
       CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
       return new CloseableClassLoader(classLoader, () -> {
-        try {
-          classLoader.close();
-        } catch (Exception ignored) {
-        }
-        try {
-          classLoaderFolder.close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly(classLoader);
+        closeQuietly(classLoaderFolder);
       });
     } catch (Exception e) {
       Throwables.throwIfUnchecked(e);
@@ -179,18 +168,22 @@ final class ArtifactClassLoaderFactory {
           entityImpersonator);
       return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
           parentClassLoader, "lib"), () -> {
-        try {
-          parentClassLoader.close();
-        } catch (Exception ignored) {
-        }
-        try {
-          classLoaderFolder.close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly(parentClassLoader);
+        closeQuietly(classLoaderFolder);
       });
     } catch (Exception e) {
       Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
+    }
+  }
+
+  private static void closeQuietly(@Nullable Closeable closeable) {
+    if (closeable != null) {
+      try {
+        closeable.close();
+      } catch (IOException e) {
+        LOG.debug("Failed to close resource {}", closeable, e);
+      }
     }
   }
 }

@@ -121,36 +121,28 @@ public class Services {
       if (e.getStackTrace() != null) {
         timeoutException.setStackTrace(e.getStackTrace());
       }
-      try {
-        service.stopAsync();
-      } catch (Exception stopException) {
-        LOG.error("Error while trying to stop service: ", stopException);
-      }
+      stopQuietly(service);
       throw timeoutException;
     } catch (InterruptedException e) {
       LOG.error("Interrupted while waiting to start service.", e);
-      try {
-        service.stopAsync();
-      } catch (Exception stopException) {
-        LOG.error("Error while trying to stop service:", stopException);
-      }
+      stopQuietly(service);
       throw e;
     } catch (IllegalStateException e) {
       LOG.error("Failed to start service.", e);
-      try {
-        service.stopAsync();
-      } catch (Exception stopException) {
-        LOG.error("Error while trying to stop service:", stopException);
-      }
+      stopQuietly(service);
       throw new ExecutionException(e);
     } catch (ExecutionException e) {
       LOG.error("Failed to start service.", e);
-      try {
-        service.stopAsync();
-      } catch (Exception stopException) {
-        LOG.error("Error while trying to stop service:", stopException);
-      }
+      stopQuietly(service);
       throw e;
+    }
+  }
+
+  private static void stopQuietly(Service service) {
+    try {
+      service.stopAsync();
+    } catch (Exception stopException) {
+      LOG.error("Error while trying to stop service:", stopException);
     }
   }
 

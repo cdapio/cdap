@@ -177,12 +177,9 @@ public class LeaderElectionInfoServiceTest {
       try {
         SortedMap<Integer, LeaderElectionInfoService.Participant> map =
             infoService.getParticipants(5, TimeUnit.SECONDS);
-        Tasks.waitFor("host-a.local", () -> {
-          LeaderElectionInfoService.Participant p = map.get(1);
-          return p == null ? null : p.getHostname();
-        }, 5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
 
         LeaderElectionInfoService.Participant participant = map.get(1);
+        Assert.assertNotNull(participant);
         Assert.assertEquals("/customElectionPath/guid-0000000001", participant.getZkPath());
         Assert.assertEquals("host-a.local", participant.getHostname());
         Assert.assertTrue(participant.toString().contains("host-a.local"));

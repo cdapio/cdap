@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.workflow;
 
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
@@ -167,10 +168,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
       programStateWriter.error(program.getId().run(runId), t);
-      try {
-        closeable.close();
-      } catch (Exception ignored) {
-      }
+      closeQuietly(closeable);
       throw t;
     }
     blockForCompletion(closeable, controller);
@@ -214,10 +212,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void completed() {
-        try {
-          closeable.close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly(closeable);
         Set<Operation> fieldLineageOperations = new HashSet<>();
         if (controller instanceof WorkflowDataProvider) {
           fieldLineageOperations.addAll(
@@ -231,10 +226,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void killed() {
-        try {
-          closeable.close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly(closeable);
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
@@ -242,10 +234,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void error(Throwable cause) {
-        try {
-          closeable.close();
-        } catch (Exception ignored) {
-        }
+        closeQuietly(closeable);
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
@@ -282,15 +271,9 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    * Program}.
    */
   private Closeable createCloseable(final ProgramRunner programRunner, final Program program) {
-    return new Closeable() {
-      @Override
-      public void close() throws IOException {
-        try {
-          program.close();
-        } catch (Exception ignored) {
-        }
-        closeProgramRunner(programRunner);
-      }
+    return () -> {
+      closeQuietly(program);
+      closeProgramRunner(programRunner);
     };
   }
 
@@ -299,10 +282,15 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    */
   private void closeProgramRunner(ProgramRunner programRunner) {
     if (programRunner instanceof Closeable) {
-      try {
-        ((Closeable) programRunner).close();
-      } catch (Exception ignored) {
-      }
+      closeQuietly((Closeable) programRunner);
+    }
+  }
+
+  private static void closeQuietly(@Nullable Closeable closeable) {
+    try {
+      Closeables.close(closeable, true);
+    } catch (IOException ignored) {
+      // Cannot happen when swallowIOException is true
     }
   }
 }

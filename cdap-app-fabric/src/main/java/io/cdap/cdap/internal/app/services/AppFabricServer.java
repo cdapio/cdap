@@ -141,25 +141,19 @@ public class AppFabricServer extends AbstractIdleService {
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.APP_FABRIC_HTTP));
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    List<com.google.common.util.concurrent.Service> services = new ArrayList<>();
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      startIfNotRunning(namespaceCredentialProviderService);
+      services.add(namespaceCredentialProviderService);
     }
-    startIfNotRunning(provisioningService);
-    startIfNotRunning(applicationLifecycleService);
-    startIfNotRunning(bootstrapService);
-    startIfNotRunning(credentialProviderService);
-    startIfNotRunning(sourceControlOperationRunner);
-    startIfNotRunning(repositoryCleanupService);
+    services.add(provisioningService);
+    services.add(applicationLifecycleService);
+    services.add(bootstrapService);
+    services.add(credentialProviderService);
+    services.add(sourceControlOperationRunner);
+    services.add(repositoryCleanupService);
 
-    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      namespaceCredentialProviderService.awaitRunning();
-    }
-    provisioningService.awaitRunning();
-    applicationLifecycleService.awaitRunning();
-    bootstrapService.awaitRunning();
-    credentialProviderService.awaitRunning();
-    sourceControlOperationRunner.awaitRunning();
-    repositoryCleanupService.awaitRunning();
+    services.forEach(this::startIfNotRunning);
+    services.forEach(com.google.common.util.concurrent.Service::awaitRunning);
 
     // Create handler hooks
     List<AbstractHandlerHook> handlerHooks = handlerHookNames.stream()

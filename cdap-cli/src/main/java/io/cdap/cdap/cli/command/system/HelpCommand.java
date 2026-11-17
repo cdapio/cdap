@@ -127,14 +127,18 @@ public class HelpCommand implements Command {
       Predicate<Command> filter) {
 
     for (Command childCommand : Iterables.filter(commandSet.getCommands(), filter)) {
-      Optional<String> commandCategory = getCategory(childCommand).isPresent() ? getCategory(childCommand)
-          : parentCategory;
+      Optional<String> commandCategory = getCategory(childCommand);
+      if (!commandCategory.isPresent()) {
+        commandCategory = parentCategory;
+      }
       result.put(commandCategory.orElse(defaultCategory.getName()), childCommand);
     }
 
     for (CommandSet<Command> childCommandSet : commandSet.getCommandSets()) {
-      Optional<String> commandCategory = getCategory(childCommandSet).isPresent() ? getCategory(childCommandSet)
-          : parentCategory;
+      Optional<String> commandCategory = getCategory(childCommandSet);
+      if (!commandCategory.isPresent()) {
+        commandCategory = parentCategory;
+      }
       populate(result, childCommandSet, commandCategory, defaultCategory, filter);
     }
   }

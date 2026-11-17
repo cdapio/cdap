@@ -30,6 +30,7 @@ import io.cdap.cdap.messaging.store.PayloadTable;
 import io.cdap.cdap.messaging.store.TableFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -194,25 +195,12 @@ public final class LevelDBTableFactory implements TableFactory {
       this.metadataTable = null;
     }
     if (metadataTable != null) {
-      try {
-        metadataTable.getLevelDB().close();
-      } catch (Exception ignored) {
-      }
+      closeQuietly(metadataTable.getLevelDB());
     }
     Collection<DB> dbs = levelDBs.values();
-    dbs.forEach(db -> {
-      try {
-        db.close();
-      } catch (Exception ignored) {
-      }
-    });
+    dbs.forEach(LevelDBTableFactory::closeQuietly);
     dbs.clear();
-    partitionedLevelDBs.values().forEach(db -> {
-      try {
-        db.close();
-      } catch (Exception ignored) {
-      }
-    });
+    partitionedLevelDBs.values().forEach(LevelDBTableFactory::closeQuietly);
     partitionedLevelDBs.clear();
   }
 
@@ -324,10 +312,7 @@ public final class LevelDBTableFactory implements TableFactory {
               break;
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
-            try {
-              levelDBs.remove(dataDBPath).close();
-            } catch (Exception ignored) {
-            }
+            closeQuietly(levelDBs.remove(dataDBPath));
             filesToDelete.add(dataDBPath);
 
             // Payload table
@@ -336,10 +321,7 @@ public final class LevelDBTableFactory implements TableFactory {
               break;
             }
             // We can safely remove and close the levelDB as no one should be accessing them anymore
-            try {
-              levelDBs.remove(dataDBPath).close();
-            } catch (Exception ignored) {
-            }
+            closeQuietly(levelDBs.remove(dataDBPath));
             filesToDelete.add(dataDBPath);
           }
 
@@ -368,6 +350,16 @@ public final class LevelDBTableFactory implements TableFactory {
         }
       } catch (IOException ex) {
         LOG.debug("Unable to perform data cleanup in TMS LevelDB tables", ex);
+      }
+    }
+  }
+
+  private static void closeQuietly(Closeable closeable) {
+    if (closeable != null) {
+      try {
+        closeable.close();
+      } catch (IOException e) {
+        LOG.debug("Failed to close LevelDB resource", e);
       }
     }
   }

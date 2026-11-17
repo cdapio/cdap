@@ -84,8 +84,10 @@ public class LeaderElectionInfoService extends AbstractIdleService {
     try {
       Stopwatch stopwatch = Stopwatch.createStarted();
       CountDownLatch readyLatch = readyFuture.get(timeout, unit);
-      long latchTimeout = Math.max(0, stopwatch.elapsed(unit) - timeout);
-      readyLatch.await(latchTimeout, unit);
+      long latchTimeout = Math.max(0, timeout - stopwatch.elapsed(unit));
+      if (!readyLatch.await(latchTimeout, unit)) {
+        throw new TimeoutException("Timed out waiting for participants to be populated.");
+      }
     } catch (ExecutionException e) {
       // The ready future never throw on get. If this happen, just return an empty map
       return ImmutableSortedMap.of();
