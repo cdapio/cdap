@@ -25,7 +25,6 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -47,8 +46,11 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -57,7 +59,9 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -229,6 +233,21 @@ public class SupportBundleGenerator {
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
     }
+    if (bundleRequestFileList == null || bundleRequestFileList.getFiles() == null) {
+      throw new BadRequestException("The request body must contain a 'files' list.");
+    }
+
+    String bundleName = uuidFile.getName();
+    Path bundleDir = uuidFile.getCanonicalFile().toPath();
+    // Resolve every requested file before writing anything, so an invalid path fails fast.
+    Map<String, File> requestedFiles = new LinkedHashMap<>();
+    for (String filePath : bundleRequestFileList.getFiles()) {
+      File requestFile = resolveBundleFile(bundleDir, filePath);
+      if (requestFile.isFile()) {
+        requestedFiles.putIfAbsent(getEntryName(bundleName, bundleDir, requestFile.toPath()),
+            requestFile);
+      }
+    }
 
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
@@ -236,21 +255,13 @@ public class SupportBundleGenerator {
         new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING),
             digest))) {
       if (bundleRequestFileList.getFiles().isEmpty()) {
-        // If file path is empty string which means we want to zip the whole bundle id folder
-        BundleJarUtil.addToArchive(uuidFile, true, zipOut);
+        // An empty file list means the whole bundle directory is archived.
+        addBundleToArchive(bundleName, bundleDir, zipOut);
       } else {
-        Path bundleDir = uuidFile.getCanonicalFile().toPath();
-        Set<String> entryNames = new HashSet<>();
-        for (String filePath : bundleRequestFileList.getFiles()) {
-          File requestFile = resolveBundleFile(bundleDir, filePath);
-          String entryName = uuidFile.getName() + "/"
-              + bundleDir.relativize(requestFile.toPath()).toString().replace(File.separatorChar, '/');
-          if (requestFile.isFile() && entryNames.add(entryName)) {
-            ZipEntry entry = new ZipEntry(entryName);
-            zipOut.putNextEntry(entry);
-            Files.copy(requestFile.toPath(), zipOut);
-            zipOut.closeEntry();
-          }
+        for (Map.Entry<String, File> requestedFile : requestedFiles.entrySet()) {
+          zipOut.putNextEntry(new ZipEntry(requestedFile.getKey()));
+          Files.copy(requestedFile.getValue().toPath(), zipOut);
+          zipOut.closeEntry();
         }
       }
     }
@@ -302,10 +313,46 @@ public class SupportBundleGenerator {
   }
 
   /**
+   * Adds the bundle directory to the archive. Symbolic links are not followed and are skipped, so
+   * only files that are inside the bundle directory are archived.
+   */
+  private static void addBundleToArchive(String bundleName, Path bundleDir,
+      ZipOutputStream zipOut) throws IOException {
+    Files.walkFileTree(bundleDir, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+          throws IOException {
+        String entryName = getEntryName(bundleName, bundleDir, dir);
+        zipOut.putNextEntry(new ZipEntry(entryName.endsWith("/") ? entryName : entryName + "/"));
+        zipOut.closeEntry();
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (attrs.isRegularFile()) {
+          zipOut.putNextEntry(new ZipEntry(getEntryName(bundleName, bundleDir, file)));
+          Files.copy(file, zipOut);
+          zipOut.closeEntry();
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  /**
+   * Returns the archive entry name of a path inside the bundle directory.
+   */
+  private static String getEntryName(String bundleName, Path bundleDir, Path path) {
+    return bundleName + "/"
+        + bundleDir.relativize(path).toString().replace(File.separatorChar, '/');
+  }
+
+  /**
    * Resolves a file path requested by the client against the canonical bundle directory.
    *
-   * @throws BadRequestException if the path is malformed or the resolved file is not inside the
-   *     bundle directory
+   * @throws BadRequestException if the path is malformed, or does not resolve to a path inside
+   *     the bundle directory that is not a directory
    */
   private static File resolveBundleFile(Path bundleDir, @Nullable String filePath)
       throws IOException, BadRequestException {
@@ -315,16 +362,18 @@ public class SupportBundleGenerator {
       throw new BadRequestException(invalidPathMessage);
     }
     File requestFile = new File(bundleDir.toFile(), filePath).getCanonicalFile();
-    if (!requestFile.toPath().startsWith(bundleDir) || requestFile.toPath().equals(bundleDir)) {
+    if (!requestFile.toPath().startsWith(bundleDir) || requestFile.isDirectory()) {
       throw new BadRequestException(invalidPathMessage);
     }
     return requestFile;
   }
 
   /**
-   * Validates the user supplied identifiers in the bundle configuration.
+   * Validates the user supplied parameters in the bundle configuration.
+   *
+   * @throws BadRequestException if any of the parameters is invalid
    */
-  private static void validateConfiguration(SupportBundleConfiguration config)
+  public static void validateConfiguration(SupportBundleConfiguration config)
       throws BadRequestException {
     String namespace = config.getNamespace();
     if (namespace != null && !EntityId.isValidNamespace(namespace)) {
@@ -334,9 +383,17 @@ public class SupportBundleGenerator {
     if (app != null && !EntityId.isValidId(app)) {
       throw new BadRequestException(String.format("Invalid application name '%s'.", app));
     }
+    if (config.getProgramType() == null) {
+      throw new BadRequestException("Program type must be provided.");
+    }
     String programName = config.getProgramName();
-    if (programName != null && !EntityId.isValidId(programName)) {
+    if (programName == null || !EntityId.isValidId(programName)) {
       throw new BadRequestException(String.format("Invalid program name '%s'.", programName));
+    }
+    if (config.getMaxRunsPerProgram() <= 0) {
+      throw new BadRequestException(String.format(
+          "Invalid maxRunsPerProgram '%d'. It must be a positive number.",
+          config.getMaxRunsPerProgram()));
     }
     String run = config.getRun();
     if (run != null && !isValidUuid(run)) {

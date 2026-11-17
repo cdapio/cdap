@@ -89,6 +89,7 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
   private static Store store;
   private static ExecutorService executorService;
 
+  private final List<File> createdBundles = new ArrayList<>();
   private int sourceId;
 
   @BeforeClass
@@ -113,6 +114,10 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
 
   @After
   public void cleanup() throws IOException {
+    for (File bundle : createdBundles) {
+      DirUtils.deleteDirectoryContents(bundle, false);
+    }
+    createdBundles.clear();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, deleteNamespace(NAMESPACE).getResponseCode());
   }
 
@@ -196,63 +201,42 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
 
   @Test
   public void testDownloadBundleFiles() throws Exception {
-    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    String uuid = UUID.randomUUID().toString();
-    File uuidFile = new File(tempFolder, uuid);
+    File uuidFile = createFinishedBundle();
+    String uuid = uuidFile.getName();
     DirUtils.mkdirs(new File(uuidFile, "app"));
-    updateStatusToFinished(tempFolder, uuid);
     Files.write(new File(uuidFile, "app/run.json").toPath(), "{}".getBytes(StandardCharsets.UTF_8));
 
-    Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
+    Path zipPath = createZipPath();
     supportBundleGenerator.createBundleZipByRequest(
         uuid, zipPath, new SupportBundleRequestFileList(
             Arrays.asList("app/run.json", "missing.json", "app/../app/run.json", "/status.json")));
 
-    // Entry names are normalized and the same file is only added once.
-    List<String> entryNames = new ArrayList<>();
-    try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(zipPath))) {
-      for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
-        entryNames.add(entry.getName());
-      }
-    }
+    // Entry names are normalized, missing files are skipped and the same file is only added once.
     Assert.assertEquals(Arrays.asList(uuid + "/app/run.json", uuid + "/" + SupportBundleFileNames.STATUS_FILE_NAME),
-                        entryNames);
+                        listZipEntries(zipPath));
   }
 
   @Test
-  public void testDownloadRejectsFilesOutsideBundle() throws Exception {
-    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    String uuid = UUID.randomUUID().toString();
-    DirUtils.mkdirs(new File(tempFolder, uuid));
-    updateStatusToFinished(tempFolder, uuid);
-    // A file next to the bundle directory, which must not be readable through the bundle API.
-    File outsideFile = new File(tempFolder, "outside-" + uuid + ".txt");
-    Files.write(outsideFile.toPath(), "secret".getBytes(StandardCharsets.UTF_8));
-    // A symlink inside the bundle that points outside of it, where the filesystem supports it.
-    boolean hasSymlink;
+  public void testDownloadWholeBundleSkipsSymlinks() throws Exception {
+    File uuidFile = createFinishedBundle();
+    String uuid = uuidFile.getName();
+    DirUtils.mkdirs(new File(uuidFile, "app"));
+    Files.write(new File(uuidFile, "app/run.json").toPath(), "{}".getBytes(StandardCharsets.UTF_8));
+    File outsideFile = createOutsideFile(uuidFile);
     try {
-      Files.createSymbolicLink(new File(new File(tempFolder, uuid), "link").toPath(), outsideFile.toPath());
-      hasSymlink = true;
-    } catch (UnsupportedOperationException | IOException e) {
-      hasSymlink = false;
-    }
+      boolean hasSymlink = createSymlink(new File(uuidFile, "link"), outsideFile);
 
-    Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
-    try {
-      List<String> invalidPaths = new ArrayList<>(Arrays.asList(
-          "../" + outsideFile.getName(), "app/../../" + outsideFile.getName(), "./../" + outsideFile.getName(),
-          ".", "..", "", "status.json\0", null));
+      Path zipPath = createZipPath();
+      supportBundleGenerator.createBundleZipByRequest(
+          uuid, zipPath, new SupportBundleRequestFileList(Collections.emptyList()));
+
+      List<String> entries = listZipEntries(zipPath);
+      Assert.assertTrue(entries.contains(uuid + "/"));
+      Assert.assertTrue(entries.contains(uuid + "/app/"));
+      Assert.assertTrue(entries.contains(uuid + "/app/run.json"));
+      Assert.assertTrue(entries.contains(uuid + "/" + SupportBundleFileNames.STATUS_FILE_NAME));
       if (hasSymlink) {
-        invalidPaths.add("link");
-      }
-      for (String filePath : invalidPaths) {
-        try {
-          supportBundleGenerator.createBundleZipByRequest(
-              uuid, zipPath, new SupportBundleRequestFileList(Collections.singletonList(filePath)));
-          Assert.fail("Expected BadRequestException for file path " + filePath);
-        } catch (BadRequestException e) {
-          // expected
-        }
+        Assert.assertFalse(entries.contains(uuid + "/link"));
       }
     } finally {
       Files.deleteIfExists(outsideFile.toPath());
@@ -260,12 +244,42 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
   }
 
   @Test
+  public void testDownloadRejectsInvalidFilePaths() throws Exception {
+    File uuidFile = createFinishedBundle();
+    String uuid = uuidFile.getName();
+    DirUtils.mkdirs(new File(uuidFile, "app"));
+    File outsideFile = createOutsideFile(uuidFile);
+    try {
+      List<String> invalidPaths = new ArrayList<>(Arrays.asList(
+          "../" + outsideFile.getName(), "app/../../" + outsideFile.getName(), "./../" + outsideFile.getName(),
+          ".", "..", "", "app", "app/", "status.json\0", null));
+      if (createSymlink(new File(uuidFile, "link"), outsideFile)) {
+        invalidPaths.add("link");
+      }
+
+      Path zipPath = createZipPath();
+      for (String filePath : invalidPaths) {
+        assertBadRequest("file path " + filePath, () -> supportBundleGenerator.createBundleZipByRequest(
+            uuid, zipPath, new SupportBundleRequestFileList(Collections.singletonList(filePath))));
+      }
+    } finally {
+      Files.deleteIfExists(outsideFile.toPath());
+    }
+  }
+
+  @Test
+  public void testDownloadRejectsMissingFileList() throws Exception {
+    String uuid = createFinishedBundle().getName();
+    Path zipPath = createZipPath();
+    assertBadRequest("null request", () -> supportBundleGenerator.createBundleZipByRequest(uuid, zipPath, null));
+    assertBadRequest("null file list", () -> supportBundleGenerator.createBundleZipByRequest(
+        uuid, zipPath, new SupportBundleRequestFileList(null)));
+  }
+
+  @Test
   public void testInvalidBundleIdIsNotFound() throws Exception {
-    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
-    String uuid = UUID.randomUUID().toString();
-    DirUtils.mkdirs(new File(tempFolder, uuid));
-    updateStatusToFinished(tempFolder, uuid);
-    Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
+    String uuid = createFinishedBundle().getName();
+    Path zipPath = createZipPath();
 
     for (String invalidId : Arrays.asList("..", "../" + uuid, uuid + "/..", "1-1-1-1-1", "")) {
       try {
@@ -290,30 +304,93 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     }
     // The valid bundle is untouched.
     Assert.assertNotNull(supportBundleGenerator.getBundle(uuid));
-    Assert.assertTrue(new File(tempFolder, uuid).isDirectory());
   }
 
   @Test
-  public void testGenerateRejectsInvalidIdentifiers() throws Exception {
+  public void testGenerateRejectsInvalidParameters() throws Exception {
+    String namespace = NAMESPACE.getNamespace();
+    String app = AppWithWorkflow.NAME;
+    String program = AppWithWorkflow.SampleWorkflow.NAME;
     String validRun = RunIds.generate().getId();
     List<SupportBundleConfiguration> invalidConfigs = Arrays.asList(
-        new SupportBundleConfiguration(NAMESPACE.getNamespace(), AppWithWorkflow.NAME,
-                                       "../../../../../../../preferences", ProgramType.WORKFLOW,
-                                       AppWithWorkflow.SampleWorkflow.NAME, 1),
-        new SupportBundleConfiguration(NAMESPACE.getNamespace(), "../app", validRun, ProgramType.WORKFLOW,
-                                       AppWithWorkflow.SampleWorkflow.NAME, 1),
-        new SupportBundleConfiguration(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, validRun,
-                                       ProgramType.WORKFLOW, "../workflow", 1),
-        new SupportBundleConfiguration("../ns", AppWithWorkflow.NAME, validRun, ProgramType.WORKFLOW,
-                                       AppWithWorkflow.SampleWorkflow.NAME, 1));
+        new SupportBundleConfiguration(namespace, app, "../../../../../../../preferences", ProgramType.WORKFLOW,
+                                       program, 1),
+        new SupportBundleConfiguration(namespace, app, "1-1-1-1-1", ProgramType.WORKFLOW, program, 1),
+        new SupportBundleConfiguration(namespace, app, "", ProgramType.WORKFLOW, program, 1),
+        new SupportBundleConfiguration(namespace, "../app", validRun, ProgramType.WORKFLOW, program, 1),
+        new SupportBundleConfiguration(namespace, app, validRun, ProgramType.WORKFLOW, "../workflow", 1),
+        new SupportBundleConfiguration(namespace, app, validRun, ProgramType.WORKFLOW, null, 1),
+        new SupportBundleConfiguration(namespace, app, validRun, null, program, 1),
+        new SupportBundleConfiguration(namespace, app, validRun, ProgramType.WORKFLOW, program, 0),
+        new SupportBundleConfiguration(namespace, app, validRun, ProgramType.WORKFLOW, program, -1),
+        new SupportBundleConfiguration("../ns", app, validRun, ProgramType.WORKFLOW, program, 1));
     for (SupportBundleConfiguration config : invalidConfigs) {
-      try {
-        supportBundleGenerator.generate(config, executorService);
-        Assert.fail("Expected BadRequestException for " + GSON.toJson(config));
-      } catch (BadRequestException e) {
-        // expected
+      assertBadRequest(GSON.toJson(config), () -> supportBundleGenerator.generate(config, executorService));
+    }
+  }
+
+  /**
+   * Creates a bundle directory with a finished status, which is deleted after the test.
+   */
+  private File createFinishedBundle() throws IOException {
+    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    String uuid = UUID.randomUUID().toString();
+    File uuidFile = new File(tempFolder, uuid);
+    DirUtils.mkdirs(uuidFile);
+    createdBundles.add(uuidFile);
+    updateStatusToFinished(tempFolder, uuid);
+    return uuidFile;
+  }
+
+  /**
+   * Creates a file next to the given bundle directory, which must not be readable through the bundle API.
+   */
+  private static File createOutsideFile(File uuidFile) throws IOException {
+    File outsideFile = new File(uuidFile.getParentFile(), "outside-" + uuidFile.getName() + ".txt");
+    Files.write(outsideFile.toPath(), "secret".getBytes(StandardCharsets.UTF_8));
+    return outsideFile;
+  }
+
+  /**
+   * Creates a symbolic link, returning {@code false} if the filesystem does not support it.
+   */
+  private static boolean createSymlink(File link, File target) {
+    try {
+      Files.createSymbolicLink(link.toPath(), target.toPath());
+      return true;
+    } catch (UnsupportedOperationException | IOException e) {
+      return false;
+    }
+  }
+
+  private static Path createZipPath() throws IOException {
+    return Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
+  }
+
+  private static List<String> listZipEntries(Path zipPath) throws IOException {
+    List<String> entryNames = new ArrayList<>();
+    try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(zipPath))) {
+      for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
+        entryNames.add(entry.getName());
       }
     }
+    return entryNames;
+  }
+
+  private static void assertBadRequest(String description, ThrowingRunnable runnable) throws Exception {
+    try {
+      runnable.run();
+      Assert.fail("Expected BadRequestException for " + description);
+    } catch (BadRequestException e) {
+      // expected
+    }
+  }
+
+  /**
+   * A runnable that can throw exceptions.
+   */
+  private interface ThrowingRunnable {
+    void run() throws Exception;
   }
 
   private void setStartAndRunning(ProgramId id, String pid, ArtifactId artifactId) {
