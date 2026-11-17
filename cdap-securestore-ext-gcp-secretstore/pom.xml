@@ -45,11 +45,23 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-secretmanager</artifactId>
       <version>${google.cloud.secretmanager.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-core</artifactId>
       <version>2.10.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

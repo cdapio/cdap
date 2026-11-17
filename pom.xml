@@ -770,6 +770,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>org.jline</groupId>
+            <artifactId>jline</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
           </exclusion>
@@ -1967,7 +1971,7 @@
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
                     <excludeGroupIds>${dependency.groupId.exclusions}</excludeGroupIds>
-                    <excludeArtifactIds>jackson-core-asl,jackson-mapper-asl</excludeArtifactIds>
+                    <excludeArtifactIds>jackson-core-asl,jackson-mapper-asl,auto-value</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
                     <includeScope>runtime</includeScope>
