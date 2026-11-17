@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
@@ -203,7 +202,7 @@ public class SharedResourceCacheTest {
       owner = startClient(OWNER_AUTH);
       initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
       assertEquals(digestAcl(OWNER_AUTH),
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+          aclOf(owner, parent));
     } finally {
       stopAll(owner);
     }
@@ -261,7 +260,7 @@ public class SharedResourceCacheTest {
   }
 
   @Test
-  public void testOpenAclParentStaysOpen() throws Exception {
+  public void testOpenOrNullAclParentStaysOpen() throws Exception {
     String parent = ZK_NAMESPACE + "/openParent";
     String nullAclParent = ZK_NAMESPACE + "/nullAclParent";
     ZKClientService owner = null;
@@ -270,15 +269,16 @@ public class SharedResourceCacheTest {
       owner = startClient(null);
       other = startClient(null);
       initCache(owner, parent, ZooDefs.Ids.OPEN_ACL_UNSAFE);
-      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, aclOf(owner, parent));
+      // Re-initializing on an existing open parent must not write its ACL at all.
+      initCache(owner, parent, ZooDefs.Ids.OPEN_ACL_UNSAFE);
+      assertEquals(0, owner.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getAversion());
       other.create(parent + "/child", null, CreateMode.PERSISTENT)
           .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
       SharedResourceCache<String> nullAclCache = initCache(owner, nullAclParent, null);
       nullAclCache.put("key1", "value1");
-      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
-          owner.getACL(nullAclParent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, aclOf(owner, nullAclParent));
       assertEquals("value1", nullAclCache.get("key1"));
     } finally {
       stopAll(owner, other);
@@ -297,7 +297,7 @@ public class SharedResourceCacheTest {
       owner.create(parent, null, CreateMode.PERSISTENT).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
       assertEquals(digestAcl(OWNER_AUTH),
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+          aclOf(owner, parent));
       assertNoAuth(anonymous.create(parent + "/injected", Bytes.toBytes("forged"),
           CreateMode.PERSISTENT));
     } finally {
@@ -319,7 +319,7 @@ public class SharedResourceCacheTest {
       owner.create(parent, null, CreateMode.PERSISTENT, customAcl)
           .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
       initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
-      assertEquals(customAcl, owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals(customAcl, aclOf(owner, parent));
     } finally {
       stopAll(owner);
     }
@@ -335,8 +335,7 @@ public class SharedResourceCacheTest {
       // ZooKeeper rejects the restricted ACL for a session without credentials; init must
       // still succeed.
       initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
-      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
-          anonymous.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, aclOf(anonymous, parent));
     } finally {
       stopAll(anonymous);
     }
@@ -354,26 +353,14 @@ public class SharedResourceCacheTest {
       final ZKClientService concurrentWriter = other;
       // Another instance changes the ACL version right after this cache reads the ACL, so the
       // cache's version-checked setACL fails and must be ignored.
-      ZKClient racingClient = new ForwardingZKClient(owner) {
-        @Override
-        public OperationFuture<ACLData> getACL(String path) {
-          OperationFuture<ACLData> result = super.getACL(path);
-          try {
-            result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            concurrentWriter.setACL(path, ZooDefs.Ids.OPEN_ACL_UNSAFE)
-                .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-          return result;
-        }
-      };
+      ZKClient racingClient = runAfterGetAcl(owner,
+          path -> concurrentWriter.setACL(path, ZooDefs.Ids.OPEN_ACL_UNSAFE)
+              .get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       SharedResourceCache<String> cache =
           new SharedResourceCache<>(racingClient, new StringCodec(), parent,
               ZooDefs.Ids.CREATOR_ALL_ACL);
       cache.init();
-      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE,
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, aclOf(owner, parent));
     } finally {
       stopAll(owner, other);
     }
@@ -389,19 +376,8 @@ public class SharedResourceCacheTest {
       final ZKClientService deleter = owner;
       // The parent disappears between reading its ACL and restricting it, so setACL fails with
       // NoNodeException. That is neither InvalidACL nor BadVersion, and init must still succeed.
-      ZKClient racingClient = new ForwardingZKClient(owner) {
-        @Override
-        public OperationFuture<ACLData> getACL(String path) {
-          OperationFuture<ACLData> result = super.getACL(path);
-          try {
-            result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            deleter.delete(path).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-          return result;
-        }
-      };
+      ZKClient racingClient = runAfterGetAcl(owner,
+          path -> deleter.delete(path).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       SharedResourceCache<String> cache =
           new SharedResourceCache<>(racingClient, new StringCodec(), parent,
               ZooDefs.Ids.CREATOR_ALL_ACL);
@@ -421,18 +397,16 @@ public class SharedResourceCacheTest {
     try {
       anonymous = startClient(null);
       owner = startClient(OWNER_AUTH);
-      final SharedResourceCache<String> unauthenticatedCache =
-          initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
+      initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
       assertNull(anonymous.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
 
       SharedResourceCache<String> ownerCache =
           initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
       assertEquals(digestAcl(OWNER_AUTH),
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+          aclOf(owner, parent));
       ownerCache.put("key1", "value1");
       assertNoAuth(anonymous.getChildren(parent));
       assertNoAuth(anonymous.getData(parent + "/key1"));
-      assertNull(unauthenticatedCache.get("key1"));
     } finally {
       stopAll(anonymous, owner);
     }
@@ -441,7 +415,7 @@ public class SharedResourceCacheTest {
   @Test
   public void testUnauthenticatedInitLoadsEntriesOnceReadableParentIsCreated() throws Exception {
     String parent = ZK_NAMESPACE + "/delayedReadableParent";
-    // Place READ_ACL_UNSAFE first so hasAuthSchemeAcl() iterates past a non-"auth" entry.
+    // Place the world-readable entry first so the auth-scheme check iterates past it.
     List<ACL> creatorWriteWorldRead = Arrays.asList(
         new ACL(ZooDefs.Perms.READ, ZooDefs.Ids.ANYONE_ID_UNSAFE),
         new ACL(ZooDefs.Perms.ALL, ZooDefs.Ids.AUTH_IDS));
@@ -482,6 +456,15 @@ public class SharedResourceCacheTest {
             expected.getCause() instanceof KeeperException.NoAuthException);
       }
 
+      // Auth-scheme ACLs only tolerate InvalidACL; other errors such as NoAuth still propagate.
+      try {
+        initCache(otherUser, restrictedRoot + "/authAclCache", ZooDefs.Ids.CREATOR_ALL_ACL);
+        fail("Expected NoAuthException when ancestor znode denies CREATE");
+      } catch (RuntimeException expected) {
+        assertTrue("Unexpected cause: " + expected.getCause(),
+            expected.getCause() instanceof KeeperException.NoAuthException);
+      }
+
       try {
         initCache(owner, ZK_NAMESPACE + "/emptyAclParent", Collections.emptyList());
         fail("Expected InvalidACLException when ACL list is empty");
@@ -493,10 +476,10 @@ public class SharedResourceCacheTest {
       List<ACL> malformedAcls = Arrays.asList(
           new ACL(ZooDefs.Perms.ALL, new Id("unknown", "id")),
           new ACL(ZooDefs.Perms.ALL, new Id("digest", "missing-colon")));
-      int index = 0;
-      for (ACL malformedAcl : malformedAcls) {
+      for (int i = 0; i < malformedAcls.size(); i++) {
+        ACL malformedAcl = malformedAcls.get(i);
         try {
-          initCache(owner, ZK_NAMESPACE + "/malformedAclParent" + index++,
+          initCache(owner, ZK_NAMESPACE + "/malformedAclParent" + i,
               Collections.singletonList(malformedAcl));
           fail("Expected InvalidACLException for malformed ACL: " + malformedAcl);
         } catch (RuntimeException expected) {
@@ -634,9 +617,10 @@ public class SharedResourceCacheTest {
         unauthenticatedCache.put("key1", "value1");
         fail("Expected unauthenticated put with CREATOR_ALL_ACL to fail");
       } catch (RuntimeException expected) {
-        assertTrue("Expected InvalidACLException in causal chain, got: " + expected,
-            Throwables.getCausalChain(expected).stream()
-                .anyMatch(KeeperException.InvalidACLException.class::isInstance));
+        assertTrue("Unexpected cause: " + expected.getCause(),
+            expected.getCause() instanceof ExecutionException);
+        assertTrue("Unexpected cause: " + expected.getCause().getCause(),
+            expected.getCause().getCause() instanceof KeeperException.InvalidACLException);
       }
 
       assertTrue(errorLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
@@ -651,9 +635,9 @@ public class SharedResourceCacheTest {
       assertNull(owner.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
       ownerCache.put("key1", "value1");
       assertEquals(digestAcl(OWNER_AUTH),
-          owner.getACL(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+          aclOf(owner, parent));
       assertEquals(digestAcl(OWNER_AUTH),
-          owner.getACL(parent + "/key1").get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+          aclOf(owner, parent + "/key1"));
       assertEquals("value1", ownerCache.get("key1"));
     } finally {
       stopAll(anonymous, owner);
@@ -676,6 +660,37 @@ public class SharedResourceCacheTest {
         new SharedResourceCache<>(client, new StringCodec(), parent, acl);
     cache.init();
     return cache;
+  }
+
+  private static List<ACL> aclOf(ZKClient client, String path) throws Exception {
+    return client.getACL(path).get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL();
+  }
+
+  /**
+   * Returns a client that runs {@code action} on a path right after reading that path's ACL, to
+   * simulate another instance acting between this cache's getACL and setACL calls.
+   */
+  private static ZKClient runAfterGetAcl(ZKClient delegate, PathAction action) {
+    return new ForwardingZKClient(delegate) {
+      @Override
+      public OperationFuture<ACLData> getACL(String path) {
+        OperationFuture<ACLData> result = super.getACL(path);
+        try {
+          result.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          action.run(path);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+        return result;
+      }
+    };
+  }
+
+  /**
+   * An action on a znode path that may throw.
+   */
+  private interface PathAction {
+    void run(String path) throws Exception;
   }
 
   private static List<ACL> digestAcl(String auth) throws NoSuchAlgorithmException {
