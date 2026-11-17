@@ -33,6 +33,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
@@ -192,20 +193,21 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    coreSchedulerService.stopAsync().awaitTerminated();
-    bootstrapService.stopAsync().awaitTerminated();
-    systemAppManagementService.stopAsync().awaitTerminated();
-    programRuntimeService.stopAsync().awaitTerminated();
-    applicationLifecycleService.stopAsync().awaitTerminated();
-    programNotificationSubscriberService.stopAsync().awaitTerminated();
-    programStopSubscriberService.stopAsync().awaitTerminated();
-    runRecordCorrectorService.stopAsync().awaitTerminated();
-    programRunStatusMonitorService.stopAsync().awaitTerminated();
-    provisioningService.stopAsync().awaitTerminated();
-    runRecordCounterService.stopAsync().awaitTerminated();
-    runDataTimeToLiveService.stopAsync().awaitTerminated();
-    operationNotificationSubscriberService.stopAsync().awaitTerminated();
-    auditLogSubscriberService.stopAsync().awaitTerminated();
+    Services.stopAllQuietly(
+        coreSchedulerService,
+        bootstrapService,
+        systemAppManagementService,
+        programRuntimeService,
+        applicationLifecycleService,
+        programNotificationSubscriberService,
+        programStopSubscriberService,
+        runRecordCorrectorService,
+        programRunStatusMonitorService,
+        provisioningService,
+        runRecordCounterService,
+        runDataTimeToLiveService,
+        operationNotificationSubscriberService,
+        auditLogSubscriberService);
     LOG.info("AppFabric processor service stopped.");
   }
 
@@ -248,8 +250,6 @@ public class AppFabricProcessorService extends AbstractIdleService {
   }
 
   private void startIfNotRunning(com.google.common.util.concurrent.Service service) {
-    if (service.state() == State.NEW) {
-      service.startAsync();
-    }
+    Services.startIfNew(service);
   }
 }

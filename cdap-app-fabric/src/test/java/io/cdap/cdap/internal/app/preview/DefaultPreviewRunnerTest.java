@@ -93,6 +93,15 @@ public class DefaultPreviewRunnerTest {
 
   @Test
   public void testStartUpParallelServicesAndShutDownOrder() throws Exception {
+    runShutDownScenario(false);
+  }
+
+  @Test
+  public void testShutDownCompletesWhenEarlierServiceFails() throws Exception {
+    runShutDownScenario(true);
+  }
+
+  private void runShutDownScenario(boolean failProgramRuntimeShutDown) throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     SConfiguration sConf = SConfiguration.create();
@@ -162,8 +171,20 @@ public class DefaultPreviewRunnerTest {
       }
     };
 
-    Service programRuntimeBacking =
-        createTrackingService("programRuntime", parallelLatch, stopOrder);
+    Service programRuntimeBacking = new AbstractIdleService() {
+      @Override
+      protected void startUp() throws Exception {
+        awaitParallelStart(parallelLatch, "programRuntime");
+      }
+
+      @Override
+      protected void shutDown() {
+        stopOrder.add("programRuntime");
+        if (failProgramRuntimeShutDown) {
+          throw new IllegalStateException("simulated programRuntime shutdown failure");
+        }
+      }
+    };
     ProgramRuntimeService programRuntimeService =
         Mockito.mock(ProgramRuntimeService.class, invocation -> {
           if (Service.class.equals(invocation.getMethod().getDeclaringClass())) {
@@ -225,6 +246,10 @@ public class DefaultPreviewRunnerTest {
             }));
 
     LogAppenderInitializer logInitializer = Mockito.mock(LogAppenderInitializer.class);
+    if (failProgramRuntimeShutDown) {
+      Mockito.doThrow(new RuntimeException("simulated logInitializer close failure"))
+          .when(logInitializer).close();
+    }
     LevelDBTableService levelDbService = Mockito.mock(LevelDBTableService.class);
     StructuredTableAdmin tableAdmin = Mockito.mock(StructuredTableAdmin.class);
     Mockito.when(tableAdmin.exists(Mockito.any())).thenReturn(true);

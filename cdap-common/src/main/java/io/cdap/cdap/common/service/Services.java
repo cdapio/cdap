@@ -147,6 +147,57 @@ public class Services {
   }
 
   /**
+   * Starts {@code service} if it is currently in {@link Service.State#NEW}, ignoring benign races
+   * when another caller starts the same shared service instance concurrently.
+   *
+   * @param service the service to start
+   */
+  public static void startIfNew(Service service) {
+    if (service.state() == Service.State.NEW) {
+      try {
+        service.startAsync();
+      } catch (IllegalStateException e) {
+        Service.State racedState = service.state();
+        if (racedState != Service.State.STARTING && racedState != Service.State.RUNNING) {
+          throw e;
+        }
+      }
+    }
+  }
+
+  /**
+   * Starts {@code service} if it is in {@link Service.State#NEW} and awaits {@code RUNNING}.
+   *
+   * @param service the service to start and await
+   */
+  public static void startAndAwaitRunning(Service service) {
+    startIfNew(service);
+    service.awaitRunning();
+  }
+
+  /**
+   * Sequentially stops each non-null {@link Service} and waits for termination, logging any
+   * exception so remaining services still stop cleanly.
+   *
+   * @param services services to stop in order
+   */
+  public static void stopAllQuietly(@Nullable Service... services) {
+    if (services == null) {
+      return;
+    }
+    for (Service service : services) {
+      if (service == null) {
+        continue;
+      }
+      try {
+        service.stopAsync().awaitTerminated();
+      } catch (Exception e) {
+        LOG.warn("Error while stopping service {}", service, e);
+      }
+    }
+  }
+
+  /**
    * See {@link Services#startAndWait(Service, long, TimeUnit, String)}
    */
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit)

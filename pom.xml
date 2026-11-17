@@ -124,7 +124,7 @@
     <grok.version>0.1.0</grok.version>
     <gson.version>2.3.1</gson.version>
     <guava.version>32.0.0-jre</guava.version>
-    <guice.version>4.0</guice.version>
+    <guice.version>4.2.3</guice.version>
     <httpclient.version>4.5.14</httpclient.version>
     <httpcore.version>4.4.16</httpcore.version>
     <hadoop.version>3.3.6</hadoop.version>
@@ -151,7 +151,7 @@
     <resteasy.version>3.0.26.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
-    <scala2.12.version>2.12.18</scala2.12.version>
+    <scala2.12.version>2.12.15</scala2.12.version>
     <servlet.api.version>3.1.0</servlet.api.version>
     <slf4j.version>1.7.15</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
@@ -159,6 +159,8 @@
     <spark3.version>3.3.2</spark3.version>
     <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.15.0-incubating</tephra.version>
+    <!-- Forked Tephra classes compiled with Guava 32 live in cdap-data-fabric; strip upstream duplicates when staging runtime libs -->
+    <tephra.forked.class.excludes>co/cask/tephra/persist/TransactionEdit.class,co/cask/tephra/persist/TransactionEdit$*.class,org/apache/tephra/DefaultTransactionExecutor.class,org/apache/tephra/DefaultTransactionExecutor$*.class,org/apache/tephra/TransactionAdmin.class,org/apache/tephra/TransactionAdmin$*.class,org/apache/tephra/TransactionManager.class,org/apache/tephra/TransactionManager$*.class,org/apache/tephra/TransactionServiceMain.class,org/apache/tephra/TransactionServiceMain$*.class,org/apache/tephra/coprocessor/ReferenceCountedSupplier.class,org/apache/tephra/coprocessor/ReferenceCountedSupplier$*.class,org/apache/tephra/coprocessor/TransactionStateCache.class,org/apache/tephra/coprocessor/TransactionStateCache$*.class,org/apache/tephra/distributed/TransactionService.class,org/apache/tephra/distributed/TransactionService$*.class,org/apache/tephra/distributed/TransactionServiceClient.class,org/apache/tephra/distributed/TransactionServiceClient$*.class,org/apache/tephra/inmemory/InMemoryTransactionService.class,org/apache/tephra/inmemory/InMemoryTransactionService$*.class,org/apache/tephra/persist/AbstractTransactionLog.class,org/apache/tephra/persist/AbstractTransactionLog$*.class,org/apache/tephra/persist/HDFSTransactionStateStorage.class,org/apache/tephra/persist/HDFSTransactionStateStorage$*.class,org/apache/tephra/persist/LocalFileTransactionStateStorage.class,org/apache/tephra/persist/LocalFileTransactionStateStorage$*.class,org/apache/tephra/persist/TransactionEdit.class,org/apache/tephra/persist/TransactionEdit$*.class,org/apache/tephra/persist/TransactionSnapshot.class,org/apache/tephra/persist/TransactionSnapshot$*.class,org/apache/tephra/runtime/DiscoveryModules.class,org/apache/tephra/runtime/DiscoveryModules$*.class,org/apache/tephra/visibility/DefaultFenceWait.class,org/apache/tephra/visibility/DefaultFenceWait$*.class,org/apache/tephra/zookeeper/TephraZKClientService.class,org/apache/tephra/zookeeper/TephraZKClientService$*.class</tephra.forked.class.excludes>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
     <twill.version>1.5.0-SNAPSHOT</twill.version>
@@ -316,6 +318,12 @@
         <version>${guice.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.google.inject</groupId>
+        <artifactId>guice</artifactId>
+        <version>${guice.version}</version>
+        <classifier>no_aop</classifier>
+      </dependency>
+      <dependency>
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-assistedinject</artifactId>
         <version>${guice.version}</version>
@@ -323,6 +331,11 @@
       <dependency>
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-servlet</artifactId>
         <version>${guice.version}</version>
       </dependency>
       <dependency>

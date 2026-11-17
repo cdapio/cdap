@@ -73,6 +73,7 @@ import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
@@ -433,8 +434,8 @@ public class TestBase {
     preferencesService = injector.getInstance(PreferencesService.class);
 
     scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service && ((Service) scheduler).state() == Service.State.NEW) {
-      ((Service) scheduler).startAsync().awaitRunning();
+    if (scheduler instanceof Service) {
+      Services.startAndAwaitRunning((Service) scheduler);
     }
     if (scheduler instanceof CoreSchedulerService) {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);

@@ -34,6 +34,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
@@ -209,13 +210,14 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     cancelHttpService.cancel();
-    applicationLifecycleService.stopAsync().awaitTerminated();
-    bootstrapService.stopAsync().awaitTerminated();
-    provisioningService.stopAsync().awaitTerminated();
-    sourceControlOperationRunner.stopAsync().awaitTerminated();
-    repositoryCleanupService.stopAsync().awaitTerminated();
-    credentialProviderService.stopAsync().awaitTerminated();
-    namespaceCredentialProviderService.stopAsync().awaitTerminated();
+    Services.stopAllQuietly(
+        applicationLifecycleService,
+        bootstrapService,
+        provisioningService,
+        sourceControlOperationRunner,
+        repositoryCleanupService,
+        credentialProviderService,
+        namespaceCredentialProviderService);
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
@@ -259,8 +261,6 @@ public class AppFabricServer extends AbstractIdleService {
   }
 
   private void startIfNotRunning(com.google.common.util.concurrent.Service service) {
-    if (service.state() == State.NEW) {
-      service.startAsync();
-    }
+    Services.startIfNew(service);
   }
 }

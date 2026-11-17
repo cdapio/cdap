@@ -20,6 +20,7 @@ package org.apache.tephra.inmemory;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import io.cdap.cdap.common.service.Services;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TxConstants;
@@ -99,10 +100,7 @@ public class InMemoryTransactionService extends AbstractService {
   }
 
   public State startAndWait() {
-    if (state() == State.NEW) {
-      startAsync();
-    }
-    awaitRunning();
+    Services.startAndAwaitRunning(this);
     return state();
   }
 

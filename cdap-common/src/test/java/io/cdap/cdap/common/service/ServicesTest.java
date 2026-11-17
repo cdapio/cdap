@@ -22,6 +22,9 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -270,5 +273,43 @@ public class ServicesTest {
         5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
     Assert.assertTrue(runCalled.get());
     Assert.assertTrue(shutDownCalled.get());
+  }
+
+  @Test
+  public void testStartIfNewAndStopAllQuietly() {
+    List<String> stopOrder = new ArrayList<>();
+    Service first = new AbstractIdleService() {
+      @Override
+      protected void startUp() {
+      }
+
+      @Override
+      protected void shutDown() {
+        stopOrder.add("first");
+        throw new IllegalStateException("simulated stop failure");
+      }
+    };
+    Service second = new AbstractIdleService() {
+      @Override
+      protected void startUp() {
+      }
+
+      @Override
+      protected void shutDown() {
+        stopOrder.add("second");
+      }
+    };
+
+    Services.startAndAwaitRunning(first);
+    // Repeated startIfNew on already-RUNNING service must be a no-op
+    Services.startIfNew(first);
+    Assert.assertEquals(Service.State.RUNNING, first.state());
+    Services.startAndAwaitRunning(second);
+
+    // stopAllQuietly must still stop 'second' even when 'first' throws during shutDown
+    Services.stopAllQuietly(first, null, second);
+    Assert.assertEquals(Arrays.asList("first", "second"), stopOrder);
+    Assert.assertEquals(Service.State.FAILED, first.state());
+    Assert.assertEquals(Service.State.TERMINATED, second.state());
   }
 }

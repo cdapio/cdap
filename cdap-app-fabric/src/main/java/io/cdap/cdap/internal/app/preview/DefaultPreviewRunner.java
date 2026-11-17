@@ -39,6 +39,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -377,18 +378,24 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Stopping preview runner service");
-    programRuntimeService.stopAsync().awaitTerminated();
-    applicationLifecycleService.stopAsync().awaitTerminated();
-    logAppenderInitializer.close();
-    metricsCollectionService.stopAsync().awaitTerminated();
-    programNotificationSubscriberService.stopAsync().awaitTerminated();
-    programStopSubscriberService.stopAsync().awaitTerminated();
-    datasetService.stopAsync().awaitTerminated();
-    dsOpExecService.stopAsync().awaitTerminated();
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAsync().awaitTerminated();
+    Services.stopAllQuietly(programRuntimeService, applicationLifecycleService);
+    try {
+      logAppenderInitializer.close();
+    } catch (Exception e) {
+      LOG.warn("Failed to close log appender initializer", e);
     }
-    levelDBTableService.close();
+    Services.stopAllQuietly(
+        metricsCollectionService,
+        programNotificationSubscriberService,
+        programStopSubscriberService,
+        datasetService,
+        dsOpExecService,
+        messagingService instanceof Service ? (Service) messagingService : null);
+    try {
+      levelDBTableService.close();
+    } catch (Exception e) {
+      LOG.warn("Failed to close levelDB table service", e);
+    }
   }
 
   private void previewStarted(ProgramId programId) {

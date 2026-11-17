@@ -35,6 +35,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -131,9 +132,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
       @Override
       protected void shutDown() {
-        scheduleNotificationSubscriberService.stopAsync().awaitTerminated();
-        constraintCheckerService.stopAsync().awaitTerminated();
-        timeSchedulerService.stopAsync().awaitTerminated();
+        Services.stopAllQuietly(
+            scheduleNotificationSubscriberService,
+            constraintCheckerService,
+            timeSchedulerService);
         LOG.info("Stopped core scheduler service.");
       }
     }, io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000,

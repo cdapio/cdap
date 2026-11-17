@@ -29,6 +29,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.service.Services;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -239,10 +240,7 @@ public class TransactionManager extends AbstractService {
   }
 
   public State startAndWait() {
-    if (state() == State.NEW) {
-      startAsync();
-    }
-    awaitRunning();
+    Services.startAndAwaitRunning(this);
     return state();
   }
 

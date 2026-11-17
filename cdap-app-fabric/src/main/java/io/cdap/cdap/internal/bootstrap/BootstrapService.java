@@ -24,6 +24,7 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import io.cdap.cdap.internal.capability.CapabilityManagementService;
@@ -125,9 +126,10 @@ public class BootstrapService extends AbstractIdleService {
     // Shutdown the executor, which will issue an interrupt to the running thread.
     // There is only a single daemon thread, so no need to wait for termination
     executorService.shutdownNow();
-    this.systemAppManagementService.stopAsync().awaitTerminated();
-    capabilityManagementService.stopAsync().awaitTerminated();
-    systemProgramManagementService.stopAsync().awaitTerminated();
+    Services.stopAllQuietly(
+        this.systemAppManagementService,
+        capabilityManagementService,
+        systemProgramManagementService);
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
