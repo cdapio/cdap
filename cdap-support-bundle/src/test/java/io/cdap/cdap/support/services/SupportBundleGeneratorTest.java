@@ -54,6 +54,7 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -204,14 +205,18 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
 
     Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
     supportBundleGenerator.createBundleZipByRequest(
-        uuid, zipPath, new SupportBundleRequestFileList(Arrays.asList("app/run.json", "missing.json")));
+        uuid, zipPath, new SupportBundleRequestFileList(
+            Arrays.asList("app/run.json", "missing.json", "app/../app/run.json", "/status.json")));
 
+    // Entry names are normalized and the same file is only added once.
+    List<String> entryNames = new ArrayList<>();
     try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(zipPath))) {
-      ZipEntry entry = zipIn.getNextEntry();
-      Assert.assertNotNull(entry);
-      Assert.assertEquals(uuid + "/app/run.json", entry.getName());
-      Assert.assertNull(zipIn.getNextEntry());
+      for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
+        entryNames.add(entry.getName());
+      }
     }
+    Assert.assertEquals(Arrays.asList(uuid + "/app/run.json", uuid + "/" + SupportBundleFileNames.STATUS_FILE_NAME),
+                        entryNames);
   }
 
   @Test
@@ -223,11 +228,24 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     // A file next to the bundle directory, which must not be readable through the bundle API.
     File outsideFile = new File(tempFolder, "outside-" + uuid + ".txt");
     Files.write(outsideFile.toPath(), "secret".getBytes(StandardCharsets.UTF_8));
+    // A symlink inside the bundle that points outside of it, where the filesystem supports it.
+    boolean hasSymlink;
+    try {
+      Files.createSymbolicLink(new File(new File(tempFolder, uuid), "link").toPath(), outsideFile.toPath());
+      hasSymlink = true;
+    } catch (UnsupportedOperationException | IOException e) {
+      hasSymlink = false;
+    }
 
     Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
     try {
-      for (String filePath : Arrays.asList("../" + outsideFile.getName(), "app/../../" + outsideFile.getName(),
-                                           "./../" + outsideFile.getName(), ".", "..")) {
+      List<String> invalidPaths = new ArrayList<>(Arrays.asList(
+          "../" + outsideFile.getName(), "app/../../" + outsideFile.getName(), "./../" + outsideFile.getName(),
+          ".", "..", "", "status.json\0", null));
+      if (hasSymlink) {
+        invalidPaths.add("link");
+      }
+      for (String filePath : invalidPaths) {
         try {
           supportBundleGenerator.createBundleZipByRequest(
               uuid, zipPath, new SupportBundleRequestFileList(Collections.singletonList(filePath)));
@@ -285,7 +303,9 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
         new SupportBundleConfiguration(NAMESPACE.getNamespace(), "../app", validRun, ProgramType.WORKFLOW,
                                        AppWithWorkflow.SampleWorkflow.NAME, 1),
         new SupportBundleConfiguration(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, validRun,
-                                       ProgramType.WORKFLOW, "../workflow", 1));
+                                       ProgramType.WORKFLOW, "../workflow", 1),
+        new SupportBundleConfiguration("../ns", AppWithWorkflow.NAME, validRun, ProgramType.WORKFLOW,
+                                       AppWithWorkflow.SampleWorkflow.NAME, 1));
     for (SupportBundleConfiguration config : invalidConfigs) {
       try {
         supportBundleGenerator.generate(config, executorService);

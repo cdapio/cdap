@@ -239,10 +239,14 @@ public class SupportBundleGenerator {
         // If file path is empty string which means we want to zip the whole bundle id folder
         BundleJarUtil.addToArchive(uuidFile, true, zipOut);
       } else {
+        Path bundleDir = uuidFile.getCanonicalFile().toPath();
+        Set<String> entryNames = new HashSet<>();
         for (String filePath : bundleRequestFileList.getFiles()) {
-          File requestFile = resolveBundleFile(uuidFile, filePath);
-          if (requestFile.isFile()) {
-            ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
+          File requestFile = resolveBundleFile(bundleDir, filePath);
+          String entryName = uuidFile.getName() + "/"
+              + bundleDir.relativize(requestFile.toPath()).toString().replace(File.separatorChar, '/');
+          if (requestFile.isFile() && entryNames.add(entryName)) {
+            ZipEntry entry = new ZipEntry(entryName);
             zipOut.putNextEntry(entry);
             Files.copy(requestFile.toPath(), zipOut);
             zipOut.closeEntry();
@@ -298,19 +302,21 @@ public class SupportBundleGenerator {
   }
 
   /**
-   * Resolves a file path requested by the client against the bundle directory.
+   * Resolves a file path requested by the client against the canonical bundle directory.
    *
-   * @throws BadRequestException if the resolved file is not inside the bundle directory
+   * @throws BadRequestException if the path is malformed or the resolved file is not inside the
+   *     bundle directory
    */
-  private static File resolveBundleFile(File uuidFile, String filePath)
+  private static File resolveBundleFile(Path bundleDir, @Nullable String filePath)
       throws IOException, BadRequestException {
-    File bundleDir = uuidFile.getCanonicalFile();
-    File requestFile = new File(bundleDir, filePath).getCanonicalFile();
-    if (!requestFile.toPath().startsWith(bundleDir.toPath())
-        || requestFile.equals(bundleDir)) {
-      throw new BadRequestException(
-          String.format("Invalid file path '%s' for support bundle '%s'.", filePath,
-              uuidFile.getName()));
+    String invalidPathMessage = String.format("Invalid file path '%s' for support bundle '%s'.",
+        filePath, bundleDir.getFileName());
+    if (filePath == null || filePath.indexOf('\0') >= 0) {
+      throw new BadRequestException(invalidPathMessage);
+    }
+    File requestFile = new File(bundleDir.toFile(), filePath).getCanonicalFile();
+    if (!requestFile.toPath().startsWith(bundleDir) || requestFile.toPath().equals(bundleDir)) {
+      throw new BadRequestException(invalidPathMessage);
     }
     return requestFile;
   }
@@ -320,6 +326,10 @@ public class SupportBundleGenerator {
    */
   private static void validateConfiguration(SupportBundleConfiguration config)
       throws BadRequestException {
+    String namespace = config.getNamespace();
+    if (namespace != null && !EntityId.isValidNamespace(namespace)) {
+      throw new BadRequestException(String.format("Invalid namespace '%s'.", namespace));
+    }
     String app = config.getApp();
     if (app != null && !EntityId.isValidId(app)) {
       throw new BadRequestException(String.format("Invalid application name '%s'.", app));
