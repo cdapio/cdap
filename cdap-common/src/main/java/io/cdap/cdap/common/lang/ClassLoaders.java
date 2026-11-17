@@ -19,6 +19,7 @@ package io.cdap.cdap.common.lang;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
@@ -51,6 +53,8 @@ public final class ClassLoaders {
 
   // Class-Path attributed in JAR are " " separated
   private static final Splitter CLASS_PATH_ATTR_SPLITTER = Splitter.on(" ").omitEmptyStrings();
+  private static final Splitter JAVA_CLASS_PATH_SPLITTER =
+      Splitter.on(File.pathSeparator).omitEmptyStrings();
 
   private ClassLoaders() {
   }
@@ -173,13 +177,12 @@ public final class ClassLoaders {
    */
   public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader,
       boolean childFirst, T urls) {
-    Deque<URLClassLoader> classLoaders = collectURLClassLoaders(classLoader, new LinkedList<>());
+    Deque<List<URL>> classLoaderURLs = collectClassLoaderURLs(classLoader, new LinkedList<>());
 
-    Iterator<URLClassLoader> iterator =
-        childFirst ? classLoaders.iterator() : classLoaders.descendingIterator();
+    Iterator<List<URL>> iterator =
+        childFirst ? classLoaderURLs.iterator() : classLoaderURLs.descendingIterator();
     while (iterator.hasNext()) {
-      URLClassLoader cl = iterator.next();
-      for (URL url : cl.getURLs()) {
+      for (URL url : iterator.next()) {
         if (urls.add(url) && (url.getProtocol().equals("file"))) {
           addClassPathFromJar(url, urls);
         }
@@ -190,16 +193,17 @@ public final class ClassLoaders {
   }
 
   /**
-   * Collects {@link URLClassLoader} along the {@link ClassLoader} chain. This method recognizes
-   * both {@link Delegator} and {@link CombineClassLoader} and will unfold the delegating
-   * classloaders inside it. The order of insertion
+   * Collects URL lists along the {@link ClassLoader} chain. This method recognizes both
+   * {@link Delegator} and {@link CombineClassLoader} and will unfold the delegating classloaders
+   * inside it. On Java 9+, {@link ClassLoader#getSystemClassLoader()} is not a
+   * {@link URLClassLoader}, so its URLs are resolved from {@code java.class.path}.
    *
    * @param classLoader the classloader to start the search from
    * @param result a collection for storing the result
    * @param <T> type of the collection
    * @return the result collection
    */
-  private static <T extends Collection<? super URLClassLoader>> T collectURLClassLoaders(
+  private static <T extends Collection<? super List<URL>>> T collectClassLoaderURLs(
       ClassLoader classLoader,
       T result) {
     // Do BFS from the bottom of the ClassLoader chain
@@ -227,7 +231,9 @@ public final class ClassLoaders {
           queue.addFirst((ClassLoader) delegate);
         }
       } else if (cl instanceof URLClassLoader) {
-        result.add((URLClassLoader) cl);
+        result.add(Arrays.asList(((URLClassLoader) cl).getURLs()));
+      } else if (Objects.equal(cl, ClassLoader.getSystemClassLoader())) {
+        result.add(parseJavaClassPath());
       }
 
       if (cl.getParent() != null) {
@@ -236,6 +242,44 @@ public final class ClassLoaders {
     }
 
     return result;
+  }
+
+  /**
+   * Returns the URLs listed in the {@code java.class.path} system property, in order. On Java 9+
+   * this is how the URLs of {@link ClassLoader#getSystemClassLoader()} are found, since it is no
+   * longer a {@link URLClassLoader}.
+   */
+  public static List<URL> parseJavaClassPath() {
+    ImmutableList.Builder<URL> urls = ImmutableList.builder();
+    for (String entry : JAVA_CLASS_PATH_SPLITTER.split(System.getProperty("java.class.path", ""))) {
+      URL url = toClassPathUrl(entry);
+      if (url != null) {
+        urls.add(url);
+      }
+    }
+    return urls.build();
+  }
+
+  @Nullable
+  private static URL toClassPathUrl(String entry) {
+    File file = new File(entry);
+    try {
+      return file.toURI().toURL();
+    } catch (SecurityException e) {
+      try {
+        String path = file.getAbsolutePath();
+        if (file.isDirectory() && !path.endsWith("/")) {
+          path = path + "/";
+        }
+        return new URL("file", null, path);
+      } catch (MalformedURLException | SecurityException malformed) {
+        LOG.warn("Malformed classpath entry: {}", entry, malformed);
+        return null;
+      }
+    } catch (MalformedURLException e) {
+      LOG.warn("Malformed classpath entry: {}", entry, e);
+      return null;
+    }
   }
 
   /**

@@ -465,9 +465,25 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       args.put(ClusterProperties.KERBEROS_KEYTAB, kerberosKeytab);
     }
 
+    scriptWriter.println("if [ -n \"${JAVA_HOME}\" ] && [ -x \"${JAVA_HOME}/bin/java\" ]; then");
+    scriptWriter.println("  JAVA_CMD=\"${JAVA_HOME}/bin/java\"");
+    scriptWriter.println("else");
+    scriptWriter.println("  JAVA_CMD=\"java\"");
+    scriptWriter.println("fi");
+    scriptWriter.println("JAVA_VER_RAW=$(\"${JAVA_CMD}\" -version 2>&1"
+        + " | awk -F '\"' '!/^Picked up / && /version \"/ {print $2; exit}')");
+    scriptWriter.println("JAVA_MAJOR=$(echo \"${JAVA_VER_RAW}\""
+        + " | awk -F '[._+-]' '{if ($1 == \"1\") print $2; else print $1}')");
+    scriptWriter.println("case \"${JAVA_MAJOR}\" in ''|*[!0-9]*) JAVA_MAJOR=0 ;; esac");
+    scriptWriter.println("if [ \"${JAVA_MAJOR}\" -lt 11 ]; then");
+    scriptWriter.println("  echo \"Java 11+ required on the cluster"
+        + " (found: ${JAVA_VER_RAW:-unknown})\" >&2");
+    scriptWriter.println("  exit 1");
+    scriptWriter.println("fi");
+
     scriptWriter.printf(
-        "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s "
-            + ">%s/stdout 2>%s/stderr &\n",
+        "nohup \"${JAVA_CMD}\" -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s'"
+            + " true %s >%s/stdout 2>%s/stderr &\n",
         getProgramRunId().getRun(),
         targetPath,
         Constants.Files.LAUNCHER_JAR,
