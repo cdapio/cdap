@@ -25,6 +25,8 @@ import io.cdap.cdap.SupportBundleTestBase;
 import io.cdap.cdap.SupportBundleTestHelper;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -39,6 +41,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.support.lib.SupportBundleFileNames;
+import io.cdap.cdap.support.lib.SupportBundleRequestFileList;
 import io.cdap.cdap.support.status.CollectionState;
 import io.cdap.cdap.support.status.SupportBundleConfiguration;
 import io.cdap.cdap.support.status.SupportBundleStatus;
@@ -48,6 +51,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +63,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -181,6 +191,109 @@ public class SupportBundleGeneratorTest extends SupportBundleTestBase {
     //Exceed the maximum number of folder allows in bundle
     File expectedDeletedBundle = new File(tempFolder.getPath(), expectedDeletedUuid);
     Assert.assertFalse(expectedDeletedBundle.exists());
+  }
+
+  @Test
+  public void testDownloadBundleFiles() throws Exception {
+    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    String uuid = UUID.randomUUID().toString();
+    File uuidFile = new File(tempFolder, uuid);
+    DirUtils.mkdirs(new File(uuidFile, "app"));
+    updateStatusToFinished(tempFolder, uuid);
+    Files.write(new File(uuidFile, "app/run.json").toPath(), "{}".getBytes(StandardCharsets.UTF_8));
+
+    Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
+    supportBundleGenerator.createBundleZipByRequest(
+        uuid, zipPath, new SupportBundleRequestFileList(Arrays.asList("app/run.json", "missing.json")));
+
+    try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(zipPath))) {
+      ZipEntry entry = zipIn.getNextEntry();
+      Assert.assertNotNull(entry);
+      Assert.assertEquals(uuid + "/app/run.json", entry.getName());
+      Assert.assertNull(zipIn.getNextEntry());
+    }
+  }
+
+  @Test
+  public void testDownloadRejectsFilesOutsideBundle() throws Exception {
+    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    String uuid = UUID.randomUUID().toString();
+    DirUtils.mkdirs(new File(tempFolder, uuid));
+    updateStatusToFinished(tempFolder, uuid);
+    // A file next to the bundle directory, which must not be readable through the bundle API.
+    File outsideFile = new File(tempFolder, "outside-" + uuid + ".txt");
+    Files.write(outsideFile.toPath(), "secret".getBytes(StandardCharsets.UTF_8));
+
+    Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
+    try {
+      for (String filePath : Arrays.asList("../" + outsideFile.getName(), "app/../../" + outsideFile.getName(),
+                                           "./../" + outsideFile.getName(), ".", "..")) {
+        try {
+          supportBundleGenerator.createBundleZipByRequest(
+              uuid, zipPath, new SupportBundleRequestFileList(Collections.singletonList(filePath)));
+          Assert.fail("Expected BadRequestException for file path " + filePath);
+        } catch (BadRequestException e) {
+          // expected
+        }
+      }
+    } finally {
+      Files.deleteIfExists(outsideFile.toPath());
+    }
+  }
+
+  @Test
+  public void testInvalidBundleIdIsNotFound() throws Exception {
+    File tempFolder = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
+    String uuid = UUID.randomUUID().toString();
+    DirUtils.mkdirs(new File(tempFolder, uuid));
+    updateStatusToFinished(tempFolder, uuid);
+    Path zipPath = Files.createTempFile(TEMP_FOLDER.newFolder().toPath(), "bundle", ".zip");
+
+    for (String invalidId : Arrays.asList("..", "../" + uuid, uuid + "/..", "1-1-1-1-1", "")) {
+      try {
+        supportBundleGenerator.getBundle(invalidId);
+        Assert.fail("Expected NotFoundException for get of " + invalidId);
+      } catch (NotFoundException e) {
+        // expected
+      }
+      try {
+        supportBundleGenerator.deleteBundle(invalidId);
+        Assert.fail("Expected NotFoundException for delete of " + invalidId);
+      } catch (NotFoundException e) {
+        // expected
+      }
+      try {
+        supportBundleGenerator.createBundleZipByRequest(
+            invalidId, zipPath, new SupportBundleRequestFileList(Collections.emptyList()));
+        Assert.fail("Expected NotFoundException for download of " + invalidId);
+      } catch (NotFoundException e) {
+        // expected
+      }
+    }
+    // The valid bundle is untouched.
+    Assert.assertNotNull(supportBundleGenerator.getBundle(uuid));
+    Assert.assertTrue(new File(tempFolder, uuid).isDirectory());
+  }
+
+  @Test
+  public void testGenerateRejectsInvalidIdentifiers() throws Exception {
+    String validRun = RunIds.generate().getId();
+    List<SupportBundleConfiguration> invalidConfigs = Arrays.asList(
+        new SupportBundleConfiguration(NAMESPACE.getNamespace(), AppWithWorkflow.NAME,
+                                       "../../../../../../../preferences", ProgramType.WORKFLOW,
+                                       AppWithWorkflow.SampleWorkflow.NAME, 1),
+        new SupportBundleConfiguration(NAMESPACE.getNamespace(), "../app", validRun, ProgramType.WORKFLOW,
+                                       AppWithWorkflow.SampleWorkflow.NAME, 1),
+        new SupportBundleConfiguration(NAMESPACE.getNamespace(), AppWithWorkflow.NAME, validRun,
+                                       ProgramType.WORKFLOW, "../workflow", 1));
+    for (SupportBundleConfiguration config : invalidConfigs) {
+      try {
+        supportBundleGenerator.generate(config, executorService);
+        Assert.fail("Expected BadRequestException for " + GSON.toJson(config));
+      } catch (BadRequestException e) {
+        // expected
+      }
+    }
   }
 
   private void setStartAndRunning(ProgramId id, String pid, ArtifactId artifactId) {

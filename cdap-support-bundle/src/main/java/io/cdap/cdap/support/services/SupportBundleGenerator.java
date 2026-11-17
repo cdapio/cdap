@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,6 +29,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.job.SupportBundleJob;
@@ -93,6 +95,7 @@ public class SupportBundleGenerator {
    */
   public String generate(SupportBundleConfiguration config, ExecutorService executorService)
       throws Exception {
+    validateConfiguration(config);
     NamespaceId namespace = Optional.ofNullable(config.getNamespace()).map(NamespaceId::new)
         .orElse(null);
     List<NamespaceId> namespaces = new ArrayList<>();
@@ -221,7 +224,7 @@ public class SupportBundleGenerator {
    */
   public String createBundleZipByRequest(String uuid, Path tmpPath,
       SupportBundleRequestFileList bundleRequestFileList)
-      throws IOException, NotFoundException, NoSuchAlgorithmException {
+      throws IOException, NotFoundException, NoSuchAlgorithmException, BadRequestException {
     File uuidFile = getUUIDFile(uuid);
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
@@ -237,8 +240,8 @@ public class SupportBundleGenerator {
         BundleJarUtil.addToArchive(uuidFile, true, zipOut);
       } else {
         for (String filePath : bundleRequestFileList.getFiles()) {
-          File requestFile = new File(uuidFile, filePath);
-          if (requestFile.exists()) {
+          File requestFile = resolveBundleFile(uuidFile, filePath);
+          if (requestFile.isFile()) {
             ZipEntry entry = new ZipEntry(uuidFile.getName() + "/" + filePath);
             zipOut.putNextEntry(entry);
             Files.copy(requestFile.toPath(), zipOut);
@@ -281,11 +284,70 @@ public class SupportBundleGenerator {
   }
 
   /**
-   * Get uuid file
+   * Returns the bundle directory for the given uuid.
+   *
+   * @throws NotFoundException if the uuid is not a well-formed UUID, since no bundle can exist
+   *     for it
    */
-  private File getUUIDFile(String uuid) {
+  private File getUUIDFile(String uuid) throws NotFoundException {
+    if (!isValidUuid(uuid)) {
+      throw new NotFoundException(String.format("No such uuid '%s' in Support Bundle.", uuid));
+    }
     File baseDirectory = new File(cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR));
     return new File(baseDirectory, uuid);
+  }
+
+  /**
+   * Resolves a file path requested by the client against the bundle directory.
+   *
+   * @throws BadRequestException if the resolved file is not inside the bundle directory
+   */
+  private static File resolveBundleFile(File uuidFile, String filePath)
+      throws IOException, BadRequestException {
+    File bundleDir = uuidFile.getCanonicalFile();
+    File requestFile = new File(bundleDir, filePath).getCanonicalFile();
+    if (!requestFile.toPath().startsWith(bundleDir.toPath())
+        || requestFile.equals(bundleDir)) {
+      throw new BadRequestException(
+          String.format("Invalid file path '%s' for support bundle '%s'.", filePath,
+              uuidFile.getName()));
+    }
+    return requestFile;
+  }
+
+  /**
+   * Validates the user supplied identifiers in the bundle configuration.
+   */
+  private static void validateConfiguration(SupportBundleConfiguration config)
+      throws BadRequestException {
+    String app = config.getApp();
+    if (app != null && !EntityId.isValidId(app)) {
+      throw new BadRequestException(String.format("Invalid application name '%s'.", app));
+    }
+    String programName = config.getProgramName();
+    if (programName != null && !EntityId.isValidId(programName)) {
+      throw new BadRequestException(String.format("Invalid program name '%s'.", programName));
+    }
+    String run = config.getRun();
+    if (run != null && !isValidUuid(run)) {
+      throw new BadRequestException(String.format("Invalid run id '%s'.", run));
+    }
+  }
+
+  /**
+   * Returns whether the given string is a UUID in its canonical string form.
+   */
+  private static boolean isValidUuid(@Nullable String value) {
+    if (value == null) {
+      return false;
+    }
+    try {
+      // UUID.fromString is lenient (e.g. it accepts "1-1-1-1-1"), so compare with the canonical
+      // form to only accept the 8-4-4-4-12 hex representation.
+      return UUID.fromString(value).toString().equalsIgnoreCase(value);
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   /**
