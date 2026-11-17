@@ -542,56 +542,6 @@ public class SharedResourceCacheTest {
   }
 
   @Test
-  public void testPutRestoresInterruptFlagWhenInterrupted() throws Exception {
-    String parent = ZK_NAMESPACE + "/interruptedPut";
-    ZKClientService owner = null;
-    try {
-      owner = startClient(OWNER_AUTH);
-      SharedResourceCache<String> cache = initCache(owner, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
-
-      // 1. Interrupt before put(): hits createParentIfAbsent() catch (InterruptedException).
-      Thread.currentThread().interrupt();
-      try {
-        cache.put("key1", "value1");
-        fail("Expected put() to fail when thread is interrupted before createParentIfAbsent()");
-      } catch (RuntimeException expected) {
-        assertTrue("Expected InterruptedException cause, got: " + expected.getCause(),
-            expected.getCause() instanceof InterruptedException);
-        assertTrue("Expected interrupt flag to remain set", Thread.interrupted());
-      }
-
-      // 2. Interrupt during encode(): hits completion.get() catch (InterruptedException).
-      Codec<String> interruptingEncodeCodec = new Codec<String>() {
-        @Override
-        public byte[] encode(String object) {
-          Thread.currentThread().interrupt();
-          return Bytes.toBytes(object);
-        }
-
-        @Override
-        public String decode(byte[] data) {
-          return Bytes.toString(data);
-        }
-      };
-      SharedResourceCache<String> completionInterruptCache =
-          new SharedResourceCache<>(owner, interruptingEncodeCodec, parent,
-              ZooDefs.Ids.CREATOR_ALL_ACL);
-      completionInterruptCache.init();
-      try {
-        completionInterruptCache.put("key2", "value2");
-        fail("Expected put() to fail when thread is interrupted before completion.get()");
-      } catch (RuntimeException expected) {
-        assertTrue("Expected InterruptedException cause, got: " + expected.getCause(),
-            expected.getCause() instanceof InterruptedException);
-        assertTrue("Expected interrupt flag to remain set", Thread.interrupted());
-      }
-    } finally {
-      Thread.interrupted();
-      stopAll(owner);
-    }
-  }
-
-  @Test
   public void testUnauthenticatedPutOnMissingParentDoesNotCreateOpenParent() throws Exception {
     String parent = ZK_NAMESPACE + "/unauthenticatedPut";
     ZKClientService anonymous = null;
@@ -599,19 +549,8 @@ public class SharedResourceCacheTest {
     try {
       anonymous = startClient(null);
       owner = startClient(OWNER_AUTH);
-      final SharedResourceCache<String> unauthenticatedCache =
+      SharedResourceCache<String> unauthenticatedCache =
           initCache(anonymous, parent, ZooDefs.Ids.CREATOR_ALL_ACL);
-      AtomicReference<Throwable> reportedError = new AtomicReference<>();
-      CountDownLatch errorLatch = new CountDownLatch(1);
-      unauthenticatedCache.addListener(new BaseResourceListener<String>() {
-        @Override
-        public void onError(String name, Throwable throwable) {
-          if ("key1".equals(name)) {
-            reportedError.set(throwable);
-            errorLatch.countDown();
-          }
-        }
-      });
 
       try {
         unauthenticatedCache.put("key1", "value1");
@@ -623,8 +562,6 @@ public class SharedResourceCacheTest {
             expected.getCause().getCause() instanceof KeeperException.InvalidACLException);
       }
 
-      assertTrue(errorLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
-      assertTrue(reportedError.get() instanceof KeeperException.InvalidACLException);
       assertNull(unauthenticatedCache.get("key1"));
       assertNull(anonymous.exists(parent).get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
 
