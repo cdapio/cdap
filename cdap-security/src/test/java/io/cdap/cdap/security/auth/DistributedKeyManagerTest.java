@@ -174,8 +174,8 @@ DistributedKeyManagerTest extends TestTokenManager {
   /**
    * Runs the real key distribution flow with the ACLs used on Kerberos clusters: the leader
    * creates the keys parent locked to its identity, a peer with the same identity still shares
-   * keys and validates tokens, and a client without credentials can neither add keys nor fail
-   * to start.
+   * keys and validates tokens, and a client without credentials still starts but cannot add
+   * keys.
    */
   @Test
   public void testKeyDistributionWithRestrictedAcls() throws Exception {
@@ -220,14 +220,7 @@ DistributedKeyManagerTest extends TestTokenManager {
           startRestrictedKeyManager(anonymousClient, namespace);
       services.add(anonymous);
       assertEquals(Service.State.RUNNING, anonymous.state());
-      try {
-        anonymousClient.create(namespace + "/keys/forged", new byte[] {1}, CreateMode.PERSISTENT)
-            .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        fail("Expected NoAuthException when adding a key without credentials");
-      } catch (ExecutionException e) {
-        assertTrue("Unexpected cause: " + e.getCause(),
-            e.getCause() instanceof KeeperException.NoAuthException);
-      }
+      assertCannotAddKey(anonymousClient, namespace);
     } finally {
       stopAll(services, ownerClient1, ownerClient2, anonymousClient);
     }
@@ -298,14 +291,7 @@ DistributedKeyManagerTest extends TestTokenManager {
       int keyId = leader.getCurrentKey().getKeyId();
       Tasks.waitFor(true, () -> follower.hasKey(keyId), TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-      try {
-        anonymousClient.create(namespace + "/keys/forged", new byte[] {1}, CreateMode.PERSISTENT)
-            .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        fail("Expected NoAuthException when adding a key after the upgrade");
-      } catch (ExecutionException e) {
-        assertTrue("Unexpected cause: " + e.getCause(),
-            e.getCause() instanceof KeeperException.NoAuthException);
-      }
+      assertCannotAddKey(anonymousClient, namespace);
     } finally {
       stopAll(services, ownerClient1, ownerClient2, anonymousClient);
     }
@@ -361,6 +347,18 @@ DistributedKeyManagerTest extends TestTokenManager {
     ZKClientService client = builder.build();
     client.startAndWait();
     return client;
+  }
+
+  private static void assertCannotAddKey(ZKClientService client, String namespace)
+      throws Exception {
+    try {
+      client.create(namespace + "/keys/forged", new byte[] {1}, CreateMode.PERSISTENT)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      fail("Expected NoAuthException when adding a key to " + namespace + "/keys");
+    } catch (ExecutionException e) {
+      assertTrue("Unexpected cause: " + e.getCause(),
+          e.getCause() instanceof KeeperException.NoAuthException);
+    }
   }
 
   private static List<ACL> digestAcl(String auth) throws Exception {
