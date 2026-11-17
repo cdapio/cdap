@@ -267,6 +267,50 @@ DistributedKeyManagerTest extends TestTokenManager {
     }
   }
 
+  /**
+   * Covers a cluster upgraded from a version that created the keys parent writable by any client:
+   * the first credentialed participant restricts it, and key distribution keeps working.
+   */
+  @Test
+  public void testUpgradeRestrictsExistingOpenKeysParent() throws Exception {
+    String namespace = "/upgradedOpenKeys";
+    ZKClientService ownerClient1 = null;
+    ZKClientService ownerClient2 = null;
+    ZKClientService anonymousClient = null;
+    List<Service> services = new ArrayList<>();
+    try {
+      ownerClient1 = startClient(OWNER_AUTH);
+      ownerClient2 = startClient(OWNER_AUTH);
+      anonymousClient = startClient(null);
+      ownerClient1.create(namespace + "/keys", null, CreateMode.PERSISTENT)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, ownerClient1.getACL(namespace + "/keys")
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+
+      WaitableDistributedKeyManager leader = startRestrictedKeyManager(ownerClient1, namespace);
+      services.add(leader);
+      Tasks.waitFor(true, () -> leader.getCurrentKey() != null, TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(digestAcl(OWNER_AUTH), ownerClient1.getACL(namespace + "/keys")
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+
+      WaitableDistributedKeyManager follower = startRestrictedKeyManager(ownerClient2, namespace);
+      services.add(follower);
+      int keyId = leader.getCurrentKey().getKeyId();
+      Tasks.waitFor(true, () -> follower.hasKey(keyId), TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+      try {
+        anonymousClient.create(namespace + "/keys/forged", new byte[] {1}, CreateMode.PERSISTENT)
+            .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        fail("Expected NoAuthException when adding a key after the upgrade");
+      } catch (ExecutionException e) {
+        assertTrue("Unexpected cause: " + e.getCause(),
+            e.getCause() instanceof KeeperException.NoAuthException);
+      }
+    } finally {
+      stopAll(services, ownerClient1, ownerClient2, anonymousClient);
+    }
+  }
+
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec()
       throws Exception {
