@@ -182,7 +182,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 

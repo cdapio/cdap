@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.profile;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -48,12 +49,14 @@ public class ProfileMetadataTest extends AppFabricTestBase {
   @BeforeClass
   public static void setUp() {
     metadataSubscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    if (metadataSubscriberService.state() == Service.State.NEW) {
+      metadataSubscriberService.startAsync().awaitRunning();
+    }
   }
 
   @AfterClass
   public static void tearDown() {
-    metadataSubscriberService.stopAndWait();
+    metadataSubscriberService.stopAsync().awaitTerminated();
   }
 
   @Test

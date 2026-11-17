@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.store;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -69,7 +70,7 @@ public class ApplicationMeta {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("id", id)
         .add("spec", ADAPTER.toJson(spec))
         .add("change", change)

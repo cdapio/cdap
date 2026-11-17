@@ -198,7 +198,8 @@ public class MapperWrapper extends Mapper {
             basicMapReduceContext.flushOperations();
           } catch (Exception e) {
             LOG.error("Failed to persist changes", e);
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
           }
           processedRecords = 0;
         }
@@ -249,7 +250,8 @@ public class MapperWrapper extends Mapper {
           "Failed to create mapper instance for program '{}' with error: {}. Please check the system logs "
 
               + "for more details.", program, rootCause.getMessage(), rootCause);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

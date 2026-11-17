@@ -1137,6 +1137,39 @@ cdap_cli() {
 }
 
 #
+# cdap_append_tool_classpath <lib-dir> [include-hadoop: true/false]
+# Appends deterministically sorted JARs from <lib-dir> (and optionally Hadoop/EXTRA_CLASSPATH) plus conf to CLASSPATH
+#
+cdap_append_tool_classpath() {
+  local readonly __lib=${1} __path=${2} __include_hadoop=${3:-false}
+  local readonly __sorted_jars=$(find -L "${__lib}" -maxdepth 1 -type f -name '*.jar' 2>/dev/null | sort | tr '\n' ':' | sed 's/:$//')
+  if [[ -n ${__sorted_jars} ]]; then
+    if [[ -z ${CLASSPATH} ]]; then
+      CLASSPATH=${__sorted_jars}
+    else
+      CLASSPATH=${CLASSPATH}:${__sorted_jars}
+    fi
+  fi
+  if [[ ${__include_hadoop} == true ]]; then
+    local __hadoop_cp=""
+    if [[ -n ${HADOOP_HOME} ]] && [[ -d ${HADOOP_HOME} ]]; then
+      __hadoop_cp=$("${HADOOP_HOME}"/bin/hadoop classpath 2>/dev/null)
+    fi
+    if [[ -n ${__hadoop_cp} ]]; then
+      CLASSPATH=${CLASSPATH}:${__hadoop_cp}
+    fi
+    if [[ -n ${EXTRA_CLASSPATH} ]]; then
+      CLASSPATH=${CLASSPATH}:${EXTRA_CLASSPATH}
+    fi
+  fi
+  if [[ -d ${CDAP_CONF} ]]; then
+    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
+  elif [[ -d ${__path}/conf ]]; then
+    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
+  fi
+}
+
+#
 # cdap_config_tool [arguments]
 #
 cdap_config_tool() {
@@ -1152,16 +1185,7 @@ cdap_config_tool() {
     __libexec=${__path}/libexec
     __lib=${__path}/lib
   fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
+  cdap_append_tool_classpath "${__lib}" "${__path}" false
   # add token file arg with default token file if one is not provided
   local __has_arg=0 __var
   for __var in ${@}; do
@@ -1173,7 +1197,7 @@ cdap_config_tool() {
     set -- ${@} "--token-file" "${__auth_file}"
   fi
 
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  "${JAVA}" -cp "${CLASSPATH}" -Dscript=${__script} ${__class} ${@}
   __ret=${?}
   return ${__ret}
 }
@@ -1253,16 +1277,7 @@ cdap_tx_debugger() {
     __libexec=${__path}/libexec
     __lib=${__path}/lib
   fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
+  cdap_append_tool_classpath "${__lib}" "${__path}" true
   # add token file arg with default token file if one is not provided
   local __has_arg=0 __var
   for __var in ${@}; do
@@ -1274,7 +1289,7 @@ cdap_tx_debugger() {
     set -- ${@} "--token-file" "${__auth_file}"
   fi
 
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  "${JAVA}" -cp "${CLASSPATH}" -Dscript=${__script} ${__class} ${@}
   __ret=${?}
   return ${__ret}
 }

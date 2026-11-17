@@ -102,7 +102,8 @@ public class Schedulers {
           context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_TRIGGER_TABLE)
       );
     } catch (TableNotFoundException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

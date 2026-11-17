@@ -16,15 +16,14 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
+import com.google.common.base.Throwables;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -297,10 +296,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       if (artifactsComputeHash && (artifactsComputeHashSnapshot
           || !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
         Hasher hasher = Hashing.sha256().newHasher();
-        hasher.putString(artifactDescriptor.getNamespace());
-        hasher.putString(artifactDescriptor.getArtifactId().getName());
-        hasher.putString(artifactDescriptor.getArtifactId().getScope().name());
-        hasher.putString(artifactDescriptor.getArtifactId().getVersion().getVersion());
+        hasher.putUnencodedChars(artifactDescriptor.getNamespace());
+        hasher.putUnencodedChars(artifactDescriptor.getArtifactId().getName());
+        hasher.putUnencodedChars(artifactDescriptor.getArtifactId().getScope().name());
+        hasher.putUnencodedChars(artifactDescriptor.getArtifactId().getVersion().getVersion());
         Map<String, String> arguments = new HashMap<>(options.getArguments().asMap());
         arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
@@ -446,7 +445,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       throw ioe;
     } catch (Exception e) {
       // should not happen
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -493,7 +493,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
               file.delete();
             }
           } else if (resource instanceof Closeable) {
-            Closeables.closeQuietly((Closeable) resource);
+            try {
+              ((Closeable) resource).close();
+            } catch (Exception ignored) {
+            }
           } else if (resource instanceof Runnable) {
             ((Runnable) resource).run();
           }
@@ -558,9 +561,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private static void hashArtifactId(Hasher hasher, ArtifactId artifactId) {
-    hasher.putString(artifactId.getParent().toString());
-    hasher.putString(artifactId.getArtifact());
-    hasher.putString(artifactId.getVersion());
+    hasher.putUnencodedChars(artifactId.getParent().toString());
+    hasher.putUnencodedChars(artifactId.getArtifact());
+    hasher.putUnencodedChars(artifactId.getVersion());
   }
 
   /**
@@ -673,7 +676,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       } catch (Exception e) {
         Throwables.propagateIfPossible(e, IOException.class);
         // should not happen
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     } else {
       operation.call();

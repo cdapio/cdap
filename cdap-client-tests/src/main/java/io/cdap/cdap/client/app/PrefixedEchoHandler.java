@@ -17,7 +17,7 @@
 package io.cdap.cdap.client.app;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
+import java.util.Optional;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
@@ -38,7 +38,7 @@ public final class PrefixedEchoHandler extends AbstractHttpServiceHandler {
   @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
-    this.sdf = Optional.fromNullable(context.getRuntimeArguments().get("sdf")).or("");
+    this.sdf = Optional.ofNullable(context.getRuntimeArguments().get("sdf")).orElse("");
   }
 
   @POST

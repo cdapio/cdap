@@ -25,6 +25,7 @@ import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.PackageFilterClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Manifest;
 
@@ -57,19 +58,24 @@ public class PluginClassLoader extends DirectoryClassLoader {
   private final Set<String> exportPackages;
 
   static ClassLoader createParent(ClassLoader templateClassLoader) {
-    // Find the ProgramClassLoader from the template ClassLoader
+    // Collect Export-Package declarations across any intermediate parent plugin DirectoryClassLoaders
+    // as well as the root ProgramClassLoader so non-exported dependencies (such as Guava) stay hidden.
+    Set<String> exportPackages = new HashSet<>();
     ClassLoader programClassLoader = templateClassLoader;
     while (programClassLoader != null
            && !(programClassLoader instanceof ProgramClassLoader)) {
+      if (programClassLoader instanceof DirectoryClassLoader) {
+        exportPackages.addAll(
+            ManifestFields.getExportPackages(((DirectoryClassLoader) programClassLoader).getManifest()));
+      }
       programClassLoader = programClassLoader.getParent();
     }
     // This shouldn't happen
     Preconditions.checkArgument(programClassLoader != null,
         "Cannot find ProgramClassLoader");
 
-    // Package filtered classloader of the template classloader, which only classes in "Export-Packages" are loadable.
     Manifest manifest = ((ProgramClassLoader) programClassLoader).getManifest();
-    Set<String> exportPackages = ManifestFields.getExportPackages(manifest);
+    exportPackages.addAll(ManifestFields.getExportPackages(manifest));
     PackageFilterClassLoader filteredTemplateClassLoader =
         new PackageFilterClassLoader(templateClassLoader,
             exportPackages::contains);

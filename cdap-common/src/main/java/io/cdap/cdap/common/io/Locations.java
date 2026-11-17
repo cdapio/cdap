@@ -21,8 +21,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -116,7 +114,9 @@ public final class Locations {
               createDFSStreamSizeProvider(fs, false, path, input));
         } catch (Throwable t) {
           Closeables.closeQuietly(input);
-          Throwables.propagateIfInstanceOf(t, IOException.class);
+          if (t instanceof IOException) {
+            throw (IOException) t;
+          }
           throw new IOException(t);
         }
       }
@@ -170,7 +170,9 @@ public final class Locations {
           throw new IOException("Failed to create SeekableInputStream from location " + location);
         } catch (Throwable t) {
           Closeables.closeQuietly(input);
-          Throwables.propagateIfInstanceOf(t, IOException.class);
+          if (t instanceof IOException) {
+            throw (IOException) t;
+          }
           throw new IOException(t);
         }
       }
@@ -343,7 +345,9 @@ public final class Locations {
         DirUtils.mkdirs(output);
       } else {
         DirUtils.mkdirs(output.getParentFile());
-        ByteStreams.copy(tis, com.google.common.io.Files.newOutputStreamSupplier(output));
+        try (OutputStream os = java.nio.file.Files.newOutputStream(output.toPath())) {
+          ByteStreams.copy(tis, os);
+        }
       }
       entry = tis.getNextTarEntry();
     }
@@ -484,7 +488,8 @@ public final class Locations {
       return locationFactory.create(uri);
     } catch (URISyntaxException e) {
       // Should not happen.
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -570,7 +575,8 @@ public final class Locations {
           }
           return getFileLengthMethod;
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     });

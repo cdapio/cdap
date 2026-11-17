@@ -63,7 +63,8 @@ public final class WrapperUtil {
       return delegate;
     } catch (Exception e) {
       LOG.error("Failed to initialize delegate with {}", basicMapReduceContext, e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }

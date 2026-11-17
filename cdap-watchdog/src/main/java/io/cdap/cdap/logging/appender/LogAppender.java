@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.hash.Hashing;
 import io.cdap.cdap.api.exception.ErrorCodeType;
 import io.cdap.cdap.api.exception.FailureDetailsProvider;
 import io.cdap.cdap.common.conf.Constants;
@@ -59,6 +60,13 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
         .maximumSize(LOGGER_CACHE_SIZE)
         .expireAfterAccess(LOGGER_CACHE_EXPIRY_MILLIS, TimeUnit.MILLISECONDS)
         .build();
+  }
+
+  /**
+   * Computes a deterministic non-negative MD5 partition index for the given key.
+   */
+  public static int partition(Object key, int numPartitions) {
+    return Math.abs(Hashing.md5().hashUnencodedChars(key.toString()).asInt()) % numPartitions;
   }
 
   @Override

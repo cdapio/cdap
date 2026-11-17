@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.apache.tephra.AbstractTransactionExecutor;
-import org.apache.tephra.RetryOnConflictStrategy;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.RetryStrategy;
 import org.apache.tephra.TransactionContext;
@@ -48,7 +47,7 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
 
   public DynamicTransactionExecutor(TransactionContextFactory txContextFactory,
       RetryStrategy retryStrategy) {
-    super(MoreExecutors.sameThreadExecutor());
+    super(MoreExecutors.newDirectExecutorService());
     this.txContextFactory = txContextFactory;
     this.retryStrategy = retryStrategy;
   }

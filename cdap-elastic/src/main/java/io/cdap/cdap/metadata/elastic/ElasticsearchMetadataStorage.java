@@ -22,7 +22,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -226,7 +225,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public void close() {
-    Closeables.closeQuietly(client);
+    try {
+      client.close();
+    } catch (Exception ignored) {
+    }
   }
 
   @Override

@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
+import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactClasses;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
@@ -40,12 +43,17 @@ import io.cdap.cdap.internal.app.runtime.artifact.plugin.nested.NestedConfigPlug
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.security.impersonation.DefaultImpersonator;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -244,6 +252,113 @@ public class DefaultArtifactInspectorTest {
     Assert.assertFalse(DefaultArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
       "my.package"
     )).test("prefix/my/package/my.class/some.class"));
+  }
+
+  @Test
+  public void testInspectPluginWithMissingSuperclassPropagatesNoClassDefFoundError()
+      throws Exception {
+    File incompleteJar = createClassOnlyJar(
+        new File(TMP_FOLDER.newFolder(), "BrokenPlugin-1.0.0.jar"),
+        BrokenPluginSubclass.class.getPackage().getName(),
+        BrokenPluginSubclass.class);
+
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "BrokenPlugin", "1.0.0");
+    InvalidArtifactException thrown = Assert.assertThrows(
+        InvalidArtifactException.class,
+        () -> artifactInspector.inspectArtifact(
+            artifactId, incompleteJar, Collections.emptyList(), Collections.emptySet()));
+    Assert.assertTrue(
+        "Expected NoClassDefFoundError cause, but got: " + thrown.getCause(),
+        thrown.getCause() instanceof NoClassDefFoundError);
+  }
+
+  @Test
+  public void testInspectPluginFiltersNonExportedParentClassesAcrossParents() throws Exception {
+    File incompleteJar = createClassOnlyJar(
+        new File(TMP_FOLDER.newFolder(), "BrokenChildPlugin-1.0.0.jar"),
+        BrokenPluginSubclass.class.getPackage().getName(),
+        BrokenPluginSubclass.class);
+    File parentJar = createClassOnlyJar(
+        new File(TMP_FOLDER.newFolder(), "ParentWithPrivateHelper-1.0.0.jar"),
+        InspectionApp.class.getPackage().getName(),
+        InspectionApp.class, OmittedPluginSuperclass.class);
+
+    Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "BrokenChildPlugin", "1.0.0");
+    Id.Artifact parentId = Id.Artifact.from(Id.Namespace.DEFAULT, "ParentWithPrivateHelper", "1.0.0");
+    List<ArtifactDescriptor> parentDescriptor = Collections.singletonList(
+        new ArtifactDescriptor(parentId.getNamespace().getId(), parentId.toArtifactId(),
+            Locations.toLocation(parentJar)));
+
+    InvalidArtifactException thrown = Assert.assertThrows(
+        InvalidArtifactException.class,
+        () -> artifactInspector.inspectArtifact(
+            childId, incompleteJar, parentDescriptor, Collections.emptySet()));
+    Assert.assertTrue(
+        "Expected NoClassDefFoundError cause, but got: " + thrown.getCause(),
+        thrown.getCause() instanceof NoClassDefFoundError);
+
+    // Multi-parent inspection must still expose Export-Package classes from intermediate parent plugins
+    File childUsingMidExportJar = createClassOnlyJar(
+        new File(TMP_FOLDER.newFolder(), "ChildUsingMidExport-1.0.0.jar"),
+        ChildUsingMidExportPlugin.class.getPackage().getName(),
+        ChildUsingMidExportPlugin.class);
+    File nestedExportParentJar = createClassOnlyJar(
+        new File(TMP_FOLDER.newFolder(), "MidPlugin-1.0.0.jar"),
+        NestedConfigPlugin.class.getPackage().getName(),
+        NestedConfigPlugin.class, NestedConfigPlugin.NestedConfig.class);
+    Id.Artifact midId = Id.Artifact.from(Id.Namespace.DEFAULT, "MidPlugin", "1.0.0");
+    List<ArtifactDescriptor> multiParents = ImmutableList.of(
+        new ArtifactDescriptor(midId.getNamespace().getId(), midId.toArtifactId(),
+            Locations.toLocation(nestedExportParentJar)),
+        new ArtifactDescriptor(parentId.getNamespace().getId(), parentId.toArtifactId(),
+            Locations.toLocation(parentJar)));
+    ArtifactClasses inspected = artifactInspector.inspectArtifact(
+        Id.Artifact.from(Id.Namespace.DEFAULT, "ChildUsingMidExport", "1.0.0"),
+        childUsingMidExportJar, multiParents, Collections.emptySet()).getArtifactClasses();
+    Assert.assertTrue(
+        inspected.getPlugins().stream().anyMatch(p -> "childMidExport".equals(p.getName())));
+  }
+
+  private File createClassOnlyJar(File destFile, String exportPackage, Class<?>... classes)
+      throws IOException {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, exportPackage);
+    try (JarOutputStream jos = new JarOutputStream(new FileOutputStream(destFile), manifest)) {
+      for (Class<?> cls : classes) {
+        String classResource = cls.getName().replace('.', '/') + ".class";
+        try (InputStream classBytes = getClass().getClassLoader().getResourceAsStream(classResource)) {
+          Assert.assertNotNull(classBytes);
+          jos.putNextEntry(new JarEntry(classResource));
+          ByteStreams.copy(classBytes, jos);
+          jos.closeEntry();
+        }
+      }
+    }
+    return destFile;
+  }
+
+  /**
+   * Unpackaged base class omitted from the incomplete plugin test jar.
+   */
+  public static class OmittedPluginSuperclass {
+  }
+
+  /**
+   * Plugin whose config references an intermediate parent plugin's exported class.
+   */
+  @Plugin(type = "dummy")
+  @Name("childMidExport")
+  public static class ChildUsingMidExportPlugin {
+    private NestedConfigPlugin.NestedConfig config;
+  }
+
+  /**
+   * Annotated plugin class whose superclass is omitted from the test jar to trigger NoClassDefFoundError.
+   */
+  @Plugin(type = "dummy")
+  @Name("brokenSubclass")
+  public static class BrokenPluginSubclass extends OmittedPluginSuperclass {
   }
 
   private File getAppFile() throws IOException {

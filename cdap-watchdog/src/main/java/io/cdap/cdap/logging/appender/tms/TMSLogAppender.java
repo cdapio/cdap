@@ -17,7 +17,6 @@
 package io.cdap.cdap.logging.appender.tms;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -66,8 +65,8 @@ public class TMSLogAppender extends LogAppender {
   public void start() {
     TMSLogPublisher publisher = new TMSLogPublisher(cConf, messagingService);
     Optional.ofNullable(tmsLogPublisher.getAndSet(publisher))
-        .ifPresent(TMSLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(s -> s.stopAsync().awaitTerminated());
+    publisher.startAsync().awaitRunning();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -75,7 +74,7 @@ public class TMSLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(TMSLogPublisher::stopAndWait);
+    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(s -> s.stopAsync().awaitTerminated());
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -94,8 +93,8 @@ public class TMSLogAppender extends LogAppender {
   // Based off of StringPartitioner, but that class can not be used in Standalone, as kafka dependencies do not exist
   // in Standalone
   @VisibleForTesting
-  static int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % numPartitions;
+  public static int partition(Object key, int numPartitions) {
+    return LogAppender.partition(key, numPartitions);
   }
 
   /**

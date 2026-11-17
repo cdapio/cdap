@@ -139,7 +139,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     } catch (IOException | UnauthorizedException e) {
       throw e;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -98,32 +98,32 @@ public class ProvisioningServiceTest {
 
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    datasetService.startAsync().awaitRunning();
     messagingService = injector.getInstance(MessagingService.class);
     provisionerStore = injector.getInstance(ProvisionerStore.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      ((Service) messagingService).startAsync().awaitRunning();
     }
 
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
+    provisioningService.startAsync().awaitRunning();
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
   }
 
   @AfterClass
   public static void cleanupClass() {
-    provisioningService.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
+    provisioningService.stopAsync().awaitTerminated();
+    datasetService.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      ((Service) messagingService).stopAsync().awaitTerminated();
     }
   }
 

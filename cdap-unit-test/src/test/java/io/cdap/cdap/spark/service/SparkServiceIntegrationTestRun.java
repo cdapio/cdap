@@ -71,7 +71,8 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
       serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Failed to start {} service", TestSparkServiceIntegrationApp.SERVICE_NAME, e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

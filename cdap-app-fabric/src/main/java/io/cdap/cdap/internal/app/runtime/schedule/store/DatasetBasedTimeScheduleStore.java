@@ -87,7 +87,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       setMisfireThreshold(cConf.getLong(Constants.Scheduler.CFG_SCHEDULER_MISFIRE_THRESHOLD_MS));
       readSchedulesFromPersistentStore();
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      Throwables.throwIfUnchecked(th);
+      throw new RuntimeException(th);
     }
   }
 
@@ -143,7 +144,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       executeDelete(triggerKey);
       return true;
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      Throwables.throwIfUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -154,7 +156,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
       executeDelete(jobKey);
       return true;
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      Throwables.throwIfUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -169,7 +172,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         delete(getTimeScheduleStructuredTable(context), TRIGGER_KEY, triggerKey.getName());
       });
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      Throwables.throwIfUnchecked(th);
+      throw new RuntimeException(th);
     }
   }
 
@@ -179,7 +183,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         delete(getTimeScheduleStructuredTable(context), JOB_KEY, jobKey.getName());
       });
     } catch (Throwable t) {
-      throw Throwables.propagate(t);
+      Throwables.throwIfUnchecked(t);
+      throw new RuntimeException(t);
     }
   }
 
@@ -200,7 +205,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         }
       });
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      Throwables.throwIfUnchecked(th);
+      throw new RuntimeException(th);
     }
   }
 
@@ -223,7 +229,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         }
       });
     } catch (Throwable th) {
-      throw Throwables.propagate(th);
+      Throwables.throwIfUnchecked(th);
+      throw new RuntimeException(th);
     }
   }
 

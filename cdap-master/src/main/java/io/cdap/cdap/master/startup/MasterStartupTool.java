@@ -77,7 +77,8 @@ public class MasterStartupTool {
       SecurityUtil.loginForMasterService(cConf);
     } catch (Exception e) {
       LOG.error("Failed to login as CDAP user", e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
 
     Configuration hConf = new Configuration();

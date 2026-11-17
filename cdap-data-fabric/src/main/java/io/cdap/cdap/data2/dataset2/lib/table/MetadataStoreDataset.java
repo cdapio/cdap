@@ -150,7 +150,8 @@ public class MetadataStoreDataset extends AbstractDataset {
         return deserialize(id, value, typeOfT);
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -460,7 +461,8 @@ public class MetadataStoreDataset extends AbstractDataset {
         }
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -473,7 +475,8 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       table.delete(id.getKey(), COLUMN);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -487,7 +490,8 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       table.put(new Put(id.getKey()).add(COLUMN, serialize(value)));
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -501,7 +505,8 @@ public class MetadataStoreDataset extends AbstractDataset {
     try {
       table.increment(id.getKey(), COLUMN, amount);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -531,7 +536,8 @@ public class MetadataStoreDataset extends AbstractDataset {
         return map;
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -566,7 +572,8 @@ public class MetadataStoreDataset extends AbstractDataset {
         return map;
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
