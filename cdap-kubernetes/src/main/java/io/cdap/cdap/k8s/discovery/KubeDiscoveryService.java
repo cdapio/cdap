@@ -17,7 +17,6 @@
 package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.openapi.ApiClient;
@@ -31,7 +30,6 @@ import io.kubernetes.client.openapi.models.V1ServiceBuilder;
 import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
-import io.kubernetes.client.util.generic.options.ListOptions;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
@@ -74,7 +72,7 @@ public class KubeDiscoveryService implements DiscoveryService,
   private static final Logger LOG = LoggerFactory.getLogger(
       KubeDiscoveryService.class);
   private static final byte[] EMPTY_PAYLOAD = new byte[0];
-  private static final String SERVICE_LABEL = "cdap.service";
+  static final String SERVICE_LABEL = "cdap.service";
   private static final String SERVICE_TYPE_LOAD_BALANCER = "LoadBalancer";
   private static final String SERVICE_TYPE_CLUSTER_IP = "ClusterIP";
   private static final String PAYLOAD_NAME = "cdap.service.payload";
@@ -599,61 +597,16 @@ public class KubeDiscoveryService implements DiscoveryService,
   /**
    * A {@link Thread} that keep watching for changes in service in Kubernetes.
    */
-  private final class WatcherThread extends AbstractWatcherThread<V1Service> {
-
-    private final Set<String> services;
+  private final class WatcherThread extends AbstractDiscoveryWatcherThread<V1Service> {
 
     WatcherThread() {
-      super("kube-discovery-service", namespace, "", "v1", "services",
-          apiClientFactory);
-      this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    }
-
-    void addService(String name) {
-      // Service name in K8s are prefixed
-      // If this is a new service to watch, reset the watch so that the new selector will get pickup.
-      if (services.add(namePrefix + name)) {
-        closeWatch();
-      }
+      super("kube-discovery-service", namespace, "services", apiClientFactory, namePrefix,
+          serviceDiscovereds);
     }
 
     @Override
-    protected void updateListOptions(ListOptions options) {
-      options.setLabelSelector(
-          String.format("%s in (%s)", SERVICE_LABEL,
-              String.join(",", services)));
-    }
-
-    @Override
-    public void resourceAdded(V1Service service) {
-      getServiceDiscovered(service)
-          .ifPresent(s -> s.setDiscoverables(
-              toDiscoverables(s.getName(), service, namespace)));
-    }
-
-    @Override
-    public void resourceModified(V1Service service) {
-      // Treat modify the same as add since both would contain the complete list of
-      // ports exposed by the given service
-      resourceAdded(service);
-    }
-
-    @Override
-    public void resourceDeleted(V1Service service) {
-      getServiceDiscovered(service).ifPresent(
-          s -> s.setDiscoverables(Collections.emptySet()));
-    }
-
-    private Optional<DefaultServiceDiscovered> getServiceDiscovered(
-        V1Service service) {
-      String serviceName = service
-          .getMetadata().getLabels().get(SERVICE_LABEL);
-      if (serviceName == null) {
-        return Optional.empty();
-      }
-      // Remove the name prefix to get the original CDAP service name
-      serviceName = serviceName.substring(namePrefix.length());
-      return Optional.ofNullable(serviceDiscovereds.get(serviceName));
+    protected Set<Discoverable> toDiscoverables(String name, V1Service service) {
+      return KubeDiscoveryService.this.toDiscoverables(name, service, namespace);
     }
   }
 }

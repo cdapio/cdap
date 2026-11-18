@@ -32,6 +32,8 @@ import org.apache.twill.discovery.InMemoryDiscoveryService;
 public final class MockMasterEnvironment implements MasterEnvironment {
 
   private final InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+  // A separate instance, so tests can tell which client a component was given.
+  private final InMemoryDiscoveryService endpointsDiscoveryService = new InMemoryDiscoveryService();
 
   @Override
   public MasterEnvironmentRunnable createRunnable(
@@ -53,6 +55,11 @@ public final class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
+  }
+
+  @Override
+  public Supplier<DiscoveryServiceClient> getEndpointsDiscoveryServiceClientSupplier() {
+    return () -> endpointsDiscoveryService;
   }
 
   @Override

@@ -89,6 +89,16 @@ public interface MasterEnvironment {
   Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier();
 
   /**
+   * Returns a {@link Supplier} of {@link DiscoveryServiceClient} that discovers the address of each
+   * running instance of a service, instead of one load-balanced address for the service.
+   *
+   * @throws UnsupportedOperationException if this environment can't discover instance addresses
+   */
+  default Supplier<DiscoveryServiceClient> getEndpointsDiscoveryServiceClientSupplier() {
+    throw new UnsupportedOperationException("Method not implemented");
+  }
+
+  /**
    * Returns a {@link Supplier} of {@link TwillRunnerService} for running programs.
    */
   Supplier<TwillRunnerService> getTwillRunnerSupplier();
