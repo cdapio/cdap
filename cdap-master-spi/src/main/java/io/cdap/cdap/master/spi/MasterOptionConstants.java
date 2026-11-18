@@ -25,4 +25,15 @@ public class MasterOptionConstants {
    * Option for name of the runtime namespace for the program run.
    */
   public static final String RUNTIME_NAMESPACE = "runtimeNamespace";
+
+  /**
+   * Option to use the Recreate strategy for the Kubernetes Deployment of the main runnable.
+   */
+  public static final String K8S_RECREATE_STRATEGY = "k8s.deployment.strategy.recreate";
+
+  /**
+   * Option for the termination grace period, in seconds, of the Kubernetes pods for the run.
+   */
+  public static final String K8S_TERMINATION_GRACE_PERIOD_SECONDS =
+      "k8s.pod.termination.grace.period.seconds";
 }
