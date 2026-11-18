@@ -25,6 +25,7 @@ import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
 import io.cdap.cdap.k8s.common.LocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
+import io.cdap.cdap.k8s.discovery.KubeEndpointsDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.k8s.util.KubeUtil;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
@@ -239,6 +240,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private final List<MasterEnvironmentTask> tasks;
   private KubeDiscoveryService discoveryService;
+  private KubeEndpointsDiscoveryService endpointsDiscoveryService;
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
   private ApiClientFactory apiClientFactory;
@@ -346,10 +348,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       loadBalancerServiceList = Arrays.asList(
           conf.get(LOAD_BALANCER_SERVICES).split(","));
     }
-    discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
+    String servicePrefix = "cdap-" + instanceName + "-";
+    discoveryService = new KubeDiscoveryService(cdapInstallNamespace, servicePrefix,
         podInfo.getName(), podLabels, podInfo.getOwnerReferences(), apiClientFactory,
         loadBalancerServiceList,
         parseLoadBalancerAnnotations(conf.get(LOAD_BALANCER_SERVICE_ANNOTATIONS)));
+    endpointsDiscoveryService = new KubeEndpointsDiscoveryService(cdapInstallNamespace,
+        servicePrefix, apiClientFactory);
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
@@ -430,6 +435,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     discoveryService.close();
+    endpointsDiscoveryService.close();
     LOG.info("Kubernetes environment destroyed");
   }
 
@@ -446,6 +452,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
+  }
+
+  @Override
+  public Supplier<DiscoveryServiceClient> getEndpointsDiscoveryServiceClientSupplier() {
+    return () -> endpointsDiscoveryService;
   }
 
   @Override
