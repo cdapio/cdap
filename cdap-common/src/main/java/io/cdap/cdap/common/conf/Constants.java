@@ -576,6 +576,9 @@ public final class Constants {
     public static final String WORKER_THREADS = "task.worker.manager.worker.threads";
     // How long a stopping manager waits for in-flight task responses before closing them.
     public static final String DRAIN_TIMEOUT_SECS = "task.worker.manager.drain.timeout.secs";
+    // Upper bound on the connect timeout of App Fabric's calls to the manager.
+    public static final String CLIENT_CONNECT_TIMEOUT_MS =
+        "task.worker.manager.client.connect.timeout.ms";
 
     // Answered by the manager itself for the Kubernetes readiness probe.
     public static final String PING_PATH = "/ping";
