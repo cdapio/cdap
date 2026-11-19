@@ -17,23 +17,22 @@
 package io.cdap.cdap.metadata.elastic;
 
 import io.cdap.cdap.spi.metadata.MetadataChange;
-import org.elasticsearch.action.support.WriteRequest;
 
 /**
- * A simple class to pass around an Elasticsearch index write request, along with the metadata
- * change that it effects.
+ * A simple class to pass around a write to the index, along with the metadata change that it
+ * effects.
  */
 public class RequestAndChange {
 
-  private final WriteRequest<?> request;
+  private final WriteOperation request;
   private final MetadataChange change;
 
-  public RequestAndChange(WriteRequest<?> request, MetadataChange change) {
+  RequestAndChange(WriteOperation request, MetadataChange change) {
     this.request = request;
     this.change = change;
   }
 
-  public WriteRequest<?> getRequest() {
+  WriteOperation getRequest() {
     return request;
   }
 
