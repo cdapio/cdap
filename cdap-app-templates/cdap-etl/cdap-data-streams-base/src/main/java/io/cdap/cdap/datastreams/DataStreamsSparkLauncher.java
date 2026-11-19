@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.datastreams;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -41,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * CDAP Spark client that configures and launches the actual Spark program.
@@ -129,7 +132,12 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
     // NOTE: If you change this value, also update io.netty.maxDirectMemory in
     // KubeMasterEnvironment
-    sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
+    Resources execResources = context.getSpecification().getExecutorResources() != null
+      ? context.getSpecification().getExecutorResources() : spec.getResources();
+    Resources drvResources = context.getSpecification().getDriverResources() != null
+      ? context.getSpecification().getDriverResources() : spec.getDriverResources();
+    sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem",
+                  String.valueOf(computeMaxRemoteBlockSizeFetchToMem(execResources, drvResources)));
 
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
@@ -191,6 +199,19 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
                        status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
 
+  }
+
+  @VisibleForTesting
+  static long computeMaxRemoteBlockSizeFetchToMem(@Nullable Resources executorResources,
+                                                  @Nullable Resources driverResources) {
+    int minMemoryMB = executorResources != null ? executorResources.getMemoryMB() : 2048;
+    if (driverResources != null) {
+      minMemoryMB = Math.min(minMemoryMB, driverResources.getMemoryMB());
+    }
+    if (minMemoryMB <= 0) {
+      return 200L * 1024L * 1024L;
+    }
+    return Math.min((long) Integer.MAX_VALUE - 512L, (long) minMemoryMB * 512L * 1024L);
   }
 
   private void emitMetrics(DataStreamsPipelineSpec spec) {
