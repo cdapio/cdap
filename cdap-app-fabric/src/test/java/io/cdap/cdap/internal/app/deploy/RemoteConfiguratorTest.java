@@ -43,6 +43,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.internal.remote.RunnableTaskLauncher;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
@@ -124,8 +125,10 @@ public class RemoteConfiguratorTest {
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), true,
                                                     auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(
-          new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> { },
-                                          new NoOpMetricsCollectionService()),
+          new TaskWorkerHttpHandlerInternal(cConf,
+                                            new RunnableTaskLauncher(cConf, discoveryService, discoveryService,
+                                                                     new NoOpMetricsCollectionService()),
+                                            className -> { }, new NoOpMetricsCollectionService()),
           new ArtifactHttpHandlerInternal(new TestArtifactRepository(cConf), namespaceAdmin),
           new ArtifactLocalizerHttpHandlerInternal(
               new ArtifactLocalizer(cConf, remoteClientFactory,

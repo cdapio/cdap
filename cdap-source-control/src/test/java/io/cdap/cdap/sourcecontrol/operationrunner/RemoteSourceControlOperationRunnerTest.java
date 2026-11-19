@@ -31,6 +31,7 @@ import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.internal.remote.RunnableTaskLauncher;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
@@ -143,8 +144,9 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService(), true,
                                                     auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(
-        new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
-        }, new NoOpMetricsCollectionService()),
+        new TaskWorkerHttpHandlerInternal(cConf,
+          new RunnableTaskLauncher(cConf, discoveryService, discoveryService, new NoOpMetricsCollectionService()),
+          className -> { }, new NoOpMetricsCollectionService()),
         new SecureStoreHandler(fileSecureStoreService, fileSecureStoreService)
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {

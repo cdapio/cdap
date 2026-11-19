@@ -35,6 +35,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -49,7 +50,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -547,9 +550,11 @@ public class TaskWorkerServiceTest {
   public void testCapacityRejectionReportsRunning() throws Exception {
     CConfiguration cConf = createTaskWorkerManagerCConf();
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
+    // With the task worker manager, isolation no longer forces one task at a time.
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 1);
     TaskWorkerService service = startService(cConf);
     try {
-      // Isolation runs one task at a time, so one of two concurrent tasks is rejected.
+      // One slot, so one of two concurrent tasks is rejected.
       List<Callable<HttpResponse>> calls = new ArrayList<>();
       for (int i = 0; i < 2; i++) {
         calls.add(() -> runTask(service, "1000"));
@@ -576,6 +581,7 @@ public class TaskWorkerServiceTest {
     // The restart is scheduled after a whole number of seconds drawn from [(int) 3.6, (int) 4.4),
     // so 3s in, while the long task below still runs.
     cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 4);
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 1);
     TaskWorkerService service = startService(cConf);
 
     Future<HttpResponse> longTask =
@@ -652,6 +658,65 @@ public class TaskWorkerServiceTest {
       }
     }
     return null;
+  }
+
+  @Test
+  public void testPingRespondsWhenAllWorkerSlotsAreBusyWithTheManager() throws Exception {
+    BlockingRunnableTask.reset(2);
+    CConfiguration cConf = createTaskWorkerManagerCConf();
+    cConf.setInt(TaskWorker.REQUEST_LIMIT, 2);
+    cConf.setInt(TaskWorker.EXEC_THREADS, 2);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 100);
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
+    TaskWorkerService service = startService(cConf);
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    try {
+      RunnableTaskRequest blockingRequest =
+          RunnableTaskRequest.getBuilder(BlockingRunnableTask.class.getName())
+              .withNamespace("testNamespace").build();
+      Future<HttpResponse> first = executor.submit(() -> runTask(service, blockingRequest));
+      Future<HttpResponse> second = executor.submit(() -> runTask(service, blockingRequest));
+
+      Assert.assertTrue("Both worker slots should enter run() within 5s",
+          BlockingRunnableTask.entered.await(5, TimeUnit.SECONDS));
+
+      // Because TaskWorkerService reserves REQUEST_LIMIT + 1 exec threads when the manager is on,
+      // /ping must answer right away instead of queueing behind the two blocked tasks.
+      InetSocketAddress addr = service.getBindAddress();
+      URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+      HttpResponse ping = HttpRequests.execute(
+          HttpRequest.get(uri.resolve("/ping").toURL()).build(),
+          new HttpRequestConfig(2000, 1500, false));
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, ping.getResponseCode());
+
+      BlockingRunnableTask.release.countDown();
+      Assert.assertEquals(
+          HttpURLConnection.HTTP_OK, first.get(10, TimeUnit.SECONDS).getResponseCode());
+      Assert.assertEquals(
+          HttpURLConnection.HTTP_OK, second.get(10, TimeUnit.SECONDS).getResponseCode());
+    } finally {
+      BlockingRunnableTask.release.countDown();
+      executor.shutdownNow();
+      service.stopAndWait();
+    }
+  }
+
+  public static class BlockingRunnableTask implements RunnableTask {
+
+    private static volatile CountDownLatch entered = new CountDownLatch(0);
+    private static volatile CountDownLatch release = new CountDownLatch(0);
+
+    static void reset(int parties) {
+      entered = new CountDownLatch(parties);
+      release = new CountDownLatch(1);
+    }
+
+    @Override
+    public void run(RunnableTaskContext context) throws Exception {
+      entered.countDown();
+      Assert.assertTrue(release.await(15, TimeUnit.SECONDS));
+      context.writeResult("ok".getBytes(StandardCharsets.UTF_8));
+    }
   }
 
   public static class TestRunnableClass implements RunnableTask {

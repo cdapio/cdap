@@ -73,8 +73,7 @@ public class TaskWorkerKillCountTest {
     HttpResponder late = Mockito.mock(HttpResponder.class);
     handler.run(runRequest(), late);
 
-    Mockito.verify(late).sendStatus(
-        Mockito.eq(HttpResponseStatus.TOO_MANY_REQUESTS), Mockito.any(HttpHeaders.class));
+    Mockito.verify(late).sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
     Mockito.verify(late, Mockito.never()).sendContent(Mockito.any(HttpResponseStatus.class),
         Mockito.any(BodyProducer.class), Mockito.any(HttpHeaders.class));
     Assert.assertEquals("The late task must never start", 1, TASK_RUNS.get());
@@ -126,8 +125,10 @@ public class TaskWorkerKillCountTest {
   private static TaskWorkerHttpHandlerInternal newHandler(CConfiguration cConf,
       Consumer<String> stopper) {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    return new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, stopper,
-        new NoOpMetricsCollectionService());
+    return new TaskWorkerHttpHandlerInternal(cConf,
+        new RunnableTaskLauncher(cConf, discoveryService, discoveryService,
+            new NoOpMetricsCollectionService()),
+        stopper, new NoOpMetricsCollectionService());
   }
 
   private static FullHttpRequest runRequest() {
