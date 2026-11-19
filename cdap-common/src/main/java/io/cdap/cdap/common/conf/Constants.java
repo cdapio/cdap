@@ -117,6 +117,9 @@ public final class Constants {
 
     public static final String EXTENSIONS_DIR = "master.environment.extensions.dir";
     public static final String MAX_INSTANCES = "master.service.max.instances";
+    // How long a stopping master environment runnable's JVM waits for it before exiting.
+    public static final String RUNNABLE_STOP_TIMEOUT_SECS =
+        "master.environment.k8s.runnable.stop.timeout.secs";
   }
 
   /**
@@ -574,11 +577,18 @@ public final class Constants {
     public static final String PORT = "task.worker.manager.bind.port";
     public static final String BOSS_THREADS = "task.worker.manager.boss.threads";
     public static final String WORKER_THREADS = "task.worker.manager.worker.threads";
+    public static final String CONTAINER_MEMORY_MB = "task.worker.manager.container.memory.mb";
+    public static final String CONTAINER_CORES = "task.worker.manager.container.num.cores";
+    public static final String CONTAINER_JVM_OPTS = "task.worker.manager.container.jvm.opts";
+    public static final String POOL_CHECK_INTERVAL = "task.worker.manager.pool.check.interval";
     // How long a stopping manager waits for in-flight task responses before closing them.
     public static final String DRAIN_TIMEOUT_SECS = "task.worker.manager.drain.timeout.secs";
     // Upper bound on the connect timeout of App Fabric's calls to the manager.
     public static final String CLIENT_CONNECT_TIMEOUT_MS =
         "task.worker.manager.client.connect.timeout.ms";
+    // Kubernetes probes for the manager pod; see io.cdap.cdap.k8s.util.ProbeFactory for the keys.
+    public static final String PROBE_ENABLED = "task.worker.manager.probe.enabled";
+    public static final String PROBE_PREFIX = "task.worker.manager.probe.";
 
     // Answered by the manager itself for the Kubernetes readiness probe.
     public static final String PING_PATH = "/ping";

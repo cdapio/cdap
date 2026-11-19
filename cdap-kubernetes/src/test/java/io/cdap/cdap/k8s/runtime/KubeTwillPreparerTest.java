@@ -22,6 +22,7 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
@@ -30,6 +31,7 @@ import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1Volume;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -416,6 +418,143 @@ public class KubeTwillPreparerTest {
     Assert.assertEquals("The filtered map should contain the correct entries with prefixes removed.", expected, actual);
   }
 
+
+  @Test
+  public void testBuildDeploymentKeepsKubernetesDefaults() throws Exception {
+    V1Deployment deployment = buildDeployment(createSystemNamespacePreparer());
+
+    // Other workloads rely on the RollingUpdate default and the cluster's grace period.
+    Assert.assertNull(deployment.getSpec().getStrategy());
+    Assert.assertNull(
+        deployment.getSpec().getTemplate().getSpec().getTerminationGracePeriodSeconds());
+  }
+
+  @Test
+  public void testBuildDeploymentWithRecreateStrategy() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.K8S_RECREATE_STRATEGY, "true"));
+
+    V1Deployment deployment = buildDeployment(preparer);
+
+    Assert.assertNotNull(deployment.getSpec().getStrategy());
+    Assert.assertEquals("Recreate", deployment.getSpec().getStrategy().getType());
+  }
+
+  @Test
+  public void testRecreateStrategyFalseKeepsDefaultStrategy() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.K8S_RECREATE_STRATEGY, "true"));
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.K8S_RECREATE_STRATEGY, "false"));
+
+    Assert.assertNull(buildDeployment(preparer).getSpec().getStrategy());
+  }
+
+  @Test
+  public void testRecreateStrategyWithStatefulRunnableFails() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.dependentRunnableNames(MainRunnable.class.getSimpleName(),
+        SidecarRunnable.class.getSimpleName(), SidecarRunnable2.class.getSimpleName());
+    preparer.withStatefulRunnable(MainRunnable.class.getSimpleName(), false);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.K8S_RECREATE_STRATEGY, "true"));
+
+    // The check runs before start() creates anything. The preparer has no API client or app
+    // location, so a later failure would surface as a different exception.
+    try {
+      preparer.start();
+      Assert.fail("Expected IllegalStateException");
+    } catch (IllegalStateException e) {
+      Assert.assertThat(e.getMessage(),
+          CoreMatchers.containsString(MasterOptionConstants.K8S_RECREATE_STRATEGY));
+      Assert.assertThat(e.getMessage(),
+          CoreMatchers.containsString(MainRunnable.class.getSimpleName()));
+    }
+  }
+
+  @Test
+  public void testBuildDeploymentWithTerminationGracePeriod() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(Collections.singletonMap(
+        MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS, "75"));
+
+    V1Deployment deployment = buildDeployment(preparer);
+
+    Assert.assertEquals(Long.valueOf(75),
+        deployment.getSpec().getTemplate().getSpec().getTerminationGracePeriodSeconds());
+    // The grace period doesn't imply a strategy.
+    Assert.assertNull(deployment.getSpec().getStrategy());
+  }
+
+  @Test
+  public void testZeroTerminationGracePeriodIsKept() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(Collections.singletonMap(
+        MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS, "0"));
+
+    Assert.assertEquals(Long.valueOf(0), buildDeployment(preparer).getSpec().getTemplate()
+        .getSpec().getTerminationGracePeriodSeconds());
+  }
+
+  @Test
+  public void testTerminationGracePeriodAppliesToEveryPodSpec() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(Collections.singletonMap(
+        MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS, "30"));
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null, createResourceSpecification(),
+        Collections.emptyList());
+
+    // createPodSpec is shared by Deployments, StatefulSets and Jobs.
+    V1PodSpec podSpec = preparer.createPodSpec(new LocalLocationFactory().create("yes"),
+        Collections.singletonMap(MainRunnable.class.getSimpleName(), runtimeSpec));
+
+    Assert.assertEquals(Long.valueOf(30), podSpec.getTerminationGracePeriodSeconds());
+  }
+
+  @Test
+  public void testInvalidTerminationGracePeriodIsRejected() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+
+    for (String value : Arrays.asList("-1", "abc", "", "1.5", null)) {
+      try {
+        preparer.withConfiguration(Collections.singletonMap(
+            MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS, value));
+        Assert.fail("Expected IllegalArgumentException for '" + value + "'");
+      } catch (IllegalArgumentException e) {
+        Assert.assertThat(e.getMessage(), CoreMatchers.containsString(
+            MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS));
+      }
+    }
+    // A rejected value leaves the cluster default in place.
+    Assert.assertNull(buildDeployment(preparer).getSpec().getTemplate().getSpec()
+        .getTerminationGracePeriodSeconds());
+  }
+
+  private KubeTwillPreparer createSystemNamespacePreparer() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(),
+        null, "default", createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null, null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+    return preparer;
+  }
+
+  private V1Deployment buildDeployment(KubeTwillPreparer preparer) throws Exception {
+    // A single instance mirrors the task worker manager proxy, which is the only caller that opts into
+    // the Recreate strategy.
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null,
+        new DefaultResourceSpecification(1, 100, 1, 1, 1), Collections.emptyList());
+    V1ObjectMeta metadata = preparer.createResourceMetadata(V1Deployment.class,
+        MainRunnable.class.getSimpleName(), 0, false);
+
+    return preparer.buildDeployment(metadata,
+        Collections.singletonMap(MainRunnable.class.getSimpleName(), runtimeSpec),
+        new LocalLocationFactory().create("yes"));
+  }
 
   private static Map<String, String> getTwillConfigs() {
     HashMap<String, String> cConf = new HashMap<>();

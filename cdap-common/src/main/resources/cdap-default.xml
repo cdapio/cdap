@@ -5694,6 +5694,23 @@
   </property>
 
   <property>
+    <name>master.environment.k8s.runnable.stop.timeout.secs</name>
+    <value>30</value>
+    <description>
+      When a master environment runnable's pod is stopped, how long, in seconds, its JVM waits for
+      the runnable to finish stopping before it exits.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.pool.check.interval</name>
+    <value>30</value>
+    <description>
+      Interval (in seconds) for ensuring the task worker manager is up and running.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.manager.drain.timeout.secs</name>
     <value>60</value>
     <description>
@@ -5708,6 +5725,117 @@
     <description>
       The maximum time in milliseconds App Fabric waits to connect to the task worker manager
       before retrying. Applies only when the task worker manager is enabled.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.enabled</name>
+    <value>true</value>
+    <description>
+      Whether the task worker manager pod gets the Kubernetes probes configured
+      under task.worker.manager.probe.k8s.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.names</name>
+    <value>readiness</value>
+    <description>
+      Probes for the task worker manager pod. Readiness only, since a liveness restart would cut
+      every in-flight task.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.type</name>
+    <value>httpget</value>
+    <description>
+      Action type of the manager readiness probe.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.http.path</name>
+    <value>/ping</value>
+    <description>
+      Path of the manager readiness probe, answered by the manager itself.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.http.port</name>
+    <value>${task.worker.manager.bind.port}</value>
+    <description>
+      Port of the manager readiness probe.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.http.scheme</name>
+    <value>HTTP</value>
+    <description>
+      Scheme of the manager readiness probe. TaskWorkerManagerServiceLauncher sets this to HTTPS when
+      ssl.internal.enabled is true and HTTP otherwise.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.period.seconds</name>
+    <value>2</value>
+    <description>
+      How often, in seconds, Kubernetes runs the manager readiness probe.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.timeout.seconds</name>
+    <value>2</value>
+    <description>
+      Seconds after which a manager readiness probe attempt counts as failed.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.failure.threshold</name>
+    <value>3</value>
+    <description>
+      Consecutive failures before the manager pod is taken out of the service. Above 1 so a
+      single slow answer under load doesn't stop routing to a healthy manager.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.probe.k8s.readiness.success.threshold</name>
+    <value>1</value>
+    <description>
+      Consecutive successes before the manager pod is put back into the service.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.container.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of virtual cores for the task worker manager, before
+      master.environment.k8s.container.cpu.multiplier is applied.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Memory in megabytes for the task worker manager, before
+      master.environment.k8s.container.memory.multiplier is applied.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.container.jvm.opts</name>
+    <value>-XX:+UseG1GC -XX:+ExitOnOutOfMemoryError</value>
+    <description>
+      JVM opts for the task worker manager container. The max heap size is computed from the
+      container memory, so -Xmx is not set here.
     </description>
   </property>
 
