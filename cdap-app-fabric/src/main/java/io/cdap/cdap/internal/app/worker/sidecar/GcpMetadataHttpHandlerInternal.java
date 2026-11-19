@@ -230,7 +230,8 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @PUT
   @Path("/set-context")
   public void setContext(FullHttpRequest request, HttpResponder responder)
-      throws BadRequestException {
+      throws BadRequestException, ForbiddenException {
+    requireMetadataFlavorHeader(request);
     this.gcpMetadataTaskContext = getGcpMetadataTaskContext(request);
     this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
     responder.sendJson(HttpResponseStatus.OK,
@@ -246,13 +247,31 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
    */
   @DELETE
   @Path("/clear-context")
-  public void clearContext(HttpRequest request, HttpResponder responder) {
+  public void clearContext(HttpRequest request, HttpResponder responder)
+      throws ForbiddenException {
+    requireMetadataFlavorHeader(request);
     this.gcpMetadataTaskContext = null;
     this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
     this.credentialLoadingCache.invalidateAll();
     this.credentialIdentityPresent = true;
     LOG.trace("Context cleared.");
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
+   * Rejects a request that does not carry the {@code Metadata-Flavor: Google} header, as the
+   * status and token endpoints do.
+   */
+  private static void requireMetadataFlavorHeader(HttpRequest request)
+      throws ForbiddenException {
+    if (request.headers().contains(METADATA_FLAVOR_HEADER_KEY,
+        METADATA_FLAVOR_HEADER_VALUE, true)) {
+      return;
+    }
+    throw new ForbiddenException(
+        String.format("Request is missing required %s header. To access the metadata server, "
+            + "you must add the %s: %s header to your request.", METADATA_FLAVOR_HEADER_KEY,
+            METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE));
   }
 
   /**
