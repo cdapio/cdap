@@ -84,6 +84,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -108,6 +109,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       .create();
 
   private static final String BACKFILL_SUBSCRIBER_NAME = "metadata.backfill";
+  private static final long REBUILD_RETRY_DELAY_MILLIS = TimeUnit.MINUTES.toMillis(1);
 
   private final CConfiguration cConf;
   private final MetadataStorage metadataStorage;
@@ -115,18 +117,22 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnConflict;
   private final MetricsCollectionService metricsCollectionService;
+  private final SystemMetadataRebuilder systemMetadataRebuilder;
 
   private String conflictMessageId;
   private int conflictCount;
 
   private boolean didBackfill;
   private int backfillAttempts;
+  private boolean didCheckRebuild;
+  private long nextRebuildCheckMillis;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
       MetricsCollectionService metricsCollectionService,
       MetadataStorage metadataStorage,
-      TransactionRunner transactionRunner) {
+      TransactionRunner transactionRunner,
+      SystemMetadataRebuilder systemMetadataRebuilder) {
     super(
         NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
         cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
@@ -147,6 +153,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
     this.metricsCollectionService = metricsCollectionService;
+    this.systemMetadataRebuilder = systemMetadataRebuilder;
   }
 
   @Override
@@ -194,6 +201,33 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected void preProcess() {
+    rebuildSystemMetadataIfRequired();
+    backfillPluginMetadata();
+  }
+
+  /**
+   * Writes the system metadata of all entities again if the metadata storage lost metadata, for
+   * example because its index was created again. Does this check one time after the start.
+   */
+  private void rebuildSystemMetadataIfRequired() {
+    if (didCheckRebuild || System.currentTimeMillis() < nextRebuildCheckMillis) {
+      return;
+    }
+    try {
+      if (metadataStorage.isRebuildRequired()) {
+        systemMetadataRebuilder.rebuild();
+      }
+      didCheckRebuild = true;
+    } catch (IOException | RuntimeException e) {
+      // The storage keeps its record that a rebuild is required, so try again later. Do not try
+      // in every run: this method runs before each batch of messages.
+      nextRebuildCheckMillis = System.currentTimeMillis() + REBUILD_RETRY_DELAY_MILLIS;
+      LOG.warn("Failed to write the system metadata of all entities again. Will try again in {} "
+          + "seconds.", TimeUnit.MILLISECONDS.toSeconds(REBUILD_RETRY_DELAY_MILLIS), e);
+    }
+  }
+
+  private void backfillPluginMetadata() {
     if (didBackfill) {
       return;
     }

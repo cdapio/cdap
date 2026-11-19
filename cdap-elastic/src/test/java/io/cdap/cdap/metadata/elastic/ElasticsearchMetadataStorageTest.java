@@ -18,13 +18,16 @@ package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.sun.net.httpserver.HttpServer;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataChange;
 import io.cdap.cdap.spi.metadata.MetadataKind;
 import io.cdap.cdap.spi.metadata.MetadataMutation.Drop;
 import io.cdap.cdap.spi.metadata.MetadataMutation.Update;
@@ -37,12 +40,25 @@ import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.SearchResponse;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -375,10 +391,136 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     mds.batch(records.stream().map(MetadataRecord::getEntity).map(Drop::new).collect(Collectors.toList()), options);
   }
 
+  @Test
+  public void testBatchPartialConflictWithNonSnapshotVersionedEntity() throws IOException {
+    String elasticPort = System.getProperty("elastic.http.port", "9200");
+    String indexName = "idxconflict" + Math.abs(new Random().nextInt());
+    MetadataEntity versionedApp = MetadataEntity.builder()
+        .append(MetadataEntity.NAMESPACE, "ns")
+        .appendAsType(MetadataEntity.APPLICATION, "verapp")
+        .append(MetadataEntity.VERSION, "42")
+        .build();
+    MetadataEntity dataset = MetadataEntity.ofDataset("ns", "conflict_ds");
+    Metadata appInitial = new Metadata(MetadataScope.USER, tags("app-init"), props("k", "v0"));
+    Metadata appUpdate = new Metadata(MetadataScope.USER, tags("app-upd"), props("k", "v1"));
+    Metadata dsInitial = new Metadata(MetadataScope.USER, tags("ds-init"), props("dk", "dv0"));
+    Metadata dsConcurrent = new Metadata(MetadataScope.USER, tags("ds-conc"), props("c", "1"));
+    Metadata dsUpdate = new Metadata(MetadataScope.USER, tags("ds-upd"), props("dk", "dv1"));
+
+    CConfiguration directConf = CConfiguration.create();
+    directConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
+    directConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
+    SConfiguration sConf = SConfiguration.create();
+
+    AtomicBoolean injectedConflict = new AtomicBoolean(false);
+    AtomicInteger appBulkWrites = new AtomicInteger();
+
+    try (ElasticsearchMetadataStorage directStore =
+             new ElasticsearchMetadataStorage(directConf, sConf);
+         CloseableHttpClient forwardClient = HttpClients.createDefault()) {
+      directStore.createIndex();
+      try {
+        directStore.batch(Arrays.asList(
+            new Update(versionedApp, appInitial),
+            new Update(dataset, dsInitial)), MutationOptions.DEFAULT);
+
+        HttpServer proxy = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        proxy.createContext("/", exchange -> {
+          byte[] reqBody = ByteStreams.toByteArray(exchange.getRequestBody());
+          String rawUri = exchange.getRequestURI().toString();
+          if (rawUri.startsWith("/_bulk")) {
+            String bulkText = new String(reqBody, StandardCharsets.UTF_8);
+            if (bulkText.contains("application:namespace=ns,application=verapp")) {
+              appBulkWrites.incrementAndGet();
+            }
+          }
+          ForwardRequest req = new ForwardRequest(
+              exchange.getRequestMethod(),
+              URI.create("http://localhost:" + elasticPort + rawUri));
+          String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
+          if (contentType != null) {
+            req.setHeader("Content-Type", contentType);
+          }
+          if (reqBody.length > 0) {
+            req.setEntity(new ByteArrayEntity(reqBody));
+          }
+          int status;
+          byte[] respBody;
+          try (CloseableHttpResponse resp = forwardClient.execute(req)) {
+            status = resp.getStatusLine().getStatusCode();
+            HttpEntity entity = resp.getEntity();
+            respBody = entity == null ? new byte[0] : EntityUtils.toByteArray(entity);
+          }
+          if (rawUri.endsWith("/_mget") && injectedConflict.compareAndSet(false, true)) {
+            // Advance dataset seq_no between _mget and _bulk so dataset conflicts with 409 once.
+            directStore.apply(new Update(dataset, dsConcurrent), MutationOptions.DEFAULT);
+          }
+          exchange.getResponseHeaders().add("Content-Type", "application/json");
+          boolean noBody = "HEAD".equals(exchange.getRequestMethod()) || respBody.length == 0;
+          exchange.sendResponseHeaders(status, noBody ? -1 : respBody.length);
+          if (!noBody) {
+            exchange.getResponseBody().write(respBody);
+          }
+          exchange.close();
+        });
+        proxy.start();
+        try {
+          CConfiguration proxyConf = CConfiguration.create();
+          proxyConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
+          proxyConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + proxy.getAddress().getPort());
+          try (ElasticsearchMetadataStorage proxyStore =
+                   new ElasticsearchMetadataStorage(proxyConf, sConf)) {
+            proxyStore.createIndex();
+            List<MetadataChange> changes = proxyStore.batch(Arrays.asList(
+                new Update(versionedApp, appUpdate),
+                new Update(dataset, dsUpdate)), MutationOptions.DEFAULT);
+
+            Assert.assertTrue(injectedConflict.get());
+            Assert.assertEquals(1, appBulkWrites.get());
+            Assert.assertEquals(2, changes.size());
+            Assert.assertEquals(versionedApp, changes.get(0).getEntity());
+            Assert.assertEquals(appInitial, changes.get(0).getBefore());
+            Assert.assertEquals(
+                new Metadata(MetadataScope.USER, tags("app-init", "app-upd"), props("k", "v1")),
+                changes.get(0).getAfter());
+            Assert.assertEquals(dataset, changes.get(1).getEntity());
+            Assert.assertEquals(
+                new Metadata(MetadataScope.USER, tags("ds-init", "ds-conc"),
+                    props("dk", "dv0", "c", "1")),
+                changes.get(1).getBefore());
+            Assert.assertEquals(
+                new Metadata(MetadataScope.USER, tags("ds-init", "ds-conc", "ds-upd"),
+                    props("dk", "dv1", "c", "1")),
+                changes.get(1).getAfter());
+          }
+        } finally {
+          proxy.stop(0);
+        }
+      } finally {
+        directStore.dropIndex();
+      }
+    }
+  }
+
   @Override
   protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
     Cursor c = Cursor.fromString(cursor);
     Assert.assertEquals(expectedOffset, c.getOffset());
     Assert.assertEquals(expectedPageSize, c.getLimit());
+  }
+
+  private static final class ForwardRequest extends HttpEntityEnclosingRequestBase {
+
+    private final String method;
+
+    ForwardRequest(String method, URI uri) {
+      this.method = method;
+      setURI(uri);
+    }
+
+    @Override
+    public String getMethod() {
+      return method;
+    }
   }
 }

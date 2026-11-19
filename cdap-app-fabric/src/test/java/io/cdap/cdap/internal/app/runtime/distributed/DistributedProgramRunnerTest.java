@@ -14,6 +14,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.app.AbstractApplication;
@@ -63,7 +64,6 @@ import org.apache.twill.api.logging.LogEntry.Level;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.elasticsearch.common.Strings;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
