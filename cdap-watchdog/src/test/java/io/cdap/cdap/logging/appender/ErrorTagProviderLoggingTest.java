@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.apache.tephra.TransactionManager;
-import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -86,7 +85,7 @@ public class ErrorTagProviderLoggingTest {
 
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     Filter filter = FilterParser.parse("");
-    ReadRange readRange = new ReadRange(0, new DateTime().getMillis(),
+    ReadRange readRange = new ReadRange(0, System.currentTimeMillis(),
       LogOffset.INVALID_KAFKA_OFFSET);
 
     CloseableIterator<LogEvent> logIter = logReader.getLog(context, readRange.getFromMillis(),
