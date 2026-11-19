@@ -263,6 +263,40 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
+  @Override
+  public boolean isRebuildRequired() throws IOException {
+    createIndex();
+    JsonElement required = getIndexMeta().get(Config.MAPPING_REBUILD_REQUIRED);
+    return required != null && Boolean.parseBoolean(required.getAsString());
+  }
+
+  @Override
+  public void markRebuilt() throws IOException {
+    setRebuildRequired(getClient(), indexName, false);
+  }
+
+  /**
+   * Records in the "_meta" object of the index whether the index misses metadata that must be
+   * written again. Also used by the migration tool.
+   */
+  static void setRebuildRequired(IndexRestClient client, String indexName, boolean required)
+      throws IOException {
+    JsonObject meta = getIndexMeta(client, indexName);
+    if (required) {
+      meta.addProperty(Config.MAPPING_REBUILD_REQUIRED, "true");
+    } else {
+      meta.remove(Config.MAPPING_REBUILD_REQUIRED);
+    }
+    // A mapping update replaces the complete "_meta" object.
+    JsonObject mapping = new JsonObject();
+    mapping.add("_meta", meta);
+    IndexRestClient.Response response = client.execute(
+        "PUT", Arrays.asList(indexName, "_mapping"), NO_PARAMETERS, mapping).ensureSuccess();
+    if (!isAcknowledged(response)) {
+      throw new IOException("Mapping update was not acknowledged: " + response);
+    }
+  }
+
   private JsonObject getIndexMeta() throws IOException {
     return getIndexMeta(getClient(), indexName);
   }
