@@ -81,7 +81,7 @@ public class ConcurrentLogBufferWriterTest {
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
@@ -97,7 +97,7 @@ public class ConcurrentLogBufferWriterTest {
 
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(5, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
   }
 
@@ -122,7 +122,7 @@ public class ConcurrentLogBufferWriterTest {
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
@@ -156,8 +156,61 @@ public class ConcurrentLogBufferWriterTest {
 
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(100, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
+  }
+
+  @Test
+  public void testCheckedIoExceptionAndRuntimeExceptionPropagation() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.LogBuffer.LOG_BUFFER_BASE_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.setLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES, 100000);
+
+    // 1. Checked IOException failure cause (from closed underlying LogBufferWriter stream) is
+    //    rethrown directly via propagateIfInstanceOf without wrapping in "Unable to write...".
+    try (ConcurrentLogBufferWriter ioFailWriter =
+        new ConcurrentLogBufferWriter(cConf, ImmutableList.of(), () -> { })) {
+      java.lang.reflect.Field writerField =
+          ConcurrentLogBufferWriter.class.getDeclaredField("logBufferWriter");
+      writerField.setAccessible(true);
+      LogBufferWriter innerWriter = (LogBufferWriter) writerField.get(ioFailWriter);
+      innerWriter.close();
+
+      try {
+        ioFailWriter.process(new LogBufferRequest(0, getLoggingEvents()));
+        Assert.fail("Expected IOException from closed underlying LogBufferWriter");
+      } catch (IOException actual) {
+        Assert.assertNotEquals("Unable to write log event to log buffer", actual.getMessage());
+        Assert.assertNull(actual.getCause());
+      }
+    }
+
+    // 2. Unchecked RuntimeException failure cause is wrapped in IOException with exact cause
+    final IllegalStateException runtimeFailure = new IllegalStateException("iterator exploded");
+    try (ConcurrentLogBufferWriter runtimeFailWriter =
+        new ConcurrentLogBufferWriter(cConf, ImmutableList.of(), () -> { })) {
+      LogBufferRequest runtimeFailingRequest = new LogBufferRequest(0, ImmutableList.of()) {
+        @Override
+        public java.util.Iterator<byte[]> iterator() {
+          throw runtimeFailure;
+        }
+      };
+      try {
+        runtimeFailWriter.process(runtimeFailingRequest);
+        Assert.fail("Expected IOException wrapping RuntimeException");
+      } catch (IOException actual) {
+        Assert.assertEquals("Unable to write log event to log buffer", actual.getMessage());
+        Assert.assertSame(runtimeFailure, actual.getCause());
+      }
+
+      runtimeFailWriter.close();
+      try {
+        runtimeFailWriter.process(new LogBufferRequest(0, getLoggingEvents()));
+        Assert.fail("Expected IOException when writing to closed ConcurrentLogBufferWriter");
+      } catch (IOException actual) {
+        Assert.assertTrue(actual.getMessage().contains("already closed"));
+      }
+    }
   }
 
   private ImmutableList<byte[]> getLoggingEvents() {

@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.master.upgrade;
 
-import com.google.common.base.Throwables;
 import java.io.IOException;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -35,7 +34,7 @@ public class UpgradeUserIDProvider {
     try {
       userId = UserGroupInformation.getCurrentUser().getShortUserName();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return userId;
   }

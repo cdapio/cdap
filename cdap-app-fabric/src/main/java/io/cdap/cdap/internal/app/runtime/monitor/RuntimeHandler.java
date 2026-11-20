@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
@@ -227,7 +226,13 @@ public class RuntimeHandler extends AbstractHttpHandler {
       @Override
       public void handleError(Throwable cause) {
         LOG.error("Failed to write spark event logs for {}", programRunId, cause);
-        Closeables.closeQuietly(os);
+        if (os != null) {
+          try {
+            os.close();
+          } catch (Exception ignored) {
+            // Ignore close exception
+          }
+        }
         try {
           location.delete();
         } catch (IOException e) {
@@ -346,7 +351,13 @@ public class RuntimeHandler extends AbstractHttpHandler {
               "Failed to process all messages due to " + e.getMessage());
         }
       } finally {
-        Closeables.closeQuietly(inputStream);
+        if (inputStream != null) {
+          try {
+            inputStream.close();
+          } catch (Exception ignored) {
+            // Ignore close exception
+          }
+        }
         buffer.release();
       }
     }
@@ -368,7 +379,13 @@ public class RuntimeHandler extends AbstractHttpHandler {
     }
 
     void setDelegate(InputStream delegate) {
-      Closeables.closeQuietly(in);
+      if (in != null) {
+        try {
+          in.close();
+        } catch (Exception ignored) {
+          // Ignore close exception
+        }
+      }
       in = delegate;
     }
   }

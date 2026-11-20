@@ -25,7 +25,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -167,8 +166,11 @@ public class PluginInstantiator implements Closeable {
     try {
       return classLoaders.get(new ClassLoaderKey(artifactId));
     } catch (ExecutionException e) {
-      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
-      throw Throwables.propagate(e.getCause());
+      if (e.getCause() instanceof IOException) {
+        throw (IOException) e.getCause();
+      }
+      Throwables.throwIfUnchecked(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -196,8 +198,11 @@ public class PluginInstantiator implements Closeable {
     try {
       return classLoaders.get(new ClassLoaderKey(artifactId, pluginParents));
     } catch (ExecutionException e) {
-      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
-      throw Throwables.propagate(e.getCause());
+      if (e.getCause() instanceof IOException) {
+        throw (IOException) e.getCause();
+      }
+      Throwables.throwIfUnchecked(e.getCause());
+      throw new RuntimeException(e.getCause());
     }
   }
 
@@ -495,7 +500,8 @@ public class PluginInstantiator implements Closeable {
           return (T) constructor.newInstance(config);
         } catch (InvocationTargetException e) {
           // If there is exception thrown from the constructor, propagate it.
-          throw Throwables.propagate(e.getCause());
+          Throwables.throwIfUnchecked(e.getCause());
+          throw new RuntimeException(e.getCause());
         } catch (Exception e) {
           // Failed to instantiate. Resort to field injection
           LOG.warn("Failed to invoke plugin constructor {}. Resort to config field injection.",
@@ -516,8 +522,12 @@ public class PluginInstantiator implements Closeable {
   public void close() throws IOException {
     // Cleanup the ClassLoader cache and the temporary directory for the expanded plugin jar.
     classLoaders.invalidateAll();
-    if (ownedParentClassLoader) {
-      Closeables.closeQuietly((Closeable) parentClassLoader);
+    if (ownedParentClassLoader && parentClassLoader instanceof Closeable) {
+      try {
+        ((Closeable) parentClassLoader).close();
+      } catch (Exception ignored) {
+        // Ignore close exception
+      }
     }
     try {
       DirUtils.deleteDirectoryContents(tmpDir);
@@ -618,7 +628,14 @@ public class PluginInstantiator implements Closeable {
 
     @Override
     public void onRemoval(RemovalNotification<ClassLoaderKey, PluginClassLoader> notification) {
-      Closeables.closeQuietly(notification.getValue());
+      PluginClassLoader cl = notification.getValue();
+      if (cl != null) {
+        try {
+          cl.close();
+        } catch (Exception ignored) {
+          // Ignore close exception
+        }
+      }
     }
   }
 

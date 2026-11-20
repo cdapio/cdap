@@ -42,20 +42,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.curator.test.TestingCluster;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.zookeeper.OperationFuture;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Tests covering the {@link DistributedKeyManager} implementation.
  */
-public class
-DistributedKeyManagerTest extends TestTokenManager {
+public class DistributedKeyManagerTest extends TestTokenManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
   private static TestingCluster zkCluster;
@@ -117,8 +120,8 @@ DistributedKeyManagerTest extends TestTokenManager {
         new TestingTokenManager(manager1, injector1.getInstance(UserIdentityCodec.class));
     TestingTokenManager tokenManager2 =
         new TestingTokenManager(manager2, injector2.getInstance(UserIdentityCodec.class));
-    tokenManager1.startAndWait();
-    tokenManager2.startAndWait();
+    tokenManager1.startAsync().awaitRunning();
+    tokenManager2.startAsync().awaitRunning();
 
     long now = System.currentTimeMillis();
     UserIdentity ident1 = new UserIdentity("testuser", UserIdentity.IdentifierType.EXTERNAL,
@@ -136,8 +139,8 @@ DistributedKeyManagerTest extends TestTokenManager {
     assertEquals(token1.getIdentifier().getGroups(), token2.getIdentifier().getGroups());
     assertEquals(token1, token2);
 
-    tokenManager1.stopAndWait();
-    tokenManager2.stopAndWait();
+    tokenManager1.stopAsync().awaitTerminated();
+    tokenManager2.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -154,27 +157,59 @@ DistributedKeyManagerTest extends TestTokenManager {
     Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, DistributedKeyManager.getACLs(noKerbConf));
   }
 
+  @Test
+  public void testDoInitInterruptedExceptionPropagation() throws Exception {
+    ZKClient mockZkClient = Mockito.mock(ZKClient.class);
+    @SuppressWarnings("unchecked")
+    OperationFuture<Stat> mockExistsFuture = Mockito.mock(OperationFuture.class);
+    InterruptedException interrupted = new InterruptedException("interrupted during init");
+    Mockito.when(mockExistsFuture.get()).thenThrow(interrupted);
+    Mockito.when(mockZkClient.exists(Mockito.anyString())).thenReturn(mockExistsFuture);
+
+    DistributedKeyManager manager = new DistributedKeyManager(
+        CConfiguration.create(),
+        injector1.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
+        })),
+        mockZkClient,
+        ZooDefs.Ids.OPEN_ACL_UNSAFE);
+    try {
+      manager.doInit();
+      Assert.fail("Expected RuntimeException wrapping InterruptedException");
+    } catch (RuntimeException e) {
+      Assert.assertSame(interrupted, e.getCause());
+    }
+  }
+
+  @Test
+  public void testStartAndShutdownStopsLeaderElection() throws Exception {
+    DistributedKeyManager manager = getKeyManager(injector1, true);
+    Assert.assertTrue(manager.isRunning());
+    manager.stopAsync().awaitTerminated();
+    Assert.assertFalse(manager.isRunning());
+  }
+
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec()
       throws Exception {
     DistributedKeyManager keyManager = getKeyManager(injector1, true);
-    TokenManager tokenManager = new TokenManager(keyManager,
+    TokenManager tokenManager = new TestingTokenManager(keyManager,
         injector1.getInstance(UserIdentityCodec.class));
-    tokenManager.startAndWait();
     return new ImmutablePair<>(tokenManager, injector1.getInstance(AccessTokenCodec.class));
   }
 
   private DistributedKeyManager getKeyManager(Injector injector, boolean expectLeader)
       throws Exception {
     ZKClientService zk = injector.getInstance(ZKClientService.class);
-    zk.startAndWait();
+    if (!zk.isRunning()) {
+      zk.startAsync().awaitRunning();
+    }
     WaitableDistributedKeyManager keyManager =
         new WaitableDistributedKeyManager(injector.getInstance(CConfiguration.class),
             injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
             })),
             zk);
 
-    keyManager.startAndWait();
+    keyManager.startAsync().awaitRunning();
     if (expectLeader) {
       Tasks.waitFor(true, () -> keyManager.getCurrentKey() != null, 5L, TimeUnit.SECONDS);
     }
@@ -201,6 +236,13 @@ DistributedKeyManagerTest extends TestTokenManager {
 
     private TestingTokenManager(KeyManager keyManager, Codec<UserIdentity> identifierCodec) {
       super(keyManager, identifierCodec);
+    }
+
+    @Override
+    public void startUp() {
+      if (!keyManager.isRunning()) {
+        super.startUp();
+      }
     }
 
     public KeyIdentifier getCurrentKey() {

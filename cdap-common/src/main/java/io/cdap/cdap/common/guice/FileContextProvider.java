@@ -69,7 +69,8 @@ public class FileContextProvider implements Provider<FileContext> {
         return UserGroupInformation.createRemoteUser(hdfsUser);
       }
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

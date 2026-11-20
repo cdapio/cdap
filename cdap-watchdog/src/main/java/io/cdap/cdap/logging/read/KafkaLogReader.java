@@ -112,7 +112,8 @@ public class KafkaLogReader implements LogReader {
       fetchLogEvents(kafkaConsumer, kafkaCallback, startOffset, latestOffset, maxEvents, readRange);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     } finally {
       try {
         kafkaConsumer.close();
@@ -190,7 +191,8 @@ public class KafkaLogReader implements LogReader {
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     } finally {
       try {
         kafkaConsumer.close();

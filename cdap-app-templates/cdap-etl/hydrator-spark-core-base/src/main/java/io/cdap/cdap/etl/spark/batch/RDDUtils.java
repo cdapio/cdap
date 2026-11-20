@@ -74,7 +74,8 @@ public class RDDUtils {
         inputFormatProvider.getInputFormatClassName());
       return jsc.newAPIHadoopRDD(hConf, inputFormatClass, keyClass, valueClass);
     } catch (ClassNotFoundException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

@@ -99,7 +99,8 @@ public class ClusterNameTestApp extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

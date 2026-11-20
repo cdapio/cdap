@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +122,7 @@ public class DataprocJobMain {
       Class<?> dataprocEnvClass = newCl.loadClass(dataprocEnvClassName);
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
-      try {
+      executeWithDestroy(() -> {
         // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class,
             String.class);
@@ -150,12 +151,12 @@ public class DataprocJobMain {
 
         LOG.info("Invoking run() on {}", runtimeJobClassName);
         runMethod.invoke(runner, newDataprocEnvInstance);
-      } finally {
+      }, () -> {
         // call destroy() method on envProviderClass
         Method closeMethod = dataprocEnvClass.getMethod("destroy");
         LOG.info("Invoking destroy() on {}", dataprocEnvClassName);
         closeMethod.invoke(newDataprocEnvInstance);
-      }
+      });
 
       LOG.info("Runtime job completed.");
       completion.complete(null);
@@ -164,6 +165,45 @@ public class DataprocJobMain {
       LOG.error("Runtime job failed", t);
       completion.completeExceptionally(t);
       throw t;
+    }
+  }
+
+  @FunctionalInterface
+  interface ThrowingRunnable {
+    void run() throws Exception;
+  }
+
+  /**
+   * Executes the job action and ensures cleanup runs without masking any primary failure.
+   */
+  static void executeWithDestroy(ThrowingRunnable runAction, ThrowingRunnable destroyAction)
+      throws Exception {
+    Throwable primary = null;
+    try {
+      runAction.run();
+    } catch (Throwable t) {
+      primary = t;
+    }
+    try {
+      destroyAction.run();
+    } catch (Throwable destroyEx) {
+      if (primary != null) {
+        if (primary != destroyEx) {
+          primary.addSuppressed(destroyEx);
+        }
+        LOG.error("Suppressing exception raised in destroy() after job failure", destroyEx);
+      } else {
+        primary = destroyEx;
+      }
+    }
+    if (primary != null) {
+      if (primary instanceof Exception) {
+        throw (Exception) primary;
+      }
+      if (primary instanceof Error) {
+        throw (Error) primary;
+      }
+      throw new RuntimeException(primary);
     }
   }
 
@@ -207,11 +247,13 @@ public class DataprocJobMain {
     return urls;
   }
 
-  private static void addJarUrls(File dir, List<URL> result) throws MalformedURLException {
+  @SuppressWarnings("checkstyle:MissingJavadocMethod")
+  static void addJarUrls(File dir, List<URL> result) throws MalformedURLException {
     File[] files = dir.listFiles(f -> f.getName().endsWith(".jar"));
     if (files == null) {
       return;
     }
+    Arrays.sort(files, Comparator.comparing(File::getName));
     for (File file : files) {
       result.add(file.toURI().toURL());
     }

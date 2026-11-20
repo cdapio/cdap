@@ -67,22 +67,22 @@ public class SparkTransactionHandlerTest {
   @BeforeClass
   public static void init() throws UnknownHostException {
     txManager = new TransactionManager(new Configuration());
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     txClient = new InMemoryTxSystemClient(txManager);
 
     sparkTxHandler = new SparkTransactionHandler(txClient);
     httpService = new SparkDriverHttpService("test", InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                              sparkTxHandler);
-    httpService.startAndWait();
+    httpService.startAsync().awaitRunning();
 
     sparkTxClient = new SparkTransactionClient(httpService.getBaseURI());
   }
 
   @AfterClass
   public static void finish() {
-    httpService.stopAndWait();
-    txManager.stopAndWait();
+    httpService.stopAsync().awaitTerminated();
+    txManager.stopAsync().awaitTerminated();
   }
 
   /**
@@ -176,12 +176,12 @@ public class SparkTransactionHandlerTest {
         throw new IllegalStateException("Cannot start long transaction");
       }
     };
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     try {
       SparkTransactionHandler txHandler = new SparkTransactionHandler(new InMemoryTxSystemClient(txManager));
       SparkDriverHttpService httpService = new SparkDriverHttpService(
         "test", InetAddress.getLoopbackAddress().getCanonicalHostName(), txHandler);
-      httpService.startAndWait();
+      httpService.startAsync().awaitRunning();
       try {
         // Start a job
         txHandler.jobStarted(1, ImmutableSet.of(2));
@@ -197,10 +197,56 @@ public class SparkTransactionHandlerTest {
         // End the job
         txHandler.jobEnded(1, false);
       } finally {
-        httpService.stopAndWait();
+        httpService.stopAsync().awaitTerminated();
       }
     } finally {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
+    }
+  }
+
+  /**
+   * Verifies that a failed {@code startLong()} caches an absent {@code Optional} so subsequent stage requests do not
+   * invoke {@code startLong()} a second time.
+   */
+  @Test
+  public void testFailedStartLongCachedAsAbsentAndNotRetried() throws Exception {
+    final AtomicInteger startLongCalls = new AtomicInteger();
+    TransactionManager failingTxManager = new TransactionManager(new Configuration()) {
+      @Override
+      public Transaction startLong() {
+        startLongCalls.incrementAndGet();
+        throw new IllegalStateException("Cannot start long transaction");
+      }
+    };
+    failingTxManager.startAsync().awaitRunning();
+    try {
+      SparkTransactionHandler txHandler = new SparkTransactionHandler(new InMemoryTxSystemClient(failingTxManager));
+      SparkDriverHttpService localHttp = new SparkDriverHttpService(
+          "test", InetAddress.getLoopbackAddress().getCanonicalHostName(), txHandler);
+      localHttp.startAsync().awaitRunning();
+      try {
+        txHandler.jobStarted(99, ImmutableSet.of(100));
+        // Duplicate jobStarted exercises JobTransaction.toString() when transaction is still null.
+        txHandler.jobStarted(99, ImmutableSet.of(100));
+
+        SparkTransactionClient client = new SparkTransactionClient(localHttp.getBaseURI(), 10L);
+        for (int attempt = 0; attempt < 2; attempt++) {
+          try {
+            client.getTransaction(100, 100L, TimeUnit.MILLISECONDS);
+            Assert.fail("Expected TransactionFailureException");
+          } catch (TransactionFailureException expected) {
+            // expected
+          }
+        }
+        Assert.assertEquals(1, startLongCalls.get());
+        // Duplicate jobStarted now exercises JobTransaction.toString() when transaction is absent Optional.
+        txHandler.jobStarted(99, ImmutableSet.of(100));
+        txHandler.jobEnded(99, false);
+      } finally {
+        localHttp.stopAsync().awaitTerminated();
+      }
+    } finally {
+      failingTxManager.stopAsync().awaitTerminated();
     }
   }
 

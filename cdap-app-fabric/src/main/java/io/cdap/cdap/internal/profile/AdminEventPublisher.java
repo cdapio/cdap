@@ -151,7 +151,8 @@ public class AdminEventPublisher {
             } catch (TopicNotFoundException | ServiceUnavailableException e) {
               throw new RetryableException(e);
             } catch (IOException | AccessException e) {
-              throw Throwables.propagate(e);
+              Throwables.throwIfUnchecked(e);
+              throw new RuntimeException(e);
             }
             return null;
           },

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.capability;
 
-import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -100,7 +99,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
     programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
     runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
-    capabilityManagementService.stopAndWait();
+    capabilityManagementService.stopAsync().awaitTerminated();
   }
 
   @AfterClass
@@ -117,7 +116,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
             programLifecycleService.stopAll(
                 new ApplicationReference(NamespaceId.SYSTEM.getNamespace(), d.getName()));
           } catch (Exception e) {
-            Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         });
 
@@ -127,7 +126,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
             programLifecycleService.stopAll(
                 new ApplicationReference(NamespaceId.DEFAULT.getNamespace(), d.getName()));
           } catch (Exception e) {
-            Throwables.propagate(e);
+            throw new RuntimeException(e);
           }
         });
 

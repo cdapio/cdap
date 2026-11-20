@@ -618,7 +618,8 @@ public class LevelDBTableCore {
           return new Result(result.getFirst(), result.getSecond());
         }
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 
