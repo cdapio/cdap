@@ -73,16 +73,6 @@ public class DelegatingMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public boolean isRebuildRequired() throws IOException {
-    return delegate.isRebuildRequired();
-  }
-
-  @Override
-  public void markRebuilt() throws IOException {
-    delegate.markRebuilt();
-  }
-
-  @Override
   public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
     return delegate.apply(mutation, options);
   }

@@ -55,24 +55,6 @@ public interface MetadataStorage extends Closeable {
   void dropIndex() throws IOException;
 
   /**
-   * Returns whether the storage lost metadata, so that the system metadata of all entities must
-   * be written again. For example, a storage can require this after it had to recreate its index.
-   *
-   * @return true if the system metadata must be written again; false by default
-   */
-  default boolean isRebuildRequired() throws IOException {
-    return false;
-  }
-
-  /**
-   * Records that the system metadata of all entities was written again, so that
-   * {@link #isRebuildRequired()} returns false from now on.
-   */
-  default void markRebuilt() throws IOException {
-    // no-op
-  }
-
-  /**
    * Apply the given mutation to the metadata state.
    *
    * @param mutation the mutation to perform
