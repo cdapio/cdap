@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metadata.Metadata;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
@@ -32,6 +33,7 @@ import io.cdap.cdap.spi.metadata.MetadataMutation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Stage to write metadata for an application.
@@ -39,7 +41,6 @@ import java.util.List;
 public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> {
 
   private final MetadataServiceClient metadataServiceClient;
-  private String creationTime;
 
   public MetadataWriterStage(MetadataServiceClient metadataServiceClient) {
     super(TypeToken.of(ApplicationWithPrograms.class));
@@ -49,32 +50,15 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
   @Override
   public void process(ApplicationWithPrograms input) {
     // use current time as creation time for app and all programs
-    creationTime = String.valueOf(System.currentTimeMillis());
+    String creationTime = String.valueOf(System.currentTimeMillis());
 
-    // add system metadata for apps
     ApplicationId appId = input.getApplicationId();
-    ApplicationSpecification appSpec = input.getSpecification();
-    List<MetadataMutation> mutations = new ArrayList<>();
     // get the system metadata and combine it with our own system metadata, metadata creation mutation will
     // completely override the previous metadata in the scope, so we have to combine these together
     Metadata systemAppMetadata = input.getMetadata().get(MetadataScope.SYSTEM);
-
-    mutations.add(
-        new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec,
-            input.getApplicationClass(), creationTime,
-            systemAppMetadata)
-            .getMetadataMutation());
-
-    // collect system metadata for programs
-    collectProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values(),
-        mutations);
-    collectProgramSystemMetadata(appId, ProgramType.SERVICE, appSpec.getServices().values(),
-        mutations);
-    collectProgramSystemMetadata(appId, ProgramType.SPARK, appSpec.getSpark().values(), mutations);
-    collectProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values(),
-        mutations);
-    collectProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values(),
-        mutations);
+    List<MetadataMutation> mutations = new ArrayList<>(createSystemMetadataMutations(
+        metadataServiceClient, appId, input.getSpecification(), input.getApplicationClass(),
+        creationTime, systemAppMetadata));
 
     // add the rest user defined metadata
     Metadata userAppMetadata = input.getMetadata().get(MetadataScope.USER);
@@ -93,9 +77,45 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
     emit(input);
   }
 
-  private void collectProgramSystemMetadata(ApplicationId appId, ProgramType programType,
-      Iterable<? extends ProgramSpecification> specs,
-      List<MetadataMutation> mutations) {
+  /**
+   * Returns the mutations that create the system metadata of an application and of its programs.
+   *
+   * @param metadataServiceClient the client that the metadata writers require
+   * @param appId the application
+   * @param appSpec the specification of the application
+   * @param applicationClass the application class in the artifact of the application
+   * @param creationTime the creation time of the application and its programs, in milliseconds
+   * @param systemAppMetadata system metadata that the application emitted, or null if none
+   */
+  public static List<MetadataMutation.Create> createSystemMetadataMutations(
+      MetadataServiceClient metadataServiceClient, ApplicationId appId,
+      ApplicationSpecification appSpec, ApplicationClass applicationClass, String creationTime,
+      @Nullable Metadata systemAppMetadata) {
+    List<MetadataMutation.Create> mutations = new ArrayList<>();
+    // add system metadata for apps
+    mutations.add(
+        new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, applicationClass,
+            creationTime, systemAppMetadata)
+            .getMetadataMutation());
+
+    // collect system metadata for programs
+    collectProgramSystemMetadata(metadataServiceClient, appId, ProgramType.MAPREDUCE,
+        appSpec.getMapReduce().values(), creationTime, mutations);
+    collectProgramSystemMetadata(metadataServiceClient, appId, ProgramType.SERVICE,
+        appSpec.getServices().values(), creationTime, mutations);
+    collectProgramSystemMetadata(metadataServiceClient, appId, ProgramType.SPARK,
+        appSpec.getSpark().values(), creationTime, mutations);
+    collectProgramSystemMetadata(metadataServiceClient, appId, ProgramType.WORKER,
+        appSpec.getWorkers().values(), creationTime, mutations);
+    collectProgramSystemMetadata(metadataServiceClient, appId, ProgramType.WORKFLOW,
+        appSpec.getWorkflows().values(), creationTime, mutations);
+    return mutations;
+  }
+
+  private static void collectProgramSystemMetadata(MetadataServiceClient metadataServiceClient,
+      ApplicationId appId, ProgramType programType,
+      Iterable<? extends ProgramSpecification> specs, String creationTime,
+      List<MetadataMutation.Create> mutations) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
       mutations.add(

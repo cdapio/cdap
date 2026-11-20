@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.client.MetadataClient;
@@ -123,13 +124,16 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private final MetadataAdmin metadataAdmin;
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final Injector injector;
 
   @Inject
   MetadataHttpHandler(MetadataAdmin metadataAdmin,
-      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
+      Injector injector) {
     this.metadataAdmin = metadataAdmin;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
+    this.injector = injector;
   }
 
   @GET
@@ -341,6 +345,26 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
             LIST_MUTATION_TYPE);
     metadataAdmin.applyMutations(mutations, SYNC);
     responder.sendString(HttpResponseStatus.OK, "List of Metadata mutations applied successfully.");
+  }
+
+  /**
+   * Writes the system metadata of all entities to the metadata storage again.
+   *
+   * @param drop whether to first delete all metadata, also the metadata that users added
+   */
+  @POST
+  @Path("/metadata-internals/rebuild")
+  public void rebuild(HttpRequest request, HttpResponder responder,
+      @QueryParam("drop") @DefaultValue("false") boolean drop) throws IOException {
+    // This handler is also part of services that do not have the stores that the rebuild reads.
+    // Therefore get the rebuilder only when it is used.
+    SystemMetadataRebuilder rebuilder = injector.getInstance(SystemMetadataRebuilder.class);
+    if (drop) {
+      rebuilder.dropAndRebuild();
+    } else {
+      rebuilder.rebuild();
+    }
+    responder.sendString(HttpResponseStatus.OK, "System metadata rebuilt successfully.");
   }
 
   @GET
