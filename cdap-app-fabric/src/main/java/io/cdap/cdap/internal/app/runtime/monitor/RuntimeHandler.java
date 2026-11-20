@@ -147,7 +147,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
         ProgramType.valueOfCategoryName(programType, BadRequestException::new),
         program, run);
-    ProgramRunInfo programRunInfo = requestValidator.getProgramRunStatus(programRunId, request);
+    ProgramRunInfo programRunInfo =
+        requestValidator.validate(programRunId, request).getProgramRunInfo();
 
     if (!allowedTopics.contains(topic)) {
       throw new UnauthorizedException("Access denied for topic " + topic);
@@ -193,7 +194,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
         ProgramType.valueOfCategoryName(programType, BadRequestException::new),
         program, run);
-    requestValidator.getProgramRunStatus(programRunId, request);
+    requestValidator.validate(programRunId, request);
 
     Location location = eventLogsBaseLocation.append(
         String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));

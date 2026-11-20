@@ -3388,6 +3388,15 @@
   </property>
 
   <property>
+    <name>app.program.runtime.token.validation.enabled</name>
+    <value>false</value>
+    <description>
+      Enables enforcement of run-scoped runtime token validation in the Runtime Service.
+      When false, validation checks run in report-only mode.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.remote.stop.delay.secs</name>
     <value>10</value>
     <description>
