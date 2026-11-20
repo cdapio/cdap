@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.gateway.router.handlers;
 
+import com.google.common.base.Ascii;
+import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -52,6 +54,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,6 +81,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHandler.class);
   private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(
       Constants.Router.AUDIT_LOGGER_NAME);
+  private static final Splitter SLASH_SPLITTER = Splitter.on('/').omitEmptyStrings();
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -185,7 +189,48 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    * Checks if the given request bypass access token validation.
    */
   private boolean isBypassed(HttpRequest request) {
-    return bypassPattern != null && bypassPattern.matcher(request.uri()).matches();
+    if (bypassPattern == null) {
+      return false;
+    }
+    String canonicalPath = getCanonicalBypassPath(request.uri());
+    return canonicalPath != null && bypassPattern.matcher(canonicalPath).matches();
+  }
+
+  /**
+   * Canonicalizes and validates the request URI path for {@code router.bypass.auth.regex} matching
+   * so that the matched path aligns with downstream {@code netty-http} route dispatch, or returns
+   * {@code null} if the URI is malformed or contains path-traversal sequences.
+   */
+  @Nullable
+  private static String getCanonicalBypassPath(@Nullable String rawUri) {
+    // Require RFC 7230 origin-form ("/..."); URI.create treats a leading "//" as an authority.
+    if (rawUri == null || !rawUri.startsWith("/") || rawUri.startsWith("//")) {
+      return null;
+    }
+    URI uri;
+    try {
+      uri = URI.create(rawUri);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+    // Reject encoded slashes before getPath() decodes them into indistinguishable '/' separators.
+    if (Ascii.toLowerCase(uri.getRawPath()).contains("%2f")) {
+      return null;
+    }
+    String decodedPath = uri.getPath();
+    for (int i = 0; i < decodedPath.length(); i++) {
+      if (Character.isISOControl(decodedPath.charAt(i))) {
+        return null;
+      }
+    }
+    StringBuilder canonical = new StringBuilder(decodedPath.length());
+    for (String segment : SLASH_SPLITTER.split(decodedPath)) {
+      if (".".equals(segment) || "..".equals(segment)) {
+        return null;
+      }
+      canonical.append('/').append(segment);
+    }
+    return canonical.length() == 0 ? "/" : canonical.toString();
   }
 
   /**
