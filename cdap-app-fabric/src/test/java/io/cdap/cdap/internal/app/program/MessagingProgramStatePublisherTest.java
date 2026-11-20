@@ -29,6 +29,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -94,5 +95,66 @@ public class MessagingProgramStatePublisherTest {
     Mockito.verify(messagingService).publish(storeRequestCaptor.capture());
     StoreRequest storeRequest = storeRequestCaptor.getValue();
     Assert.assertEquals("programstatusevent0", storeRequest.getTopicId().getTopic());
+  }
+
+  @Test
+  public void testPublishSuccessOnRetryableException() throws TopicNotFoundException, IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
+    cConf.setInt("system.program.state.retry.policy.max.retries", 3);
+
+    MessagingService messagingService = Mockito.mock(MessagingService.class);
+    MessagingProgramStatePublisher publisher = new MessagingProgramStatePublisher(cConf, messagingService);
+    Mockito.when(messagingService.publish(Mockito.any()))
+           .thenThrow(new SocketTimeoutException())
+           .thenReturn(null);
+
+    publisher.publish(Notification.Type.PROGRAM_STATUS, ImmutableMap.of());
+
+    Mockito.verify(messagingService, Mockito.times(2)).publish(storeRequestCaptor.capture());
+    StoreRequest storeRequest = storeRequestCaptor.getValue();
+    Assert.assertEquals("programstatusevent", storeRequest.getTopicId().getTopic());
+  }
+
+  @Test
+  public void testPublishThrowsOnRetryExhausted() throws TopicNotFoundException, IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
+    cConf.setInt("system.program.state.retry.policy.max.retries", 3);
+
+    MessagingService messagingService = Mockito.mock(MessagingService.class);
+    MessagingProgramStatePublisher publisher = new MessagingProgramStatePublisher(cConf, messagingService);
+    Mockito.when(messagingService.publish(Mockito.any()))
+        .thenThrow(new SocketTimeoutException());
+
+    RuntimeException outerException = Assert.assertThrows(RuntimeException.class,
+        () -> publisher.publish(Notification.Type.PROGRAM_STATUS, ImmutableMap.of()));
+    Assert.assertNotNull(outerException.getCause());
+    Assert.assertTrue(outerException.getCause() instanceof SocketTimeoutException);
+
+    Mockito.verify(messagingService, Mockito.times(4)).publish(storeRequestCaptor.capture());
+    StoreRequest storeRequest = storeRequestCaptor.getValue();
+    Assert.assertEquals("programstatusevent", storeRequest.getTopicId().getTopic());
+  }
+
+  @Test
+  public void testPublishThrowsForNonRetryableException() throws TopicNotFoundException, IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
+
+    MessagingService messagingService = Mockito.mock(MessagingService.class);
+    MessagingProgramStatePublisher publisher = new MessagingProgramStatePublisher(cConf,
+        messagingService);
+    Mockito.when(messagingService.publish(Mockito.any()))
+        .thenThrow(new IOException())
+        .thenReturn(null);
+
+    RuntimeException outerException = Assert.assertThrows(RuntimeException.class,
+        () -> publisher.publish(Notification.Type.PROGRAM_STATUS, ImmutableMap.of()));
+    Assert.assertNotNull(outerException.getCause());
+    Assert.assertTrue(outerException.getCause() instanceof IOException);
+    Mockito.verify(messagingService).publish(storeRequestCaptor.capture());
+    StoreRequest storeRequest = storeRequestCaptor.getValue();
+    Assert.assertEquals("programstatusevent", storeRequest.getTopicId().getTopic());
   }
 }
