@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.apache.twill.common.Threads;
+import org.apache.twill.zookeeper.ACLData;
 import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.NodeData;
 import org.apache.twill.zookeeper.OperationFuture;
@@ -45,7 +46,9 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,22 +82,120 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     this.listeners = new ListenerManager();
   }
 
+  /**
+   * Initializes the parent znode if absent, restricts it if an older version left it
+   * world-writable, and starts watching child znodes for updates.
+   */
   public void init() throws InterruptedException {
     this.watcher = new ZKWatcher();
     try {
       LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
-      if (zookeeper.exists(parentZnode).get() == null) {
-        // may be created in parallel by another instance
-        // Also the child nodes are secure even without adding any ACLs to parent node.
-        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT),
-            KeeperException.NodeExistsException.class, null).get();
-      }
+      createParentIfAbsent();
     } catch (ExecutionException ee) {
-      // recheck if already created
-      throw Throwables.propagate(ee.getCause());
+      // Sessions without ZooKeeper credentials (e.g. YARN program containers) get InvalidACL for
+      // "auth"-scheme ACLs. Tolerate only that so they can still start; rethrow anything else.
+      if (!(ee.getCause() instanceof KeeperException.InvalidACLException) || !hasAuthSchemeAcl()) {
+        throw Throwables.propagate(ee.getCause());
+      }
+      // Never fall back to an open parent: that is the vulnerability this ACL closes.
+      LOG.warn("ZooKeeper rejected ACLs {} for parent znode {} because this session is not "
+          + "authenticated. Not creating it; entries will only load once an authenticated "
+          + "client creates it with ACLs readable by this session.", znodeACL, parentZnode);
     }
+    restrictOpenParentAcl();
     this.resources = reloadAll();
     listeners.notifyUpdate();
+  }
+
+  /**
+   * Restricts an existing parent znode that older versions created world-writable, so that no
+   * further entries can be added by unauthorized clients on upgraded clusters. Entries added while
+   * the parent was writable are kept. Only an ACL of exactly {@code OPEN_ACL_UNSAFE} is replaced;
+   * any other ACL may have been set by an operator and is left unchanged. A failure here is logged
+   * and never stops initialization.
+   */
+  private void restrictOpenParentAcl() throws InterruptedException {
+    if (znodeACL == null || znodeACL.isEmpty() || ZooDefs.Ids.OPEN_ACL_UNSAFE.equals(znodeACL)) {
+      return;
+    }
+    ACLData aclData;
+    try {
+      aclData = zookeeper.getACL(parentZnode).get();
+    } catch (ExecutionException ee) {
+      // The parent is missing because this session could not create it, or is not readable.
+      LOG.debug("Not checking ACLs of parent znode {}", parentZnode, ee.getCause());
+      return;
+    }
+    if (!ZooDefs.Ids.OPEN_ACL_UNSAFE.equals(aclData.getACL())) {
+      return;
+    }
+    try {
+      // The ACL version guards against overwriting a concurrent change by another instance.
+      Stat stat = ZKOperations.ignoreError(
+          zookeeper.setACL(parentZnode, znodeACL, aclData.getStat().getAversion()),
+          KeeperException.BadVersionException.class, null).get();
+      if (stat == null) {
+        LOG.debug("ACLs of parent znode {} were changed concurrently; not changing them",
+            parentZnode);
+        return;
+      }
+      LOG.warn("Restricted ACLs of parent znode {} from {} to {}. Older versions created it "
+          + "writable by any ZooKeeper client. Its {} existing entries were kept; review them, as "
+          + "they may have been added while it was writable.", parentZnode,
+          ZooDefs.Ids.OPEN_ACL_UNSAFE, describeParentAcl(), aclData.getStat().getNumChildren());
+    } catch (ExecutionException ee) {
+      if (ee.getCause() instanceof KeeperException.InvalidACLException && hasAuthSchemeAcl()) {
+        LOG.info("Parent znode {} is writable by any ZooKeeper client. This session is not "
+            + "authenticated, so an authenticated CDAP service must restrict its ACLs to {}.",
+            parentZnode, znodeACL);
+        return;
+      }
+      LOG.warn("Parent znode {} is writable by any ZooKeeper client and its ACLs could not be "
+          + "restricted to {}. Restrict them manually, for example with zkCli.sh setAcl.",
+          parentZnode, znodeACL, ee.getCause());
+    }
+  }
+
+  /**
+   * Returns the ACLs now set on the parent znode, which show the identity they were restricted to,
+   * or the configured ACLs if they cannot be read.
+   */
+  private String describeParentAcl() throws InterruptedException {
+    try {
+      return zookeeper.getACL(parentZnode).get().getACL().toString();
+    } catch (ExecutionException ee) {
+      return String.valueOf(znodeACL);
+    }
+  }
+
+  private void createParentIfAbsent() throws ExecutionException, InterruptedException {
+    if (zookeeper.exists(parentZnode).get() == null) {
+      // Create the parent with znodeACL, the same ACLs as the entries under it, so only
+      // authorized clients can add entries. Another instance may create it at the same time, so
+      // NodeExistsException is ignored. restrictOpenParentAcl() handles an existing open parent.
+      OperationFuture<String> createFuture = (znodeACL == null)
+          ? zookeeper.create(parentZnode, null, CreateMode.PERSISTENT)
+          : zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, znodeACL);
+      ZKOperations.ignoreError(createFuture,
+          KeeperException.NodeExistsException.class, null).get();
+    }
+  }
+
+  /**
+   * Returns whether znodeACL has an "auth" entry (as in CREATOR_ALL_ACL), which ZooKeeper replaces
+   * with the session's identity. For such ACLs, InvalidACLException means the session is not
+   * authenticated rather than that the ACLs are malformed.
+   */
+  private boolean hasAuthSchemeAcl() {
+    if (znodeACL == null) {
+      return false;
+    }
+    for (ACL acl : znodeACL) {
+      if (acl != null && acl.getId() != null && "auth".equals(acl.getId().getScheme())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Map<String, T> reloadAll() {
@@ -173,6 +274,9 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     final String znode = joinZNode(parentZnode, name);
     try {
       LOG.debug("Setting value for node {}", znode);
+      // Ensure parentZnode exists with znodeACL before ZKExtOperations.createOrSet runs;
+      // otherwise ZKExtOperations would recreate a missing parent with OPEN_ACL_UNSAFE.
+      createParentIfAbsent();
 
       final SettableFuture<T> completion = SettableFuture.create();
       Futures.addCallback(

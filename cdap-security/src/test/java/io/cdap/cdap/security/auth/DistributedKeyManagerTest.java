@@ -17,8 +17,12 @@
 package io.cdap.cdap.security.auth;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -35,15 +39,26 @@ import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.apache.curator.test.TestingCluster;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClients;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Id;
+import org.apache.zookeeper.server.auth.DigestAuthenticationProvider;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -58,6 +73,8 @@ public class
 DistributedKeyManagerTest extends TestTokenManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
+  private static final String OWNER_AUTH = "cdap:secret";
+  private static final long TIMEOUT_SECONDS = 10;
   private static TestingCluster zkCluster;
   private static Injector injector1;
   private static Injector injector2;
@@ -154,6 +171,132 @@ DistributedKeyManagerTest extends TestTokenManager {
     Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, DistributedKeyManager.getACLs(noKerbConf));
   }
 
+  /**
+   * Runs the real key distribution flow with the ACLs used on Kerberos clusters: the leader
+   * creates the keys parent locked to its identity, a peer with the same identity still shares
+   * keys and validates tokens, and a client without credentials still starts but cannot add
+   * keys.
+   */
+  @Test
+  public void testKeyDistributionWithRestrictedAcls() throws Exception {
+    String namespace = "/restrictedAclKeys";
+    ZKClientService ownerClient1 = null;
+    ZKClientService ownerClient2 = null;
+    ZKClientService anonymousClient = null;
+    List<Service> services = new ArrayList<>();
+    try {
+      ownerClient1 = startClient(OWNER_AUTH);
+      ownerClient2 = startClient(OWNER_AUTH);
+      anonymousClient = startClient(null);
+
+      WaitableDistributedKeyManager leader = startRestrictedKeyManager(ownerClient1, namespace);
+      services.add(leader);
+      Tasks.waitFor(true, () -> leader.getCurrentKey() != null, TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(digestAcl(OWNER_AUTH), ownerClient1.getACL(namespace + "/keys")
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+
+      WaitableDistributedKeyManager follower = startRestrictedKeyManager(ownerClient2, namespace);
+      services.add(follower);
+      TestingTokenManager leaderTokens =
+          new TestingTokenManager(leader, injector1.getInstance(UserIdentityCodec.class));
+      TestingTokenManager followerTokens =
+          new TestingTokenManager(follower, injector2.getInstance(UserIdentityCodec.class));
+      leaderTokens.startAndWait();
+      followerTokens.startAndWait();
+      services.add(leaderTokens);
+      services.add(followerTokens);
+
+      long now = System.currentTimeMillis();
+      UserIdentity identity = new UserIdentity("testuser", UserIdentity.IdentifierType.EXTERNAL,
+          Lists.newArrayList("users"), now, now + TimeUnit.HOURS.toMillis(1));
+      AccessToken token = leaderTokens.signIdentifier(identity);
+      followerTokens.waitForKey(leader.getCurrentKey().getKeyId(), TIMEOUT_SECONDS,
+          TimeUnit.SECONDS);
+      followerTokens.validateSecret(token);
+
+      // A participant without credentials, such as a program container, starts without error
+      // but cannot add a key of its own.
+      WaitableDistributedKeyManager anonymous =
+          startRestrictedKeyManager(anonymousClient, namespace);
+      services.add(anonymous);
+      assertEquals(Service.State.RUNNING, anonymous.state());
+      assertCannotAddKey(anonymousClient, namespace);
+    } finally {
+      stopAll(services, ownerClient1, ownerClient2, anonymousClient);
+    }
+  }
+
+  /**
+   * Covers a participant without credentials that starts before the keys parent exists. It must
+   * start, fail to write a key as leader without creating an open parent, and let a credentialed
+   * participant create the parent with restricted ACLs afterwards.
+   */
+  @Test
+  public void testUnauthenticatedFirstParticipantDoesNotCreateOpenKeysParent() throws Exception {
+    String namespace = "/restrictedAclFreshKeys";
+    ZKClientService anonymousClient = null;
+    ZKClientService ownerClient = null;
+    List<Service> services = new ArrayList<>();
+    try {
+      anonymousClient = startClient(null);
+      ownerClient = startClient(OWNER_AUTH);
+
+      WaitableDistributedKeyManager anonymous =
+          startRestrictedKeyManager(anonymousClient, namespace);
+      services.add(anonymous);
+      assertEquals(Service.State.RUNNING, anonymous.state());
+      // As the only participant it becomes leader and tries to write the first key.
+      assertTrue(anonymous.awaitAddKeyAttempt(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      assertNull(anonymous.getCurrentKey());
+      assertNull(ownerClient.exists(namespace + "/keys").get(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+
+      WaitableDistributedKeyManager owner = startRestrictedKeyManager(ownerClient, namespace);
+      services.add(owner);
+      Tasks.waitFor(true, () -> owner.getCurrentKey() != null, TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(digestAcl(OWNER_AUTH), ownerClient.getACL(namespace + "/keys")
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+    } finally {
+      stopAll(services, anonymousClient, ownerClient);
+    }
+  }
+
+  /**
+   * Covers a cluster upgraded from a version that created the keys parent writable by any client:
+   * the first credentialed participant restricts it, and key distribution keeps working.
+   */
+  @Test
+  public void testUpgradeRestrictsExistingOpenKeysParent() throws Exception {
+    String namespace = "/upgradedOpenKeys";
+    ZKClientService ownerClient1 = null;
+    ZKClientService ownerClient2 = null;
+    ZKClientService anonymousClient = null;
+    List<Service> services = new ArrayList<>();
+    try {
+      ownerClient1 = startClient(OWNER_AUTH);
+      ownerClient2 = startClient(OWNER_AUTH);
+      anonymousClient = startClient(null);
+      ownerClient1.create(namespace + "/keys", null, CreateMode.PERSISTENT)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, ownerClient1.getACL(namespace + "/keys")
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+
+      WaitableDistributedKeyManager leader = startRestrictedKeyManager(ownerClient1, namespace);
+      services.add(leader);
+      Tasks.waitFor(true, () -> leader.getCurrentKey() != null, TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(digestAcl(OWNER_AUTH), ownerClient1.getACL(namespace + "/keys")
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS).getACL());
+
+      WaitableDistributedKeyManager follower = startRestrictedKeyManager(ownerClient2, namespace);
+      services.add(follower);
+      int keyId = leader.getCurrentKey().getKeyId();
+      Tasks.waitFor(true, () -> follower.hasKey(keyId), TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+      assertCannotAddKey(anonymousClient, namespace);
+    } finally {
+      stopAll(services, ownerClient1, ownerClient2, anonymousClient);
+    }
+  }
+
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec()
       throws Exception {
@@ -181,11 +324,79 @@ DistributedKeyManagerTest extends TestTokenManager {
     return keyManager;
   }
 
+  /**
+   * Starts a key manager with {@code CREATOR_ALL_ACL} on a client namespaced under the given path,
+   * so its keys parent is separate from the one the other tests create with open ACLs.
+   */
+  private WaitableDistributedKeyManager startRestrictedKeyManager(ZKClientService client,
+      String namespace) {
+    WaitableDistributedKeyManager keyManager =
+        new WaitableDistributedKeyManager(injector1.getInstance(CConfiguration.class),
+            injector1.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
+            })),
+            ZKClients.namespace(client, namespace), ZooDefs.Ids.CREATOR_ALL_ACL);
+    keyManager.startAndWait();
+    return keyManager;
+  }
+
+  private static ZKClientService startClient(@Nullable String digestAuth) {
+    ZKClientService.Builder builder = ZKClientService.Builder.of(zkCluster.getConnectString());
+    if (digestAuth != null) {
+      builder.addAuthInfo("digest", digestAuth.getBytes(StandardCharsets.UTF_8));
+    }
+    ZKClientService client = builder.build();
+    client.startAndWait();
+    return client;
+  }
+
+  private static void assertCannotAddKey(ZKClientService client, String namespace)
+      throws Exception {
+    try {
+      client.create(namespace + "/keys/forged", new byte[] {1}, CreateMode.PERSISTENT)
+          .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      fail("Expected NoAuthException when adding a key to " + namespace + "/keys");
+    } catch (ExecutionException e) {
+      assertTrue("Unexpected cause: " + e.getCause(),
+          e.getCause() instanceof KeeperException.NoAuthException);
+    }
+  }
+
+  private static List<ACL> digestAcl(String auth) throws Exception {
+    return Collections.singletonList(new ACL(ZooDefs.Perms.ALL,
+        new Id("digest", DigestAuthenticationProvider.generateDigest(auth))));
+  }
+
+  private static void stopAll(List<Service> services, ZKClientService... clients) {
+    for (Service service : Lists.reverse(services)) {
+      try {
+        service.stopAndWait();
+      } catch (Exception e) {
+        LOG.warn("Failed to stop {}", service, e);
+      }
+    }
+    for (ZKClientService client : clients) {
+      if (client == null) {
+        continue;
+      }
+      try {
+        client.stopAndWait();
+      } catch (Exception e) {
+        LOG.warn("Failed to stop test ZKClientService", e);
+      }
+    }
+  }
+
   private static class WaitableDistributedKeyManager extends DistributedKeyManager {
 
-    WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec,
-        ZKClientService zk) {
-      super(conf, codec, zk, Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE));
+    private final CountDownLatch addKeyAttempted = new CountDownLatch(1);
+
+    WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zk) {
+      this(conf, codec, zk, Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE));
+    }
+
+    WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zk,
+        List<ACL> acls) {
+      super(conf, codec, zk, acls);
     }
 
     public KeyIdentifier getCurrentKey() {
@@ -194,6 +405,19 @@ DistributedKeyManagerTest extends TestTokenManager {
 
     public boolean hasKey(int keyId) {
       return super.hasKey(keyId);
+    }
+
+    @Override
+    protected void addKey(KeyIdentifier key) {
+      try {
+        super.addKey(key);
+      } finally {
+        addKeyAttempted.countDown();
+      }
+    }
+
+    boolean awaitAddKeyAttempt(long timeout, TimeUnit unit) throws InterruptedException {
+      return addKeyAttempted.await(timeout, unit);
     }
   }
 
