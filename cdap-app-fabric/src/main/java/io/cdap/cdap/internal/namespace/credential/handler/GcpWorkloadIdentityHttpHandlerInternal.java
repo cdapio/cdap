@@ -19,12 +19,14 @@ package io.cdap.cdap.internal.namespace.credential.handler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -61,6 +63,7 @@ public class GcpWorkloadIdentityHttpHandlerInternal extends AbstractHttpHandler 
    * @param responder    The HTTP responder.
    * @param namespace    The namespace of the identity for which to provision a credential.
    * @param scopes       A comma separated list of OAuth scopes requested.
+   * @throws BadRequestException             If the namespace is invalid or disallowed.
    * @throws CredentialProvisioningException If provisioning fails.
    * @throws IOException                     If transport errors occur.
    * @throws NotFoundException               If the identity or associated profile are not found.
@@ -69,9 +72,20 @@ public class GcpWorkloadIdentityHttpHandlerInternal extends AbstractHttpHandler 
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity/provision")
   public void provisionCredential(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @QueryParam("scopes") String scopes)
-      throws CredentialProvisioningException, IOException, NotFoundException {
+      throws BadRequestException, CredentialProvisioningException, IOException, NotFoundException {
     // If query params are updated, update the pattern matching URI at
     // io.cdap.cdap.common.encryption.EncryptionExemptionHook
+    NamespaceId namespaceId;
+    try {
+      namespaceId = new NamespaceId(namespace);
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+      throw new BadRequestException(
+          String.format("Cannot provision workload identity credential from '%s' namespace.",
+              namespace));
+    }
     try {
       responder.sendJson(HttpResponseStatus.OK,
           GSON.toJson(credentialProvider.provision(namespace, scopes)));

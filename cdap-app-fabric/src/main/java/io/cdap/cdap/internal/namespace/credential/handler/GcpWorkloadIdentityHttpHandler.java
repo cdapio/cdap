@@ -102,7 +102,8 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity/validate")
   public void validateIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
-    accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.PROVISION_CREDENTIAL);
+    NamespaceId namespaceId = ensureValidNamespace(namespace);
+    accessEnforcer.enforce(namespaceId, NamespacePermission.PROVISION_CREDENTIAL);
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
     switchToInternalUser();
@@ -130,6 +131,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity")
   public void getIdentity(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
+    ensureValidNamespace(namespace);
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
     CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
         NamespaceId.SYSTEM.getNamespace(),
@@ -159,7 +161,8 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity")
   public void createIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
-    accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.SET_SERVICE_ACCOUNT);
+    NamespaceId namespaceId = ensureValidNamespace(namespace);
+    accessEnforcer.enforce(namespaceId, NamespacePermission.SET_SERVICE_ACCOUNT);
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
@@ -194,7 +197,8 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity")
   public void deleteIdentity(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
-    accessEnforcer.enforce(new NamespaceId(namespace), NamespacePermission.UNSET_SERVICE_ACCOUNT);
+    NamespaceId namespaceId = ensureValidNamespace(namespace);
+    accessEnforcer.enforce(namespaceId, NamespacePermission.UNSET_SERVICE_ACCOUNT);
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
     CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
         NamespaceId.SYSTEM.getNamespace(),
@@ -205,12 +209,25 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     emitNamespaceWorkloadIdentityCountMetric();
   }
 
-  private NamespaceMeta getNamespaceMeta(String namespace) throws Exception {
-    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
-      return NamespaceMeta.SYSTEM;
-    }
+  private NamespaceId ensureValidNamespace(String namespace) throws BadRequestException {
+    NamespaceId namespaceId;
     try {
-      return namespaceQueryAdmin.get(new NamespaceId(namespace));
+      namespaceId = new NamespaceId(namespace);
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+      throw new BadRequestException(
+          String.format("Cannot perform workload identity operations in '%s' namespace.",
+              namespace));
+    }
+    return namespaceId;
+  }
+
+  private NamespaceMeta getNamespaceMeta(String namespace) throws Exception {
+    NamespaceId namespaceId = ensureValidNamespace(namespace);
+    try {
+      return namespaceQueryAdmin.get(namespaceId);
     } catch (Exception e) {
       Throwable cause = e.getCause();
       if (cause instanceof NamespaceNotFoundException || cause instanceof UnauthorizedException) {

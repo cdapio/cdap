@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -28,6 +29,12 @@ import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.id.CredentialIdentityId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.DefaultAccessEnforcer;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -54,10 +61,18 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
       BasicThrowable.class, new BasicThrowableCodec()).create();
 
   private final CredentialProvider credentialProvider;
+  private final AuthenticationContext authenticationContext;
+  private final AccessEnforcer internalAccessEnforcer;
 
   @Inject
-  CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider) {
+  CredentialProviderHttpHandlerInternal(
+      CredentialProvider credentialProvider,
+      AuthenticationContext authenticationContext,
+      @Named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER)
+          AccessEnforcer internalAccessEnforcer) {
     this.credentialProvider = credentialProvider;
+    this.authenticationContext = authenticationContext;
+    this.internalAccessEnforcer = internalAccessEnforcer;
   }
 
   /**
@@ -67,6 +82,7 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
    * @param responder    The HTTP responder.
    * @param namespace    The namespace of the identity for which to provision a credential.
    * @param identityName The name of the identity for which to provision a credential.
+   * @throws BadRequestException             If the namespace or identity name is invalid.
    * @throws CredentialProvisioningException If provisioning fails.
    * @throws IOException                     If transport errors occur.
    * @throws NotFoundException               If the identity or associated profile are not found.
@@ -76,6 +92,18 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
   public void provisionCredential(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identityName)
       throws BadRequestException, CredentialProvisioningException, IOException, NotFoundException {
+    CredentialIdentityId identityId;
+    try {
+      identityId = new CredentialIdentityId(namespace, identityName);
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+    if (NamespaceId.SYSTEM.equals(identityId.getParent())) {
+      throw new BadRequestException(
+          String.format("Cannot provision credential from '%s' namespace.", namespace));
+    }
+    internalAccessEnforcer.enforce(
+        identityId, authenticationContext.getPrincipal(), StandardPermission.USE);
     CredentialProvisionContext context = deserializeRequestContent(request,
         CredentialProvisionContext.class);
     try {

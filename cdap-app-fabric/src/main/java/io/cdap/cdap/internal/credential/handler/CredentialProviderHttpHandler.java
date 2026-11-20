@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
+import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
 import io.cdap.cdap.proto.credential.CreateCredentialIdentityRequest;
 import io.cdap.cdap.proto.credential.CreateCredentialProfileRequest;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
@@ -120,17 +121,13 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void validateIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace)
       throws BadRequestException, NotFoundException, IOException {
+    canCreateInNamespace(namespace);
     ValidateIdentityRequest identityValidationRequest = deserializeRequestContent(request,
         ValidateIdentityRequest.class);
     CredentialIdentity identity = identityValidationRequest.getIdentity();
-    if (Strings.isNullOrEmpty(identity.getIdentity())) {
-      throw new BadRequestException("Identity cannot be null or empty.");
-    }
-    if (!identity.getProfileNamespace().equals(namespace)
-        && !identity.getProfileNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
-      throw new BadRequestException("Cannot validate identity in a namespace that is "
-          + "associated with a profile in a different namespace.");
-    }
+    validateCredentialIdentity(namespace, identity);
+    accessEnforcer.enforce(new CredentialProfileId(identity.getProfileNamespace(),
+        identity.getProfileName()), StandardPermission.GET);
     try {
       credentialProvider
           .validateIdentity(namespace, identity, identityValidationRequest.getContext());
@@ -150,16 +147,18 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
    * @param request   The HTTP request.
    * @param responder The HTTP responder.
    * @param namespace The namespace.
-   * @throws IOException       If transport errors occur.
-   * @throws NotFoundException If the namespace is not found.
+   * @throws BadRequestException If the namespace is invalid or disallowed.
+   * @throws IOException         If transport errors occur.
+   * @throws NotFoundException   If the namespace is not found.
    */
   @GET
   @Path("/namespaces/{namespace-id}/credentials/profiles")
   public void listProfiles(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespace) throws IOException, NotFoundException {
+      @PathParam("namespace-id") String namespace)
+      throws BadRequestException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     accessEnforcer.enforceOnParent(EntityType.CREDENTIAL_PROFILE,
         new NamespaceId(namespace), StandardPermission.LIST);
-    canCreateInNamespace(namespace);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(credentialProfileManager.list(namespace)));
   }
@@ -180,9 +179,9 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void getProfile(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("profile-name") String profileName)
       throws BadRequestException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     final CredentialProfileId profileId = createProfileIdOrPropagate(namespace, profileName);
     accessEnforcer.enforce(profileId, StandardPermission.GET);
-    canCreateInNamespace(namespace);
     Optional<CredentialProfile> profile;
     profile = credentialProfileManager.get(profileId);
     if (profile.isPresent()) {
@@ -208,6 +207,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void createProfile(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws AlreadyExistsException,
       BadRequestException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     final CreateCredentialProfileRequest createRequest = deserializeRequestContent(request,
         CreateCredentialProfileRequest.class);
     final CredentialProfileId profileId = createProfileIdOrPropagate(namespace,
@@ -216,7 +216,6 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("No profile provided for create request");
     }
     accessEnforcer.enforce(profileId, StandardPermission.CREATE);
-    canCreateInNamespace(namespace);
     credentialProfileManager.create(profileId, createRequest.getProfile());
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -237,9 +236,9 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void updateProfile(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("profile-name") String profileName)
       throws BadRequestException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     final CredentialProfileId profileId = createProfileIdOrPropagate(namespace, profileName);
     accessEnforcer.enforce(profileId, StandardPermission.UPDATE);
-    canCreateInNamespace(namespace);
     final CredentialProfile profile = deserializeRequestContent(request, CredentialProfile.class);
     credentialProfileManager.update(profileId, profile);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -262,9 +261,9 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void deleteProfile(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("profile-name") String profileName)
       throws BadRequestException, ConflictException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     final CredentialProfileId profileId = createProfileIdOrPropagate(namespace, profileName);
     accessEnforcer.enforce(profileId, StandardPermission.DELETE);
-    canCreateInNamespace(namespace);
     credentialProfileManager.delete(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -275,16 +274,18 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
    * @param request   The HTTP request.
    * @param responder The HTTP responder.
    * @param namespace The namespace.
-   * @throws IOException       If transport errors occur.
-   * @throws NotFoundException If the namespace is not found.
+   * @throws BadRequestException If the namespace is invalid or disallowed.
+   * @throws IOException         If transport errors occur.
+   * @throws NotFoundException   If the namespace is not found.
    */
   @GET
   @Path("/namespaces/{namespace-id}/credentials/identities")
   public void listIdentities(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespace) throws IOException, NotFoundException {
+      @PathParam("namespace-id") String namespace)
+      throws BadRequestException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     accessEnforcer.enforceOnParent(EntityType.CREDENTIAL_IDENTITY, new NamespaceId(namespace),
         StandardPermission.LIST);
-    canCreateInNamespace(namespace);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(credentialIdentityManager.list(namespace)));
   }
@@ -306,10 +307,9 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespace,
       @PathParam("identity-name") String identityName)
       throws BadRequestException, IOException, NotFoundException {
-    final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
-    accessEnforcer.enforce(new CredentialIdentityId(namespace, identityName),
-        StandardPermission.GET);
     canCreateInNamespace(namespace);
+    final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
+    accessEnforcer.enforce(identityId, StandardPermission.GET);
     Optional<CredentialIdentity> identity = credentialIdentityManager.get(identityId);
     if (identity.isPresent()) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(identity.get()));
@@ -334,22 +334,17 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void createIdentity(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws AlreadyExistsException,
       BadRequestException, IOException, NotFoundException {
+    canCreateInNamespace(namespace);
     CreateCredentialIdentityRequest createRequest = deserializeRequestContent(request,
         CreateCredentialIdentityRequest.class);
     final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace,
         createRequest.getName());
     final CredentialIdentity identity = createRequest.getIdentity();
-    if (createRequest.getIdentity() == null) {
+    if (identity == null) {
       throw new BadRequestException("No identity provided for create request");
     }
+    validateCredentialIdentity(namespace, identity);
     accessEnforcer.enforce(identityId, StandardPermission.CREATE);
-    canCreateInNamespace(namespace);
-    validateCredentialIdentity(identity);
-    if (!identity.getProfileNamespace().equals(namespace)
-        && !identity.getProfileNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
-      throw new BadRequestException("Creation of an identity in a namespace that is "
-          + "associated with a profile in a different namespace is not allowed.");
-    }
     accessEnforcer.enforce(new CredentialProfileId(identity.getProfileNamespace(),
         identity.getProfileName()), StandardPermission.GET);
     credentialIdentityManager.create(identityId, identity);
@@ -373,13 +368,12 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespace,
       @PathParam("identity-name") String identityName)
       throws BadRequestException, IOException, NotFoundException {
-    final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
-    accessEnforcer.enforce(new CredentialIdentityId(namespace, identityName),
-        StandardPermission.UPDATE);
     canCreateInNamespace(namespace);
+    final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
     final CredentialIdentity identity = deserializeRequestContent(request,
         CredentialIdentity.class);
-    validateCredentialIdentity(identity);
+    validateCredentialIdentity(namespace, identity);
+    accessEnforcer.enforce(identityId, StandardPermission.UPDATE);
     accessEnforcer.enforce(new CredentialProfileId(identity.getProfileNamespace(),
         identity.getProfileName()), StandardPermission.GET);
     credentialIdentityManager.update(identityId, identity);
@@ -403,24 +397,27 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespace,
       @PathParam("identity-name") String identityName)
       throws BadRequestException, IOException, NotFoundException {
-    final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
-    accessEnforcer.enforce(new CredentialIdentityId(namespace, identityName),
-        StandardPermission.DELETE);
     canCreateInNamespace(namespace);
+    final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
+    accessEnforcer.enforce(identityId, StandardPermission.DELETE);
     credentialIdentityManager.delete(identityId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   private void canCreateInNamespace(String namespace)
-      throws IOException, NamespaceNotFoundException {
+      throws BadRequestException, IOException, NamespaceNotFoundException {
     NamespaceId namespaceId;
-    Boolean namespaceFound;
     try {
       namespaceId = new NamespaceId(namespace);
-      if (NamespaceId.SYSTEM.equals(namespaceId)) {
-        // return true for SYSTEM namespace.
-        return;
-      }
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+      throw new BadRequestException(
+          String.format("Cannot perform credential operations in '%s' namespace.", namespace));
+    }
+    boolean namespaceFound;
+    try {
       namespaceFound = namespaceQueryAdmin.exists(namespaceId);
     } catch (Exception e) {
       throw new IOException(String.format("Failed to check if namespace '%s' exists",
@@ -435,7 +432,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       throws BadRequestException {
     try {
       return new CredentialProfileId(namespace, name);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
   }
@@ -444,14 +441,34 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       throws BadRequestException {
     try {
       return new CredentialIdentityId(namespace, name);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage(), e);
     }
   }
 
-  private void validateCredentialIdentity(CredentialIdentity identity) throws BadRequestException {
-    if (identity.getProfileNamespace() == null || identity.getProfileName() == null) {
+  private void validateCredentialIdentity(String namespace, CredentialIdentity identity)
+      throws BadRequestException {
+    if (identity == null) {
+      throw new BadRequestException("No identity provided");
+    }
+    if (Strings.isNullOrEmpty(identity.getProfileNamespace())
+        || Strings.isNullOrEmpty(identity.getProfileName())) {
       throw new BadRequestException("Identity provided with no associated profile");
+    }
+    if (Strings.isNullOrEmpty(identity.getIdentity())) {
+      throw new BadRequestException("Identity cannot be null or empty.");
+    }
+    createProfileIdOrPropagate(identity.getProfileNamespace(), identity.getProfileName());
+    if (!identity.getProfileNamespace().equals(namespace)
+        && !identity.getProfileNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
+      throw new BadRequestException("Cannot associate an identity in a namespace with "
+          + "a profile in a different namespace.");
+    }
+    if (NamespaceId.SYSTEM.getNamespace().equals(identity.getProfileNamespace())
+        && GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME.equals(identity.getProfileName())) {
+      throw new BadRequestException(
+          String.format("Cannot associate identity with reserved system profile '%s:%s'.",
+              identity.getProfileNamespace(), identity.getProfileName()));
     }
   }
 
