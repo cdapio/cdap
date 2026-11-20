@@ -642,6 +642,9 @@ public final class Constants {
     public static final String PROGRAM_STATUS_EVENT_FETCH_SIZE = "scheduler.program.status.event.fetch.size";
 
     public static final String JOB_QUEUE_NUM_PARTITIONS = "scheduler.job.queue.num.partitions";
+
+    public static final String WORKFLOW_TOKEN_MAX_WAIT_MS =
+        "scheduler.workflow.token.max.wait.ms";
   }
 
   /**
@@ -1330,6 +1333,17 @@ public final class Constants {
       public static final String SCHEDULE_SUCCESS = "schedulejob.success";
       public static final String SCHEDULE_NOTIFICATION_FAILURE = "schedulejob.notification.failure";
       public static final String SCHEDULE_LATENCY = "schedulejob.latency";
+
+      /**
+       * Metrics for workflow token availability constraint checks (counted per check, not per job).
+       */
+      public static final String SCHEDULE_TOKEN_WAIT_SATISFIED =
+          "schedulejob.token.wait.satisfied";
+      public static final String SCHEDULE_TOKEN_WAIT_DEFERRED =
+          "schedulejob.token.wait.deferred";
+      public static final String SCHEDULE_TOKEN_WAIT_TIMEOUT =
+          "schedulejob.token.wait.timeout";
+      public static final String SCHEDULE_TOKEN_WAIT_MS = "schedulejob.token.wait.ms";
     }
 
     /**

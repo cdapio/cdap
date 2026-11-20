@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,8 +32,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -122,6 +125,8 @@ final class DataprocConf {
 
   private static final Splitter COMMA_SPLITTER =
     Splitter.on(',').trimResults().omitEmptyStrings();
+  private static final Splitter RANK_SPLITTER =
+    Splitter.on(';').trimResults().omitEmptyStrings();
 
   private final String accountKey;
   private final String region;
@@ -140,8 +145,7 @@ final class DataprocConf {
   private final int masterDiskGb;
   private final String masterDiskType;
   private final String masterMachineType;
-  private final List<String> masterFlexVmMachineTypes;
-  private final List<String> masterFlexVmDiskTypes;
+  private final List<FlexVmChoice> masterFlexVmChoices;
 
   private final int workerNumNodes;
   private final int secondaryWorkerNumNodes;
@@ -150,8 +154,7 @@ final class DataprocConf {
   private final int workerDiskGb;
   private final String workerDiskType;
   private final String workerMachineType;
-  private final List<String> workerFlexVmMachineTypes;
-  private final List<String> workerFlexVmDiskTypes;
+  private final List<FlexVmChoice> workerFlexVmChoices;
 
   private final long pollCreateDelay;
   private final long pollCreateJitter;
@@ -205,10 +208,10 @@ final class DataprocConf {
       @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
       int masterNumNodes, int masterCpus, int masterMemoryMb,
       int masterDiskGb, String masterDiskType, @Nullable String masterMachineType,
-      List<String> masterFlexVmMachineTypes, List<String> masterFlexVmDiskTypes,
+      List<FlexVmChoice> masterFlexVmChoices,
       int workerNumNodes, int secondaryWorkerNumNodes, int workerCpus, int workerMemoryMb,
       int workerDiskGb, String workerDiskType, @Nullable String workerMachineType,
-      List<String> workerFlexVmMachineTypes, List<String> workerFlexVmDiskTypes,
+      List<FlexVmChoice> workerFlexVmChoices,
       long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
       @Nullable String encryptionKeyName, @Nullable String gcsBucket,
       @Nullable String tempBucket, @Nullable String serviceAccount, boolean preferExternalIp,
@@ -248,8 +251,7 @@ final class DataprocConf {
     this.masterDiskGb = masterDiskGb;
     this.masterDiskType = masterDiskType;
     this.masterMachineType = masterMachineType;
-    this.masterFlexVmMachineTypes = masterFlexVmMachineTypes;
-    this.masterFlexVmDiskTypes = masterFlexVmDiskTypes;
+    this.masterFlexVmChoices = masterFlexVmChoices;
     this.workerNumNodes = workerNumNodes;
     this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
     this.workerCpus = workerCpus;
@@ -257,8 +259,7 @@ final class DataprocConf {
     this.workerDiskGb = workerDiskGb;
     this.workerDiskType = workerDiskType;
     this.workerMachineType = workerMachineType;
-    this.workerFlexVmMachineTypes = workerFlexVmMachineTypes;
-    this.workerFlexVmDiskTypes = workerFlexVmDiskTypes;
+    this.workerFlexVmChoices = workerFlexVmChoices;
     this.pollCreateDelay = pollCreateDelay;
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
@@ -361,20 +362,20 @@ final class DataprocConf {
     return getMachineType(workerMachineType, workerCpus, workerMemoryMb);
   }
 
-  public List<String> getMasterFlexVmMachineTypes() {
-    return formatMachineType(masterFlexVmMachineTypes, masterCpus, masterMemoryMb);
+  /**
+   * Returns the master Flex VM choices in rank order, or an empty list if Flex VM is not
+   * configured for the master.
+   */
+  public List<FlexVmChoice> getMasterFlexVmChoices() {
+    return masterFlexVmChoices;
   }
 
-  public List<String> getWorkerFlexVmMachineTypes() {
-    return formatMachineType(workerFlexVmMachineTypes, workerCpus, workerMemoryMb);
-  }
-
-  public List<String> getMasterFlexVmDiskTypes() {
-    return masterFlexVmDiskTypes;
-  }
-
-  public List<String> getWorkerFlexVmDiskTypes() {
-    return workerFlexVmDiskTypes;
+  /**
+   * Returns the worker Flex VM choices in rank order, or an empty list if Flex VM is not
+   * configured for the workers.
+   */
+  public List<FlexVmChoice> getWorkerFlexVmChoices() {
+    return workerFlexVmChoices;
   }
 
   int getTotalWorkerCpus() {
@@ -595,7 +596,12 @@ final class DataprocConf {
     }
   }
 
-  private String getMachineType(@Nullable String type, int cpus, int memoryMb) {
+  private static String getMachineType(@Nullable String type, int cpus, int memoryMb) {
+    // A full machine type always contains a hyphen (n2-standard-2, custom-2-8192) while a family
+    // never does (n1, n2d, e2), so full names skip the derivation below and are used as given.
+    if (type != null && type.contains("-")) {
+      return type.toLowerCase(Locale.ROOT);
+    }
     // n1 is of format custom-cpu-memory
     // other types are of format type-custom-cpu-memory. For example, n2d-custom-4-16
     String typePrefix = type == null || type.isEmpty() || "n1".equals(type.toLowerCase())
@@ -705,16 +711,18 @@ final class DataprocConf {
     if (masterDiskType == null) {
       masterDiskType = "pd-standard";
     }
-    final List<String> masterFlexVmMachineTypes = getStringList(properties, MASTER_FLEX_VM_MACHINE_TYPES);
-    final List<String> masterFlexVmDiskTypes = getDiskTypeList(properties, MASTER_FLEX_VM_DISK_TYPES);
+    final List<FlexVmChoice> masterFlexVmChoices = buildFlexVmChoices("master",
+        parseRankedList(properties, MASTER_FLEX_VM_MACHINE_TYPES),
+        parseRankedList(properties, MASTER_FLEX_VM_DISK_TYPES), masterCpus, masterMemoryMb);
     final int workerDiskGb = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
     final String workerMachineType = getString(properties, "workerMachineType");
     if (workerDiskType == null) {
       workerDiskType = "pd-standard";
     }
-    final List<String> workerFlexVmMachineTypes = getStringList(properties, WORKER_FLEX_VM_MACHINE_TYPES);
-    final List<String> workerFlexVmDiskTypes = getDiskTypeList(properties, WORKER_FLEX_VM_DISK_TYPES);
+    final List<FlexVmChoice> workerFlexVmChoices = buildFlexVmChoices("worker",
+        parseRankedList(properties, WORKER_FLEX_VM_MACHINE_TYPES),
+        parseRankedList(properties, WORKER_FLEX_VM_DISK_TYPES), workerCpus, workerMemoryMb);
 
     final long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
     final long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
@@ -823,9 +831,9 @@ final class DataprocConf {
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectId, network,
         subnet,
         masterNumNodes, masterCpus, masterMemoryMb, masterDiskGb,
-        masterDiskType, masterMachineType, masterFlexVmMachineTypes, masterFlexVmDiskTypes,
+        masterDiskType, masterMachineType, masterFlexVmChoices,
         workerNumNodes, secondaryWorkerNumNodes, workerCpus, workerMemoryMb, workerDiskGb,
-        workerDiskType, workerMachineType, workerFlexVmMachineTypes, workerFlexVmDiskTypes,
+        workerDiskType, workerMachineType, workerFlexVmChoices,
         pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
         gcpCmekKeyName, gcpCmekBucket, tempBucket, serviceAccount, preferExternalIp,
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
@@ -887,12 +895,90 @@ final class DataprocConf {
     }
   }
 
-  private List<String> formatMachineType(List<String> flexTypes, int cpus, int memoryMb) {
-    List<String> result = flexTypes.stream()
-      .map(type -> getMachineType(type, cpus, memoryMb))
-      .collect(Collectors.toList());
+  /**
+   * Builds the Flex VM choices of an instance group from its ranked machine and disk types, in
+   * rank order. Disk types are optional; when given there must be one disk type rank per machine
+   * type rank and, within each rank, one disk type per machine type in the same order. Each
+   * resolved machine type may appear only once across all ranks.
+   *
+   * @param groupName the instance group name ("master" or "worker") used in error messages
+   * @throws DataprocRuntimeException if the disk type counts do not match the machine types or a
+   *     machine type is listed more than once
+   */
+  private static List<FlexVmChoice> buildFlexVmChoices(String groupName,
+      List<List<String>> rankedMachineTypes, List<List<String>> rankedDiskTypes,
+      int cpus, int memoryMb) {
+    if (!rankedDiskTypes.isEmpty()) {
+      validateFlexVmDiskTypeCounts(groupName, rankedMachineTypes, rankedDiskTypes);
+    }
 
-    return Collections.unmodifiableList(result);
+    List<FlexVmChoice> flexVmChoices = new ArrayList<>();
+    Set<String> distinctMachineTypes = new HashSet<>();
+    for (int rank = 0; rank < rankedMachineTypes.size(); rank++) {
+      List<String> machineTypes = rankedMachineTypes.get(rank);
+      for (int i = 0; i < machineTypes.size(); i++) {
+        String machineType = getMachineType(machineTypes.get(i), cpus, memoryMb);
+        if (!distinctMachineTypes.add(machineType)) {
+          throw flexVmConfigurationError(groupName, String.format(
+              "Machine type '%s' is listed more than once. "
+                  + "Each machine type can appear only once across all ranks.", machineType));
+        }
+        String diskType = rankedDiskTypes.isEmpty() ? null : rankedDiskTypes.get(rank).get(i);
+        flexVmChoices.add(new FlexVmChoice(rank, machineType, diskType));
+      }
+    }
+    return Collections.unmodifiableList(flexVmChoices);
+  }
+
+  /**
+   * Ensures the disk types have the same number of ranks as the machine types and, within each
+   * rank, exactly one disk type per machine type.
+   */
+  private static void validateFlexVmDiskTypeCounts(String groupName,
+      List<List<String>> rankedMachineTypes, List<List<String>> rankedDiskTypes) {
+    if (rankedDiskTypes.size() != rankedMachineTypes.size()) {
+      throw flexVmConfigurationError(groupName, String.format(
+          "Found %d machine type rank(s) but %d disk type rank(s). "
+              + "Disk types must use the same ';' separated ranks as the machine types.",
+          rankedMachineTypes.size(), rankedDiskTypes.size()));
+    }
+    for (int rank = 0; rank < rankedMachineTypes.size(); rank++) {
+      List<String> machineTypes = rankedMachineTypes.get(rank);
+      List<String> diskTypes = rankedDiskTypes.get(rank);
+      if (diskTypes.size() != machineTypes.size()) {
+        throw flexVmConfigurationError(groupName, String.format(
+            "Rank %d has %d machine type(s) %s but %d disk type(s) %s. "
+                + "Each rank must have exactly one disk type per machine type, in the same order.",
+            rank, machineTypes.size(), machineTypes, diskTypes.size(), diskTypes));
+      }
+    }
+  }
+
+  private static DataprocRuntimeException flexVmConfigurationError(String groupName,
+      String detail) {
+    String errorMessage = String.format("Invalid %s Flex VM config. %s", groupName, detail);
+    return new DataprocRuntimeException.Builder()
+      .withErrorCategory(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION)
+      .withErrorReason(errorMessage)
+      .withErrorMessage(errorMessage)
+      .withErrorType(ErrorType.USER)
+      .build();
+  }
+
+  /**
+   * Parses a property where ';' separates ranks and ',' separates the values within a rank,
+   * normalized to lower case.
+   * For example, "n4-standard-4, n2; e2" gives rank 0 = [n4-standard-4, n2] and rank 1 = [e2].
+   */
+  private static List<List<String>> parseRankedList(Map<String, String> properties, String key) {
+    String val = getString(properties, key);
+    if (Strings.isNullOrEmpty(val)) {
+      return Collections.emptyList();
+    }
+    return RANK_SPLITTER.splitToList(val.toLowerCase(Locale.ROOT)).stream()
+      .map(COMMA_SPLITTER::splitToList)
+      .filter(group -> !group.isEmpty())
+      .collect(Collectors.toList());
   }
 
   /**
@@ -904,15 +990,5 @@ final class DataprocConf {
     return Strings.isNullOrEmpty(val)
       ? Collections.emptyList()
       : COMMA_SPLITTER.splitToList(val);
-  }
-
-  /**
-   * Parses a comma-separated list of boot disk types, normalized to lower case.
-   */
-  private static List<String> getDiskTypeList(Map<String, String> properties, String key) {
-    List<String> diskTypes = getStringList(properties, key).stream()
-      .map(String::toLowerCase)
-      .collect(Collectors.toList());
-    return Collections.unmodifiableList(diskTypes);
   }
 }

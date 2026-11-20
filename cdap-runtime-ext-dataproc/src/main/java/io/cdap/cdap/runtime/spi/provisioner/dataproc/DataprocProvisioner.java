@@ -24,6 +24,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import com.google.longrunning.Operation;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.Timestamps;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -41,6 +43,7 @@ import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import io.grpc.Status;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -55,8 +58,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-
-import io.grpc.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -517,47 +518,77 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
    * @param client the dataproc client
    * @param conf the dataproc configuration
    * @param previousStatus the status of the cluster before the transition
+   * @param currentStatus the current status of the cluster
    * @param clusterName the name of the cluster
    */
   private void emitLroMetric(ProvisionerContext context, DataprocClient client, DataprocConf conf,
-                             ClusterStatus previousStatus, ClusterStatus currentStatus, String clusterName) {
+      ClusterStatus previousStatus, ClusterStatus currentStatus, String clusterName) {
     String method = getMethod(previousStatus);
     if (method == null) {
       return;
     }
 
+    String imageVersion = getImageVersion(context, conf);
+    Optional<Operation> operation = Optional.empty();
     try {
-      String metricName = "provisioner.cluster.operation.response.count";
-      String imageVersion = getImageVersion(context, conf);
+      operation = client.getLatestOperation(clusterName, method);
+    } catch (RetryableProvisionException | RuntimeException ex) {
+      LOG.warn("Failed to retrieve LRO operation metadata for metric emission on cluster {}",
+          clusterName, ex);
+    }
 
-      DataprocMetric.Builder builder = DataprocMetric.builder(metricName)
+    if (operation.isPresent() && operation.get().getDone()) {
+      Operation op = operation.get();
+      StatusCode.Code statusCode = op.hasError()
+          ? GrpcStatusCode.of(Status.fromCodeValue(op.getError().getCode()).getCode()).getCode()
+          : StatusCode.Code.OK;
+
+      DataprocUtils.emitMetric(context,
+          buildLroMetric("provisioner.cluster.operation.response.count",
+              conf, imageVersion, method, statusCode));
+
+      getOperationLatency(op).ifPresent(latency ->
+          DataprocUtils.emitMetric(context,
+              buildLroMetric("provisioner.cluster.operation.latency.seconds",
+                  conf, imageVersion, method, statusCode),
+              latency));
+    } else if ("DELETE".equals(method) && currentStatus == ClusterStatus.NOT_EXISTS) {
+      DataprocUtils.emitMetric(context,
+          buildLroMetric("provisioner.cluster.operation.response.count",
+              conf, imageVersion, method, StatusCode.Code.OK));
+    }
+  }
+
+  private Optional<Long> getOperationLatency(Operation op) {
+    return getClusterOperationMetadata(op)
+        .filter(metadata -> metadata.getStatusHistoryCount() > 0
+            && metadata.getStatusHistory(0).hasStateStartTime()
+            && metadata.getStatus().hasStateStartTime())
+        .map(metadata -> Math.max(0L, Timestamps.between(
+            metadata.getStatusHistory(0).getStateStartTime(),
+            metadata.getStatus().getStateStartTime()).getSeconds()));
+  }
+
+  private Optional<ClusterOperationMetadata> getClusterOperationMetadata(Operation op) {
+    if (!op.hasMetadata() || !op.getMetadata().is(ClusterOperationMetadata.class)) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.of(op.getMetadata().unpack(ClusterOperationMetadata.class));
+    } catch (InvalidProtocolBufferException ex) {
+      LOG.debug("Failed to unpack ClusterOperationMetadata for operation {}", op.getName(), ex);
+      return Optional.empty();
+    }
+  }
+
+  private DataprocMetric buildLroMetric(String metricName, DataprocConf conf, String imageVersion,
+      String method, StatusCode.Code statusCode) {
+    return DataprocMetric.builder(metricName)
         .setRegion(conf.getRegion())
         .setImageVersion(imageVersion)
-        .setMethod(method);
-
-      if ("DELETE".equals(method) && currentStatus == ClusterStatus.NOT_EXISTS) {
-        builder.setStatusCode(StatusCode.Code.OK);
-        DataprocUtils.emitMetric(context, builder.build());
-        return;
-      }
-
-      Optional<Operation> operation = client.getLatestOperation(clusterName, method);
-
-      if (!operation.isPresent() || !operation.get().getDone()) {
-        return;
-      }
-
-      Operation op = operation.get();
-
-      if (op.hasError()) {
-        Status.Code grpcCode = Status.fromCodeValue(op.getError().getCode()).getCode();
-        StatusCode gaxStatusCode = GrpcStatusCode.of(grpcCode);
-        builder.setStatusCode(gaxStatusCode.getCode());
-      }
-      DataprocUtils.emitMetric(context, builder.build());
-    } catch (RetryableProvisionException | RuntimeException ex) {
-      LOG.warn("Failed to retrieve LRO operation metadata for metric emission on cluster {}", clusterName, ex);
-    }
+        .setMethod(method)
+        .setStatusCode(statusCode)
+        .build();
   }
 
   @Nullable

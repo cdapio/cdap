@@ -166,6 +166,8 @@ public class SpannerMessagingServiceTest {
     configs.put(SpannerUtil.PUBLISH_BATCH_SIZE, "2");
     configs.put(SpannerUtil.PUBLISH_BATCH_TIMEOUT_MILLIS, "5");
     configs.put(SpannerUtil.SPANNER_EMULATOR_HOST, EMULATOR_HOST);
+    // The emulator must take precedence over a configured endpoint.
+    configs.put(SpannerUtil.ENDPOINT, "https://spanner.googleapis.com");
     MessagingServiceContext context = new MockMessagingServiceContext(configs);
 
     service = new SpannerMessagingService();

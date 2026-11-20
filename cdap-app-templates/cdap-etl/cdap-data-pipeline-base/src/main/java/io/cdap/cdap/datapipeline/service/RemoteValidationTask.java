@@ -41,6 +41,7 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -118,6 +119,6 @@ public class RemoteValidationTask implements RunnableTask {
         context.setTerminateOnComplete(!ArtifactScope.SYSTEM.equals(spec.getPlugin().getArtifact().getScope()));
       }
     }
-    context.writeResult(GSON.toJson(validationResponse).getBytes());
+    context.writeResult(GSON.toJson(validationResponse).getBytes(StandardCharsets.UTF_8));
   }
 }
