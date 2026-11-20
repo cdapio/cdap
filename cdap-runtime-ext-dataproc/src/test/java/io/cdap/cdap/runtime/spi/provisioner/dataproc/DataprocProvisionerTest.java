@@ -23,6 +23,7 @@ import com.google.cloud.dataproc.v1.ClusterOperationStatus;
 import com.google.cloud.dataproc.v1.ClusterStatus.State;
 import com.google.common.collect.ImmutableMap;
 import com.google.longrunning.Operation;
+import com.sun.net.httpserver.HttpServer;
 import com.google.protobuf.Any;
 import com.google.protobuf.Timestamp;
 import io.cdap.cdap.api.exception.ErrorCategory;
@@ -36,6 +37,10 @@ import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -66,7 +72,7 @@ public class DataprocProvisionerTest {
   private static final String CLUSTER_META_DATA =
       "metadata-key1|metadata-val1;metadata-key2|metadata-val2";
   private static final String SERVICE_ACCOUNT = "service-account-1";
-  private static final String tokTOKEN_ENDPOINTnEndpoint = "end-point1";
+  private static final String TOKEN_ENDPOINT = "end-point1";
 
   @Mock
   private DataprocClient dataprocClient;
@@ -92,7 +98,7 @@ public class DataprocProvisionerTest {
     provisionerSystemContext
       .addProperty(DataprocConf.CLUSTER_META_DATA, CLUSTER_META_DATA);
     provisionerSystemContext.addProperty(DataprocConf.SERVICE_ACCOUNT, SERVICE_ACCOUNT);
-    provisionerSystemContext.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, tokTOKEN_ENDPOINTnEndpoint);
+    provisionerSystemContext.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, TOKEN_ENDPOINT);
 
     // default system properties defined by AbstractDataprocProvisioner
     provisionerSystemContext
@@ -248,7 +254,7 @@ public class DataprocProvisionerTest {
         properties.get(DataprocConf.CLUSTER_META_DATA));
     Assert.assertEquals(SERVICE_ACCOUNT,
         properties.get(DataprocConf.SERVICE_ACCOUNT));
-    Assert.assertEquals(tokTOKEN_ENDPOINTnEndpoint,
+    Assert.assertEquals(TOKEN_ENDPOINT,
         properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
     Assert.assertEquals("job_manager",
         properties.get(DataprocConf.RUNTIME_JOB_MANAGER));
@@ -862,6 +868,119 @@ public class DataprocProvisionerTest {
               "hyperdisk-balanced, pd-ssd, hyperdisk-balanced");
 
     provisioner.validateProperties(props);
+  }
+
+  @Test
+  public void testValidatePropertiesRejectsTokenEndpoint() {
+    Map<String, String> props = autoDetectPropsWithTokenEndpoint();
+
+    IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+        () -> provisioner.validateProperties(props));
+    Assert.assertEquals("Property 'token.endpoint' cannot be set in a compute profile.",
+        e.getMessage());
+  }
+
+  @Test
+  public void testExistingDataprocValidatePropertiesRejectsTokenEndpoint() {
+    Map<String, String> props = autoDetectPropsWithTokenEndpoint();
+    props.put("clusterName", "test-cluster");
+    ExistingDataprocProvisioner existingProvisioner = new ExistingDataprocProvisioner();
+
+    IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+        () -> existingProvisioner.validateProperties(props));
+    Assert.assertEquals("Property 'token.endpoint' cannot be set in a compute profile.",
+        e.getMessage());
+  }
+
+  @Test
+  public void testGetTotalProcessingCpusLabelIgnoresTokenEndpoint() throws Exception {
+    AtomicInteger requests = new AtomicInteger();
+    HttpServer server = HttpServer.create(
+        new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+    server.createContext("/", exchange -> {
+      requests.incrementAndGet();
+      byte[] body = "{\"access_token\":\"token\",\"expires_in\":3600}"
+          .getBytes(StandardCharsets.UTF_8);
+      exchange.sendResponseHeaders(200, body.length);
+      try (OutputStream os = exchange.getResponseBody()) {
+        os.write(body);
+      }
+    });
+    server.start();
+    try {
+      Map<String, String> props = autoDetectPropsWithTokenEndpoint();
+      props.put(DataprocConf.TOKEN_ENDPOINT_KEY, String.format("http://%s:%d/token",
+          server.getAddress().getHostString(), server.getAddress().getPort()));
+
+      try {
+        provisioner.getTotalProcessingCpusLabel(props);
+      } catch (IllegalArgumentException e) {
+        // Expected when no environment credentials are available to the test.
+      }
+      Assert.assertEquals(0, requests.get());
+
+      DataprocConf.create(props);
+      Assert.assertEquals(1, requests.get());
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  public void testCreateContextPropertiesUsesSystemTokenEndpoint() {
+    context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
+
+    Map<String, String> properties = provisioner.createContextProperties(context);
+
+    Assert.assertEquals(TOKEN_ENDPOINT,
+        properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
+  }
+
+  @Test
+  public void testCreateContextPropertiesReplacesEmptyTokenEndpoint() {
+    context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "");
+
+    Map<String, String> properties = provisioner.createContextProperties(context);
+
+    Assert.assertEquals(TOKEN_ENDPOINT, properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
+  }
+
+  @Test
+  public void testCreateContextPropertiesIgnoresTokenEndpointWithoutSystemValue() {
+    DataprocProvisioner noEndpointProvisioner =
+        new DataprocProvisioner((conf, requireSsh, errorCategory) -> dataprocClient);
+    noEndpointProvisioner.initialize(new MockProvisionerSystemContext());
+    context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
+
+    Map<String, String> properties = noEndpointProvisioner.createContextProperties(context);
+
+    Assert.assertFalse(properties.containsKey(DataprocConf.TOKEN_ENDPOINT_KEY));
+  }
+
+  @Test
+  public void testExistingDataprocCreateContextPropertiesUsesSystemTokenEndpoint() {
+    MockProvisionerSystemContext systemContext = new MockProvisionerSystemContext();
+    systemContext.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, TOKEN_ENDPOINT);
+    ExistingDataprocProvisioner existingProvisioner = new ExistingDataprocProvisioner();
+    existingProvisioner.initialize(systemContext);
+    context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
+
+    Map<String, String> properties = existingProvisioner.createContextProperties(context);
+
+    Assert.assertEquals(TOKEN_ENDPOINT, properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
+  }
+
+  /**
+   * Returns profile properties that take the credential fetch path in {@link DataprocConf#create},
+   * so a request to {@code token.endpoint} would be attempted if the property was not rejected
+   * before {@link DataprocConf#create} runs.
+   */
+  private static Map<String, String> autoDetectPropsWithTokenEndpoint() {
+    Map<String, String> props = baseProps();
+    props.put("accountKey", DataprocConf.AUTO_DETECT);
+    props.put("compute.credentials.max.retries", "1");
+    props.put(DataprocConf.TOKEN_ENDPOINT_KEY, "http://invalid.invalid/token");
+    return props;
   }
 
   private static Map<String, String> baseProps() {
