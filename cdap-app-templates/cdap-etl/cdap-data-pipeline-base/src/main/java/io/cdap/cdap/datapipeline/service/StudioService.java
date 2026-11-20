@@ -55,7 +55,7 @@ public class StudioService extends AbstractSystemService {
   protected void configure() {
     setName(Constants.STUDIO_SERVICE_NAME);
     setDescription("Handles pipeline studio operations, like validation, connections and schema propagation.");
-    addHandler(new ValidationHandler());
+    addHandler(new ValidationHandler(connectionConfig));
     addHandler(new DraftHandler());
     addHandler(new ConnectionHandler(connectionConfig));
     addHandler(new OAuthHandler());

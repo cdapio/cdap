@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import io.cdap.cdap.api.DatasetConfigurer;
+import io.cdap.cdap.api.annotation.Metadata;
+import io.cdap.cdap.api.annotation.MetadataProperty;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -49,6 +51,7 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.connector.Connector;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
@@ -114,6 +117,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   // this is used when this configure() is called at runtime
   @Nullable
   private final MacroEvaluator runtimeEvaluator;
+  private Set<String> disabledTypes = Collections.emptySet();
 
   protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(
       String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer,
@@ -313,6 +317,27 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   }
 
 
+  public void setDisabledTypes(@Nullable Set<String> disabledTypes) {
+    this.disabledTypes = disabledTypes == null ? Collections.emptySet() : disabledTypes;
+  }
+
+  public static boolean isPluginTypeDisabled(@Nullable Set<String> disabledTypes,
+      @Nullable String typeName) {
+    if (disabledTypes == null || disabledTypes.isEmpty() || typeName == null) {
+      return false;
+    }
+    String trimmed = typeName.trim();
+    if (trimmed.isEmpty()) {
+      return false;
+    }
+    for (String disabledType : disabledTypes) {
+      if (disabledType != null && disabledType.trim().equalsIgnoreCase(trimmed)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Configures a plugin and returns the spec for it.
    *
@@ -332,7 +357,27 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
     DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
+    if (isPluginTypeDisabled(disabledTypes, pluginName)) {
+      collector.addFailure(
+          String.format("Stage '%s' uses disabled plugin '%s' of type '%s'.",
+              stageName, pluginName, type),
+          "Select an enabled plugin.");
+      collector.getOrThrowException();
+    }
     Object plugin = getPlugin(stageName, etlPlugin, pluginSelector, type, pluginName, collector);
+    Metadata metadata = plugin.getClass().getAnnotation(Metadata.class);
+    if (metadata != null) {
+      for (MetadataProperty property : metadata.properties()) {
+        if (Connector.PLUGIN_TYPE.equals(property.key())
+            && isPluginTypeDisabled(disabledTypes, property.value())) {
+          collector.addFailure(
+              String.format("Stage '%s' uses disabled plugin '%s' of type '%s'.",
+                  stageName, pluginName, type),
+              "Select an enabled plugin.");
+          collector.getOrThrowException();
+        }
+      }
+    }
     try {
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;

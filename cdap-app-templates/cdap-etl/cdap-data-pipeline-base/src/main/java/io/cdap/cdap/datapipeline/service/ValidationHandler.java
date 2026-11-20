@@ -17,9 +17,11 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -35,10 +37,12 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RemoteTaskException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.etl.api.batch.BatchSource;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.ConnectionMacroEvaluator;
@@ -46,10 +50,16 @@ import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthAccessTokenMacroEvaluator;
 import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
 import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
+import io.cdap.cdap.etl.proto.v2.ConnectionConfig;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
+import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
+import io.cdap.cdap.etl.proto.v2.validation.StageValidationResponse;
+import io.cdap.cdap.etl.spec.PipelineSpecGenerator;
+import io.cdap.cdap.etl.validation.DefaultFailureCollector;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.element.EntityType;
@@ -66,6 +76,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -81,7 +92,37 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     .create();
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() {
   }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final String DISABLED_TYPES = "disabledTypes";
   private static final Logger LOG = LoggerFactory.getLogger(ValidationHandler.class);
+
+  private ConnectionConfig connectionConfig;
+  private Set<String> disabledTypes = Collections.emptySet();
+
+  public ValidationHandler() {
+    this(null);
+  }
+
+  public ValidationHandler(@Nullable ConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
+  }
+
+  @Override
+  protected void configure() {
+    Set<String> disabled = connectionConfig == null
+        ? Collections.emptySet() : connectionConfig.getDisabledTypes();
+    setProperties(Collections.singletonMap(DISABLED_TYPES, GSON.toJson(disabled)));
+  }
+
+  @Override
+  public void initialize(SystemHttpServiceContext context) throws Exception {
+    super.initialize(context);
+    String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
+    Set<String> configuredDisabledTypes =
+        disabledTypesStr == null ? null : GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
+    this.disabledTypes = configuredDisabledTypes == null
+        ? Collections.emptySet() : configuredDisabledTypes;
+  }
 
   @GET
   @Path("v1/health")
@@ -100,19 +141,48 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     getContext().getContextAccessEnforcer().enforceOnParent(
         EntityType.APPLICATION, new NamespaceId(namespace), StandardPermission.CREATE);
 
-    //Validate remotely if remote execution is enabled
-    if (getContext().isRemoteTaskEnabled()) {
-      validateRemotely(request, responder, namespace);
+    String validationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
+    StageValidationRequest validationRequest;
+    try {
+      validationRequest = GSON.fromJson(validationRequestString, StageValidationRequest.class);
+      validationRequest.validate();
+    } catch (JsonSyntaxException e) {
+      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
+      return;
+    } catch (IllegalArgumentException e) {
+      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid stage config: " + e.getMessage());
       return;
     }
-    validateLocally(request, responder, namespace);
+
+    ETLStage stage = validationRequest.getStage();
+    ETLPlugin stagePlugin = stage.getPlugin();
+    if (PipelineSpecGenerator.isPluginTypeDisabled(disabledTypes, stagePlugin.getName())) {
+      DefaultFailureCollector collector =
+          new DefaultFailureCollector(stage.getName(), Collections.emptyMap());
+      collector.addFailure(
+          String.format("Stage '%s' uses disabled plugin '%s' of type '%s'.",
+              stage.getName(), stagePlugin.getName(), stagePlugin.getType()),
+          "Select an enabled plugin.");
+      try {
+        collector.getOrThrowException();
+      } catch (ValidationException e) {
+        responder.sendString(GSON.toJson(new StageValidationResponse(e.getFailures())));
+        return;
+      }
+    }
+
+    //Validate remotely if remote execution is enabled
+    if (getContext().isRemoteTaskEnabled()) {
+      validateRemotely(validationRequestString, responder, namespace);
+      return;
+    }
+    validateLocally(validationRequest, responder, namespace);
   }
 
-  private void validateRemotely(HttpServiceRequest request, HttpServiceResponder responder,
+  private void validateRemotely(String validationRequestString, HttpServiceResponder responder,
                                 String namespace) throws IOException {
-    String validationRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
     RemoteValidationRequest remoteValidationRequest =
-        new RemoteValidationRequest(namespace, validationRequestString);
+        new RemoteValidationRequest(namespace, validationRequestString, disabledTypes);
     RunnableTaskRequest runnableTaskRequest =
         RunnableTaskRequest.getBuilder(RemoteValidationTask.class.getName())
             .withParam(GSON.toJson(remoteValidationRequest)).withNamespace(namespace).build();
@@ -137,21 +207,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     return HttpURLConnection.HTTP_INTERNAL_ERROR;
   }
 
-  private void validateLocally(HttpServiceRequest request, HttpServiceResponder responder,
+  private void validateLocally(StageValidationRequest validationRequest, HttpServiceResponder responder,
                                String namespace) throws IOException {
-    StageValidationRequest validationRequest;
-    try {
-      validationRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
-                                        StageValidationRequest.class);
-      validationRequest.validate();
-    } catch (JsonSyntaxException e) {
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Unable to decode request body: " + e.getMessage());
-      return;
-    } catch (IllegalArgumentException e) {
-      responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid stage config: " + e.getMessage());
-      return;
-    }
-
     Map<String, String> arguments = Collections.emptyMap();
     // Fetch preferences for this instance and namespace and use them as program arguments if the user selects
     // this option.
@@ -186,7 +243,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     Function<Map<String, String>, Map<String, String>> macroFn =
       macroProperties -> getContext().evaluateMacros(namespace, macroProperties, macroEvaluator, macroParserOptions);
     String validationResponse = GSON.toJson(ValidationUtils.validate(
-      namespace, validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn, getContext()));
+      namespace, validationRequest, getContext().createServicePluginConfigurer(namespace), macroFn,
+      getContext(), disabledTypes));
     responder.sendString(validationResponse);
   }
 
@@ -214,6 +272,10 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       return;
     }
 
+    if (!hasValidStages(appRequest.getConfig(), responder)) {
+      return;
+    }
+
     ArtifactSummary artifactSummary = appRequest.getArtifact();
 
     if (StudioUtil.isBatchPipeline(artifactSummary)) {
@@ -225,6 +287,39 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
                           String.format("Invalid artifact '%s'. Must be '%s' or '%s'.", artifactSummary.getName(),
                                         StudioUtil.ARTIFACT_BATCH_NAME, StudioUtil.ARTIFACT_STREAMING_NAME));
     }
+  }
+
+  private boolean hasValidStages(@Nullable JsonObject configJson, HttpServiceResponder responder) {
+    if (configJson == null || disabledTypes == null || disabledTypes.isEmpty()) {
+      return true;
+    }
+    for (String arrayField : ImmutableList.of("stages", "postActions")) {
+      JsonElement element = configJson.get(arrayField);
+      if (element == null || !element.isJsonArray()) {
+        continue;
+      }
+      for (JsonElement stageElement : element.getAsJsonArray()) {
+        if (!stageElement.isJsonObject()) {
+          continue;
+        }
+        JsonObject stageObj = stageElement.getAsJsonObject();
+        JsonElement pluginElement = stageObj.get("plugin");
+        if (pluginElement == null || !pluginElement.isJsonObject()) {
+          continue;
+        }
+        JsonObject pluginObj = pluginElement.getAsJsonObject();
+        JsonElement nameElement = pluginObj.get("name");
+        if (nameElement != null && nameElement.isJsonPrimitive()) {
+          String pluginName = nameElement.getAsString();
+          if (PipelineSpecGenerator.isPluginTypeDisabled(disabledTypes, pluginName)) {
+            responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
+                                String.format("Plugin '%s' is disabled and cannot be used.", pluginName));
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   // TODO: (CDAP-14687) implement with real logic

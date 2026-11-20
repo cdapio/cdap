@@ -48,6 +48,9 @@ public class BatchPipelineSpecGenerator extends
 
   @Override
   public BatchPipelineSpec generateSpec(ETLBatchConfig config) throws ValidationException {
+    if (config.getConnectionConfig() != null) {
+      setDisabledTypes(config.getConnectionConfig().getDisabledTypes());
+    }
     BatchPipelineSpec.Builder specBuilder = BatchPipelineSpec.builder();
 
     for (ETLStage endingAction : config.getPostActions()) {

@@ -16,6 +16,10 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import java.util.Collections;
+import java.util.Set;
+import javax.annotation.Nullable;
+
 /**
  * RemoteValidationRequest
  */
@@ -24,10 +28,18 @@ public class RemoteValidationRequest {
   private final String namespace;
   //The original request string
   private final String request;
+  private final Set<String> disabledTypes;
 
   public RemoteValidationRequest(String namespace, String request) {
+    this(namespace, request, Collections.emptySet());
+  }
+
+  public RemoteValidationRequest(String namespace, String request,
+      @Nullable Set<String> disabledTypes) {
     this.namespace = namespace;
     this.request = request;
+    this.disabledTypes = disabledTypes == null
+        ? Collections.emptySet() : Collections.unmodifiableSet(disabledTypes);
   }
 
   public String getNamespace() {
@@ -36,5 +48,9 @@ public class RemoteValidationRequest {
 
   public String getRequest() {
     return request;
+  }
+
+  public Set<String> getDisabledTypes() {
+    return disabledTypes == null ? Collections.emptySet() : disabledTypes;
   }
 }
