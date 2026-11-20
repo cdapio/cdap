@@ -326,6 +326,9 @@ public class BundleJarUtil {
     boolean isTargetDirectoryNewlyCreated = false;
 
     try {
+      if (Files.isSymbolicLink(targetPath)) {
+        throw new IOException("Refusing to extract archive into symbolic link destination: " + targetDirectory);
+      }
       // Check if the directory exists before trying to create it
       if (!Files.exists(targetPath)) {
         Files.createDirectories(targetPath);
@@ -342,7 +345,7 @@ public class BundleJarUtil {
 
         Path output = targetPath.resolve(entryName).normalize();
 
-        if (!output.startsWith(targetPath)) {
+        if (!output.startsWith(targetPath) || Files.isSymbolicLink(output)) {
           throw new IllegalArgumentException("Illegal path detected for Jar Entry : " + entryName + ". This will try to"
                                                + " write outside the target directory, which is not allowed.");
         }
