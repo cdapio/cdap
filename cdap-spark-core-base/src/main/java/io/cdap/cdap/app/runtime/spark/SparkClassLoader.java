@@ -46,7 +46,8 @@ public class SparkClassLoader extends CombineClassLoader {
    */
   public static SparkClassLoader findFromContext() {
     ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-    SparkClassLoader sparkClassLoader = ClassLoaders.find(contextClassLoader, SparkClassLoader.class);
+    SparkClassLoader sparkClassLoader =
+        SparkRuntimeContextProvider.findSparkClassLoader(contextClassLoader);
 
     // Should find the Spark ClassLoader
     Preconditions.checkState(sparkClassLoader != null, "Cannot find SparkClassLoader from context ClassLoader %s",

@@ -74,6 +74,41 @@ public class LogPipelineCheckTest {
     new LogPipelineCheck(cConf).run();
   }
 
+  /**
+   * Test appender referencing Java 11 platform modules moved out of the bootstrap classloader.
+   */
+  public static class PlatformCheckingAppender extends NoopAppender {
+
+    public PlatformCheckingAppender() {
+      // Force resolution of java.sql and java.security.jgss classes when instantiated.
+      if (java.sql.Driver.class.getName().isEmpty()
+          || org.ietf.jgss.GSSManager.class.getName().isEmpty()) {
+        throw new IllegalStateException("Unexpected empty platform class name");
+      }
+    }
+  }
+
+  @Test
+  public void testPlatformClassLoaderAccess() throws Exception {
+    File libDir = TEMP_FOLDER.newFolder();
+    String appenderClassName = "PlatformCheckingAppender2";
+    try (JarOutputStream jarOutput = new JarOutputStream(
+        new FileOutputStream(new File(libDir, "lib.jar")))) {
+      jarOutput.putNextEntry(new JarEntry(appenderClassName + ".class"));
+      jarOutput.write(renameClass(PlatformCheckingAppender.class, appenderClassName));
+    }
+
+    File configDir = TEMP_FOLDER.newFolder();
+    generateLogConfig("ALL", Collections.emptyMap(),
+        appenderClassName, new File(configDir, "test-platform.xml"));
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Logging.PIPELINE_LIBRARY_DIR, libDir.getAbsolutePath());
+    cConf.set(Constants.Logging.PIPELINE_CONFIG_DIR, configDir.getAbsolutePath());
+
+    new LogPipelineCheck(cConf).run();
+  }
+
   @Test (expected = InvalidPipelineException.class)
   public void testInvalid() throws Exception {
     // Sets an invalid config for the CDAPLogAppender

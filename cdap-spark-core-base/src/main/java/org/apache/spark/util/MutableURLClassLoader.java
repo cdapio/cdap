@@ -17,7 +17,7 @@
 package org.apache.spark.util;
 
 import io.cdap.cdap.app.runtime.spark.SparkClassLoader;
-import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class MutableURLClassLoader extends ClassLoader {
 
   private static ClassLoader createParent(ClassLoader parent) {
     // If SparkClassLoader is already in the ClassLoader hierarchy, simply use the given parent.
-    if (ClassLoaders.find(parent, SparkClassLoader.class) != null) {
+    if (SparkRuntimeContextProvider.findSparkClassLoader(parent) != null) {
       return parent;
     }
 
