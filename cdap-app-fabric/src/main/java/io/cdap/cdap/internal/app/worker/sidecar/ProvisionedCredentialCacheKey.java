@@ -59,8 +59,8 @@ public final class ProvisionedCredentialCacheKey {
 
     return Objects.equals(gcpMetadataTaskContext.getNamespace(),
         that.gcpMetadataTaskContext.getNamespace())
-        && Objects.equals(gcpMetadataTaskContext.getUserCredential().toString(),
-        that.gcpMetadataTaskContext.getUserCredential().toString())
+        && Objects.equals(Objects.toString(gcpMetadataTaskContext.getUserCredential(), null),
+        Objects.toString(that.gcpMetadataTaskContext.getUserCredential(), null))
         && Objects.equals(gcpMetadataTaskContext.getUserId(),
         that.gcpMetadataTaskContext.getUserId())
         && Objects.equals(gcpMetadataTaskContext.getUserIp(),
@@ -77,7 +77,7 @@ public final class ProvisionedCredentialCacheKey {
         this.hashCode = hashCode = Objects.hash(scopes);
       } else {
         this.hashCode = hashCode = Objects.hash(gcpMetadataTaskContext.getNamespace(),
-            gcpMetadataTaskContext.getUserCredential().toString(),
+            Objects.toString(gcpMetadataTaskContext.getUserCredential(), null),
             gcpMetadataTaskContext.getUserId(), gcpMetadataTaskContext.getUserIp(), scopes);
       }
     }

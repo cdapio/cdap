@@ -54,8 +54,10 @@ public class InternalRouterService extends AbstractIdleService {
       DiscoveryService discoveryService,
       InternalServiceRoutingHandler handler,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+    // InternalRouterService relays worker requests with their encrypted credentials intact so the
+    // downstream target service performs AEAD decryption and URI exemption enforcement.
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
-            Service.INTERNAL_ROUTER)
+            Service.INTERNAL_ROUTER, false)
         .setHttpHandlers(Collections.singleton(handler))
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
           @Override

@@ -19,13 +19,16 @@ package io.cdap.cdap.common.internal.remote;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.TaskWorker;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -93,6 +96,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final String metadataServiceEndpoint;
   private final MetricsCollectionService metricsCollectionService;
   private final CConfiguration cConf;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
   /**
    * If true, pod will restart once an operation finish its execution.
@@ -108,6 +112,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
@@ -117,8 +122,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
         TaskWorker.USER_CODE_ISOLATION_ENABLED);
-    if (enableUserCodeIsolationEnabled) {
-      // Run only one request at a time in user code isolation mode.
+    boolean nsaEnabled = Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)
+        || Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider);
+    if (enableUserCodeIsolationEnabled || nsaEnabled) {
+      // Run only one request at a time in user code isolation or namespaced service account mode
+      // because the pod-local GCP metadata sidecar locks to a single active task context.
       this.concurrentRequestLimit = 1;
     } else {
       this.concurrentRequestLimit = cConf.getInt(TaskWorker.REQUEST_LIMIT);
@@ -133,7 +141,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
       String className = taskDetails.getClassName();
       if (mustRestart.get() && pendingRequests == 0) {
-        stopper.accept(className);
+        stopper.accept(className != null ? className : "");
         return;
       }
 
@@ -174,7 +182,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     int finalTaskDeadlineSeconds = calculateFinalTaskDeadlineSeconds(duration);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
-    Threads.createDaemonThreadFactory("task-worker-restart"));
+        Threads.createDaemonThreadFactory("task-worker-restart"));
 
     executorService.scheduleWithFixedDelay(() -> {
       // we restart once all ongoing requests finish, i.e. runningRequestCount is 0.
@@ -215,6 +223,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;
     }
+    if (isCallerValidationRequired() && !validateCaller(request, responder)) {
+      return;
+    }
     if (runningRequestCount.incrementAndGet() > concurrentRequestLimit) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       runningRequestCount.decrementAndGet();
@@ -222,8 +233,9 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
 
     long startTime = System.currentTimeMillis();
+    RunnableTaskRequest runnableTaskRequest = null;
     try {
-      RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
+      runnableTaskRequest = GSON.fromJson(
           request.content().toString(StandardCharsets.UTF_8),
           RunnableTaskRequest.class);
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
@@ -238,10 +250,23 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         } else {
           namespaceId = new NamespaceId(runnableTaskRequest.getNamespace());
         }
-        // set the GcpMetadataTaskContext before running the task.
-        GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(namespaceId,
-            cConf);
-        runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+        String metadataUnlockToken = null;
+        boolean contextLocked = false;
+        try {
+          // set the GcpMetadataTaskContext before running the task.
+          metadataUnlockToken = GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(
+              namespaceId, cConf);
+          contextLocked = true;
+          runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
+          runnableTaskContext.executeCleanupTask();
+        } finally {
+          if (contextLocked) {
+            runnableTaskContext.executeCleanupTask();
+            // clear the GcpMetadataTaskContext before streaming the response so mustRestart is
+            // visible to taskCompletionConsumer.
+            clearMetadataContextSafely(metadataUnlockToken);
+          }
+        }
         TaskDetails taskDetails = new TaskDetails(metricsCollectionService,
             startTime, runnableTaskContext.isTerminateOnComplete(),
             runnableTaskRequest);
@@ -259,9 +284,6 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         taskCompletionConsumer.accept(false,
             new TaskDetails(metricsCollectionService, startTime, false,
                 runnableTaskRequest));
-      } finally {
-        // clear the GcpMetadataTaskContext after the task is completed.
-        GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
       }
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
@@ -272,7 +294,61 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
               "application/json"));
       // Potentially ran user code, hence terminate the runner.
       taskCompletionConsumer.accept(false,
-          new TaskDetails(metricsCollectionService, startTime, true, null));
+          new TaskDetails(metricsCollectionService, startTime, true, runnableTaskRequest));
+    }
+  }
+
+  private boolean isCallerValidationRequired() {
+    return cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)
+        || Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider);
+  }
+
+  private boolean validateCaller(FullHttpRequest request, HttpResponder responder) {
+    String internalAuthHeader =
+        request.headers().get(Constants.Security.Headers.INTERNAL_AUTHORIZATION);
+    if (internalAuthHeader == null || internalAuthHeader.trim().isEmpty()) {
+      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
+          String.format("Missing %s header.", Constants.Security.Headers.INTERNAL_AUTHORIZATION));
+      return false;
+    }
+    String sidecarEndpoint = GcpMetadataTaskContextUtil.getSidecarServiceEndpoint(cConf);
+    if (sidecarEndpoint == null) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+          "ArtifactLocalizer port is not configured for caller validation.");
+      return false;
+    }
+    try {
+      URL validateUrl = new URL(String.format("%s%s/worker/validate-caller",
+          sidecarEndpoint, Constants.Gateway.INTERNAL_API_VERSION_3));
+      HttpRequest.Builder requestBuilder = HttpRequest.post(validateUrl)
+          .addHeader(Constants.Security.Headers.INTERNAL_AUTHORIZATION, internalAuthHeader);
+      String userId = request.headers().get(Constants.Security.Headers.USER_ID);
+      if (userId != null) {
+        requestBuilder.addHeader(Constants.Security.Headers.USER_ID, userId);
+      }
+      HttpResponse validateResponse = HttpRequests.execute(requestBuilder.build());
+      int responseCode = validateResponse.getResponseCode();
+      if (responseCode == HttpResponseStatus.OK.code()) {
+        return true;
+      }
+      HttpResponseStatus status = (responseCode == HttpResponseStatus.UNAUTHORIZED.code())
+          ? HttpResponseStatus.UNAUTHORIZED
+          : HttpResponseStatus.FORBIDDEN;
+      responder.sendString(status, validateResponse.getResponseBodyAsString());
+      return false;
+    } catch (Exception e) {
+      LOG.warn("Failed to validate task worker caller via sidecar at {}", sidecarEndpoint, e);
+      responder.sendString(HttpResponseStatus.FORBIDDEN, "Failed to validate caller.");
+      return false;
+    }
+  }
+
+  private void clearMetadataContextSafely(@Nullable String metadataUnlockToken) {
+    try {
+      GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf, metadataUnlockToken);
+    } catch (Exception clearEx) {
+      LOG.error("Failed to clear GCP metadata task context; scheduling worker restart.", clearEx);
+      mustRestart.set(true);
     }
   }
 
@@ -286,6 +362,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @Path("/token")
   public void token(io.netty.handler.codec.http.HttpRequest request,
       HttpResponder responder) {
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+          "Worker token endpoint is disabled when strict namespaced service accounts are enabled.");
+      return;
+    }
     if (metadataServiceEndpoint == null) {
       responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED,
           String.format("%s has not been set",
@@ -325,14 +406,14 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private int calculateFinalTaskDeadlineSeconds(int duration) {
     int taskDeadlineSeconds = cConf.getInt(
-      TaskWorker.TASK_EXECUTION_DEADLINE_SECOND,
-      0);
+        TaskWorker.TASK_EXECUTION_DEADLINE_SECOND,
+        0);
 
     if (taskDeadlineSeconds < 0) {
       LOG.info(
-        "Task deadline is {}, using {} value {} as the deadline instead.",
-        taskDeadlineSeconds,
-        Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
+          "Task deadline is {}, using {} value {} as the deadline instead.",
+          taskDeadlineSeconds,
+          Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, duration);
       taskDeadlineSeconds = duration;
     }
     return taskDeadlineSeconds;

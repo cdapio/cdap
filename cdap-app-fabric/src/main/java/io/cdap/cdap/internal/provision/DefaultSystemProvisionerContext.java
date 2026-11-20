@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
+import io.cdap.cdap.security.auth.P4saTokenEndpointAuth;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,7 +65,8 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
     if (confReloadInterval <= 0
         || System.currentTimeMillis() - confReloadInterval > lastConfReloadTime) {
       cConf.reloadConfiguration();
-      properties.set(Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix)));
+      properties.set(Collections.unmodifiableMap(
+          P4saTokenEndpointAuth.augmentEndpointProperties(cConf, cConf.getPropsWithPrefix(prefix))));
       lastConfReloadTime = System.currentTimeMillis();
     }
   }

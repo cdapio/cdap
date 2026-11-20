@@ -40,7 +40,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
-import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
@@ -194,8 +193,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }
 
     try {
-      // set the GcpMetadataTaskContext before running the preview.
-      GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(programId.getNamespaceId(), cConf);
       LOG.debug("Deploying preview application for {}", programId);
       applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(),
           preview.getVersion(),
@@ -407,8 +404,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     Path pid = Paths.get(previewIdDirPath.toString(), programId.getApplication());
     // delete the temp file
     try {
-      // clear the GcpMetadataTaskContext after the preview is completed.
-      GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
       Files.delete(pid);
     } catch (IOException e) {
       LOG.warn("Error deleting file {} containing preview program id.", pid, e);

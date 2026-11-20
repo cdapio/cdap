@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.metadata;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.auth.P4saTokenEndpointAuth;
 import io.cdap.cdap.spi.metadata.MetadataConsumerContext;
 import io.cdap.cdap.spi.metadata.MetadataConsumerMetrics;
 import java.util.Collections;
@@ -48,7 +49,8 @@ public class DefaultMetadataConsumerContext implements MetadataConsumerContext {
                                  MetricsCollectionService metricsCollectionService,
                                  String namespace, String app) {
     String prefix = String.format("%s.%s.", Constants.MetadataConsumer.METADATA_CONSUMER_PREFIX, metadataConsumerName);
-    this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
+    this.properties = Collections.unmodifiableMap(
+        P4saTokenEndpointAuth.augmentEndpointProperties(cConf, cConf.getPropsWithPrefix(prefix)));
     this.metricsCollectionService = metricsCollectionService;
     this.namespace = namespace;
     this.app = app;

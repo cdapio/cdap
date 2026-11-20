@@ -33,8 +33,11 @@ import io.cdap.cdap.common.io.DatumReader;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.io.Decoder;
 import io.cdap.cdap.common.io.Encoder;
+import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
+import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.DatumWriterFactory;
+import io.cdap.cdap.internal.io.ReflectionDatumReaderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -63,6 +66,18 @@ public class KeyIdentifierCodec implements Codec<KeyIdentifier> {
     }
   }
 
+  /**
+   * Constructs a {@link KeyIdentifierCodec} with default reflection/ASM reader and writer
+   * factories.
+   */
+  public KeyIdentifierCodec() {
+    this(new ReflectionDatumReaderFactory(),
+        new ASMDatumWriterFactory(new ASMFieldAccessorFactory()));
+  }
+
+  /**
+   * Constructs a {@link KeyIdentifierCodec} with injected reader and writer factories.
+   */
   @Inject
   public KeyIdentifierCodec(DatumReaderFactory readerFactory, DatumWriterFactory writerFactory) {
     this.readerFactory = readerFactory;

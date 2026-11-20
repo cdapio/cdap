@@ -24,12 +24,16 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpMethod;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -87,6 +91,26 @@ public class ArtifactLocalizerTest extends AppFabricTestBase {
     Mockito.verify(mockClient)
         .openConnection(HttpMethod.GET, String.format(downloadUrlFormat, "wrangler", "4.9"));
     Mockito.verify(mockClient, Mockito.times(4)).openConnection(Mockito.any(), Mockito.anyString());
+  }
+
+  @Test
+  public void testNullErrorStreamOnHttpFailure() throws Exception {
+    ArtifactManager mockManager = Mockito.mock(ArtifactManager.class);
+    RemoteClient mockClient = Mockito.mock(RemoteClient.class);
+    HttpURLConnection mockConn = Mockito.mock(HttpURLConnection.class);
+    Mockito.when(mockConn.getResponseCode()).thenReturn(HttpURLConnection.HTTP_UNAUTHORIZED);
+    Mockito.when(mockConn.getErrorStream()).thenReturn(null);
+    Mockito.when(mockClient.openConnection(Mockito.eq(HttpMethod.GET), Mockito.anyString()))
+        .thenReturn(mockConn);
+
+    ArtifactLocalizer localizer = createArtifactLocalizer(mockManager, mockClient);
+    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "my-app", "1.0.0");
+    try {
+      localizer.fetchArtifact(artifactId);
+      Assert.fail("Expected IOException for HTTP 401 with null error stream");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("HTTP 401"));
+    }
   }
 
 }

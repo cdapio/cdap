@@ -26,6 +26,7 @@ import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.http.HttpHeaderNames;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -200,6 +201,9 @@ public abstract class AbstractServiceRoutingHandler extends AbstractHttpHandler 
             .enable((HttpsURLConnection) urlConn);
       }
       for (Map.Entry<String, String> header : request.headers().entries()) {
+        if (HttpHeaderNames.WORKER_DECRYPTION_HDR.equalsIgnoreCase(header.getKey())) {
+          continue;
+        }
         urlConn.setRequestProperty(header.getKey(), header.getValue());
       }
       urlConn.setRequestMethod(request.method().name());

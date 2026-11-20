@@ -19,23 +19,30 @@ package io.cdap.cdap.internal.namespace.credential;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.features.Feature;
+import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
+import io.cdap.cdap.internal.credential.CredentialProviderService;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
-import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
+import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.NamespacePermission;
@@ -44,6 +51,9 @@ import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation for {@link NamespaceCredentialProviderService} used in AppFabric.
@@ -51,23 +61,34 @@ import java.util.List;
 public class DefaultNamespaceCredentialProviderService extends AbstractIdleService
     implements NamespaceCredentialProviderService {
 
+  public static final String SYSTEM_P4SA_IDENTITY_NAME = "system-p4sa";
   private static final String CREDENTIAL_PROVIDER_NAME = "gcp-wi-credential-provider";
-  private final CredentialProvider credentialProvider;
+  private static final String GOOGLE_MANAGED_SA_SUBSTRING = "@gcp-sa-";
+  private static final String TENANT_PROJECT_SA_SUFFIX = "-tp.iam.gserviceaccount.com";
+
+  private final CredentialProviderService credentialProvider;
   private final NamespaceAdmin namespaceAdmin;
   private final ContextAccessEnforcer contextAccessEnforcer;
   private final CredentialProfileManager credentialProfileManager;
+  private final CredentialIdentityManager credentialIdentityManager;
   private final CConfiguration cConf;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
-
+  /**
+   * Constructs {@link DefaultNamespaceCredentialProviderService}.
+   */
   @Inject
-  DefaultNamespaceCredentialProviderService(CConfiguration cConf,
-      CredentialProvider credentialProvider, ContextAccessEnforcer contextAccessEnforcer,
-      NamespaceAdmin namespaceAdmin, CredentialProfileManager credentialProfileManager) {
+  public DefaultNamespaceCredentialProviderService(CConfiguration cConf,
+      CredentialProviderService credentialProvider, ContextAccessEnforcer contextAccessEnforcer,
+      NamespaceAdmin namespaceAdmin, CredentialProfileManager credentialProfileManager,
+      CredentialIdentityManager credentialIdentityManager) {
     this.cConf = cConf;
     this.credentialProvider = credentialProvider;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.namespaceAdmin = namespaceAdmin;
     this.credentialProfileManager = credentialProfileManager;
+    this.credentialIdentityManager = credentialIdentityManager;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   /**
@@ -102,8 +123,20 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
   }
 
   @Override
+  public ProvisionedCredential provisionSystemP4sa(@Nullable String scopes)
+      throws CredentialProvisioningException, IOException, NotFoundException {
+    switchToInternalUser();
+    return credentialProvider.provisionSystemP4sa(
+        new CredentialProvisionContext(
+            GcpWorkloadIdentityUtil.createProvisionPropertiesMap(scopes, NamespaceMeta.DEFAULT)));
+  }
+
+  @Override
   public void validateIdentity(String namespace, String serviceAccount)
       throws IdentityValidationException, IOException {
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)) {
+      validateAllowedServiceAccount(serviceAccount);
+    }
     NamespaceMeta namespaceMeta;
     try {
       namespaceMeta = namespaceAdmin.get(new NamespaceId(namespace));
@@ -126,8 +159,29 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
     }
   }
 
+  private void validateAllowedServiceAccount(@Nullable String serviceAccount)
+      throws IdentityValidationException {
+    String normalizedSa = Strings.nullToEmpty(serviceAccount).trim().toLowerCase(Locale.ROOT);
+    if (normalizedSa.isEmpty()) {
+      throw new IdentityValidationException("Namespace Service Account email must not be empty.");
+    }
+    String configuredSystemP4sa =
+        Strings.nullToEmpty(cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_SERVICE_ACCOUNT, ""))
+            .trim()
+            .toLowerCase(Locale.ROOT);
+    if (normalizedSa.contains(GOOGLE_MANAGED_SA_SUBSTRING)
+        || normalizedSa.endsWith(TENANT_PROJECT_SA_SUFFIX)
+        || (!configuredSystemP4sa.isEmpty() && normalizedSa.equals(configuredSystemP4sa))) {
+      throw new IdentityValidationException(
+          String.format(
+              "Service account '%s' is a Google-managed or system service account and cannot be "
+                  + "attached as a Namespace Service Account.",
+              serviceAccount));
+    }
+  }
+
   private void switchToInternalUser() {
-    SecurityRequestContext.reset();
+    SecurityRequestContext.resetUserDetails();
   }
 
   /**
@@ -136,24 +190,28 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
   @Override
   protected void startUp() throws Exception {
     // Updates the namespaces and creates the identities if not exist.
-    List<NamespaceMeta> namespaceMetaList = namespaceAdmin.list();
-    for (NamespaceMeta namespaceMeta : namespaceMetaList) {
-      if (Strings.isNullOrEmpty(namespaceMeta.getIdentity())) {
-        String identityName = namespaceAdmin.getIdentity(namespaceMeta.getNamespaceId());
-        MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-        if (masterEnv != null
-            && !cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)) {
-          masterEnv.createIdentity(NamespaceId.DEFAULT.getNamespace(), identityName);
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)
+        || Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)) {
+      List<NamespaceMeta> namespaceMetaList = namespaceAdmin.list();
+      for (NamespaceMeta namespaceMeta : namespaceMetaList) {
+        if (Strings.isNullOrEmpty(namespaceMeta.getIdentity())) {
+          String identityName = namespaceAdmin.getIdentity(namespaceMeta.getNamespaceId());
+          MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+          if (masterEnv != null
+              && !cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)) {
+            masterEnv.createIdentity(NamespaceId.DEFAULT.getNamespace(), identityName);
+          }
+          NamespaceMeta newNamespaceMeta =
+              new NamespaceMeta.Builder(namespaceMeta)
+                  .setIdentity(identityName)
+                  .build();
+          namespaceAdmin.updateProperties(newNamespaceMeta.getNamespaceId(), newNamespaceMeta);
         }
-        NamespaceMeta newNamespaceMeta =
-            new NamespaceMeta.Builder(namespaceMeta)
-                .setIdentity(identityName)
-                .build();
-        namespaceAdmin.updateProperties(newNamespaceMeta.getNamespaceId(), newNamespaceMeta);
       }
     }
     // create the system profile if not exists.
     createSystemProfileIfNotExists();
+    upsertSystemP4saIdentityIfConfigured();
   }
 
   private void createSystemProfileIfNotExists() throws BadRequestException, IOException {
@@ -168,6 +226,34 @@ public class DefaultNamespaceCredentialProviderService extends AbstractIdleServi
     } catch (AlreadyExistsException e) {
       // ignore if the profile already exists.
     }
+  }
+
+  private void upsertSystemP4saIdentityIfConfigured() throws Exception {
+    String systemP4sa =
+        Strings.nullToEmpty(cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_SERVICE_ACCOUNT, ""))
+            .trim();
+    String systemK8sIdentity =
+        Strings.nullToEmpty(cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_K8S_IDENTITY, ""))
+            .trim();
+    if (systemP4sa.isEmpty() || systemK8sIdentity.isEmpty()) {
+      return;
+    }
+
+    CredentialIdentityId identityId = new CredentialIdentityId(
+        NamespaceId.SYSTEM.getNamespace(), SYSTEM_P4SA_IDENTITY_NAME);
+    CredentialIdentity credentialIdentity = new CredentialIdentity(
+        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
+        systemK8sIdentity, systemP4sa);
+
+    Retries.runWithRetries(() -> {
+      switchToInternalUser();
+      try {
+        credentialIdentityManager.create(identityId, credentialIdentity);
+      } catch (AlreadyExistsException e) {
+        credentialIdentityManager.update(identityId, credentialIdentity);
+      }
+    }, RetryStrategies.limit(3, RetryStrategies.fixDelay(500, TimeUnit.MILLISECONDS)),
+        t -> t instanceof IOException);
   }
 
   /**

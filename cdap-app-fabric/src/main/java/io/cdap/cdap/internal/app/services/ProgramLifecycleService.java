@@ -17,14 +17,19 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -44,9 +49,11 @@ import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -58,6 +65,8 @@ import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.capability.CapabilityReader;
+import io.cdap.cdap.internal.credential.CredentialIdentityManager;
+import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
@@ -69,8 +78,10 @@ import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.RunCountResult;
 import io.cdap.cdap.proto.RunRecord;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -82,6 +93,7 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
@@ -146,6 +158,8 @@ public class ProgramLifecycleService {
   private final int batchSize;
 
   private final boolean userProgramLaunchDisabled;
+  private final FeatureFlagsProvider featureFlagsProvider;
+  private final Supplier<CredentialIdentityManager> credentialIdentityManagerSupplier;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -156,7 +170,8 @@ public class ProgramLifecycleService {
       ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
       ArtifactRepository artifactRepository,
-      FlowControlService flowControlService) {
+      FlowControlService flowControlService,
+      Injector injector) {
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.accessEnforcer = accessEnforcer;
@@ -175,6 +190,9 @@ public class ProgramLifecycleService {
     this.provisionerNotifier = provisionerNotifier;
     this.provisioningService = provisioningService;
     this.flowControlService = flowControlService;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.credentialIdentityManagerSupplier =
+        Suppliers.memoize(() -> injector.getInstance(CredentialIdentityManager.class));
   }
 
   /**
@@ -693,8 +711,10 @@ public class ProgramLifecycleService {
       Map<String, String> sysArgs,
       boolean debug)
       throws NotFoundException, ProfileConflictException, ProgramRunForbiddenException {
-    ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, userArgs);
-    Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
+    Map<String, String> effectiveUserArgs = new HashMap<>(userArgs);
+    ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, effectiveUserArgs);
+    Map<String, String> profileProperties =
+        SystemArguments.getProfileProperties(effectiveUserArgs);
     Profile profile = profileService.getProfile(profileId, profileProperties);
     if (profile.getStatus() == ProfileStatus.DISABLED) {
       throw new ProfileConflictException(
@@ -717,6 +737,11 @@ public class ProgramLifecycleService {
     Map<String, String> systemArgs = new HashMap<>(sysArgs);
     // add profile properties to the system arguments
     SystemArguments.addProfileArgs(systemArgs, profile);
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)
+        && !NamespaceId.SYSTEM.equals(programId.getNamespaceId())
+        && !ProfileId.NATIVE.equals(profileId)) {
+      enforceNamespaceServiceAccount(programId, effectiveUserArgs, systemArgs);
+    }
 
     // Set the ClusterMode. If it is NATIVE profile, then it is ON_PREMISE, otherwise is ISOLATED
     // This should probably move into the provisioner later once we have a better contract for the
@@ -733,7 +758,71 @@ public class ProgramLifecycleService {
     systemArgs.put(ProgramOptionConstants.PLUGIN_REQUIREMENTS,
         GSON.toJson(getPluginRequirements(programSpecification)));
     return new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
-        new BasicArguments(userArgs), debug);
+        new BasicArguments(effectiveUserArgs), debug);
+  }
+
+  private void enforceNamespaceServiceAccount(ProgramId programId,
+      Map<String, String> effectiveUserArgs, Map<String, String> systemArgs) {
+    String originalUserId = SecurityRequestContext.getUserId();
+    Credential originalCredential = SecurityRequestContext.getUserCredential();
+    String originalUserIp = SecurityRequestContext.getUserIp();
+    Optional<CredentialIdentity> identity;
+    try {
+      // Clear user details for internal store lookup while preserving request audit context.
+      SecurityRequestContext.resetUserDetails();
+      identity = credentialIdentityManagerSupplier.get().get(new CredentialIdentityId(
+          NamespaceId.SYSTEM.getNamespace(),
+          GcpWorkloadIdentityUtil.getWorkloadIdentityName(programId.getNamespaceId())));
+    } catch (IOException e) {
+      throw new RuntimeException(String.format(
+          "Failed to look up Namespace Service Account for namespace '%s'.",
+          programId.getNamespace()), e);
+    } finally {
+      SecurityRequestContext.resetUserDetails();
+      if (originalUserId != null) {
+        SecurityRequestContext.setUserId(originalUserId);
+      }
+      if (originalCredential != null) {
+        SecurityRequestContext.setUserCredential(originalCredential);
+      }
+      if (originalUserIp != null) {
+        SecurityRequestContext.setUserIp(originalUserIp);
+      }
+    }
+
+    if (!identity.isPresent() || Strings.isNullOrEmpty(identity.get().getSecureValue())
+        || identity.get().getSecureValue().trim().isEmpty()) {
+      throw new UnauthorizedException(String.format(
+          "No Namespace Service Account is configured for namespace '%s'. "
+              + "Bind a GCP service account to this namespace before running programs.",
+          programId.getNamespace()));
+    }
+
+    String boundNsa = identity.get().getSecureValue().trim();
+    String profileSaKey = SystemArguments.PROFILE_PROPERTIES_PREFIX + "serviceAccount";
+    validateAndNormalizeServiceAccountArgs(programId, effectiveUserArgs, profileSaKey, boundNsa);
+    validateAndNormalizeServiceAccountArgs(programId, systemArgs, profileSaKey, boundNsa);
+    systemArgs.put(profileSaKey, boundNsa);
+  }
+
+  private static void validateAndNormalizeServiceAccountArgs(ProgramId programId,
+      Map<String, String> args, String profileSaKey, String boundNsa) {
+    String scopedSuffix = "." + profileSaKey;
+    for (Map.Entry<String, String> entry : args.entrySet()) {
+      String key = entry.getKey();
+      if (key == null || (!key.equals(profileSaKey) && !key.endsWith(scopedSuffix))) {
+        continue;
+      }
+      String candidate = entry.getValue();
+      if (!Strings.isNullOrEmpty(candidate) && !candidate.trim().isEmpty()
+          && !candidate.trim().equalsIgnoreCase(boundNsa)) {
+        throw new UnauthorizedException(String.format(
+            "Execution service account '%s' must match the Namespace Service Account '%s' "
+                + "configured for namespace '%s'.",
+            candidate.trim(), boundNsa, programId.getNamespace()));
+      }
+      entry.setValue(boundNsa);
+    }
   }
 
   /**

@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.security.authorization.InternalAccessEnforcer;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.http.NettyHttpService;
 import java.net.InetAddress;
@@ -31,6 +32,7 @@ import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +51,15 @@ public class ArtifactLocalizerService extends AbstractIdleService {
   private final int cacheCleanupInterval;
   private ScheduledExecutorService scheduledExecutorService;
 
+  /**
+   * Constructs {@link ArtifactLocalizerService}.
+   */
   @Inject
-  ArtifactLocalizerService(CConfiguration cConf,
+  public ArtifactLocalizerService(CConfiguration cConf,
       ArtifactLocalizer artifactLocalizer,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-      RemoteClientFactory remoteClientFactory, RemoteAuthenticator remoteAuthenticator) {
+      RemoteClientFactory remoteClientFactory, RemoteAuthenticator remoteAuthenticator,
+      @Nullable InternalAccessEnforcer internalAccessEnforcer) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
     this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER, false)
@@ -61,7 +67,9 @@ public class ArtifactLocalizerService extends AbstractIdleService {
         .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
         .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
-        .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer),
+        .setHttpHandlers(
+            new ArtifactLocalizerHttpHandlerInternal(cConf, artifactLocalizer,
+                internalAccessEnforcer),
             new GcpMetadataHttpHandlerInternal(cConf, remoteClientFactory, remoteAuthenticator))
         .build();
 

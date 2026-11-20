@@ -245,17 +245,25 @@ public abstract class AbstractArtifactLocalizer {
       return;
     }
 
-    try (Reader reader = new InputStreamReader(urlConn.getErrorStream(), StandardCharsets.UTF_8)) {
-      String errMsg = CharStreams.toString(reader);
-      switch (responseCode) {
-        case HttpURLConnection.HTTP_NOT_FOUND:
-          throw new ArtifactNotFoundException(artifactId);
-        case HttpURLConnection.HTTP_UNAVAILABLE:
-          throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP, errMsg);
+    String errMsg = "";
+    InputStream errorStream = urlConn.getErrorStream();
+    if (errorStream != null) {
+      try (Reader reader = new InputStreamReader(errorStream, StandardCharsets.UTF_8)) {
+        errMsg = CharStreams.toString(reader);
       }
-      throw new IOException(
-          String.format("Failed to fetch artifact %s from app-fabric due to %s", artifactId,
-              errMsg));
+    }
+    if (errMsg.isEmpty()) {
+      errMsg = "HTTP " + responseCode;
+    }
+    switch (responseCode) {
+      case HttpURLConnection.HTTP_NOT_FOUND:
+        throw new ArtifactNotFoundException(artifactId);
+      case HttpURLConnection.HTTP_UNAVAILABLE:
+        throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP, errMsg);
+      default:
+        throw new IOException(
+            String.format("Failed to fetch artifact %s from app-fabric due to %s", artifactId,
+                errMsg));
     }
   }
 }

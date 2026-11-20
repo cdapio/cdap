@@ -24,6 +24,7 @@ import io.cdap.http.HttpResponder;
 import io.cdap.http.internal.HandlerInfo;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,8 @@ import org.slf4j.LoggerFactory;
 public class EncryptionExemptionHook extends AbstractHandlerHook {
 
   private static final Logger LOG = LoggerFactory.getLogger(EncryptionExemptionHook.class);
+  private static final Pattern INTERNAL_ROUTER_URI_PREFIX =
+      Pattern.compile("^/v3Internal/router/services/[^/]+(/.*)$");
 
   private static final List<Pattern> SHARED_WORKER_EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3/namespaces/([^/]+)/artifacts/([^/]+)/versions/([^/]+)(/.*)?$"),
@@ -44,14 +47,23 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
           + "/v1/contexts/([^/]+)/connections(?:/.*)?$"),
       Pattern.compile(
           "/v3/namespaces/([^/]+)/apps/([^/]+)/services/([^/]+)/methods"
-              + "/v1/oauth/provider/([^/]+)(?:/authurl|/credential/([^/]+)(?:/valid)?)?$"));
-  private static final List<Pattern> TASK_WORKER_EXEMPTED_URIS = ImmutableList.of(
-      Pattern.compile("/v3/namespaces/([^/]+)/securekeys/([^/]+)(/.*)?$"),
-      Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences([^/]+)"));
+              + "/v1/oauth/provider/([^/]+)(?:/authurl|/credential/([^/]+)(?:/valid)?)?$"),
+      Pattern.compile(
+          "/v3/namespaces/([^/]+)/apps/dataprep/services/service/methods/config(\\?.*)?$"),
+      Pattern.compile(
+          "/v3/namespaces/([^/]+)/apps/dataprep/services/service/methods"
+              + "/contexts/([^/]+)/schemas(?:/.*)?$"),
+      Pattern.compile("/v3/namespaces/([^/]+)/securekeys(/.*)?$"),
+      Pattern.compile("/v3Internal/namespaces/system/securekeys/storeInfo$"),
+      Pattern.compile("/v3Internal/preferences(\\?.*)?$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/preferences(\\?.*)?$"));
+  private static final List<Pattern> TASK_WORKER_EXEMPTED_URIS = ImmutableList.of();
   private static final List<Pattern> PREVIEW_RUNNER_EXEMPTED_URIS = ImmutableList.of(
       Pattern.compile("/v3Internal/namespaces/([^/]+)/artifacts/([^/]+)/versions(\\?.*)?$"),
+      Pattern.compile("/v3Internal/namespaces/([^/]+)/apps/([^/]+)/preferences(\\?.*)?$"),
       Pattern.compile(
-          "/v3Internal/namespaces/([^/]+)/apps/([^/]+)/workflows/([^/]+)/preferences(\\?.*)?$"),
+          "/v3Internal/namespaces/([^/]+)/apps/([^/]+)"
+              + "/(workflows|spark|mapreduce|workers|services)/([^/]+)/preferences(\\?.*)?$"),
       Pattern.compile("/v3/namespaces/([^/]+)/data/datasets/([^/]+)$"),
       Pattern.compile("/v1/namespaces/system/topics/preview/publish"));
 
@@ -59,12 +71,14 @@ public class EncryptionExemptionHook extends AbstractHandlerHook {
   public boolean preCall(HttpRequest request, HttpResponder responder, HandlerInfo handlerInfo) {
     WorkerDecryptionScope exemptionType = WorkerDecryptionScope.NONE;
     String uri = request.uri();
+    Matcher routerMatcher = INTERNAL_ROUTER_URI_PREFIX.matcher(uri);
+    String targetUri = routerMatcher.matches() ? routerMatcher.group(1) : uri;
 
-    if (isUriExempt(uri, SHARED_WORKER_EXEMPTED_URIS)) {
+    if (isUriExempt(targetUri, SHARED_WORKER_EXEMPTED_URIS)) {
       exemptionType = WorkerDecryptionScope.ANY_WORKER;
-    } else if (isUriExempt(uri, PREVIEW_RUNNER_EXEMPTED_URIS)) {
+    } else if (isUriExempt(targetUri, PREVIEW_RUNNER_EXEMPTED_URIS)) {
       exemptionType = WorkerDecryptionScope.PREVIEW_RUNNER;
-    } else if (isUriExempt(uri, TASK_WORKER_EXEMPTED_URIS)) {
+    } else if (isUriExempt(targetUri, TASK_WORKER_EXEMPTED_URIS)) {
       exemptionType = WorkerDecryptionScope.TASK_WORKER;
     }
 

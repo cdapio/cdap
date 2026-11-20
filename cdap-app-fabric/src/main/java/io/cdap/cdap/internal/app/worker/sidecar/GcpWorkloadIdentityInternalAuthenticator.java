@@ -21,7 +21,7 @@ import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.GcpMetadataTaskContext;
 import java.util.function.BiConsumer;
-import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
 /**
  * A class which sets internal authenticated headers for the remote client using a
@@ -29,20 +29,14 @@ import javax.annotation.Nullable;
  */
 public class GcpWorkloadIdentityInternalAuthenticator implements InternalAuthenticator {
 
-  private GcpMetadataTaskContext gcpMetadataTaskContext;
+  private final Supplier<GcpMetadataTaskContext> contextSupplier;
 
   /**
    * Constructs the {@link GcpWorkloadIdentityInternalAuthenticator}.
    */
-  public GcpWorkloadIdentityInternalAuthenticator(GcpMetadataTaskContext gcpMetadataTaskContext) {
-    this.gcpMetadataTaskContext = gcpMetadataTaskContext;
-  }
-
-  /**
-   * Sets the {@link GcpMetadataTaskContext}.
-   */
-  public void setGcpMetadataTaskContext(@Nullable GcpMetadataTaskContext gcpMetadataTaskContext) {
-    this.gcpMetadataTaskContext = gcpMetadataTaskContext;
+  public GcpWorkloadIdentityInternalAuthenticator(
+      Supplier<GcpMetadataTaskContext> contextSupplier) {
+    this.contextSupplier = contextSupplier;
   }
 
   /**
@@ -53,20 +47,21 @@ public class GcpWorkloadIdentityInternalAuthenticator implements InternalAuthent
    */
   @Override
   public void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter) {
-    if (gcpMetadataTaskContext == null) {
+    GcpMetadataTaskContext context = contextSupplier.get();
+    if (context == null) {
       return;
     }
 
-    if (gcpMetadataTaskContext.getUserId() != null) {
-      headerSetter.accept(Constants.Security.Headers.USER_ID, gcpMetadataTaskContext.getUserId());
+    if (context.getUserId() != null) {
+      headerSetter.accept(Constants.Security.Headers.USER_ID, context.getUserId());
     }
 
-    if (gcpMetadataTaskContext.getUserIp() != null) {
-      headerSetter.accept(Constants.Security.Headers.USER_IP, gcpMetadataTaskContext.getUserIp());
+    if (context.getUserIp() != null) {
+      headerSetter.accept(Constants.Security.Headers.USER_IP, context.getUserIp());
     }
 
-    if (gcpMetadataTaskContext.getUserCredential() != null) {
-      Credential userCredential = gcpMetadataTaskContext.getUserCredential();
+    Credential userCredential = context.getUserCredential();
+    if (userCredential != null) {
       headerSetter.accept(Constants.Security.Headers.RUNTIME_TOKEN,
           String.format("%s %s", userCredential.getType().getQualifiedName(),
               userCredential.getValue()));

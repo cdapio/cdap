@@ -14,6 +14,7 @@ package io.cdap.cdap.internal.events;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.auth.P4saTokenEndpointAuth;
 import io.cdap.cdap.spi.events.EventWriterContext;
 import java.util.Collections;
 import java.util.Map;
@@ -31,7 +32,8 @@ public class DefaultEventWriterContext implements EventWriterContext {
    */
   DefaultEventWriterContext(CConfiguration cConf, String eventsWriterId) {
     String prefix = String.format("%s.%s.", Constants.Event.EVENTS_WRITER_PREFIX, eventsWriterId);
-    this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
+    this.properties = Collections.unmodifiableMap(
+        P4saTokenEndpointAuth.augmentEndpointProperties(cConf, cConf.getPropsWithPrefix(prefix)));
   }
 
   @Override

@@ -20,6 +20,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.MetricsWriterContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.auth.P4saTokenEndpointAuth;
 import java.util.Collections;
 import java.util.Map;
 
@@ -36,7 +37,8 @@ public class DefaultMetricsWriterContext implements MetricsWriterContext {
     this.metricsContext = metricsContext;
     String prefix = String.format("%s%s.", Constants.Metrics.METRICS_WRITER_PREFIX,
         metricsWriterId);
-    this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
+    this.properties = Collections.unmodifiableMap(
+        P4saTokenEndpointAuth.augmentEndpointProperties(cConf, cConf.getPropsWithPrefix(prefix)));
   }
 
   public MetricsContext getMetricsContext() {

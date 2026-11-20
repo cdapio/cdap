@@ -160,6 +160,9 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           // required.
           cConfCopy.setBoolean(InternalRouter.CLIENT_ENABLED,
               cConf.getBoolean(TaskWorker.INTERNAL_ROUTER_ENABLED));
+          if (Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)) {
+            cConfCopy.setBoolean(Constants.Logging.LOG_PUBLISHER_ENABLED, false);
+          }
 
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
@@ -205,7 +208,12 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
               NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
-          if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+          boolean strictNsaEnabled =
+              Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider);
+          boolean nsaEnabled =
+              Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)
+                  || strictNsaEnabled;
+          if (nsaEnabled) {
             String localhost = InetAddress.getLoopbackAddress().getHostName();
             twillPreparer = twillPreparer.withEnv(TaskWorkerTwillRunnable.class.getSimpleName(),
                 ImmutableMap.of(
@@ -213,8 +221,10 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
                     String.format("%s:%s", localhost,
                         cConf.getInt(Constants.ArtifactLocalizer.PORT))
                 ));
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withNamespacedWorkloadIdentity(TaskWorkerTwillRunnable.class.getSimpleName());
+            if (twillPreparer instanceof SecureTwillPreparer) {
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                  .withNamespacedWorkloadIdentity(TaskWorkerTwillRunnable.class.getSimpleName());
+            }
           }
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
@@ -260,7 +270,8 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
                 .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
                     new SecretDisk(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME),
                         cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH)));
-            if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
+            if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)
+                && !strictNsaEnabled) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
               twillPreparer = ((SecureTwillPreparer) twillPreparer)

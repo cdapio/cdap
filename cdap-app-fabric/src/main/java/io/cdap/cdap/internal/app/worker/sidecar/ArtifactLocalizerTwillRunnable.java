@@ -106,7 +106,9 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)) {
+      modules.add(RemoteAuthenticatorModules.getNoOpModule());
+    } else if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
       modules.add(RemoteAuthenticatorModules.getDefaultModule(
           Constants.ArtifactLocalizer.REMOTE_AUTHENTICATOR_NAME));
     } else {

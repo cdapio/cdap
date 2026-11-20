@@ -59,6 +59,7 @@ import java.util.function.Predicate;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Helper class for executing a {@link RunnableTaskRequest} on a remote worker.
@@ -75,6 +76,7 @@ public class RemoteTaskExecutor {
       (throwable instanceof RetryableException);
   private final boolean compression;
   private final RemoteClient remoteClient;
+  private final InternalAuthenticator internalAuthenticator;
   private final RetryStrategy retryStrategy;
   private final Predicate<Throwable> retryablePredicate;
   private final MetricsCollectionService metricsCollectionService;
@@ -97,6 +99,7 @@ public class RemoteTaskExecutor {
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
         httpRequestConfig,
         Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.internalAuthenticator = remoteClientFactory.getInternalAuthenticator();
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
     if (workerType == Type.TASK_WORKER) {
@@ -138,21 +141,45 @@ public class RemoteTaskExecutor {
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
           }
 
-          // Encrypting user credentials for task worker calls
-          Credential currentCredential = SecurityRequestContext.getUserCredential();
-          if (isWorkerEncryptionRequired && currentCredential != null) {
-            String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
-                Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-            Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
-            SecurityRequestContext.setUserCredential(encryptedCredential);
-          }
+          String originalUserId = SecurityRequestContext.getUserId();
+          Credential originalCredential = SecurityRequestContext.getUserCredential();
+          String originalUserIp = SecurityRequestContext.getUserIp();
+          HttpResponse httpResponse;
+          try {
+            if (isWorkerEncryptionRequired && internalAuthenticator != null) {
+              try {
+                SecurityRequestContext.resetUserDetails();
+                internalAuthenticator.applyInternalAuthenticationHeaders(
+                    (headerName, headerValue) -> {
+                      if ((Constants.Security.Headers.RUNTIME_TOKEN.equals(headerName)
+                          || Constants.Security.Headers.INTERNAL_AUTHORIZATION.equals(headerName))
+                          && headerValue != null) {
+                        requestBuilder.addHeader(
+                            Constants.Security.Headers.INTERNAL_AUTHORIZATION, headerValue);
+                      }
+                    });
+              } finally {
+                restoreSecurityRequestContext(originalUserId, originalCredential, originalUserIp);
+              }
+            }
 
-          HttpRequest httpRequest = requestBuilder.build();
-          HttpResponse httpResponse = remoteClient.execute(httpRequest);
+            // Encrypting user credentials for task worker calls
+            if (isWorkerEncryptionRequired && originalCredential != null) {
+              String encryptedValue = userEncryptionAeadCipher.encryptToBase64(
+                  originalCredential.getValue(),
+                  Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes(
+                      StandardCharsets.UTF_8));
+              Credential encryptedCredential =
+                  new Credential(encryptedValue, originalCredential.getType());
+              SecurityRequestContext.setUserCredential(encryptedCredential);
+            }
 
-          // Resetting user credentials for further execution of current request
-          if (isWorkerEncryptionRequired) {
-            SecurityRequestContext.setUserCredential(currentCredential);
+            HttpRequest httpRequest = requestBuilder.build();
+            httpResponse = remoteClient.execute(httpRequest);
+          } finally {
+            if (isWorkerEncryptionRequired) {
+              restoreSecurityRequestContext(originalUserId, originalCredential, originalUserIp);
+            }
           }
 
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
@@ -184,6 +211,20 @@ public class RemoteTaskExecutor {
       //emit metrics with failed result
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
       throw e;
+    }
+  }
+
+  private void restoreSecurityRequestContext(@Nullable String userId,
+      @Nullable Credential credential, @Nullable String userIp) {
+    SecurityRequestContext.resetUserDetails();
+    if (userId != null) {
+      SecurityRequestContext.setUserId(userId);
+    }
+    if (credential != null) {
+      SecurityRequestContext.setUserCredential(credential);
+    }
+    if (userIp != null) {
+      SecurityRequestContext.setUserIp(userIp);
     }
   }
 

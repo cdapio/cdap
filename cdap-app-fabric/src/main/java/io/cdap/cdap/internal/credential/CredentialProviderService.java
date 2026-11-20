@@ -18,10 +18,21 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.proto.credential.CredentialProvider;
+import io.cdap.cdap.proto.credential.CredentialProvisionContext;
+import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.credential.NotFoundException;
+import io.cdap.cdap.proto.credential.ProvisionedCredential;
+import java.io.IOException;
 
 /**
  * A service which provides credentials based on identity and profile.
  */
 public interface CredentialProviderService extends CredentialProvider, Service {
 
+  /**
+   * Provisions a short-lived credential for the reserved {@code system:system-p4sa} identity.
+   * Must only be invoked by {@code NamespaceCredentialProviderService#provisionSystemP4sa}.
+   */
+  ProvisionedCredential provisionSystemP4sa(CredentialProvisionContext context)
+      throws CredentialProvisioningException, IOException, NotFoundException;
 }

@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.internal.namespace.credential.DefaultNamespaceCredentialProviderService;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProvisionContext;
@@ -26,6 +27,8 @@ import io.cdap.cdap.proto.credential.IdentityValidationException;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -138,5 +141,35 @@ public class DefaultCredentialProviderServiceTest extends CredentialProviderTest
     CredentialIdentity identity = new CredentialIdentity(namespace, "does-not-exist",
         identityName, "some-secure-value");
     credentialProviderService.validateIdentity(namespace, identity, new CredentialProvisionContext());
+  }
+
+  @Test
+  public void testDirectProvisioningOfReservedSystemP4saIsRejected() throws Exception {
+    String systemNs = NamespaceId.SYSTEM.getNamespace();
+    CredentialProfileId profileId = createDummyProfile(
+        CREDENTIAL_PROVIDER_TYPE_SUCCESS, systemNs, "system-p4sa-test-profile");
+    CredentialIdentityId id = new CredentialIdentityId(
+        systemNs, DefaultNamespaceCredentialProviderService.SYSTEM_P4SA_IDENTITY_NAME);
+    CredentialIdentity identity = new CredentialIdentity(
+        profileId.getNamespace(), profileId.getName(), "system-ksa", "p4sa@proj.iam.gserviceaccount.com");
+    credentialIdentityManager.create(id, identity);
+    try {
+      try {
+        credentialProviderService.provision(
+            systemNs,
+            DefaultNamespaceCredentialProviderService.SYSTEM_P4SA_IDENTITY_NAME,
+            new CredentialProvisionContext());
+        Assert.fail("Expected UnauthorizedException for direct system:system-p4sa provision");
+      } catch (UnauthorizedException e) {
+        Assert.assertEquals(403, e.getStatusCode());
+      }
+
+      // Dedicated internal provisionSystemP4sa succeeds.
+      Assert.assertEquals(
+          RETURNED_TOKEN,
+          credentialProviderService.provisionSystemP4sa(new CredentialProvisionContext()));
+    } finally {
+      credentialIdentityManager.delete(id);
+    }
   }
 }

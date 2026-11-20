@@ -17,11 +17,21 @@
 package io.cdap.cdap.internal.namespace.credential;
 
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.proto.credential.CredentialProvisioningException;
 import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
+import io.cdap.cdap.proto.credential.NotFoundException;
+import io.cdap.cdap.proto.credential.ProvisionedCredential;
+import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * A service which provides credentials based on identity and profile associated with the namespace.
  */
 public interface NamespaceCredentialProviderService extends NamespaceCredentialProvider, Service {
 
+  /**
+   * Provisions a short-lived credential for the system P4SA identity in {@code NamespaceId.SYSTEM}.
+   */
+  ProvisionedCredential provisionSystemP4sa(@Nullable String scopes)
+      throws CredentialProvisioningException, IOException, NotFoundException;
 }

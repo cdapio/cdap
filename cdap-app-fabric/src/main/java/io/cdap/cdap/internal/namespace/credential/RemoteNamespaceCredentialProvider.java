@@ -32,6 +32,7 @@ import io.cdap.cdap.proto.credential.NamespaceCredentialProvider;
 import io.cdap.cdap.proto.credential.NamespaceWorkloadIdentity;
 import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -87,6 +88,10 @@ public class RemoteNamespaceCredentialProvider implements NamespaceCredentialPro
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new NotFoundException(
           String.format("Credential Identity not found for namespace '%s'.", namespace));
+    }
+    if (response.getResponseCode() == HttpResponseStatus.UNAUTHORIZED.code()
+        || response.getResponseCode() == HttpResponseStatus.FORBIDDEN.code()) {
+      throw new UnauthorizedException(response.getResponseBodyAsString());
     }
 
     if (response.getResponseCode() != HttpResponseStatus.OK.code()) {

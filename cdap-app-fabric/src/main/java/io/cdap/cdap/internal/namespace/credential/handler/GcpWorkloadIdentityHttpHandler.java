@@ -20,14 +20,18 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.AlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.conf.Constants.Metrics.WorkloadIdentity;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -54,6 +58,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -75,9 +80,14 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   private final CredentialIdentityManager credentialIdentityManager;
   private final NamespaceCredentialProvider credentialProvider;
   private final MetricsCollectionService metricsCollectionService;
+  private final FeatureFlagsProvider featureFlagsProvider;
 
+  /**
+   * Constructs {@link GcpWorkloadIdentityHttpHandler}.
+   */
   @Inject
-  GcpWorkloadIdentityHttpHandler(ContextAccessEnforcer accessEnforcer,
+  public GcpWorkloadIdentityHttpHandler(CConfiguration cConf,
+      ContextAccessEnforcer accessEnforcer,
       NamespaceQueryAdmin namespaceQueryAdmin,
       CredentialIdentityManager credentialIdentityManager,
       NamespaceCredentialProvider credentialProvider,
@@ -87,6 +97,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     this.credentialIdentityManager = credentialIdentityManager;
     this.credentialProvider = credentialProvider;
     this.metricsCollectionService = metricsCollectionService;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   /**
@@ -106,13 +117,7 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     NamespaceWorkloadIdentity namespaceWorkloadIdentity =
         deserializeRequestContent(request, NamespaceWorkloadIdentity.class);
     switchToInternalUser();
-    try {
-      credentialProvider
-          .validateIdentity(namespace, namespaceWorkloadIdentity.getServiceAccount());
-    } catch (IdentityValidationException e) {
-      throw new BadRequestException(String.format("Identity validation failed with error: %s",
-          e.getCause() == null ? e.getMessage() : e.getCause().getMessage()), e);
-    }
+    validateNamespaceIdentity(namespace, namespaceWorkloadIdentity.getServiceAccount());
     responder.sendJson(HttpResponseStatus.OK, "Namespace identity validated successfully");
   }
 
@@ -167,6 +172,9 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
         NamespaceId.SYSTEM.getNamespace(),
         GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceMeta.getNamespaceId()));
     switchToInternalUser();
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)) {
+      validateNamespaceIdentity(namespace, namespaceWorkloadIdentity.getServiceAccount());
+    }
     Optional<CredentialIdentity> identity = credentialIdentityManager.get(credentialIdentityId);
     CredentialIdentity credentialIdentity = new CredentialIdentity(
         NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
@@ -178,6 +186,19 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
     }
     responder.sendStatus(HttpResponseStatus.OK);
     emitNamespaceWorkloadIdentityCountMetric();
+  }
+
+  private void validateNamespaceIdentity(String namespace, @Nullable String serviceAccount)
+      throws BadRequestException, IOException {
+    try {
+      credentialProvider.validateIdentity(namespace, serviceAccount);
+    } catch (IdentityValidationException e) {
+      String detail = (e.getCause() != null && e.getCause().getMessage() != null)
+          ? e.getCause().getMessage()
+          : e.getMessage();
+      throw new BadRequestException(
+          String.format("Identity validation failed with error: %s", detail), e);
+    }
   }
 
   /**

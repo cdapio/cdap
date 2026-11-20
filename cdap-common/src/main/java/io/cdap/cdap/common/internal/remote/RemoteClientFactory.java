@@ -121,6 +121,10 @@ public class RemoteClientFactory {
         basePath, internalAuthenticator);
   }
 
+  InternalAuthenticator getInternalAuthenticator() {
+    return internalAuthenticator;
+  }
+
   /**
    * Creates a {@link RemoteClient}.
    *

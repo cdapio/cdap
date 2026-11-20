@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -145,7 +146,14 @@ public class AppFabricServer extends AbstractIdleService {
             Constants.Service.APP_FABRIC_HTTP));
     List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+    boolean systemP4saConfigured =
+        !Strings.isNullOrEmpty(
+                cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_SERVICE_ACCOUNT))
+            && !Strings.isNullOrEmpty(
+                cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_K8S_IDENTITY));
+    if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)
+        || Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider)
+        || systemP4saConfigured) {
       futuresList.add(namespaceCredentialProviderService.start());
     }
     futuresList.addAll(ImmutableList.of(

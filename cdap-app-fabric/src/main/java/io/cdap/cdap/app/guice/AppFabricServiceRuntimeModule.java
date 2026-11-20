@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.guice;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -552,8 +553,17 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         }
 
         FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
-        if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+        boolean nsaEnabled = Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)
+            || Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider);
+        boolean systemP4saConfigured =
+            !Strings.isNullOrEmpty(
+                    cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_SERVICE_ACCOUNT))
+                && !Strings.isNullOrEmpty(
+                    cConf.get(Constants.CredentialProvider.SYSTEM_P4SA_K8S_IDENTITY));
+        if (nsaEnabled) {
           handlerBinder.addBinding().to(GcpWorkloadIdentityHttpHandler.class);
+        }
+        if (nsaEnabled || systemP4saConfigured) {
           handlerBinder.addBinding().to(GcpWorkloadIdentityHttpHandlerInternal.class);
         }
 

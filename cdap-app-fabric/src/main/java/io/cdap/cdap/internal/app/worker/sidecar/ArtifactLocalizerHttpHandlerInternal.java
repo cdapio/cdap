@@ -17,22 +17,33 @@
 package io.cdap.cdap.internal.app.worker.sidecar;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.InternalAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
+import java.util.Collections;
+import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -46,11 +57,37 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
+  @Nullable
+  private final CConfiguration cConf;
   private final ArtifactLocalizer artifactLocalizer;
+  @Nullable
+  private final InternalAccessEnforcer internalAccessEnforcer;
 
+  /**
+   * Constructs {@link ArtifactLocalizerHttpHandlerInternal} for tests without caller validation.
+   */
   @VisibleForTesting
   public ArtifactLocalizerHttpHandlerInternal(ArtifactLocalizer artifactLocalizer) {
+    this(null, artifactLocalizer, null);
+  }
+
+  /**
+   * Constructs {@link ArtifactLocalizerHttpHandlerInternal} without {@link CConfiguration}.
+   */
+  public ArtifactLocalizerHttpHandlerInternal(ArtifactLocalizer artifactLocalizer,
+      @Nullable InternalAccessEnforcer internalAccessEnforcer) {
+    this(null, artifactLocalizer, internalAccessEnforcer);
+  }
+
+  /**
+   * Constructs {@link ArtifactLocalizerHttpHandlerInternal}.
+   */
+  public ArtifactLocalizerHttpHandlerInternal(@Nullable CConfiguration cConf,
+      ArtifactLocalizer artifactLocalizer,
+      @Nullable InternalAccessEnforcer internalAccessEnforcer) {
+    this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
+    this.internalAccessEnforcer = internalAccessEnforcer;
   }
 
   @GET
@@ -74,6 +111,55 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
       } else {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
       }
+    }
+  }
+
+  /**
+   * Validates the caller's {@code X-CDAP-Internal-Authorization} header
+   * ({@code CDAP-Internal token}) on behalf of the co-located {@code TaskWorkerHttpHandlerInternal}
+   * container, which does not mount {@code tokenManagerKey.json}.
+   */
+  @POST
+  @Path("/validate-caller")
+  public void validateCaller(HttpRequest request, HttpResponder responder) {
+    if (cConf == null || !cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)
+        || internalAccessEnforcer == null) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+          "Internal authentication and InternalAccessEnforcer must be enabled for caller "
+              + "validation.");
+      return;
+    }
+    String authHeader = request.headers().get(Constants.Security.Headers.INTERNAL_AUTHORIZATION);
+    if (authHeader == null || authHeader.trim().isEmpty()) {
+      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
+          String.format("Missing %s header.", Constants.Security.Headers.INTERNAL_AUTHORIZATION));
+      return;
+    }
+    String[] parts = authHeader.trim().split("\\s+", 2);
+    if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
+      responder.sendString(HttpResponseStatus.UNAUTHORIZED,
+          String.format("Malformed %s header.",
+              Constants.Security.Headers.INTERNAL_AUTHORIZATION));
+      return;
+    }
+    String credentialTypeStr = parts[0];
+    String tokenValue = parts[1];
+
+    try {
+      Credential.CredentialType credentialType =
+          Credential.CredentialType.fromQualifiedName(credentialTypeStr);
+      String userId = request.headers().get(Constants.Security.Headers.USER_ID);
+      if (Strings.isNullOrEmpty(userId)) {
+        userId = "system";
+      }
+      Credential credential = new Credential(tokenValue, credentialType);
+      Principal principal = new Principal(userId, Principal.PrincipalType.USER, null, credential);
+      internalAccessEnforcer.enforce(
+          NamespaceId.SYSTEM, principal, Collections.singleton(StandardPermission.GET));
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (AccessException | IllegalArgumentException | IllegalStateException e) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+          Strings.isNullOrEmpty(e.getMessage()) ? "Caller validation failed." : e.getMessage());
     }
   }
 

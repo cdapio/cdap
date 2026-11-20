@@ -182,7 +182,11 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
         Path runDir = Files.createTempDirectory(tmpDir, "preview");
         try {
           CConfiguration cConfCopy = CConfiguration.copy(cConf);
-          if (!cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
+          boolean strictNsaEnabled =
+              Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.isEnabled(featureFlagsProvider);
+          boolean mountWorkerSecret =
+              cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET) && !strictNsaEnabled;
+          if (!mountWorkerSecret) {
             // Unset the internal certificate path since certificate is stored cdap-security which
             // is not going to be exposed to preview runner.
             // TODO: CDAP-18768 this will break preview when certificate checking is enabled.
@@ -192,6 +196,9 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           // required.
           cConfCopy.setBoolean(InternalRouter.CLIENT_ENABLED,
               cConf.getBoolean(Preview.INTERNAL_ROUTER_ENABLED));
+          if (strictNsaEnabled) {
+            cConfCopy.setBoolean(Constants.Logging.LOG_PUBLISHER_ENABLED, false);
+          }
 
           Path cConfPath = runDir.resolve("cConf.xml");
           try (Writer writer = Files.newBufferedWriter(cConfPath, StandardCharsets.UTF_8)) {
@@ -239,7 +246,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                     cConf.getBoolean(Preview.INTERNAL_ROUTER_ENABLED));
           }
 
-          if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
+          boolean nsaEnabled =
+              Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)
+                  || strictNsaEnabled;
+          if (nsaEnabled) {
             String localhost = InetAddress.getLoopbackAddress().getHostName();
             twillPreparer = twillPreparer.withEnv(PreviewRunnerTwillRunnable.class.getSimpleName(),
                 ImmutableMap.of(
@@ -247,8 +257,10 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                     String.format("%s:%s", localhost,
                         cConf.getInt(Constants.ArtifactLocalizer.PORT))
                 ));
-            twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withNamespacedWorkloadIdentity(PreviewRunnerTwillRunnable.class.getSimpleName());
+            if (twillPreparer instanceof SecureTwillPreparer) {
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                  .withNamespacedWorkloadIdentity(PreviewRunnerTwillRunnable.class.getSimpleName());
+            }
           }
 
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
@@ -290,8 +302,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
                 .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
                     new SecretDisk(artifactLocalizerSecretName, artifactLocalizerSecretPath));
-            // Mount worker secrets as configured in CConf
-            if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
+            // Mount worker secrets as configured in CConf unless strict NSA mode isolates user code
+            if (mountWorkerSecret) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
               twillPreparer = ((SecureTwillPreparer) twillPreparer)

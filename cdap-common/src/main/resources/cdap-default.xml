@@ -6412,6 +6412,14 @@
   </property>
 
   <property>
+    <name>feature.namespaced.service.accounts.strict.enabled</name>
+    <value>false</value>
+    <description>
+      If true, worker pods fail closed without a configured Namespace Service Account and reject P4SA fallback.
+    </description>
+  </property>
+
+  <property>
     <name>feature.wrangler.kryo.serialization.enabled</name>
     <value>true</value>
     <description>

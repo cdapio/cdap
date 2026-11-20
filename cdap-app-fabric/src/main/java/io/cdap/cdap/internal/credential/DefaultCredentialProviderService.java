@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.credential;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.internal.namespace.credential.DefaultNamespaceCredentialProviderService;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
 import io.cdap.cdap.proto.credential.CredentialProfile;
 import io.cdap.cdap.proto.credential.CredentialProvisionContext;
@@ -27,8 +28,10 @@ import io.cdap.cdap.proto.credential.NotFoundException;
 import io.cdap.cdap.proto.credential.ProvisionedCredential;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.security.spi.credential.CredentialProvider;
 import java.io.IOException;
 import java.util.Map;
@@ -90,6 +93,25 @@ public class DefaultCredentialProviderService extends AbstractIdleService
    */
   @Override
   public ProvisionedCredential provision(String namespace, String identityName,
+      CredentialProvisionContext context)
+      throws CredentialProvisioningException, IOException, NotFoundException {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)
+        && DefaultNamespaceCredentialProviderService.SYSTEM_P4SA_IDENTITY_NAME.equals(
+            identityName)) {
+      throw new UnauthorizedException(
+          "Direct provisioning of reserved system identity 'system:system-p4sa' is forbidden.");
+    }
+    return provisionIdentityInternal(namespace, identityName, context);
+  }
+
+  @Override
+  public ProvisionedCredential provisionSystemP4sa(CredentialProvisionContext context)
+      throws CredentialProvisioningException, IOException, NotFoundException {
+    return provisionIdentityInternal(NamespaceId.SYSTEM.getNamespace(),
+        DefaultNamespaceCredentialProviderService.SYSTEM_P4SA_IDENTITY_NAME, context);
+  }
+
+  private ProvisionedCredential provisionIdentityInternal(String namespace, String identityName,
       CredentialProvisionContext context)
       throws CredentialProvisioningException, IOException, NotFoundException {
     CredentialIdentityId identityId =

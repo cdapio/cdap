@@ -28,7 +28,10 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.Optional;
@@ -51,6 +54,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private static final Cancellable DUMMY_CANCELLABLE = () -> {
   };
 
+  private final CConfiguration cConf;
   private final PreviewRunner previewRunner;
   private final PreviewRequestFetcher requestFetcher;
   private final long pollDelayMillis;
@@ -63,6 +67,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   @Inject
   PreviewRunnerService(CConfiguration cConf, PreviewRequestFetcher previewRequestFetcher,
       @Assisted PreviewRunner previewRunner) {
+    this.cConf = cConf;
     this.previewRunner = previewRunner;
     this.requestFetcher = previewRequestFetcher;
     this.pollDelayMillis = cConf.getLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS);
@@ -100,24 +105,51 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
           continue;
         }
 
-        previewApp = request.getProgram().getParent();
-
-        runs++;
-        Future<PreviewRequest> future = previewRunner.startPreview(request);
-
-        // If the cancelPreview was not null, this means the triggerShutdown was called while the
-        // startPreview was call. If that's the case, stop the preview.
-        Cancellable cancelPreview = () -> {
-          if (!future.isDone()) {
-            stopPreview(request);
+        String originalUserId = SecurityRequestContext.getUserId();
+        Credential originalUserCredential = SecurityRequestContext.getUserCredential();
+        String originalUserIp = SecurityRequestContext.getUserIp();
+        try {
+          SecurityRequestContext.resetUserDetails();
+          if (request.getPrincipal() != null) {
+            SecurityRequestContext.setUserId(request.getPrincipal().getName());
+            SecurityRequestContext.setUserCredential(request.getPrincipal().getFullCredential());
           }
-          previewApp = null;
-        };
-        if (this.cancelPreview.compareAndSet(null, cancelPreview)) {
-          waitForCompletion(request, future, cancelPreview);
-        } else {
-          cancelPreview.cancel();
-          terminated = true;
+
+          previewApp = request.getProgram().getParent();
+
+          runs++;
+          String metadataUnlockToken = GcpMetadataTaskContextUtil.setGcpMetadataTaskContext(
+              request.getProgram().getNamespaceId(), cConf);
+          try {
+            Future<PreviewRequest> future = previewRunner.startPreview(request);
+
+            // If the cancelPreview was not null, this means the triggerShutdown was called while
+            // the startPreview was called. If that's the case, stop the preview.
+            Cancellable cancelPreview = () -> {
+              if (!future.isDone()) {
+                stopPreview(request);
+              }
+              previewApp = null;
+            };
+            if (this.cancelPreview.compareAndSet(null, cancelPreview)) {
+              waitForCompletion(request, future, cancelPreview);
+            } else {
+              cancelPreview.cancel();
+              waitForCompletion(request, future, cancelPreview);
+              terminated = true;
+            }
+          } finally {
+            try {
+              GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf, metadataUnlockToken);
+            } catch (Exception clearEx) {
+              LOG.error(
+                  "Failed to clear GCP metadata task context after preview {}; terminating runner.",
+                  request.getProgram(), clearEx);
+              terminated = true;
+            }
+          }
+        } finally {
+          restoreSecurityRequestContext(originalUserId, originalUserCredential, originalUserIp);
         }
       } catch (Exception e) {
         // This is a system error not caused by the app, hence log an error
@@ -170,5 +202,19 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
    */
   public Optional<ApplicationId> getPreviewApplication() {
     return Optional.ofNullable(previewApp);
+  }
+
+  private static void restoreSecurityRequestContext(@Nullable String userId,
+      @Nullable Credential credential, @Nullable String userIp) {
+    SecurityRequestContext.resetUserDetails();
+    if (userId != null) {
+      SecurityRequestContext.setUserId(userId);
+    }
+    if (credential != null) {
+      SecurityRequestContext.setUserCredential(credential);
+    }
+    if (userIp != null) {
+      SecurityRequestContext.setUserIp(userIp);
+    }
   }
 }

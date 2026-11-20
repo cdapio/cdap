@@ -1880,6 +1880,14 @@ public final class Constants {
        * token to authorize runtime service calls.
        */
       public static final String RUNTIME_TOKEN = "X-CDAP-Runtime-Token";
+      /**
+       * Secondary internal authorization header used to verify control-plane callers on workers.
+       */
+      public static final String INTERNAL_AUTHORIZATION = "X-CDAP-Internal-Authorization";
+      /**
+       * One-time token required to unlock and clear the sidecar GCP metadata task context.
+       */
+      public static final String METADATA_UNLOCK_TOKEN = "X-CDAP-Metadata-Unlock-Token";
     }
 
     /**
@@ -2590,6 +2598,8 @@ public final class Constants {
 
     public static final String EXTENSIONS_DIR = "credential.provider.extensions.dir";
     public static final String SYSTEM_PROPERTY_PREFIX = "credential.provider.system.properties.";
+    public static final String SYSTEM_P4SA_SERVICE_ACCOUNT = "system.p4sa.service.account";
+    public static final String SYSTEM_P4SA_K8S_IDENTITY = "system.p4sa.k8s.identity";
   }
 
   /**

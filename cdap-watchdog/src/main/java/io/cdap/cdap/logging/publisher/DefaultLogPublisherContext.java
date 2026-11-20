@@ -18,6 +18,7 @@ package io.cdap.cdap.logging.publisher;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.security.auth.P4saTokenEndpointAuth;
 import io.cdap.cdap.spi.logs.LogPublisherContext;
 import java.util.Collections;
 import java.util.Map;
@@ -39,7 +40,8 @@ public class DefaultLogPublisherContext implements LogPublisherContext {
    */
   public DefaultLogPublisherContext(CConfiguration cConf, String providerName) {
     String prefix = String.format("%s.%s.", Constants.Logging.LOG_PUBLISHER_PREFIX, providerName);
-    this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
+    this.properties = Collections.unmodifiableMap(
+        P4saTokenEndpointAuth.augmentEndpointProperties(cConf, cConf.getPropsWithPrefix(prefix)));
   }
 
   @Override

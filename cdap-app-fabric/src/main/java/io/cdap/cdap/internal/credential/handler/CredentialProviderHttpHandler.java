@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.credential.CredentialIdentityManager;
 import io.cdap.cdap.internal.credential.CredentialProfileManager;
+import io.cdap.cdap.internal.namespace.credential.DefaultNamespaceCredentialProviderService;
 import io.cdap.cdap.proto.credential.CreateCredentialIdentityRequest;
 import io.cdap.cdap.proto.credential.CreateCredentialProfileRequest;
 import io.cdap.cdap.proto.credential.CredentialIdentity;
@@ -43,6 +44,7 @@ import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -338,6 +340,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
         CreateCredentialIdentityRequest.class);
     final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace,
         createRequest.getName());
+    ensureNotReservedSystemIdentity(identityId);
     final CredentialIdentity identity = createRequest.getIdentity();
     if (createRequest.getIdentity() == null) {
       throw new BadRequestException("No identity provided for create request");
@@ -374,6 +377,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       @PathParam("identity-name") String identityName)
       throws BadRequestException, IOException, NotFoundException {
     final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
+    ensureNotReservedSystemIdentity(identityId);
     accessEnforcer.enforce(new CredentialIdentityId(namespace, identityName),
         StandardPermission.UPDATE);
     canCreateInNamespace(namespace);
@@ -404,11 +408,21 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       @PathParam("identity-name") String identityName)
       throws BadRequestException, IOException, NotFoundException {
     final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
+    ensureNotReservedSystemIdentity(identityId);
     accessEnforcer.enforce(new CredentialIdentityId(namespace, identityName),
         StandardPermission.DELETE);
     canCreateInNamespace(namespace);
     credentialIdentityManager.delete(identityId);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void ensureNotReservedSystemIdentity(CredentialIdentityId identityId) {
+    if (NamespaceId.SYSTEM.getNamespace().equals(identityId.getNamespace())
+        && DefaultNamespaceCredentialProviderService.SYSTEM_P4SA_IDENTITY_NAME.equals(
+            identityId.getName())) {
+      throw new UnauthorizedException(
+          "Modification of reserved system identity 'system:system-p4sa' is forbidden.");
+    }
   }
 
   private void canCreateInNamespace(String namespace)

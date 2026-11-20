@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
@@ -25,27 +26,44 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.AlreadyExistsException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.features.Feature;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.credential.CredentialIdentityManager;
+import io.cdap.cdap.internal.credential.CredentialProfileStore;
+import io.cdap.cdap.internal.namespace.credential.GcpWorkloadIdentityUtil;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisioner;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.credential.CredentialIdentity;
+import io.cdap.cdap.proto.credential.CredentialProfile;
+import io.cdap.cdap.proto.id.CredentialIdentityId;
+import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -67,6 +85,9 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
   private static ProgramLifecycleService programLifecycleService;
   private static ProfileService profileService;
   private static ProvisioningService provisioningService;
+  private static CredentialProfileStore credentialProfileStore;
+  private static CredentialIdentityManager credentialIdentityManager;
+  private static TransactionRunner transactionRunner;
   private static CConfiguration cConf;
 
   @BeforeClass
@@ -77,6 +98,9 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
+    credentialProfileStore = injector.getInstance(CredentialProfileStore.class);
+    credentialIdentityManager = injector.getInstance(CredentialIdentityManager.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
     provisioningService.startAndWait();
   }
 
@@ -265,6 +289,227 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     // check the total run count is 1
     Assert.assertEquals(2L, getProgramRunCount(programIdV2.getProgramReference()));
     setLCMFlag(false);
+  }
+
+  @Test
+  public void testStrictNsaUnboundNamespaceFailsClosed() throws Exception {
+    deploy(AllProgramsApp.class, 200);
+    ApplicationDetail appDetail = getAppDetails(NamespaceId.DEFAULT.getNamespace(),
+        AllProgramsApp.NAME);
+    ProgramId programId = NamespaceId.DEFAULT
+        .app(AllProgramsApp.NAME, appDetail.getAppVersion())
+        .program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
+    ProfileId dataprocProfileId = NamespaceId.SYSTEM.profile("dataproc");
+    Profile dataprocProfile = new Profile("dataproc", "Dataproc", "desc", EntityScope.SYSTEM,
+        new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList()));
+    profileService.createIfNotExists(dataprocProfileId, dataprocProfile);
+
+    setStrictNsaFlag(true);
+    try {
+      Map<String, String> userArgs = ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, dataprocProfileId.getScopedName());
+      try {
+        programLifecycleService.createProgramOptions(programId, userArgs, Collections.emptyMap(),
+            false);
+        Assert.fail("Expected UnauthorizedException for unbound namespace under strict NSA mode");
+      } catch (UnauthorizedException e) {
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, e.getStatusCode());
+        Assert.assertTrue(e.getMessage().contains(
+            "No Namespace Service Account is configured for namespace 'default'"));
+      }
+    } finally {
+      setStrictNsaFlag(false);
+      profileService.disableProfile(dataprocProfileId);
+      profileService.deleteProfile(dataprocProfileId);
+    }
+  }
+
+  @Test
+  public void testStrictNsaInjectsBoundNsaOnDataprocProfile() throws Exception {
+    deploy(AllProgramsApp.class, 200);
+    ApplicationDetail appDetail = getAppDetails(NamespaceId.DEFAULT.getNamespace(),
+        AllProgramsApp.NAME);
+    ProgramId programId = NamespaceId.DEFAULT
+        .app(AllProgramsApp.NAME, appDetail.getAppVersion())
+        .program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
+    ProfileId dataprocProfileId = NamespaceId.SYSTEM.profile("dataproc");
+    Profile dataprocProfile = new Profile("dataproc", "Dataproc", "desc", EntityScope.SYSTEM,
+        new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList()));
+    profileService.createIfNotExists(dataprocProfileId, dataprocProfile);
+
+    String boundNsa = "nsa-default@my-proj.iam.gserviceaccount.com";
+    CredentialIdentityId identityId = bindNamespaceServiceAccount(NamespaceId.DEFAULT, boundNsa);
+    setStrictNsaFlag(true);
+    SecurityRequestContext.setUserId("alice");
+    SecurityRequestContext.setUserIp("10.0.0.5");
+    try {
+      Map<String, String> userArgs = ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, dataprocProfileId.getScopedName());
+      ProgramOptions options = programLifecycleService.createProgramOptions(programId, userArgs,
+          Collections.emptyMap(), false);
+      Assert.assertEquals(boundNsa,
+          options.getArguments().getOption(
+              SystemArguments.PROFILE_PROPERTIES_PREFIX + "serviceAccount"));
+      Assert.assertEquals("alice", SecurityRequestContext.getUserId());
+      Assert.assertEquals("10.0.0.5", SecurityRequestContext.getUserIp());
+    } finally {
+      SecurityRequestContext.reset();
+      setStrictNsaFlag(false);
+      deleteCredentialIdentityQuietly(identityId);
+      profileService.disableProfile(dataprocProfileId);
+      profileService.deleteProfile(dataprocProfileId);
+    }
+  }
+
+  @Test
+  public void testStrictNsaRejectsMismatchedServiceAccountOverrides() throws Exception {
+    deploy(AllProgramsApp.class, 200);
+    ApplicationDetail appDetail = getAppDetails(NamespaceId.DEFAULT.getNamespace(),
+        AllProgramsApp.NAME);
+    ProgramId programId = NamespaceId.DEFAULT
+        .app(AllProgramsApp.NAME, appDetail.getAppVersion())
+        .program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
+    ProfileId dataprocProfileId = NamespaceId.SYSTEM.profile("dataproc");
+    Profile dataprocProfile = new Profile("dataproc", "Dataproc", "desc", EntityScope.SYSTEM,
+        new ProvisionerInfo(MockProvisioner.NAME, Collections.emptyList()));
+    profileService.createIfNotExists(dataprocProfileId, dataprocProfile);
+
+    ProfileId customMismatchedProfileId = NamespaceId.DEFAULT.profile("profMismatchedSa");
+    Profile customMismatchedProfile = new Profile("profMismatchedSa", "label", "desc",
+        new ProvisionerInfo(MockProvisioner.NAME, Collections.singletonList(
+            new ProvisionerPropertyValue("serviceAccount",
+                "other-sa@my-proj.iam.gserviceaccount.com", false))));
+    profileService.createIfNotExists(customMismatchedProfileId, customMismatchedProfile);
+
+    String boundNsa = "nsa-default@my-proj.iam.gserviceaccount.com";
+    String profileSaKey = SystemArguments.PROFILE_PROPERTIES_PREFIX + "serviceAccount";
+    CredentialIdentityId identityId = bindNamespaceServiceAccount(NamespaceId.DEFAULT, boundNsa);
+    setStrictNsaFlag(true);
+    try {
+      // 1. Mismatched serviceAccount override in userArgs must fail with 403.
+      Map<String, String> mismatchedUserArgs = ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, dataprocProfileId.getScopedName(),
+          profileSaKey, "p4sa@tenant-tp.iam.gserviceaccount.com");
+      try {
+        programLifecycleService.createProgramOptions(programId, mismatchedUserArgs,
+            Collections.emptyMap(), false);
+        Assert.fail("Expected UnauthorizedException for mismatched userArgs serviceAccount");
+      } catch (UnauthorizedException e) {
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, e.getStatusCode());
+        Assert.assertTrue(e.getMessage().contains(
+            "Execution service account 'p4sa@tenant-tp.iam.gserviceaccount.com' must match the "
+                + "Namespace Service Account '" + boundNsa + "'"));
+      }
+
+      // 2. Mismatched serviceAccount configured on custom profile must fail with 403.
+      Map<String, String> mismatchedProfileArgs = ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, customMismatchedProfileId.getScopedName());
+      try {
+        programLifecycleService.createProgramOptions(programId, mismatchedProfileArgs,
+            Collections.emptyMap(), false);
+        Assert.fail("Expected UnauthorizedException for mismatched profile serviceAccount");
+      } catch (UnauthorizedException e) {
+        Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, e.getStatusCode());
+        Assert.assertTrue(e.getMessage().contains(
+            "Execution service account 'other-sa@my-proj.iam.gserviceaccount.com' must match the "
+                + "Namespace Service Account '" + boundNsa + "'"));
+      }
+
+      // 3. Matching serviceAccount (case-insensitive) succeeds and normalizes BOTH systemArgs and
+      // userArgs to exact boundNsa.
+      Map<String, String> matchingUserArgs = ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, dataprocProfileId.getScopedName(),
+          profileSaKey, "NSA-DEFAULT@my-proj.iam.gserviceaccount.com");
+      ProgramOptions options = programLifecycleService.createProgramOptions(programId,
+          matchingUserArgs, Collections.emptyMap(), false);
+      Assert.assertEquals(boundNsa, options.getArguments().getOption(profileSaKey));
+      Assert.assertEquals(boundNsa, options.getUserArguments().getOption(profileSaKey));
+
+      // 4. Blank "" or whitespace-only userArgs override is overwritten to exact boundNsa so it can
+      // never clear systemArgs at runtime.
+      for (String blankVal : new String[] {"", "   "}) {
+        Map<String, String> blankUserArgs = ImmutableMap.of(
+            SystemArguments.PROFILE_NAME, dataprocProfileId.getScopedName(),
+            profileSaKey, blankVal,
+            "spark.*." + profileSaKey, blankVal);
+        ProgramOptions blankOptions = programLifecycleService.createProgramOptions(programId,
+            blankUserArgs, Collections.emptyMap(), false);
+        Assert.assertEquals(boundNsa, blankOptions.getArguments().getOption(profileSaKey));
+        Assert.assertEquals(boundNsa, blankOptions.getUserArguments().getOption(profileSaKey));
+        Assert.assertEquals(
+            boundNsa, blankOptions.getUserArguments().getOption("spark.*." + profileSaKey));
+      }
+
+      // 5. Scoped runtime argument mismatch (e.g. spark.system.profile.properties.serviceAccount or
+      // spark.*.system.profile.properties.serviceAccount) must fail with 403 UnauthorizedException.
+      for (String scopedKey : new String[] {"spark." + profileSaKey, "spark.*." + profileSaKey}) {
+        Map<String, String> scopedMismatchArgs = ImmutableMap.of(
+            SystemArguments.PROFILE_NAME, dataprocProfileId.getScopedName(),
+            scopedKey, "rogue-sa@my-proj.iam.gserviceaccount.com");
+        try {
+          programLifecycleService.createProgramOptions(programId, scopedMismatchArgs,
+              Collections.emptyMap(), false);
+          Assert.fail("Expected UnauthorizedException for scoped key: " + scopedKey);
+        } catch (UnauthorizedException e) {
+          Assert.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, e.getStatusCode());
+        }
+      }
+
+      // 6. ProfileId.NATIVE is exempt from strict NSA requirement even when no NSA is bound.
+      deleteCredentialIdentityQuietly(identityId);
+      Map<String, String> nativeArgs = ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+      ProgramOptions nativeOptions = programLifecycleService.createProgramOptions(programId,
+          nativeArgs, Collections.emptyMap(), false);
+      Assert.assertEquals(
+          "ON_PREMISE",
+          nativeOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER_MODE));
+    } finally {
+      setStrictNsaFlag(false);
+      deleteCredentialIdentityQuietly(identityId);
+      profileService.disableProfile(customMismatchedProfileId);
+      profileService.deleteProfile(customMismatchedProfileId);
+      profileService.disableProfile(dataprocProfileId);
+      profileService.deleteProfile(dataprocProfileId);
+    }
+  }
+
+  private CredentialIdentityId bindNamespaceServiceAccount(NamespaceId namespaceId,
+      String serviceAccount) throws Exception {
+    CredentialProfileId credProfileId = new CredentialProfileId(
+        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME);
+    TransactionRunners.run(transactionRunner, context -> {
+      if (!credentialProfileStore.exists(context, credProfileId)) {
+        credentialProfileStore.write(context, credProfileId, new CredentialProfile(
+            "gcp-wi-credential-provider", "test profile", Collections.emptyMap()));
+      }
+    }, Exception.class);
+    CredentialIdentityId identityId = new CredentialIdentityId(
+        NamespaceId.SYSTEM.getNamespace(),
+        GcpWorkloadIdentityUtil.getWorkloadIdentityName(namespaceId));
+    CredentialIdentity identity = new CredentialIdentity(
+        NamespaceId.SYSTEM.getNamespace(), GcpWorkloadIdentityUtil.SYSTEM_PROFILE_NAME,
+        "ns-ksa", serviceAccount);
+    try {
+      credentialIdentityManager.create(identityId, identity);
+    } catch (AlreadyExistsException e) {
+      credentialIdentityManager.update(identityId, identity);
+    }
+    return identityId;
+  }
+
+  private void deleteCredentialIdentityQuietly(CredentialIdentityId identityId) {
+    try {
+      credentialIdentityManager.delete(identityId);
+    } catch (NotFoundException | java.io.IOException ignored) {
+      // Ignore cleanup errors.
+    }
+  }
+
+  private void setStrictNsaFlag(boolean enabled) {
+    cConf.setBoolean(
+        FEATURE_FLAG_PREFIX + Feature.NAMESPACED_SERVICE_ACCOUNTS_STRICT.getFeatureFlagString(),
+        enabled);
   }
 
   private void setLCMFlag(boolean lcmFlag) {

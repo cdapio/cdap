@@ -18,17 +18,23 @@ package io.cdap.cdap.k8s.runtime;
 
 import static io.cdap.cdap.k8s.runtime.KubeTwillPreparer.filterAndRemoveKeyPrefix;
 
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.SecretDisk;
+import io.cdap.cdap.master.spi.twill.SecurityContext;
+import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
+import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
 import io.kubernetes.client.openapi.models.V1Volume;
+import io.kubernetes.client.openapi.models.V1VolumeMount;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -414,6 +420,86 @@ public class KubeTwillPreparerTest {
 
     Assert.assertEquals("The resulting map size should match the expected size.", expected.size(), actual.size());
     Assert.assertEquals("The filtered map should contain the correct entries with prefixes removed.", expected, actual);
+  }
+
+  @Test
+  public void testWorkerPodBindsUnboundWorkerSaAndExcludesCdapSecurityFromUserContainer()
+      throws Exception {
+    V1Volume securityVolume = new V1Volume()
+        .name(KubeMasterEnvironment.SECURITY_CONFIG_NAME)
+        .secret(new V1SecretVolumeSource().secretName("cdap-security"));
+    V1VolumeMount securityMount = new V1VolumeMount()
+        .name(KubeMasterEnvironment.SECURITY_CONFIG_NAME)
+        .mountPath("/etc/cdap/security");
+
+    PodInfo podInfo = new PodInfo(
+        "test-pod-name", "test-pod-dir", "test-label-file.txt",
+        "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
+        "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
+        "cdap-inst-system-sa", "test-pod-runtime-class",
+        Collections.singletonList(securityVolume), "test-pod-container-label",
+        "test-pod-container-image",
+        Collections.singletonList(securityMount), Collections.emptyList(),
+        new V1PodSecurityContext(), "test-pod-image-pull-policy");
+
+    TwillSpecification spec = TwillSpecification.Builder.with()
+        .setName("task-worker")
+        .withRunnable()
+        .add(new MainRunnable(), createResourceSpecification())
+        .withLocalFiles()
+        .add("cConf.xml", new URI(""))
+        .apply()
+        .add(new SidecarRunnable(), createResourceSpecification())
+        .withLocalFiles()
+        .add("cConf.xml", new URI(""))
+        .apply()
+        .anyOrder()
+        .build();
+
+    KubeTwillPreparer preparer = new KubeTwillPreparer(
+        createMasterEnvironmentContext(), null, "default", podInfo, spec,
+        createRunId("worker-run-1"), null, null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+    preparer.dependentRunnableNames(
+        MainRunnable.class.getSimpleName(), SidecarRunnable.class.getSimpleName());
+    preparer.withSecurityContext(
+        MainRunnable.class.getSimpleName(),
+        new SecurityContext.Builder().withIdentity("cdap-inst-worker-sa").build());
+    preparer.withSecretDisk(
+        SidecarRunnable.class.getSimpleName(),
+        new SecretDisk("cdap-security", "/etc/cdap/security"));
+
+    Map<String, RuntimeSpecification> runtimeSpecs = new HashMap<>();
+    runtimeSpecs.put(MainRunnable.class.getSimpleName(),
+        new DefaultRuntimeSpecification(MainRunnable.class.getSimpleName(), null,
+            createResourceSpecification(), Collections.emptyList()));
+    runtimeSpecs.put(SidecarRunnable.class.getSimpleName(),
+        new DefaultRuntimeSpecification(SidecarRunnable.class.getSimpleName(), null,
+            createResourceSpecification(), Collections.emptyList()));
+
+    V1PodSpec podSpec = preparer.createPodSpec(
+        new LocalLocationFactory().create("worker"), runtimeSpecs);
+    Assert.assertEquals("cdap-inst-worker-sa", podSpec.getServiceAccountName());
+
+    V1Container mainContainer = podSpec.getContainers().stream()
+        .filter(c -> c.getName().equals(
+            KubeTwillPreparer.cleanse(MainRunnable.class.getSimpleName(), 253)))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Missing main container"));
+    V1Container sidecarContainer = podSpec.getContainers().stream()
+        .filter(c -> c.getName().equals(
+            KubeTwillPreparer.cleanse(SidecarRunnable.class.getSimpleName(), 253)))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Missing sidecar container"));
+
+    Assert.assertFalse("User-code container must not mount cdap-security",
+        mainContainer.getVolumeMounts().stream()
+            .anyMatch(vm -> KubeMasterEnvironment.SECURITY_CONFIG_NAME.equals(vm.getName())
+                || "/etc/cdap/security".equals(vm.getMountPath())));
+    Assert.assertTrue("Sidecar container must mount cdap-security",
+        sidecarContainer.getVolumeMounts().stream()
+            .anyMatch(vm -> "/etc/cdap/security".equals(vm.getMountPath())));
   }
 
 

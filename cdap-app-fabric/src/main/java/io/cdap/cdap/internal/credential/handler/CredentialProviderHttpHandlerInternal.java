@@ -23,11 +23,14 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.namespace.credential.DefaultNamespaceCredentialProviderService;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.credential.CredentialProvider;
 import io.cdap.cdap.proto.credential.CredentialProvisionContext;
 import io.cdap.cdap.proto.credential.CredentialProvisioningException;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -56,7 +59,7 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
   private final CredentialProvider credentialProvider;
 
   @Inject
-  CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider) {
+  public CredentialProviderHttpHandlerInternal(CredentialProvider credentialProvider) {
     this.credentialProvider = credentialProvider;
   }
 
@@ -76,6 +79,12 @@ public class CredentialProviderHttpHandlerInternal extends AbstractHttpHandler {
   public void provisionCredential(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("identity-name") String identityName)
       throws BadRequestException, CredentialProvisioningException, IOException, NotFoundException {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)
+        && DefaultNamespaceCredentialProviderService.SYSTEM_P4SA_IDENTITY_NAME.equals(
+            identityName)) {
+      throw new UnauthorizedException(
+          "Direct provisioning of reserved system identity 'system:system-p4sa' is forbidden.");
+    }
     CredentialProvisionContext context = deserializeRequestContent(request,
         CredentialProvisionContext.class);
     try {

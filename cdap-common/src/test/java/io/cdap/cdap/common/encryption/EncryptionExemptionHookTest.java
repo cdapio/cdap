@@ -67,6 +67,13 @@ public class EncryptionExemptionHookTest {
         {"/v3/namespaces/system/apps/pipeline/services/studio/methods"
             + "/v1/oauth/provider/provider/credential/REUSE_PROV_FALSE",
             WorkerDecryptionScope.ANY_WORKER.name(), "OAuthMacroEvaluatorExempt"},
+        {"/v3/namespaces/system/apps/dataprep/services/service/methods/config",
+            WorkerDecryptionScope.ANY_WORKER.name(), "DataprepConfigExempt"},
+        {"/v3Internal/router/services/app.fabric.http"
+            + "/v3/namespaces/system/apps/dataprep/services/service/methods/config",
+            WorkerDecryptionScope.ANY_WORKER.name(), "InternalRouterDataprepConfigExempt"},
+        {"/v3/namespaces/system/apps/dataprep/services/service/methods/contexts/ns1/schemas/s1",
+            WorkerDecryptionScope.ANY_WORKER.name(), "DataprepSchemasExempt"},
 
         {"/v3Internal/namespaces/system/artifacts/cdap-data-pipeline/versions?"
             + "lower=6.12.0-SNAPSHOT&upper=6.12.0-SNAPSHOT&limit=1&order=DE",
@@ -76,6 +83,9 @@ public class EncryptionExemptionHookTest {
         {"/v3Internal/namespaces/default/apps/e99c8132-8edd-11f0-9607-36a08ae62395/"
             + "workflows/DataPipelineWorkflow/preferences?resolved=true",
             WorkerDecryptionScope.PREVIEW_RUNNER.name(), "WorkflowPreferencesExempt"},
+        {"/v3Internal/namespaces/ns_secure/apps/e99c8132-8edd-11f0-9607-36a08ae62395/"
+            + "spark/DataStreamsSparkStreaming/preferences?resolved=true",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(), "SparkStreamingPreferencesExempt"},
         {"/v3/namespaces/user/data/datasets/MyDatasetName",
             WorkerDecryptionScope.PREVIEW_RUNNER.name(), "DataDatasetsExempt"},
         {"/v1/namespaces/system/topics/preview/publish",
@@ -83,10 +93,27 @@ public class EncryptionExemptionHookTest {
             "SystemTopicPublishExempt"},
 
         {"/v3Internal/namespaces/default/preferences?key=value",
-            WorkerDecryptionScope.TASK_WORKER.name(), "GenericPreferencesExempt"},
+            WorkerDecryptionScope.ANY_WORKER.name(), "GenericPreferencesExempt"},
+        {"/v3Internal/namespaces/default/preferences",
+            WorkerDecryptionScope.ANY_WORKER.name(), "BareNamespacePreferencesExempt"},
         {"/v3/namespaces/default/securekeys/personal-token",
-            WorkerDecryptionScope.TASK_WORKER.name(),
+            WorkerDecryptionScope.ANY_WORKER.name(),
             "SecureKeysExempt"},
+
+        {"/v3Internal/router/services/app.fabric.http/v3Internal/namespaces/default/artifacts/"
+            + "cdap-data-pipeline/versions/6.12.0/download?scope=SYSTEM",
+            WorkerDecryptionScope.ANY_WORKER.name(), "InternalRouterArtifactDownloadExempt"},
+        {"/v3Internal/router/services/app.fabric.http/v3Internal/namespaces/ns_secure/credentials/"
+            + "workloadIdentity/provision?scopes=https://www.googleapis.com/auth/cloud-platform",
+            WorkerDecryptionScope.ANY_WORKER.name(), "InternalRouterWorkloadIdentityExempt"},
+        {"/v3Internal/router/services/messaging.service/v1/namespaces/system/topics/preview/publish",
+            WorkerDecryptionScope.PREVIEW_RUNNER.name(), "InternalRouterPreviewPublishExempt"},
+        {"/v3Internal/router/services/app.fabric.http/v3/namespaces/default/securekeys/my-key",
+            WorkerDecryptionScope.ANY_WORKER.name(), "InternalRouterSecureKeysExempt"},
+        {"/v3Internal/router/services/app.fabric.http/v3Internal/system/p4sa/token",
+            WorkerDecryptionScope.NONE.name(), "InternalRouterSystemP4saNotExempt"},
+        {"/v3Internal/router/services/app.fabric.http/v3/system/services/status",
+            WorkerDecryptionScope.NONE.name(), "InternalRouterStatusNotExempt"},
 
         {"testing", WorkerDecryptionScope.NONE.name(), "NonExemptGeneric"},
         {"/v3/system/services/status", WorkerDecryptionScope.NONE.name(), "NonExemptV3Status"}
