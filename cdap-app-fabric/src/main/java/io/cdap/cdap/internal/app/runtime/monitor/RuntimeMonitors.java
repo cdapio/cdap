@@ -142,6 +142,9 @@ public final class RuntimeMonitors {
     if (args.containsKey(ProgramOptionConstants.PRINCIPAL)) {
       trimmed.put(ProgramOptionConstants.PRINCIPAL, args.get(ProgramOptionConstants.PRINCIPAL));
     }
+    if (args.containsKey(ProgramOptionConstants.RUNTIME_SCOPES)) {
+      trimmed.put(ProgramOptionConstants.RUNTIME_SCOPES, args.get(ProgramOptionConstants.RUNTIME_SCOPES));
+    }
     return trimmed;
   }
 
