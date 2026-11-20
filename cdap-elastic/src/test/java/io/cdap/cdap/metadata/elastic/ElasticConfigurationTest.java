@@ -18,6 +18,7 @@ package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -27,19 +28,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Random;
 import javax.annotation.Nullable;
-import org.apache.http.HttpHost;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests that the Elasticsearch metadata storage creates indexes with the right settings.
+ * Tests that the metadata storage creates indexes with the right settings.
  */
 public class ElasticConfigurationTest {
 
@@ -53,13 +48,13 @@ public class ElasticConfigurationTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = SConfiguration.create();
 
-    // shards defaults to 5, and replicas default 1 in Elasticsearch
+    // shards and replicas both default to 1 in OpenSearch
     // max result window defaults to 10000 but this default is not returned in the settings
-    testIndexConfig(cConf, sConf, indexName, elasticPort, 5, 1, null);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 1, 1, null);
 
     cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
-    testIndexConfig(cConf, sConf, indexName, elasticPort, 5, 1, 100);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 1, 1, 100);
 
     cConf.setInt(Config.CONF_ELASTIC_NUM_SHARDS, 4);
     cConf.setInt(Config.CONF_ELASTIC_NUM_REPLICAS, 2);
@@ -72,7 +67,7 @@ public class ElasticConfigurationTest {
     indexName = "idx" + new Random(System.currentTimeMillis()).nextInt();
     elasticPort = System.getProperty("elastic.http.port");
     elasticPort = (elasticPort != null && !elasticPort.isEmpty()) ? elasticPort : "9200";
-    LOG.info("Elasticsearch port is {}, index name is {}", elasticPort, indexName);
+    LOG.info("OpenSearch port is {}, index name is {}", elasticPort, indexName);
 
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
@@ -87,17 +82,16 @@ public class ElasticConfigurationTest {
     try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf, sConf)) {
       store.createIndex();
       try {
-        try (RestHighLevelClient client = new RestHighLevelClient(
-          RestClient.builder(new HttpHost("localhost", Integer.parseInt(elasticPort))))) {
-          GetIndexResponse response =
-            client.indices().get(new GetIndexRequest().indices(indexName), RequestOptions.DEFAULT);
+        try (IndexRestClient client = new IndexRestClient("localhost:" + elasticPort, null, null, true)) {
+          JsonObject settings = client.execute("GET", indexName, "_settings").ensureSuccess().getJson()
+              .getAsJsonObject(indexName).getAsJsonObject("settings").getAsJsonObject("index");
           if (windowSize != null) {
-            Assert.assertEquals(String.valueOf(windowSize), response.getSetting(indexName, "index.max_result_window"));
+            Assert.assertEquals(String.valueOf(windowSize), settings.get("max_result_window").getAsString());
           } else {
-            Assert.assertNull(response.getSetting(indexName, "index.max_result_window"));
+            Assert.assertFalse(settings.has("max_result_window"));
           }
-          Assert.assertEquals(String.valueOf(replicas), response.getSetting(indexName, "index.number_of_replicas"));
-          Assert.assertEquals(String.valueOf(shards), response.getSetting(indexName, "index.number_of_shards"));
+          Assert.assertEquals(String.valueOf(replicas), settings.get("number_of_replicas").getAsString());
+          Assert.assertEquals(String.valueOf(shards), settings.get("number_of_shards").getAsString());
         }
       } finally {
         store.dropIndex();
