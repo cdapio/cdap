@@ -21,12 +21,16 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Responsible for deleting dropped or updated schedules and creating new schedules
@@ -34,10 +38,22 @@ import java.util.Set;
 public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
 
   private final ScheduleManager scheduleManager;
+  @Nullable
+  private final AccessEnforcer accessEnforcer;
+  @Nullable
+  private final AuthenticationContext authenticationContext;
 
   public DeleteAndCreateSchedulesStage(ScheduleManager scheduleManager) {
+    this(scheduleManager, null, null);
+  }
+
+  public DeleteAndCreateSchedulesStage(ScheduleManager scheduleManager,
+      @Nullable AccessEnforcer accessEnforcer,
+      @Nullable AuthenticationContext authenticationContext) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.scheduleManager = scheduleManager;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -52,6 +68,10 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     ApplicationId appId = input.getApplicationId();
     // Get a set of new schedules from the app spec
     Set<ProgramSchedule> newSchedules = getProgramScheduleSet(appId, input.getSpecification());
+    for (ProgramSchedule schedule : newSchedules) {
+      ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+          accessEnforcer, authenticationContext, schedule.getProperties());
+    }
     for (ProgramSchedule schedule : scheduleManager.listSchedules(appId)) {
       if (newSchedules.contains(schedule)) {
         newSchedules.remove(schedule); // Remove the existing schedule from the newSchedules

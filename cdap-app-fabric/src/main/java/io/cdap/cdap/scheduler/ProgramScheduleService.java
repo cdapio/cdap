@@ -31,6 +31,8 @@ import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
 import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
@@ -45,12 +47,14 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Used to interact with the Scheduler. Performs authorization checks and other wrapper like
@@ -64,15 +68,25 @@ public class ProgramScheduleService {
   private final AuthenticationContext authenticationContext;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
+  @Nullable
+  private final PropertiesResolver propertiesResolver;
+
+  ProgramScheduleService(AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext, Scheduler scheduler,
+      TimeSchedulerService timeSchedulerService) {
+    this(accessEnforcer, authenticationContext, scheduler, timeSchedulerService, null);
+  }
 
   @Inject
   ProgramScheduleService(AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext, Scheduler scheduler,
-      TimeSchedulerService timeSchedulerService) {
+      TimeSchedulerService timeSchedulerService,
+      @Nullable PropertiesResolver propertiesResolver) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
+    this.propertiesResolver = propertiesResolver;
   }
 
   /**
@@ -129,6 +143,7 @@ public class ProgramScheduleService {
   public void add(ProgramSchedule schedule) throws Exception {
     accessEnforcer.enforce(schedule.getProgramId().getParent(),
         authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
+    authorizeScheduleRuntimeImpersonation(schedule.getProgramId(), schedule.getProperties());
     scheduler.addSchedule(schedule);
   }
 
@@ -177,6 +192,7 @@ public class ProgramScheduleService {
     ProgramSchedule updatedSchedule = new ProgramSchedule(existing.getName(), description,
         programId, properties,
         trigger, constraints, timeoutMillis);
+    authorizeScheduleRuntimeImpersonation(programId, properties);
     scheduler.updateSchedule(updatedSchedule);
   }
 
@@ -319,6 +335,7 @@ public class ProgramScheduleService {
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
     accessEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(),
         ApplicationPermission.EXECUTE);
+    authorizeScheduleRuntimeImpersonation(schedule.getProgramId(), schedule.getProperties());
     scheduler.enableSchedule(scheduleId);
   }
 
@@ -352,6 +369,26 @@ public class ProgramScheduleService {
       throws Exception {
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         ApplicationPermission.EXECUTE);
+    if (propertiesResolver != null) {
+      ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+          accessEnforcer, authenticationContext,
+          propertiesResolver.getUserProperties(namespaceId.app("app").workflow("wf")));
+    }
     scheduler.reEnableSchedules(namespaceId, startTimeMillis, endTimeMillis);
+  }
+
+  private void authorizeScheduleRuntimeImpersonation(
+      ProgramId programId, @Nullable Map<String, String> scheduleProperties) throws Exception {
+    ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+        accessEnforcer, authenticationContext, scheduleProperties);
+    if (propertiesResolver != null) {
+      Map<String, String> effectiveUserArgs =
+          new HashMap<>(propertiesResolver.getUserProperties(programId));
+      if (scheduleProperties != null) {
+        effectiveUserArgs.putAll(scheduleProperties);
+      }
+      ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+          accessEnforcer, authenticationContext, effectiveUserArgs);
+    }
   }
 }
