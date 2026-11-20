@@ -18,9 +18,7 @@ package io.cdap.cdap.app.runtime.spark.classloader;
 
 import com.google.common.io.Closeables;
 import io.cdap.cdap.common.lang.ClassLoaders;
-import org.junit.Assert;
-import org.junit.Test;
-
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -33,6 +31,9 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Assert;
+import org.junit.Test;
+import org.objectweb.asm.ClassReader;
 
 /**
  * Unit tests for {@link SparkRunnerClassLoader}.
@@ -142,5 +143,38 @@ public class SparkRunnerClassLoaderTest {
     // reading from stream acquired through getResourceAsStream() should fail with an exception.
     Closeables.closeQuietly(cl);
     is.read();
+  }
+
+  /**
+   * Nested class compiled to Java 11 with {@code NestHost} attribute for ASM7 rewriter testing.
+   */
+  public static class SampleNestedClass {
+
+    public void obtainTokensForNamenodes() {
+      // no-op target for YarnSparkHadoopUtil rewrite check
+    }
+  }
+
+  @Test
+  public void testSparkClassRewriterHandlesJava11Nestmates() throws IOException {
+    String resource = SampleNestedClass.class.getName().replace('.', '/') + ".class";
+    byte[] originalBytes;
+    try (InputStream is = getClass().getClassLoader().getResourceAsStream(resource)) {
+      Assert.assertNotNull(is);
+      originalBytes = is.readAllBytes();
+    }
+
+    SparkClassRewriter rewriter = new SparkClassRewriter(name -> null, false, false);
+    byte[] rewrittenYarnUtil = rewriter.rewriteClass(
+        "org.apache.spark.deploy.yarn.YarnSparkHadoopUtil",
+        new ByteArrayInputStream(originalBytes));
+    Assert.assertNotNull(rewrittenYarnUtil);
+    Assert.assertEquals(new ClassReader(originalBytes).getClassName(),
+        new ClassReader(rewrittenYarnUtil).getClassName());
+
+    byte[] rewrittenSubmit = rewriter.rewriteClass(
+        "org.apache.spark.deploy.SparkSubmit$Nested",
+        new ByteArrayInputStream(originalBytes));
+    Assert.assertNotNull(rewrittenSubmit);
   }
 }

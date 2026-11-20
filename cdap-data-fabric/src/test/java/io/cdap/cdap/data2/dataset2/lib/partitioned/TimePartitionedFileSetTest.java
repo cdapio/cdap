@@ -33,11 +33,11 @@ import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
-import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -60,12 +60,15 @@ public class TimePartitionedFileSetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
   static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
   static final long HOUR = TimeUnit.HOURS.toMillis(1);
   static final long MAX = Long.MAX_VALUE;
 
   private static final DatasetId TPFS_INSTANCE = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("tpfs");
+
+  private static long parseDateTime(String value) throws ParseException {
+    return new SimpleDateFormat("M/d/yy h:mm a", Locale.US).parse(value).getTime();
+  }
 
   @Before
   public void before() throws Exception {
@@ -88,8 +91,7 @@ public class TimePartitionedFileSetTest {
         // make sure the dataset has no partitions
         validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
-        Date date = DATE_FORMAT.parse("6/4/12 10:00 am");
-        long time = date.getTime();
+        long time = parseDateTime("6/4/12 10:00 am");
 
         // keep track of all the metadata added
         Map<String, String> allMetadata = Maps.newHashMap();
@@ -147,7 +149,7 @@ public class TimePartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         // this is an arbitrary data to use as the test time
-        long time = DATE_FORMAT.parse("12/10/14 5:10 am").getTime();
+        long time = parseDateTime("12/10/14 5:10 am");
         long time2 = time + HOUR;
         String firstPath = "first/partition";
         String secondPath = "second/partition";
@@ -220,9 +222,9 @@ public class TimePartitionedFileSetTest {
   @Test
   public void testOutputPartitionPath() throws Exception {
     // test specifying output time
-    Date date = DATE_FORMAT.parse("1/1/15 8:42 pm");
+    long outputTime = parseDateTime("1/1/15 8:42 pm");
     Map<String, String> args = Maps.newHashMap();
-    TimePartitionedFileSetArguments.setOutputPartitionTime(args, date.getTime());
+    TimePartitionedFileSetArguments.setOutputPartitionTime(args, outputTime);
     TimeZone timeZone = Calendar.getInstance().getTimeZone();
     TimePartitionedFileSetArguments.setOutputPathFormat(args, "yyyy-MM-dd/HH_mm", timeZone.getID());
     TimePartitionedFileSet ds = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
@@ -278,8 +280,7 @@ public class TimePartitionedFileSetTest {
       }
     });
 
-    Date date = DATE_FORMAT.parse("6/4/12 10:00 am");
-    final long time = date.getTime();
+    final long time = parseDateTime("6/4/12 10:00 am");
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -337,8 +338,8 @@ public class TimePartitionedFileSetTest {
   public void testPartitionsForTimeRange() throws Exception {
     for (Object[] test : rangeTests) {
       try {
-        long start = test[0] instanceof Long ? (Long) test[0] : DATE_FORMAT.parse((String) test[0]).getTime();
-        long stop = test[1] instanceof Long ? (Long) test[1] : DATE_FORMAT.parse((String) test[1]).getTime();
+        long start = test[0] instanceof Long ? (Long) test[0] : parseDateTime((String) test[0]);
+        long stop = test[1] instanceof Long ? (Long) test[1] : parseDateTime((String) test[1]);
         List<PartitionFilter> filters = TimePartitionedFileSetDataset.partitionFiltersForTimeRange(start, stop);
         //Assert.assertEquals(test.length - 2, filters.size());
         Set<String> expectedSet = Sets.newHashSet();
@@ -500,8 +501,8 @@ public class TimePartitionedFileSetTest {
   @Test
   public void testTimePartitionedInputArguments() throws Exception {
 
-    final long time8 = DATE_FORMAT.parse("10/17/2014 8:42 am").getTime();
-    final long time9 = DATE_FORMAT.parse("10/17/2014 9:42 am").getTime();
+    final long time8 = parseDateTime("10/17/2014 8:42 am");
+    final long time9 = parseDateTime("10/17/2014 9:42 am");
 
     final String path8 = "8:42";
     final String path9 = "9:42";

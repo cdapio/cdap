@@ -124,6 +124,7 @@
     <grok.version>0.1.0</grok.version>
     <gson.version>2.3.1</gson.version>
     <guava.version>13.0.1</guava.version>
+    <!-- TODO(Guava-32): Upgrade guice.version to 5.1.0 and remove no_aop classifier and exclusions once Guava 32 lands. -->
     <guice.version>4.0</guice.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
@@ -288,6 +289,10 @@
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -306,16 +311,29 @@
         <groupId>com.google.inject</groupId>
         <artifactId>guice</artifactId>
         <version>${guice.version}</version>
+        <classifier>no_aop</classifier>
       </dependency>
       <dependency>
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-assistedinject</artifactId>
         <version>${guice.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.google.inject.extensions</groupId>
         <artifactId>guice-multibindings</artifactId>
         <version>${guice.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.jboss.resteasy</groupId>
@@ -326,6 +344,12 @@
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-guice</artifactId>
         <version>${resteasy.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.xerial.snappy</groupId>
@@ -446,7 +470,27 @@
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
         <artifactId>asm-commons</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-tree</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-analysis</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-util</artifactId>
         <version>${asm.version}</version>
       </dependency>
       <dependency>
@@ -791,6 +835,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
           </exclusion>
@@ -884,6 +932,10 @@
         <artifactId>hadoop-mapreduce-client-app</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
@@ -1149,6 +1201,16 @@
         <version>${tephra.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <!-- Manage dropwizard to version compatible with tephra -->
       <dependency>
@@ -1182,6 +1244,10 @@
         <version>${hadoop.version}</version>
         <scope>test</scope>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -1368,6 +1434,10 @@
         <version>${cdap.common.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-all</artifactId>
           </exclusion>
@@ -1378,6 +1448,10 @@
         <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
@@ -1499,9 +1573,13 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.7.0</version>
           <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
+            <release>11</release>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.4</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -1715,6 +1793,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>jar</id>
+            <inherited>false</inherited>
+            <phase>none</phase>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1836,8 +1921,10 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>2.9.1</version>
+              <version>3.6.3</version>
               <configuration>
+                <doclint>none</doclint>
+                <release>11</release>
                 <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
                 <bottom>
                   <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
@@ -1878,7 +1965,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
+            <version>3.6.3</version>
           </plugin>
         </plugins>
       </build>
@@ -2508,25 +2595,18 @@
       </build>
     </profile>
 
-    <!-- For running findbugs plugin -->
+    <!-- For running spotbugs plugin -->
     <profile>
       <id>findbugs</id>
       <build>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>findbugs-maven-plugin</artifactId>
-            <version>3.0.5</version>
-            <dependencies>
-              <dependency>
-                <groupId>com.thoughtworks.xstream</groupId>
-                <artifactId>xstream</artifactId>
-                <version>1.4.20</version>
-              </dependency>
-            </dependencies>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>4.8.6.4</version>
             <executions>
               <execution>
-                <id>findbugs-check</id>
+                <id>spotbugs-check</id>
                 <goals>
                   <goal>check</goal>
                 </goals>
@@ -2644,9 +2724,10 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>3.1.0</version>
+              <version>3.6.3</version>
               <configuration>
-                <additionalparam>-Xdoclint:none</additionalparam>
+                <doclint>none</doclint>
+                <release>11</release>
                 <failOnError>false</failOnError>
               </configuration>
             </plugin>
@@ -2697,9 +2778,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
+        <version>3.6.3</version>
         <configuration>
-          <additionalparam>-Xdoclint:none</additionalparam>
+          <doclint>none</doclint>
+          <release>11</release>
           <failOnError>false</failOnError>
           <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
           <bottom>

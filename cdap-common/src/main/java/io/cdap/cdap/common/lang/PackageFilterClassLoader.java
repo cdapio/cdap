@@ -43,9 +43,8 @@ public class PackageFilterClassLoader extends ClassLoader implements Closeable {
   public PackageFilterClassLoader(ClassLoader parent, Predicate<String> predicate) {
     super(parent);
     this.predicate = predicate;
-    // There is no reliable way to get bootstrap ClassLoader from Java (System.class.getClassLoader() may return null).
-    // A URLClassLoader with no URLs and with a null parent will load class from bootstrap ClassLoader only.
-    this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
+    // Delegate to the platform classloader so Java 11 platform modules (e.g. java.sql) stay visible.
+    this.bootstrapClassLoader = new URLClassLoader(new URL[0], ClassLoader.getPlatformClassLoader());
   }
 
   @Override

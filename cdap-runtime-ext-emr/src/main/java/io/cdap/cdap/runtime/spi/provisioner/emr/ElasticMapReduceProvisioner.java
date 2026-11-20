@@ -58,55 +58,64 @@ public class ElasticMapReduceProvisioner implements Provisioner {
 
   @Override
   public void validateProperties(Map<String, String> properties) {
-    EMRConf.fromProperties(properties);
+    callWithExtensionClassLoader(() -> EMRConf.fromProperties(properties));
   }
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
-    // Generates and set the ssh key
-    SSHKeyPair sshKeyPair = context.getSSHContext().generate("ec2-user"); // or 'hadoop'
-    context.getSSHContext().setSSHKeyPair(sshKeyPair);
+    return callWithExtensionClassLoader(() -> {
+      // Generates and set the ssh key
+      SSHKeyPair sshKeyPair = context.getSSHContext().generate("ec2-user"); // or 'hadoop'
+      context.getSSHContext().setSSHKeyPair(sshKeyPair);
 
-    EMRConf conf = EMRConf.fromProvisionerContext(context);
-    String clusterName = getClusterName(context.getProgramRunInfo());
+      EMRConf conf = EMRConf.fromProvisionerContext(context);
+      String clusterName = getClusterName(context.getProgramRunInfo());
 
-    try (EMRClient client = EMRClient.fromConf(conf)) {
-      // if it already exists, it means this is a retry. We can skip actually making the request
-      Optional<ClusterSummary> existing = client.getUnterminatedClusterByName(clusterName);
-      if (existing.isPresent()) {
-        return client.getCluster(existing.get().getId()).get();
+      try (EMRClient client = EMRClient.fromConf(conf)) {
+        // if it already exists, it means this is a retry. We can skip actually making the request
+        Optional<ClusterSummary> existing = client.getUnterminatedClusterByName(clusterName);
+        if (existing.isPresent()) {
+          return client.getCluster(existing.get().getId()).get();
+        }
+        String clusterId = client.createCluster(clusterName);
+        return new Cluster(clusterId, ClusterStatus.CREATING, Collections.emptyList(),
+            Collections.emptyMap());
       }
-      String clusterId = client.createCluster(clusterName);
-      return new Cluster(clusterId, ClusterStatus.CREATING, Collections.emptyList(),
-          Collections.emptyMap());
-    }
+    });
   }
 
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster)
       throws Exception {
-    EMRConf conf = EMRConf.fromProvisionerContext(context);
-    try (EMRClient client = EMRClient.fromConf(conf)) {
-      return client.getClusterStatus(cluster.getName());
-    }
+    return callWithExtensionClassLoader(() -> {
+      EMRConf conf = EMRConf.fromProvisionerContext(context);
+      try (EMRClient client = EMRClient.fromConf(conf)) {
+        return client.getClusterStatus(cluster.getName());
+      }
+    });
   }
 
   @Override
   public Cluster getClusterDetail(ProvisionerContext context,
       Cluster cluster) throws Exception {
-    EMRConf conf = EMRConf.fromProvisionerContext(context);
-    try (EMRClient client = EMRClient.fromConf(conf)) {
-      Optional<Cluster> existing = client.getCluster(cluster.getName());
-      return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
-    }
+    return callWithExtensionClassLoader(() -> {
+      EMRConf conf = EMRConf.fromProvisionerContext(context);
+      try (EMRClient client = EMRClient.fromConf(conf)) {
+        Optional<Cluster> existing = client.getCluster(cluster.getName());
+        return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
+      }
+    });
   }
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    EMRConf conf = EMRConf.fromProvisionerContext(context);
-    try (EMRClient client = EMRClient.fromConf(conf)) {
-      client.deleteCluster(cluster.getName());
-    }
+    callWithExtensionClassLoader(() -> {
+      EMRConf conf = EMRConf.fromProvisionerContext(context);
+      try (EMRClient client = EMRClient.fromConf(conf)) {
+        client.deleteCluster(cluster.getName());
+      }
+      return null;
+    });
   }
 
   @Override
@@ -142,6 +151,31 @@ public class ElasticMapReduceProvisioner implements Provisioner {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
+  }
+
+  /**
+   * Runs the call with this extension's classloader as the thread context classloader. On Java 11,
+   * JAXB is packaged inside this extension, and the AWS SDK looks it up through the context
+   * classloader.
+   */
+  private static <T, E extends Exception> T callWithExtensionClassLoader(
+      ExtensionClassLoaderCall<T, E> call) throws E {
+    Thread currentThread = Thread.currentThread();
+    ClassLoader oldClassLoader = currentThread.getContextClassLoader();
+    currentThread.setContextClassLoader(ElasticMapReduceProvisioner.class.getClassLoader());
+    try {
+      return call.call();
+    } finally {
+      currentThread.setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  /**
+   * A call that runs with the extension classloader as the thread context classloader.
+   */
+  private interface ExtensionClassLoaderCall<T, E extends Exception> {
+
+    T call() throws E;
   }
 
   @Override
