@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
@@ -39,8 +40,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarEntry;
@@ -81,6 +84,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private static final String SETUP_SPARK_SH = "setupSpark.sh";
   private static final String SETUP_SPARK_PY = "setupSpark.py";
   private static final String SPARK_ENV_SH = "sparkEnv.sh";
+  private static final String JAVA_VERSION_CHECK_SH = "javaVersionCheck.sh";
 
   private final Cluster cluster;
   private final SSHConfig sshConfig;
@@ -388,6 +392,30 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   /**
+   * Returns the lines of a bash script resource without its leading comment block (license header
+   * and description), so that it can be inlined into another script.
+   */
+  @VisibleForTesting
+  static List<String> readScriptBody(ClassLoader classLoader, String resourceName)
+      throws IOException {
+    URL url = classLoader.getResource(resourceName);
+    if (url == null) {
+      throw new IOException("Failed to find script " + resourceName + " in classpath");
+    }
+    List<String> lines;
+    try (InputStream is = url.openStream()) {
+      lines = Arrays.asList(
+          new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8).split("\n"));
+    }
+    int start = 0;
+    while (start < lines.size()
+        && (lines.get(start).startsWith("#") || lines.get(start).trim().isEmpty())) {
+      start++;
+    }
+    return lines.subList(start, lines.size());
+  }
+
+  /**
    * Returns the context ClassLoader if there is any, otherwise, returns ClassLoader of this class.
    */
   private ClassLoader getClassLoader() {
@@ -434,7 +462,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       JvmOptions jvmOptions,
       Map<String, String> environments,
       @Nullable String kerberosPrincipal,
-      @Nullable String kerberosKeytab) {
+      @Nullable String kerberosKeytab) throws IOException {
 
     StringWriter writer = new StringWriter();
     PrintWriter scriptWriter = new PrintWriter(writer, true);
@@ -465,21 +493,9 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       args.put(ClusterProperties.KERBEROS_KEYTAB, kerberosKeytab);
     }
 
-    scriptWriter.println("if [ -n \"${JAVA_HOME}\" ] && [ -x \"${JAVA_HOME}/bin/java\" ]; then");
-    scriptWriter.println("  JAVA_CMD=\"${JAVA_HOME}/bin/java\"");
-    scriptWriter.println("else");
-    scriptWriter.println("  JAVA_CMD=\"java\"");
-    scriptWriter.println("fi");
-    scriptWriter.println("JAVA_VER_RAW=$(\"${JAVA_CMD}\" -version 2>&1"
-        + " | awk -F '\"' '!/^Picked up / && /version \"/ {print $2; exit}')");
-    scriptWriter.println("JAVA_MAJOR=$(echo \"${JAVA_VER_RAW}\""
-        + " | awk -F '[._+-]' '{if ($1 == \"1\") print $2; else print $1}')");
-    scriptWriter.println("case \"${JAVA_MAJOR}\" in ''|*[!0-9]*) JAVA_MAJOR=0 ;; esac");
-    scriptWriter.println("if [ \"${JAVA_MAJOR}\" -lt 11 ]; then");
-    scriptWriter.println("  echo \"Java 11+ required on the cluster"
-        + " (found: ${JAVA_VER_RAW:-unknown})\" >&2");
-    scriptWriter.println("  exit 1");
-    scriptWriter.println("fi");
+    for (String line : readScriptBody(getClassLoader(), JAVA_VERSION_CHECK_SH)) {
+      scriptWriter.println(line);
+    }
 
     scriptWriter.printf(
         "nohup \"${JAVA_CMD}\" -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s'"

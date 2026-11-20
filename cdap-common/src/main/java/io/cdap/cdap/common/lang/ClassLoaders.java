@@ -262,22 +262,10 @@ public final class ClassLoaders {
 
   @Nullable
   private static URL toClassPathUrl(String entry) {
-    File file = new File(entry);
     try {
-      return file.toURI().toURL();
-    } catch (SecurityException e) {
-      try {
-        String path = file.getAbsolutePath();
-        if (file.isDirectory() && !path.endsWith("/")) {
-          path = path + "/";
-        }
-        return new URL("file", null, path);
-      } catch (MalformedURLException | SecurityException malformed) {
-        LOG.warn("Malformed classpath entry: {}", entry, malformed);
-        return null;
-      }
-    } catch (MalformedURLException e) {
-      LOG.warn("Malformed classpath entry: {}", entry, e);
+      return new File(entry).toURI().toURL();
+    } catch (MalformedURLException | SecurityException e) {
+      LOG.warn("Failed to parse class path URL: {}", entry, e);
       return null;
     }
   }
