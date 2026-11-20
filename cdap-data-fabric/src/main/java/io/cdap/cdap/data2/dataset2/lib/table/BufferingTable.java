@@ -659,7 +659,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
     ensureTransactionIsStarted();
-    // TODO: add support for empty values; see https://issues.cask.co/browse/TEPHRA-45 for details.
+    // TODO: add support for empty values; see https://cdap.atlassian.net/browse/TEPHRA-45 for details.
     if (newValue != null && newValue.length == 0) {
       warnAboutEmptyValue(column);
     }

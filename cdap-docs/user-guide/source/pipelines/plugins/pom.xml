@@ -85,7 +85,7 @@
   </distributionManagement>
 
   <issueManagement>
-    <url>https://issues.cask.co/browse/CDAP</url>
+    <url>https://cdap.atlassian.net/browse/CDAP</url>
   </issueManagement>
 
   <properties>
