@@ -243,7 +243,10 @@ public class InMemorySourceControlOperationRunner extends
     // Opens the file for writing, creating the file if it doesn't exist,
     // or truncating an existing regular-file to a size of 0
     try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
-      GSON.toJson(appToPush, writer);
+      // remove scm metadata
+      ApplicationDetail detailWithoutScm = ApplicationDetail.builder(appToPush)
+          .setSourceControlMeta(null).build();
+      GSON.toJson(detailWithoutScm, writer);
     } catch (IOException e) {
       throw new ConfigFileWriteException(
           String.format("Failed to write application config to path %s", appRelativePath), e
