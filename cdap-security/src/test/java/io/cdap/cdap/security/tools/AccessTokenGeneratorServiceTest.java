@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.security.tools;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.security.auth.AccessTokenValidator;
@@ -24,15 +25,19 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.NettyHttpService;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Tests for access token generator http endpoint
+ * Tests for access token generator http endpoint.
  */
 public class AccessTokenGeneratorServiceTest {
   private static AccessTokenGeneratorService tokenGenerator;
@@ -42,7 +47,7 @@ public class AccessTokenGeneratorServiceTest {
     CConfiguration cConf = CConfiguration.create();
     // Don't set port, AccessTokenGeneratorService will find an ephemeral port.
     cConf.setInt(AccessTokenGeneratorService.PORT_CONFIG, 0);
-    tokenGenerator  = new AccessTokenGeneratorService();
+    tokenGenerator = new AccessTokenGeneratorService();
     tokenGenerator.init(new String[0]);
     tokenGenerator.start();
   }
@@ -50,6 +55,29 @@ public class AccessTokenGeneratorServiceTest {
   @AfterClass
   public static void teardown() throws Exception {
     tokenGenerator.stop();
+  }
+
+  @Test
+  public void testStopTerminatesTokenManager() throws Exception {
+    AccessTokenGeneratorService service = new AccessTokenGeneratorService();
+    service.init(new String[0]);
+    Field httpServiceField = AccessTokenGeneratorService.class.getDeclaredField("httpService");
+    httpServiceField.setAccessible(true);
+    httpServiceField.set(
+        service,
+        NettyHttpService.builder("test.accesstoken.generator")
+            .setHost("127.0.0.1")
+            .setPort(0)
+            .setHttpHandlers(Collections.<HttpHandler>emptyList())
+            .build());
+
+    service.start();
+    service.getTokenManager().startAndWait();
+    Assert.assertTrue(service.getTokenManager().isRunning());
+
+    service.stop();
+    Assert.assertEquals(Service.State.TERMINATED, service.getTokenManager().state());
+    service.destroy();
   }
 
   @Test

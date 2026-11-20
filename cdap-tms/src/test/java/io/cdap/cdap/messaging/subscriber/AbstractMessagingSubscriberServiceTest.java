@@ -208,6 +208,31 @@ public class AbstractMessagingSubscriberServiceTest {
     service.stopAndWait();
   }
 
+  @Test
+  public void testProcessMessagesStopwatchLifecycleDirect() throws Exception {
+    Mockito.doAnswer(c -> {
+      c.getArgument(0, TxRunnable.class).run(structuredTableContext);
+      return null;
+    }).when(transactionRunner).run(Mockito.any());
+
+    TestMessagingSubscriberService service = new TestMessagingSubscriberService(
+        NamespaceId.DEFAULT.topic("testDirect"), 10, 60, 1,
+        RetryStrategies.noRetry(), metricsContext, 2);
+
+    List<ImmutablePair<String, Integer>> batch = Arrays.asList(
+        ImmutablePair.of("m1", 10),
+        ImmutablePair.of("m2", 20),
+        ImmutablePair.of("m3", 30));
+
+    String lastId = service.processMessages(batch);
+    Assert.assertEquals("m3", lastId);
+    Assert.assertEquals("m3", storedMessageId);
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of("m1", 10), ImmutablePair.of("m2", 20)),
+        processedMessages.poll(5, TimeUnit.SECONDS));
+    Assert.assertEquals(Arrays.asList(ImmutablePair.of("m3", 30)),
+        processedMessages.poll(5, TimeUnit.SECONDS));
+  }
+
   class TestMessagingSubscriberService extends AbstractMessagingSubscriberService<Integer> {
     private int counter;
 

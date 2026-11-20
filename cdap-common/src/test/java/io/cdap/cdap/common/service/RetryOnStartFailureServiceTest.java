@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,19 @@
 package io.cdap.cdap.common.service;
 
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.utils.Tasks;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
@@ -32,7 +37,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Unit tests for {@link RetryOnStartFailureService}.
  */
 public class RetryOnStartFailureServiceTest {
 
@@ -40,18 +45,19 @@ public class RetryOnStartFailureServiceTest {
   public void testRetrySucceed() throws InterruptedException {
     CountDownLatch startLatch = new CountDownLatch(1);
     Service service = new RetryOnStartFailureService(
-      createServiceSupplier(3, startLatch, new CountDownLatch(1), false),
-      RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
+        createServiceSupplier(3, startLatch, new CountDownLatch(1), false),
+        RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
+    service.stopAndWait();
   }
 
   @Test
   public void testRetryFail() throws InterruptedException {
     CountDownLatch startLatch = new CountDownLatch(1);
     Service service = new RetryOnStartFailureService(
-      createServiceSupplier(1000, startLatch, new CountDownLatch(1), false),
-      RetryStrategies.limit(10, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS)));
+        createServiceSupplier(1000, startLatch, new CountDownLatch(1), false),
+        RetryStrategies.limit(10, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS)));
 
     final CountDownLatch failureLatch = new CountDownLatch(1);
     service.addListener(new ServiceListenerAdapter() {
@@ -68,52 +74,171 @@ public class RetryOnStartFailureServiceTest {
 
   @Test
   public void testStopWhileRetrying() throws InterruptedException {
-    // This test the service can be stopped during failure retry
     CountDownLatch failureLatch = new CountDownLatch(1);
     Service service = new RetryOnStartFailureService(
-      createServiceSupplier(1000, new CountDownLatch(1), failureLatch, false),
-      RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
+        createServiceSupplier(1000, new CountDownLatch(1), failureLatch, false),
+        RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
     service.stopAndWait();
   }
 
   @Test
-  public void testStopFailurePropagate() throws InterruptedException, TimeoutException, ExecutionException {
-    // This test the underlying service stop state is propagated if the start was successful
+  public void testStopFailurePropagate()
+      throws InterruptedException, TimeoutException, ExecutionException {
     CountDownLatch startLatch = new CountDownLatch(1);
     final RetryOnStartFailureService service = new RetryOnStartFailureService(
-      createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
-      RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
+        createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
+        RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
-    // block until the underlying service started successfully
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
-    // As documented in the RetryOnStartFailureService, there is a small race after the
-    // underlying service started to the time when the wrapping retry service knows about it
-    // In order to capture the stop failure correctly, we need to wait until the retry service captured
-    // the actual service instance that get started
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
-      public Boolean call() throws Exception {
+      public Boolean call() {
         return service.getStartedService() != null;
       }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
     try {
       service.stopAndWait();
       Assert.fail("Expected failure in stopping");
     } catch (Exception e) {
-      Assert.assertEquals("Intentional failure to shutdown", Throwables.getRootCause(e).getMessage());
+      Assert.assertEquals("Intentional failure to shutdown",
+          Throwables.getRootCause(e).getMessage());
     }
   }
 
-  /**
-   * Creates a {@link Supplier} of {@link Service} that the start() call will fail for the first {@code startFailures}
-   * instances that it returns.
-   */
+  @Test
+  public void testStopWhileDelegateBlockedInStartUp() throws Exception {
+    CountDownLatch enteredStartLatch = new CountDownLatch(1);
+    AtomicBoolean delegateShutDown = new AtomicBoolean(false);
+
+    RetryOnStartFailureService service = new RetryOnStartFailureService(
+        () -> new AbstractIdleService() {
+          @Override
+          protected void startUp() throws Exception {
+            enteredStartLatch.countDown();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (state() == State.STARTING && System.nanoTime() < deadline) {
+              TimeUnit.MILLISECONDS.sleep(5);
+            }
+          }
+
+          @Override
+          protected void shutDown() {
+            delegateShutDown.set(true);
+          }
+        }, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
+
+    service.startAndWait();
+    Assert.assertTrue(enteredStartLatch.await(5, TimeUnit.SECONDS));
+    Assert.assertEquals("EndureService{RetryOnStartFailureServiceTest}", service.toString());
+    Assert.assertNull(service.getStartedService());
+
+    service.stopAndWait();
+    Assert.assertTrue(delegateShutDown.get());
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+  }
+
+  @Test
+  public void testStopWhileUnstartedDelegateFailsInStartUp() throws Exception {
+    CountDownLatch enteredStartLatch = new CountDownLatch(1);
+    RetryOnStartFailureService service = new RetryOnStartFailureService(
+        () -> new AbstractIdleService() {
+          @Override
+          protected void startUp() throws Exception {
+            enteredStartLatch.countDown();
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (state() == State.STARTING && System.nanoTime() < deadline) {
+              TimeUnit.MILLISECONDS.sleep(5);
+            }
+            throw new IOException("aborted during startUp");
+          }
+
+          @Override
+          protected void shutDown() {
+            // no-op
+          }
+        }, RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
+
+    service.startAndWait();
+    Assert.assertTrue(enteredStartLatch.await(5, TimeUnit.SECONDS));
+    // Unstarted delegate failure should not fail RetryOnStartFailureService when stopped.
+    service.stopAndWait();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+  }
+
+  @Test
+  public void testFastCompletingExecutionThreadDelegate() throws Exception {
+    AtomicInteger supplierCount = new AtomicInteger(0);
+    AtomicReference<Service> delegateRef = new AtomicReference<>();
+
+    RetryOnStartFailureService service = new RetryOnStartFailureService(() -> {
+      supplierCount.incrementAndGet();
+      Service fastService = new FastExecutionThreadService();
+      delegateRef.set(fastService);
+      return fastService;
+    }, RetryStrategies.noRetry());
+
+    Assert.assertEquals("EndureService{FastExecutionThreadService}", service.toString());
+    service.startAndWait();
+
+    Tasks.waitFor(true, () -> service.getStartedService() != null,
+        5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(Service.State.TERMINATED, () -> delegateRef.get().state(),
+        5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    Assert.assertEquals(1, supplierCount.get());
+
+    // Stopping when startedService has already terminated should succeed cleanly.
+    service.stopAndWait();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+  }
+
+  @Test
+  public void testStopWhenStartedServiceAlreadyFailed() throws Exception {
+    CountDownLatch failNowLatch = new CountDownLatch(1);
+    AtomicReference<Service> delegateRef = new AtomicReference<>();
+
+    RetryOnStartFailureService service = new RetryOnStartFailureService(() -> {
+      Service runtimeFailingService = new AbstractExecutionThreadService() {
+        @Override
+        protected void run() throws Exception {
+          failNowLatch.await();
+          throw new IllegalStateException("delegate failed while running");
+        }
+      };
+      delegateRef.set(runtimeFailingService);
+      return runtimeFailingService;
+    }, RetryStrategies.noRetry());
+
+    service.startAndWait();
+    Tasks.waitFor(true, () -> service.getStartedService() != null,
+        5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
+    failNowLatch.countDown();
+    Tasks.waitFor(Service.State.FAILED, () -> delegateRef.get().state(),
+        5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+
+    try {
+      service.stopAndWait();
+      Assert.fail("Expected stopAndWait to propagate delegate failure");
+    } catch (Exception e) {
+      Assert.assertEquals("delegate failed while running",
+          Throwables.getRootCause(e).getMessage());
+    }
+    Assert.assertEquals(Service.State.FAILED, service.state());
+  }
+
+  private static final class FastExecutionThreadService extends AbstractExecutionThreadService {
+    @Override
+    protected void run() {
+      // Complete immediately after transitioning to RUNNING.
+    }
+  }
+
   private Supplier<Service> createServiceSupplier(final int startFailures,
-                                                  final CountDownLatch startLatch,
-                                                  final CountDownLatch failureLatch,
-                                                  final boolean failureOnStop) {
+      final CountDownLatch startLatch,
+      final CountDownLatch failureLatch,
+      final boolean failureOnStop) {
     return new Supplier<Service>() {
 
       private int failures;
@@ -122,7 +247,7 @@ public class RetryOnStartFailureServiceTest {
       public Service get() {
         return new AbstractIdleService() {
           @Override
-          protected void startUp() throws Exception {
+          protected void startUp() {
             if (failures++ < startFailures) {
               failureLatch.countDown();
               throw new RuntimeException("Fail");

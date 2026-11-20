@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,55 +16,60 @@
 
 package io.cdap.cdap.common.utils;
 
+import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Unit tests for {@link ImmutablePair}.
  */
 public class ImmutablePairTest {
 
   static final class Fixture {
     static ImmutablePair<Integer, Integer> a = new ImmutablePair<>(1, 2);
-    static ImmutablePair<Integer, String>  b = new ImmutablePair<>(1, "woot");
-    static ImmutablePair<String, String>   c = new ImmutablePair<>("me", "you");
+    static ImmutablePair<Integer, String> b = new ImmutablePair<>(1, "woot");
+    static ImmutablePair<String, String> c = new ImmutablePair<>("me", "you");
     static ImmutablePair<Integer, Integer> d = new ImmutablePair<>(1, 2);
     static ImmutablePair<Integer, Integer> e = new ImmutablePair<>(1, 2);
   }
 
   @Test
-  public void testGetFirst() throws Exception {
+  public void testGetFirst() {
     Assert.assertEquals(Integer.class, Fixture.a.getFirst().getClass());
     Assert.assertEquals(1, Fixture.a.getFirst().intValue());
   }
 
   @Test
-  public void testGetSecond() throws Exception {
+  public void testGetSecond() {
     Assert.assertEquals(Integer.class, Fixture.a.getSecond().getClass());
     Assert.assertEquals(2, Fixture.a.getSecond().intValue());
   }
 
   @Test
-  public void testToString() throws Exception {
+  public void testToString() {
     Assert.assertNotNull(Fixture.b.toString());
     Assert.assertEquals("ImmutablePair{first=1, second=woot}", Fixture.b.toString());
+    Assert.assertEquals("ImmutablePair{first=null, second=val}",
+        ImmutablePair.of(null, "val").toString());
+    Assert.assertEquals("ImmutablePair{first=key, second=null}",
+        ImmutablePair.of("key", null).toString());
   }
 
   @Test
-  public void testSelf() throws Exception {
+  public void testSelf() {
     Assert.assertTrue(Fixture.a.equals(Fixture.a));
     Assert.assertTrue(Fixture.b.equals(Fixture.b));
     Assert.assertTrue(Fixture.c.equals(Fixture.c));
   }
 
   @Test
-  public void testIncompatibleTypes()  throws Exception {
+  public void testIncompatibleTypes() {
     Assert.assertFalse(Fixture.a.equals(Fixture.c));
     Assert.assertFalse(Fixture.a.equals(Fixture.b));
   }
 
   @Test
-  public void testNullReferences() throws Exception {
+  public void testNullReferences() {
     Assert.assertFalse(Fixture.a.equals(null));
   }
 
@@ -83,30 +88,29 @@ public class ImmutablePairTest {
   @Test
   public void testEqualsTypeSafe() {
     ImmutablePair<Integer, Boolean> pair1 = new ImmutablePair<>(1, true);
-    ImmutablePair<String, byte[]> pair2 = new ImmutablePair<>("1", "true".getBytes());
+    ImmutablePair<String, byte[]> pair2 =
+        new ImmutablePair<>("1", "true".getBytes(StandardCharsets.UTF_8));
     Assert.assertFalse(pair1.equals(pair2));
     Assert.assertFalse(pair2.equals(pair1));
-    Assert.assertFalse(pair1.equals(new Integer(10)));
+    Assert.assertFalse(pair1.equals(Integer.valueOf(10)));
   }
 
-
   @Test
-  public void testHashCodeConsistency() throws Exception {
+  public void testHashCodeConsistency() {
     int hashcode = Fixture.a.hashCode();
     Assert.assertEquals(hashcode, Fixture.a.hashCode());
     Assert.assertEquals(hashcode, Fixture.a.hashCode());
   }
 
   @Test
-  public void testTwoSameObjectHashCode() throws Exception {
+  public void testTwoSameObjectHashCode() {
     Assert.assertEquals(Fixture.a.hashCode(), Fixture.d.hashCode());
     Assert.assertEquals(Fixture.d.hashCode(), Fixture.e.hashCode());
     Assert.assertEquals(Fixture.e.hashCode(), Fixture.a.hashCode());
   }
 
   @Test
-  public void testTwoDifferentObjectHashCode() throws Exception {
-    Assert.assertTrue(!(Fixture.a.hashCode() == Fixture.c.hashCode()));
+  public void testTwoDifferentObjectHashCode() {
+    Assert.assertNotEquals(Fixture.a.hashCode(), Fixture.c.hashCode());
   }
-
 }
