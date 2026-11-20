@@ -28,6 +28,7 @@ import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.app.upgrade.UpgradeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -204,6 +205,7 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerAdmin.class);
 
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
+    install(new UpgradeModule());
   }
 
   /**

@@ -53,6 +53,7 @@ import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.ApplicationFilter;
 import io.cdap.cdap.app.store.ScanApplicationsRequest;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.app.upgrade.UpgradeManager;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
@@ -117,6 +118,7 @@ import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
+import io.cdap.cdap.proto.upgrade.ListUpgradeResponse;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -187,6 +189,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final int appsScanBatchSize;
   private final MetricsCollectionService metricsCollectionService;
   private final FeatureFlagsProvider featureFlagsProvider;
+  private final UpgradeManager upgradeManager;
 
   /**
    * Construct the ApplicationLifeCycleService with service factory and cConf coming from guice
@@ -202,7 +205,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext,
       MessagingService messagingService, Impersonator impersonator,
       CapabilityReader capabilityReader,
-      MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService, UpgradeManager upgradeManager) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -221,6 +224,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
     this.capabilityReader = capabilityReader;
+    this.upgradeManager = upgradeManager;
     this.adminEventPublisher = new AdminEventPublisher(cConf,
         new MultiThreadMessagingContext(messagingService));
     this.metricsCollectionService = metricsCollectionService;
@@ -669,6 +673,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     return updateApplicationByArtifact(appId, currentSpec, allowedArtifactScopes, allowSnapshot);
+  }
+
+  /**
+   * Lists the upgrade details for all applications in the namespace.
+   *
+   * @param namespace namespace for which upgrades are computed.
+   * @return A {@link ListUpgradeResponse} object that will be returned from the HTTP client.
+   * @throws Exception if there was any exception while listing upgrades.
+   */
+  public ListUpgradeResponse listUpgradeResponse(NamespaceId namespace) throws Exception {
+    return new ListUpgradeResponse(upgradeManager.listUpgrades(namespace));
   }
 
   /**
