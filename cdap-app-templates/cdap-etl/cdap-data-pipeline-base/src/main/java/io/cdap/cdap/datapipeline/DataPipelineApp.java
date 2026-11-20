@@ -35,6 +35,7 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.batch.SparkSource;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
@@ -49,9 +50,9 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   public static final String DEFAULT_DESCRIPTION = "Data Pipeline Application";
   private static final Set<String> supportedPluginTypes = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE,
-    Constants.Connector.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-    Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE,
-    Condition.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
+    Constants.Connector.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, SparkSource.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE,
+    SparkSink.PLUGIN_TYPE, Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE,
+    SplitterTransform.PLUGIN_TYPE, Condition.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
   @Override
   public void configure() {
