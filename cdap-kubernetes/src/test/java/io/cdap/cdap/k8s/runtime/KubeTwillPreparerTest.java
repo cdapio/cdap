@@ -168,7 +168,7 @@ public class KubeTwillPreparerTest {
     Map<String, String> config = new HashMap<>();
     config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "system");
     preparer.withConfiguration(config);
-    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(null, resourceSpecification);
     Assert.assertEquals("1", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("100Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
   }
@@ -183,7 +183,7 @@ public class KubeTwillPreparerTest {
     preparer.withConfiguration(config);
 
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
-    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(null, resourceSpecification);
     Assert.assertEquals("1", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("100Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
   }
@@ -225,7 +225,7 @@ public class KubeTwillPreparerTest {
     config.put(MasterOptionConstants.RUNTIME_NAMESPACE, "system");
     preparer.withConfiguration(config);
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
-    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(null, resourceSpecification);
     Assert.assertEquals("500m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("25Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
   }
@@ -241,7 +241,7 @@ public class KubeTwillPreparerTest {
     preparer.withConfiguration(config);
 
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
-    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(null, resourceSpecification);
     Assert.assertEquals("500m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("50Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
     Assert.assertEquals("1", gotResourceRequirements.getLimits().get("cpu").toSuffixedString());
@@ -261,7 +261,7 @@ public class KubeTwillPreparerTest {
     preparer.withConfiguration(config);
 
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
-    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(resourceSpecification);
+    V1ResourceRequirements gotResourceRequirements = preparer.createResourceRequirements(null, resourceSpecification);
     Assert.assertEquals("300m", gotResourceRequirements.getRequests().get("cpu").toSuffixedString());
     Assert.assertEquals("70Mi", gotResourceRequirements.getRequests().get("memory").toSuffixedString());
     Assert.assertEquals("1", gotResourceRequirements.getLimits().get("cpu").toSuffixedString());
@@ -280,7 +280,7 @@ public class KubeTwillPreparerTest {
     preparer.withConfiguration(config);
 
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(1, 100, 1, 1, 1);
-    preparer.createResourceRequirements(resourceSpecification);
+    preparer.createResourceRequirements(null, resourceSpecification);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -298,7 +298,7 @@ public class KubeTwillPreparerTest {
 
     ResourceSpecification resourceSpecification = new DefaultResourceSpecification(
         1, 100, 1, 1, 1);
-    preparer.createResourceRequirements(resourceSpecification);
+    preparer.createResourceRequirements(null, resourceSpecification);
   }
 
   @Test

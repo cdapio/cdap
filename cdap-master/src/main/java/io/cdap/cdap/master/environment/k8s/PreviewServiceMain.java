@@ -65,10 +65,6 @@ import org.apache.twill.zookeeper.ZKClientService;
  */
 public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
-  // Following constants are same as defined in AbstractKubeTwillPreparer
-  private static final String KUBE_CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
-  private static final String KUBE_MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
-
   /**
    * Main entry point
    */
@@ -79,8 +75,8 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   @Override
   protected CConfiguration updateCConf(CConfiguration cConf) {
     Map<String, String> keyMap = ImmutableMap.of(
-        Constants.Preview.CONTAINER_CPU_MULTIPLIER, KUBE_CPU_MULTIPLIER,
-        Constants.Preview.CONTAINER_MEMORY_MULTIPLIER, KUBE_MEMORY_MULTIPLIER,
+        Constants.Preview.CONTAINER_CPU_MULTIPLIER, Constants.Kube.CPU_MULTIPLIER,
+        Constants.Preview.CONTAINER_MEMORY_MULTIPLIER, Constants.Kube.MEMORY_MULTIPLIER,
         Constants.Preview.CONTAINER_HEAP_RESERVED_RATIO, Configs.Keys.HEAP_RESERVED_MIN_RATIO
     );
 
