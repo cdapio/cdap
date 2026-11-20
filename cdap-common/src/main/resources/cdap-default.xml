@@ -1633,7 +1633,7 @@
 
   <property>
     <name>dataset.custom.module.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enable the support of custom dataset module
     </description>
