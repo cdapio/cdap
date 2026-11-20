@@ -34,6 +34,10 @@ public class Tables {
     public static final String CREATED_FIELD = "create_time";
     public static final String USER_FIELD = "user";
     public static final String SYSTEM_FIELD = "system";
+    public static final String USER_TOKEN_FIELD = "user_tokens";
+    public static final String SYSTEM_TOKEN_FIELD = "system_tokens";
+    public static final String TEXT_TOKEN_FIELD = "text_tokens";
+
   }
 
   /**
@@ -42,10 +46,9 @@ public class Tables {
    */
   public static class MetadataProps {
     public static final String METADATA_ID_FIELD = "metadata_id";
-    public static final String NAMESPACE_FIELD = "namespace";
-    public static final String TYPE_FIELD = "entity_type";
     public static final String NESTED_NAME_FIELD = "name";
     public static final String NESTED_SCOPE_FIELD = "scope";
     public static final String NESTED_VALUE_FIELD = "value";
+    public static final String NESTED_VALUE_TOKEN_FIELD = "value_tokens";
   }
 }
