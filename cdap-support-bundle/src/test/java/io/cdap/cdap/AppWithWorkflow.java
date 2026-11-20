@@ -51,7 +51,8 @@ public class AppWithWorkflow extends AbstractApplication {
       addMapReduce(new WordCountMapReduce());
       addWorkflow(new SampleWorkflow());
     } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

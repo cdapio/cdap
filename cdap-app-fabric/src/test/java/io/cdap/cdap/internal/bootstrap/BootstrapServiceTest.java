@@ -17,9 +17,11 @@
 
 package io.cdap.cdap.internal.bootstrap;
 
+import com.google.common.util.concurrent.Service;
 import com.google.gson.JsonObject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import io.cdap.cdap.internal.bootstrap.executor.BaseStepExecutor;
@@ -30,10 +32,12 @@ import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.bootstrap.BootstrapResult;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -212,6 +216,37 @@ public class BootstrapServiceTest {
     // make sure the state is not bootstrapped and an InterruptedException was thrown
     Assert.assertFalse(bootstrapService.isBootstrapped());
     Assert.assertTrue(wasInterrupted.get());
+  }
+
+  @Test
+  public void testStartUpAndShutDownStopsChildServices() throws Exception {
+    SystemAppManagementService sysAppService =
+        AppFabricTestHelper.getInjector().getInstance(SystemAppManagementService.class);
+    CapabilityManagementService capabilityService =
+        AppFabricTestHelper.getInjector().getInstance(CapabilityManagementService.class);
+    SystemProgramManagementService sysProgramService =
+        AppFabricTestHelper.getInjector().getInstance(SystemProgramManagementService.class);
+
+    BootstrapStep singleStep = new BootstrapStep(
+        "s1", BootstrapStep.Type.CREATE_NATIVE_PROFILE, BootstrapStep.RunCondition.ONCE, new JsonObject());
+    BootstrapConfigProvider provider = new InMemoryBootstrapConfigProvider(
+        new BootstrapConfig(Collections.singletonList(singleStep)));
+    Map<BootstrapStep.Type, BootstrapStepExecutor> executors =
+        Collections.singletonMap(BootstrapStep.Type.CREATE_NATIVE_PROFILE, EXECUTOR1);
+
+    BootstrapService service = new BootstrapService(
+        provider, bootstrapStore, executors, sysAppService, capabilityService, sysProgramService);
+    service.startAsync().awaitRunning();
+    Assert.assertEquals(Service.State.RUNNING, service.state());
+    Tasks.waitFor(Service.State.RUNNING, sysAppService::state, 5, TimeUnit.SECONDS);
+    Tasks.waitFor(Service.State.RUNNING, capabilityService::state, 5, TimeUnit.SECONDS);
+    Tasks.waitFor(Service.State.RUNNING, sysProgramService::state, 5, TimeUnit.SECONDS);
+
+    service.stopAsync().awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+    Assert.assertEquals(Service.State.TERMINATED, sysAppService.state());
+    Assert.assertEquals(Service.State.TERMINATED, capabilityService.state());
+    Assert.assertEquals(Service.State.TERMINATED, sysProgramService.state());
   }
 
   /**

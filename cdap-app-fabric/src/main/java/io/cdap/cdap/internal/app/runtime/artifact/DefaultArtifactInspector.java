@@ -160,7 +160,7 @@ final class DefaultArtifactInspector implements ArtifactInspector {
             new PluginInstantiator(cConf,
                 parentClassLoader == null ? artifactClassLoader : parentClassLoader,
                 Files.createTempDirectory(stageDir, "plugins-").toFile(),
-                false)) {
+                parentClassLoader != null)) {
       pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
       ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
           artifactLocation, artifactClassLoader);
@@ -386,13 +386,14 @@ final class DefaultArtifactInspector implements ArtifactInspector {
               return pluginClassLoader.loadClass(className);
             } catch (ClassNotFoundException | NoClassDefFoundError e) {
               // Cannot happen, since the class name is from the list of the class files under the classloader.
-              throw Throwables.propagate(e);
+              Throwables.throwIfUnchecked(e);
+              throw new RuntimeException(e);
             }
           })
           .collect(Collectors.toList());
     } catch (IOException e) {
       // Cannot happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

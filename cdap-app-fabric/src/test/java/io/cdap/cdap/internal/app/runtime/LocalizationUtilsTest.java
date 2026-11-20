@@ -17,13 +17,17 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.base.Charsets;
+import com.sun.net.httpserver.HttpServer;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.zip.GZIPOutputStream;
@@ -148,6 +152,51 @@ public class LocalizationUtilsTest {
     File gzFile = createGzFile(gzFileName, source);
     File localizationDir = TEMP_FOLDER.newFolder("localGz");
     LocalizationUtils.localizeResource(gzFileName, new LocalizeResource(gzFile, true), localizationDir);
+  }
+
+  @Test
+  public void testLocalFileCopyFallbackAndHttpUrlResource() throws IOException {
+    File sourceDir = TEMP_FOLDER.newFolder("localCopySrc");
+    File sourceFile = new File(sourceDir, "input.txt");
+    Files.write(sourceFile.toPath(), "fresh local content".getBytes(StandardCharsets.UTF_8));
+
+    File targetDir = TEMP_FOLDER.newFolder("localCopyTarget");
+    // Pre-create destination file so Files.createLink throws FileAlreadyExistsException and falls back to copy.
+    File existingDest = new File(targetDir, "localized.txt");
+    Files.write(existingDest.toPath(), "stale content".getBytes(StandardCharsets.UTF_8));
+
+    File localized = LocalizationUtils.localizeResource(
+        "localized.txt", new LocalizeResource(sourceFile, false), targetDir);
+    Assert.assertEquals("fresh local content",
+        new String(Files.readAllBytes(localized.toPath()), StandardCharsets.UTF_8));
+
+    // Localize an HTTP URL directly via Resources.newInputStreamSupplier(url).
+    byte[] payload = "http url payload".getBytes(StandardCharsets.UTF_8);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    server.createContext("/resource_in_http.txt", exchange -> {
+      exchange.sendResponseHeaders(200, payload.length);
+      try (OutputStream os = exchange.getResponseBody()) {
+        os.write(payload);
+      }
+    });
+    server.start();
+    try {
+      URI httpUri = URI.create(
+          "http://127.0.0.1:" + server.getAddress().getPort() + "/resource_in_http.txt");
+      File httpTargetDir = TEMP_FOLDER.newFolder("httpUrlTarget");
+      File localizedFromHttp = LocalizationUtils.localizeResource(
+          "extracted_payload.txt", new LocalizeResource(httpUri, false), httpTargetDir);
+      Assert.assertTrue(localizedFromHttp.isFile());
+      Assert.assertEquals("http url payload",
+          new String(Files.readAllBytes(localizedFromHttp.toPath()), StandardCharsets.UTF_8));
+    } finally {
+      server.stop(0);
+    }
+
+    Assert.assertEquals("bar.jar",
+        LocalizationUtils.getLocalizedName(URI.create("file:///tmp/foo.jar#bar.jar")));
+    Assert.assertEquals("foo.jar",
+        LocalizationUtils.getLocalizedName(URI.create("file:///tmp/foo.jar")));
   }
 
   private void testTarFiles(TarFileType type) throws IOException {

@@ -105,7 +105,8 @@ public class WorkflowStatusTestApp extends AbstractApplication {
           }
         } catch (InterruptedException e) {
           LOG.warn("Interrupted while waiting for done file {}", firstFileDone);
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     }

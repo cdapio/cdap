@@ -77,7 +77,8 @@ public class WorkflowTest {
     try {
       return tmpFolder.newFolder();
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   };
 

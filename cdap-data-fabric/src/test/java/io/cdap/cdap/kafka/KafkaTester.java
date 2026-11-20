@@ -128,19 +128,19 @@ public class KafkaTester extends ExternalResource {
   protected void before() throws Throwable {
     tmpFolder.create();
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAndWait();
+    zkServer.startAsync().awaitRunning();
     LOG.info("In memory ZK started on {}", zkServer.getConnectionStr());
 
     kafkaServer = new EmbeddedKafkaServer(generateKafkaConfig());
-    kafkaServer.startAndWait();
+    kafkaServer.startAsync().awaitRunning();
     initializeCconf();
     injector = createInjector();
     zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     kafkaClient = injector.getInstance(KafkaClientService.class);
-    kafkaClient.startAndWait();
+    kafkaClient.startAsync().awaitRunning();
     brokerService = injector.getInstance(BrokerService.class);
-    brokerService.startAndWait();
+    brokerService.startAsync().awaitRunning();
 
     String brokerList = updateKafkaBrokerList(injector.getInstance(CConfiguration.class),
         brokerService);
@@ -151,11 +151,11 @@ public class KafkaTester extends ExternalResource {
 
   @Override
   protected void after() {
-    brokerService.stopAndWait();
-    kafkaClient.stopAndWait();
-    zkClient.stopAndWait();
-    kafkaServer.stopAndWait();
-    zkServer.stopAndWait();
+    brokerService.stopAsync().awaitTerminated();
+    kafkaClient.stopAsync().awaitTerminated();
+    zkClient.stopAsync().awaitTerminated();
+    kafkaServer.stopAsync().awaitTerminated();
+    zkServer.stopAsync().awaitTerminated();
   }
 
   private void initializeCconf() throws IOException {

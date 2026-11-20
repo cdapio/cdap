@@ -107,7 +107,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
 
     // Schedule the credentials update if necessary
     if (credentialsUpdater != null) {
-      credentialsUpdater.startAndWait();
+      credentialsUpdater.startAsync().awaitRunning();
     }
 
     LOG.info("SparkDriverService started.");
@@ -167,7 +167,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
     Thread.interrupted();
     try {
       if (credentialsUpdater != null) {
-        credentialsUpdater.stopAndWait();
+        credentialsUpdater.stopAsync().awaitTerminated();
       }
     } finally {
       if (completionState.get() == CompletionState.COMPLETED) {
@@ -264,7 +264,8 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
         }
       } catch (Exception e) {
         // Just throw it out. The SparkCredentialsUpdater will handle it
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     };
   }
@@ -289,7 +290,7 @@ public class SparkDriverService extends AbstractExecutionThreadService implement
                  terminateTs, terminationTimeout);
       }
       runtimeContext.setTerminationTime(TimeUnit.SECONDS.toMillis(terminateTs));
-      stop();
+      stopAsync();
     } else {
       LOG.warn("Ignoring unsupported command {}", command);
     }

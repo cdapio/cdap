@@ -64,4 +64,15 @@ public class CLIMainArgsTest {
       CLIMainArgs.parse(new String[]{"--sdflkjsdlkfjsjdlf"}, CLIMain.getOptions()));
   }
 
+  @Test
+  public void testToString() {
+    CLIMainArgs args = new CLIMainArgs(new String[]{"-u", "localhost"}, new String[]{"list", "apps"});
+    Assert.assertEquals(
+      "CLIMainArgs{optionTokens=[-u, localhost], commandTokens=[list, apps]}",
+      args.toString());
+
+    CLIMainArgs emptyArgs = new CLIMainArgs(new String[]{}, new String[]{});
+    Assert.assertEquals("CLIMainArgs{optionTokens=[], commandTokens=[]}", emptyArgs.toString());
+  }
+
 }

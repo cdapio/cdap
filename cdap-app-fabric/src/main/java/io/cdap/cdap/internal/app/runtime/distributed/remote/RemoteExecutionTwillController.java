@@ -47,7 +47,6 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +89,7 @@ class RemoteExecutionTwillController implements TwillController {
       completion.completeExceptionally(throwable);
       return RemoteExecutionTwillController.this;
     });
-    service.addListener(new ServiceListenerAdapter() {
+    service.addListener(new Service.Listener() {
       @Override
       public void terminated(Service.State from) {
         if (terminateOnServiceStop) {
@@ -115,12 +114,12 @@ class RemoteExecutionTwillController implements TwillController {
 
   public void release() {
     terminateOnServiceStop = false;
-    executionService.stop();
+    executionService.stopAsync();
   }
 
   public void complete() {
     terminateOnServiceStop = true;
-    executionService.stop();
+    executionService.stopAsync();
     try {
       RuntimeJobStatus status;
       RetryStrategy retryStrategy = RetryStrategies.timeLimit(

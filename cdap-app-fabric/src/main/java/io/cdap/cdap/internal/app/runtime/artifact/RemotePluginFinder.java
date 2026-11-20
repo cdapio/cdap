@@ -141,7 +141,8 @@ public class RemotePluginFinder implements PluginFinder {
     } catch (ArtifactNotFoundException e) {
       throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

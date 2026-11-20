@@ -31,7 +31,6 @@
 
   <properties>
     <google.cloud.secretmanager.version>2.8.0</google.cloud.secretmanager.version>
-    <guava.version>31.1-jre</guava.version>
   </properties>
 
   <dependencies>

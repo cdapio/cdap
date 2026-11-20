@@ -102,7 +102,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       // metrics tables are in the system namespace
       return getOrCreateTable(NamespaceId.SYSTEM.dataset(tableName), props);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
