@@ -79,6 +79,49 @@ public class DataSourceProviderTest {
     Assert.assertNotNull(loadedDriver);
   }
 
+  @Test
+  public void testRejectsMaliciousJdbcUrlAndProperties() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
+    cConf.setBoolean(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_EXTERNAL, false);
+    cConf.set(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL,
+              "jdbc:postgresql://localhost:5432/db?socketFactory=org.evil.SocketFactory");
+    SConfiguration sConf = SConfiguration.create();
+
+    try {
+      PostgreSqlStorageProvider.createDataSource(cConf, sConf, new NoOpMetricsCollectionService());
+      Assert.fail("Expected IllegalArgumentException for dangerous JDBC URL");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    cConf.set(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL, "jdbc:postgresql://localhost:5432/db");
+    cConf.set(Constants.Dataset.DATA_STORAGE_SQL_PROPERTY_PREFIX + "sslfactory", "org.evil.SslFactory");
+    try {
+      PostgreSqlStorageProvider.createDataSource(cConf, sConf, new NoOpMetricsCollectionService());
+      Assert.fail("Expected IllegalArgumentException for dangerous JDBC property");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    JDBCDriverShim shim = new JDBCDriverShim(new NoopDriver());
+    try {
+      shim.acceptsURL("jdbc:mysql://localhost:3306/db?allowLoadLocalInfile=true");
+      Assert.fail("Expected IllegalArgumentException in JDBCDriverShim.acceptsURL");
+    } catch (IllegalArgumentException | SQLException expected) {
+      Assert.assertTrue(expected instanceof IllegalArgumentException);
+    }
+
+    Properties badProps = new Properties();
+    badProps.setProperty("autoDeserialize", "true");
+    try {
+      shim.connect("jdbc:mysql://localhost:3306/db", badProps);
+      Assert.fail("Expected IllegalArgumentException in JDBCDriverShim.connect");
+    } catch (IllegalArgumentException | SQLException expected) {
+      Assert.assertTrue(expected instanceof IllegalArgumentException);
+    }
+  }
+
   public static final class NoopDriver implements Driver {
 
     @Override

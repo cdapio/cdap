@@ -124,6 +124,7 @@ public class PostgreSqlStorageProvider implements StorageProvider {
       throw new IllegalArgumentException("The jdbc connection url is not specified.");
     }
     Properties properties = retrieveJDBCConnectionProperties(cConf, sConf);
+    JDBCDriverShim.validateJdbcConnection(jdbcUrl, properties);
     LOG.info("Creating the DataSource with jdbc url: {}", jdbcUrl);
 
     ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(jdbcUrl, properties);
@@ -168,6 +169,7 @@ public class PostgreSqlStorageProvider implements StorageProvider {
             cConfEntry.getValue());
       }
     }
+    JDBCDriverShim.validateProperties(properties);
     return properties;
   }
 
