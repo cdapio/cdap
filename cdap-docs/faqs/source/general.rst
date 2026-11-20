@@ -25,7 +25,7 @@ What platforms are supported by the CDAP Sandbox?
 -------------------------------------------------------
 The CDAP Sandbox has been extensively tested on Mac OS X and Linux. CDAP on Windows
 has not been as extensively tested. If you have any issues with CDAP on Windows, help us by
-`filing a ticket <https://issues.cask.co/browse/CDAP>`__.
+`filing a ticket <https://cdap.atlassian.net/browse/CDAP>`__.
 
 What programming languages are supported by CDAP?
 -------------------------------------------------
@@ -66,7 +66,7 @@ I've found a bug in CDAP. How do I file an issue?
 -------------------------------------------------
 You can use the `CDAP User GoogleGroup <https://groups.google.com/d/forum/cdap-user>`__ to
 report issues or file a ticket using the available `CDAP JIRA system
-<https://issues.cask.co/browse/CDAP>`__.
+<https://cdap.atlassian.net/browse/CDAP>`__.
 
 What User Groups and Mailing Lists are available about CDAP?
 ------------------------------------------------------------
