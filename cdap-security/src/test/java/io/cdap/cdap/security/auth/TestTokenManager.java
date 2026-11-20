@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 import org.junit.Test;
@@ -112,10 +113,46 @@ public abstract class TestTokenManager {
     AccessToken token2 = tokenCodec.decode(tokenBytes);
 
     assertEquals(token1, token2);
+    assertEquals(UserIdentity.IdentifierType.EXTERNAL, token2.getIdentifier().getIdentifierType());
     LOG.info("Deserialized token is: " + Bytes.toStringBinary(tokenCodec.encode(token2)));
     // should be valid since we just signed it
     tokenManager.validateSecret(token2);
 
     tokenManager.stopAndWait();
+  }
+
+  @Test
+  public void testRuntimeTokenSerializationAndOrdinals() throws Exception {
+    // Existing enum ordinals and schema version must stay stable for wire compatibility.
+    assertEquals(0, UserIdentity.IdentifierType.INVALID.ordinal());
+    assertEquals(1, UserIdentity.IdentifierType.EXTERNAL.ordinal());
+    assertEquals(2, UserIdentity.IdentifierType.INTERNAL.ordinal());
+    assertEquals(3, UserIdentity.IdentifierType.RUNTIME.ordinal());
+    assertEquals(2, UserIdentity.Schemas.getVersion());
+    assertEquals(2, AccessToken.Schemas.getVersion());
+
+    ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
+    TokenManager tokenManager = pair.getFirst();
+    tokenManager.startAndWait();
+    try {
+      Codec<AccessToken> tokenCodec = pair.getSecond();
+      long now = System.currentTimeMillis();
+      List<String> groups = Lists.newArrayList();
+      for (UserIdentity.IdentifierType type : EnumSet.of(
+          UserIdentity.IdentifierType.EXTERNAL,
+          UserIdentity.IdentifierType.INTERNAL,
+          UserIdentity.IdentifierType.RUNTIME)) {
+        UserIdentity identity =
+            new UserIdentity("testuser", type, groups, now, now + TOKEN_DURATION);
+        AccessToken signed = tokenManager.signIdentifier(identity);
+        AccessToken decoded = tokenCodec.decode(tokenCodec.encode(signed));
+        assertEquals("Round-trip mismatch for type: " + type, signed, decoded);
+        // UserIdentity.equals ignores identifierType, so verify the decoded type explicitly.
+        assertEquals(type, decoded.getIdentifier().getIdentifierType());
+        tokenManager.validateSecret(decoded);
+      }
+    } finally {
+      tokenManager.stopAndWait();
+    }
   }
 }
