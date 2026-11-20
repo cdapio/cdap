@@ -145,7 +145,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private static final NavigableMap<String, String> PYSPARK_BY_VERSION =
       ImmutableSortedMap.of(
           "", "pyspark/pyspark.zip",
-          "3.3", "pyspark/pyspark33.zip"
+          "3.3", "pyspark/pyspark33.zip",
+          "3.5", "pyspark/pyspark35.zip"
+      );
+
+  private static final NavigableMap<String, String> PY4J_BY_VERSION =
+      ImmutableSortedMap.of(
+          "", "pyspark/py4j-src.zip",
+          "3.5", "pyspark/py4j35-src.zip"
       );
 
   private final CConfiguration cConf;
@@ -769,7 +776,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * @param result  the collection for storing the result
    */
   private void extractPySparkLibrary(File tempDir, Collection<File> result) throws IOException {
-    URL py4jURL = getClass().getClassLoader().getResource("pyspark/py4j-src.zip");
+    String sparkVersion = SparkRuntimeEnv.getVersion();
+    URL py4jURL = getClass().getClassLoader().getResource(
+        PY4J_BY_VERSION.floorEntry(sparkVersion).getValue());
     if (py4jURL == null) {
       // This shouldn't happen
       throw new IOException("Failed to locate py4j-src.zip, which is required to run PySpark");
@@ -780,7 +789,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
     result.add(file);
 
-    String sparkVersion = SparkRuntimeEnv.getVersion();
     URL pysparkURL = getClass().getClassLoader().getResource(
         PYSPARK_BY_VERSION.floorEntry(sparkVersion).getValue());
     if (pysparkURL == null) {

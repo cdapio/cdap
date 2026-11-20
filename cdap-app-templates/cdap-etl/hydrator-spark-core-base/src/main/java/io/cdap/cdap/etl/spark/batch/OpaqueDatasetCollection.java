@@ -32,7 +32,6 @@ import io.cdap.cdap.etl.spark.join.JoinRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.MapFunction;
@@ -132,28 +131,34 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
    * Here we are trying to check if the new method introduced in 3.5.1 exists or not, and based on that we
    * invoke the new method or the old one.
    */
+  @SuppressWarnings("unchecked")
   public static ExpressionEncoder<Row> getRowEncoder(StructType sparkSchema) {
-
     try {
       return ENCODER_CACHE.get(sparkSchema, () -> {
-        StringBuilder errorStrBuilder = new StringBuilder("Failed to load a suitable Encoder dynamically. Errors : ");
+        StringBuilder errorStrBuilder =
+            new StringBuilder("Failed to load a suitable Encoder dynamically. Errors : ");
         try {
-          Method encoderForMethod =  RowEncoder.class.getMethod("encoderFor", StructType.class);
+          Method encoderForMethod = RowEncoder.class.getMethod("encoderFor", StructType.class);
           Object agnosticEncoderObj = encoderForMethod.invoke(null, sparkSchema);
 
           Method applyMethod = ExpressionEncoder.class.getMethod("apply",
-                         Class.forName("org.apache.spark.sql.catalyst.encoders.AgnosticEncoder"));
-          return (ExpressionEncoder<Row>)applyMethod.invoke(null, agnosticEncoderObj);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
-                 ClassNotFoundException e) {
-          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+              Class.forName("org.apache.spark.sql.catalyst.encoders.AgnosticEncoder"));
+          return (ExpressionEncoder<Row>) applyMethod.invoke(null, agnosticEncoderObj);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException
+                 | ClassNotFoundException e) {
+          Throwable cause =
+              e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+          errorStrBuilder.append(System.lineSeparator()).append(cause);
         }
 
         // If code reaches here, meaning it should be spark 3.3.2 or lower.
         try {
-          return RowEncoder.apply(sparkSchema);
+          Method applyMethod = RowEncoder.class.getMethod("apply", StructType.class);
+          return (ExpressionEncoder<Row>) applyMethod.invoke(null, sparkSchema);
         } catch (Exception e) {
-          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+          Throwable cause =
+              e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+          errorStrBuilder.append(System.lineSeparator()).append(cause);
         }
         throw new RuntimeException(errorStrBuilder.toString());
       });
