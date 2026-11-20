@@ -128,6 +128,12 @@ public class ServerResource extends ExternalResource {
     }
 
     @GET
+    @Path("/v1/repeat")
+    public void repeatRoot(HttpRequest request, final HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "repeat-root");
+    }
+
+    @GET
     @Path("/v1/repeat/{name}")
     public void repeat(HttpRequest request, final HttpResponder responder,
                        @PathParam("name") String name) throws InterruptedException, IOException {
