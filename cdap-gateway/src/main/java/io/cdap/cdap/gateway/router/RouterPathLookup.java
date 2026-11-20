@@ -70,15 +70,19 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   @Nullable
   public RouteDestination getRoutingService(String requestPath, HttpRequest httpRequest) {
     try {
-      String method = httpRequest.method().name();
-      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StreamSupport
           .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
           .toArray(String[]::new);
 
-      if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
-        return getV3RoutingService(uriParts, requestMethod);
+      // Check the path before parsing the method: AllowedMethod.valueOf throws for methods such
+      // as PATCH or HEAD, and the catch block below then routes the request to app-fabric.
+      if (uriParts.length == 0 || !uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
+        return DONT_ROUTE;
       }
+
+      String method = httpRequest.method().name();
+      AllowedMethod requestMethod = AllowedMethod.valueOf(method);
+      return getV3RoutingService(uriParts, requestMethod);
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
     }

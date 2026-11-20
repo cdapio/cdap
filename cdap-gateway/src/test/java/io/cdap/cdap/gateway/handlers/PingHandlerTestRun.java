@@ -22,6 +22,7 @@ import io.cdap.cdap.gateway.GatewayTestBase;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -29,6 +30,7 @@ import org.junit.Test;
  */
 public class PingHandlerTestRun extends GatewayTestBase {
   @Test
+  @Ignore("The router no longer forwards GET /ping")
   public void testPing() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet("/ping");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());

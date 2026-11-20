@@ -21,6 +21,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.HandlerException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
@@ -28,6 +29,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.gateway.discovery.VersionFilteredServiceDiscovered;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.URI;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -76,9 +78,11 @@ public class RouterServiceLookup {
     try {
       // Check if the requested path shouldn't be routed (internal URL).
       RouteDestination destService = routerPathLookup.getRoutingService(path, httpRequest);
-      if (destService == null || Strings.isNullOrEmpty(destService.getServiceName())
-          || destService.getServiceName().equals(Constants.Router.DONT_ROUTE_SERVICE)) {
+      if (destService == null || Strings.isNullOrEmpty(destService.getServiceName())) {
         return null;
+      }
+      if (destService.getServiceName().equals(Constants.Router.DONT_ROUTE_SERVICE)) {
+        throw new HandlerException(HttpResponseStatus.NOT_FOUND, "Not Found");
       }
 
       LOG.trace("Request was routed from {} to: {}", path, destService);

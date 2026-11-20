@@ -141,7 +141,9 @@ public class StandaloneTester extends ExternalResource {
   }
 
   private void waitForStandalone() throws Exception {
-    final URL url = getBaseURI().resolve("/ping").toURL();
+    final URL url = getBaseURI().resolve(
+        String.format("%s/system/services/%s/status",
+                      Constants.Gateway.API_VERSION_3, Constants.Service.APP_FABRIC_HTTP)).toURL();
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

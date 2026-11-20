@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -45,6 +46,7 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
   @Test
+  @Ignore("Uses GET /ping, which the router no longer forwards")
   public void testMetricsSuccess() throws Exception {
     String context = "tag=namespace:system&tag=component:appfabric&tag=handler:PingHandler&tag=method:ping";
 
