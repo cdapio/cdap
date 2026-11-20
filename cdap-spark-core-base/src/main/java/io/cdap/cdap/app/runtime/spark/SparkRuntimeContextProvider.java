@@ -44,7 +44,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.CombineClassLoader;
+import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -94,6 +95,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Authenticator;
@@ -103,9 +105,13 @@ import java.net.MalformedURLException;
 import java.net.ProxySelector;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
@@ -124,6 +130,10 @@ public final class SparkRuntimeContextProvider {
   static final String PROGRAM_JAR_EXPANDED_NAME = "program.jar.expanded.zip";
   static final String PROGRAM_JAR_NAME = "program.jar";
   static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
+  static final String SPARK_EXECUTOR_CLASSLOADER_NAME =
+      "org.apache.spark.executor.ExecutorClassLoader";
+  private static final String CHILD_FIRST_CLASSLOADER_NAME =
+      "org.apache.spark.util.ChildFirstURLClassLoader";
   public static final String ARTIFACTS_DIRECTORY_NAME = "artifacts_archive.jar";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
@@ -146,24 +156,7 @@ public final class SparkRuntimeContextProvider {
 
     // Try to find it from the context classloader
     ClassLoader runtimeClassLoader = Thread.currentThread().getContextClassLoader();
-
-    // For interactive Spark, it uses ExecutorClassLoader, which doesn't follow normal classloader hierarchy.
-    // Since the presence of ExecutorClassLoader is optional in Spark, use reflection to gain access to the parentLoader
-    if (EXECUTOR_CLASSLOADER_NAME.equals(runtimeClassLoader.getClass().getName())) {
-      try {
-        Method getParentLoader = runtimeClassLoader.getClass().getDeclaredMethod("parentLoader");
-        if (!getParentLoader.isAccessible()) {
-          getParentLoader.setAccessible(true);
-        }
-        runtimeClassLoader = ((ClassLoader) getParentLoader.invoke(runtimeClassLoader)).getParent();
-      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
-        LOG.warn("Unable to get the CDAP runtime classloader from {}. "
-                   + "Spark program may not be running correctly if {} is being used.",
-                 EXECUTOR_CLASSLOADER_NAME, SparkInterpreter.class.getName(), e);
-      }
-    }
-
-    SparkClassLoader sparkClassLoader = ClassLoaders.find(runtimeClassLoader, SparkClassLoader.class);
+    SparkClassLoader sparkClassLoader = findSparkClassLoader(runtimeClassLoader);
 
     if (sparkClassLoader != null) {
       // Shouldn't set the sparkContext field. It is because in Standalone, the SparkContext instance will be different
@@ -175,6 +168,81 @@ public final class SparkRuntimeContextProvider {
       return sparkClassLoader.getRuntimeContext();
     }
     return createIfNotExists();
+  }
+
+  /**
+   * Finds {@link SparkClassLoader} from the given {@link ClassLoader} hierarchy, traversing
+   * Spark 3.3 {@code org.apache.spark.repl.ExecutorClassLoader}, Spark 3.5+
+   * {@code org.apache.spark.executor.ExecutorClassLoader}, and
+   * {@code org.apache.spark.util.ChildFirstURLClassLoader} wrappers whose {@code getParent()} is
+   * {@code null}.
+   */
+  @Nullable
+  public static SparkClassLoader findSparkClassLoader(@Nullable ClassLoader classLoader) {
+    if (classLoader == null) {
+      return null;
+    }
+
+    Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+    Queue<ClassLoader> queue = new LinkedList<>();
+    visited.add(classLoader);
+    queue.add(classLoader);
+
+    while (!queue.isEmpty()) {
+      ClassLoader cl = queue.remove();
+      if (cl instanceof SparkClassLoader) {
+        return (SparkClassLoader) cl;
+      }
+      if (cl instanceof Delegator) {
+        Object delegate = ((Delegator<?>) cl).getDelegate();
+        if (delegate instanceof ClassLoader) {
+          enqueueClassLoader(queue, visited, (ClassLoader) delegate);
+        }
+      }
+      if (cl instanceof CombineClassLoader) {
+        for (ClassLoader delegate : ((CombineClassLoader) cl).getDelegates()) {
+          enqueueClassLoader(queue, visited, delegate);
+        }
+      }
+      String clName = cl.getClass().getName();
+      if (EXECUTOR_CLASSLOADER_NAME.equals(clName)
+          || SPARK_EXECUTOR_CLASSLOADER_NAME.equals(clName)) {
+        try {
+          Method getParentLoader = cl.getClass().getDeclaredMethod("parentLoader");
+          if (!getParentLoader.isAccessible()) {
+            getParentLoader.setAccessible(true);
+          }
+          ClassLoader parentLoader = (ClassLoader) getParentLoader.invoke(cl);
+          enqueueClassLoader(queue, visited, parentLoader);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException
+                 | ClassCastException e) {
+          LOG.warn("Unable to get the CDAP runtime classloader from {}. "
+                     + "Spark program may not be running correctly if {} is being used.",
+                   clName, SparkInterpreter.class.getName(), e);
+        }
+      } else if (CHILD_FIRST_CLASSLOADER_NAME.equals(clName)) {
+        try {
+          Field parentField = cl.getClass().getDeclaredField("parent");
+          if (!parentField.isAccessible()) {
+            parentField.setAccessible(true);
+          }
+          ClassLoader parentLoader = (ClassLoader) parentField.get(cl);
+          enqueueClassLoader(queue, visited, parentLoader);
+        } catch (NoSuchFieldException | IllegalAccessException | ClassCastException e) {
+          LOG.debug("Unable to inspect parent field on {}.", clName, e);
+        }
+      }
+      enqueueClassLoader(queue, visited, cl.getParent());
+    }
+    return null;
+  }
+
+  private static void enqueueClassLoader(Queue<ClassLoader> queue,
+                                         Set<ClassLoader> visited,
+                                         @Nullable ClassLoader cl) {
+    if (cl != null && visited.add(cl)) {
+      queue.add(cl);
+    }
   }
 
   /**
