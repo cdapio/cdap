@@ -1092,18 +1092,20 @@ public class AppMetadataStore {
                 + "a status in end state {}.", programRunId, existing.getStatus());
         return null;
       }
+      Map<String, String> newSystemArgs = new HashMap<>(systemArgs);
+      preserveRuntimeScopes(existing.getSystemArgs(), newSystemArgs);
       delete(existing);
       meta = RunRecordDetail.builder(existing)
           .setStatus(ProgramRunStatus.PENDING)
-          .setProperties(getRecordProperties(systemArgs, runtimeArgs))
-          .setSystemArgs(systemArgs)
+          .setProperties(getRecordProperties(newSystemArgs, runtimeArgs))
+          .setSystemArgs(newSystemArgs)
           .setCluster(cluster)
           .setProfileId(profileId.get())
-          .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
+          .setPeerName(newSystemArgs.get(ProgramOptionConstants.PEER_NAME))
           .setSourceId(sourceId)
           .setArtifactId(artifactId)
-          .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
-          .setFlowControlStatus(getFlowControlStatus(programRunId, ProgramRunStatus.PENDING, systemArgs))
+          .setPrincipal(newSystemArgs.get(ProgramOptionConstants.PRINCIPAL))
+          .setFlowControlStatus(getFlowControlStatus(programRunId, ProgramRunStatus.PENDING, newSystemArgs))
           .build();
       List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE,
           existing.getProgramRunId(),
@@ -1129,6 +1131,20 @@ public class AppMetadataStore {
       builder.put(WORKFLOW_RUNID, workflowRunId);
     }
     return builder.build();
+  }
+
+  /**
+   * Preserves the existing {@link ProgramOptionConstants#RUNTIME_SCOPES} entry (value or absence)
+   * on {@code targetSystemArgs} so scopes remain write-once for the life of a run record.
+   */
+  private static void preserveRuntimeScopes(Map<String, String> existingSystemArgs,
+      Map<String, String> targetSystemArgs) {
+    if (existingSystemArgs.containsKey(ProgramOptionConstants.RUNTIME_SCOPES)) {
+      targetSystemArgs.put(ProgramOptionConstants.RUNTIME_SCOPES,
+          existingSystemArgs.get(ProgramOptionConstants.RUNTIME_SCOPES));
+    } else {
+      targetSystemArgs.remove(ProgramOptionConstants.RUNTIME_SCOPES);
+    }
   }
 
   /**
@@ -1336,17 +1352,23 @@ public class AppMetadataStore {
       builder = RunRecordDetail.builder(existing).setStopTime(existing.getStartTs());
     }
 
+    Map<String, String> newSystemArgs = systemArgs;
+    if (existing != null) {
+      newSystemArgs = new HashMap<>(systemArgs);
+      preserveRuntimeScopes(existing.getSystemArgs(), newSystemArgs);
+    }
+
     Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(
-        programRunId.getNamespaceId(), systemArgs);
+        programRunId.getNamespaceId(), newSystemArgs);
     RunRecordDetail meta = builder.setStatus(ProgramRunStatus.REJECTED)
-        .setProperties(getRecordProperties(systemArgs, runtimeArgs))
-        .setSystemArgs(systemArgs)
+        .setProperties(getRecordProperties(newSystemArgs, runtimeArgs))
+        .setSystemArgs(newSystemArgs)
         .setProfileId(profileId.orElse(null))
-        .setPeerName(systemArgs.get(ProgramOptionConstants.PEER_NAME))
+        .setPeerName(newSystemArgs.get(ProgramOptionConstants.PEER_NAME))
         .setArtifactId(artifactId)
         .setSourceId(sourceId)
-        .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
-        .setFlowControlStatus(getFlowControlStatus(programRunId, ProgramRunStatus.REJECTED, systemArgs))
+        .setPrincipal(newSystemArgs.get(ProgramOptionConstants.PRINCIPAL))
+        .setFlowControlStatus(getFlowControlStatus(programRunId, ProgramRunStatus.REJECTED, newSystemArgs))
         .build();
 
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED,
@@ -1406,6 +1428,7 @@ public class AppMetadataStore {
 
     Map<String, String> newSystemArgs = new HashMap<>(existing.getSystemArgs());
     newSystemArgs.putAll(systemArgs);
+    preserveRuntimeScopes(existing.getSystemArgs(), newSystemArgs);
 
     // Delete the old run record
     delete(existing);
