@@ -148,6 +148,10 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
                     + "backend.",
                 Constants.Security.Authorization.EXTENSION_JAR_PATH));
       }
+      if (accessControllerExtensionJarPath.toLowerCase().contains("sentry")) {
+        throw new IllegalArgumentException(
+            "Apache Sentry authorization extension is deprecated and no longer supported.");
+      }
       try {
         File accessControllerExtensionJar = new File(accessControllerExtensionJarPath);
         ensureValidAuthExtensionJar(accessControllerExtensionJar);
