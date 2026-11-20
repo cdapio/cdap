@@ -827,4 +827,33 @@ public class DataprocClientTest {
     Assert.assertEquals("latest-op", result.get().getName());
   }
 
+  @Test
+  public void testGetLatestOperationForDelete() throws Exception {
+    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+        new ErrorCategory(ErrorCategoryEnum.OTHERS));
+
+    OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
+    PowerMockito.when(clusterControllerClientMock.getOperationsClient()).thenReturn(operationsClient);
+
+    OperationsClient.ListOperationsPagedResponse response =
+        PowerMockito.mock(OperationsClient.ListOperationsPagedResponse.class);
+    PowerMockito.when(operationsClient.listOperations(
+        eq("projects/dummy-project/regions/us-test1/operations"),
+        eq("labels.goog-dataproc-cluster-name=\"mycluster\" AND operationType=\"DELETE\"")))
+        .thenReturn(response);
+
+    OperationsClient.ListOperationsPage page = mock(OperationsClient.ListOperationsPage.class);
+    when(response.getPage()).thenReturn(page);
+
+    Operation targetClusterOp = Operation.newBuilder()
+        .setName("target-delete-op")
+        .setDone(true)
+        .build();
+    when(page.getValues()).thenReturn(Collections.singletonList(targetClusterOp));
+
+    Optional<Operation> result = client.getLatestOperation("mycluster", "DELETE");
+
+    assertTrue(result.isPresent());
+    assertEquals("target-delete-op", result.get().getName());
+  }
 }

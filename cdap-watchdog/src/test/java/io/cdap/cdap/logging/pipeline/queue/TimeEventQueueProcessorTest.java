@@ -72,6 +72,61 @@ public class TimeEventQueueProcessorTest {
     }
   }
 
+  @Test
+  public void testEventWithoutLoggerNameIsDroppedNotRetried() throws Exception {
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext("WARN",
+                                                                          ImmutableMap.of("test.logger", "INFO"),
+                                                                          MockAppender.class.getName());
+    LogProcessorPipelineContext context = new LogProcessorPipelineContext(CConfiguration.create(),
+                                                                          "test", loggerContext, NO_OP_METRICS_CONTEXT,
+                                                                          0);
+    context.start();
+    TimeEventQueueProcessor<TestOffset> processor = new TimeEventQueueProcessor<>(context, 50, 1,
+                                                                                  ImmutableList.of(0));
+    long now = System.currentTimeMillis();
+    List<ILoggingEvent> events = ImmutableList.of(
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 1000),
+      // Damaged record read back from the log buffer: no logger name. Before the fix this event was
+      // retried forever and every event behind it stayed stuck in the queue.
+      LogPipelineTestUtil.createLoggingEvent(null, Level.INFO, "2", now - 900),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "3", now - 800));
+
+    ProcessedEventMetadata<TestOffset> metadata = processor.process(0, new TransformingIterator(events.iterator()));
+
+    // The bad event is dropped and counted as processed, so the good event behind it is delivered,
+    // the queue drains and the checkpoint moves past the bad event.
+    Assert.assertEquals(3, metadata.getTotalEventsProcessed());
+    Assert.assertEquals(3, metadata.getCheckpoints().get(0).getOffset().getOffset());
+    Assert.assertTrue(processor.isQueueEmpty(0));
+  }
+
+  @Test
+  public void testEventFailingDeterministicallyIsDroppedNotRetried() throws Exception {
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext("WARN",
+                                                                          ImmutableMap.of("test.logger", "INFO"),
+                                                                          MockAppender.class.getName());
+    LogProcessorPipelineContext context = new LogProcessorPipelineContext(CConfiguration.create(),
+                                                                          "test", loggerContext, NO_OP_METRICS_CONTEXT,
+                                                                          0);
+    context.start();
+    TimeEventQueueProcessor<TestOffset> processor = new TimeEventQueueProcessor<>(context, 50, 1,
+                                                                                  ImmutableList.of(0));
+    long now = System.currentTimeMillis();
+    List<ILoggingEvent> events = ImmutableList.of(
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 1000),
+      // Damaged record with a logger name but no level: appending it fails with a
+      // NullPointerException downstream of the logger lookup. That failure is deterministic, so the
+      // event must be dropped rather than retried.
+      LogPipelineTestUtil.createLoggingEvent("test.logger", null, "2", now - 900),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "3", now - 800));
+
+    ProcessedEventMetadata<TestOffset> metadata = processor.process(0, new TransformingIterator(events.iterator()));
+
+    Assert.assertEquals(3, metadata.getTotalEventsProcessed());
+    Assert.assertEquals(3, metadata.getCheckpoints().get(0).getOffset().getOffset());
+    Assert.assertTrue(processor.isQueueEmpty(0));
+  }
+
   /**
    * Offset for unit-test.
    */
