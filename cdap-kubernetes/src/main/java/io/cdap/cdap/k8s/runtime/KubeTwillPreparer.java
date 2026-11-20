@@ -70,6 +70,8 @@ import io.kubernetes.client.openapi.models.V1PodSpecBuilder;
 import io.kubernetes.client.openapi.models.V1Probe;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1ResourceRequirementsBuilder;
+import io.kubernetes.client.openapi.models.V1CapabilitiesBuilder;
+import io.kubernetes.client.openapi.models.V1SeccompProfileBuilder;
 import io.kubernetes.client.openapi.models.V1SecurityContext;
 import io.kubernetes.client.openapi.models.V1SecurityContextBuilder;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
@@ -1396,9 +1398,15 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         .collect(Collectors.toList());
 
     V1ContainerBuilder builder = new V1ContainerBuilder();
-    if (containerSecurityContexts.containsKey(name)) {
-      builder.withSecurityContext(containerSecurityContexts.get(name));
-    }
+    V1SecurityContext baseSecurityContext = containerSecurityContexts.getOrDefault(
+        name, new V1SecurityContext());
+    V1SecurityContext restrictedSecurityContext = new V1SecurityContextBuilder(baseSecurityContext)
+        .withAllowPrivilegeEscalation(false)
+        .withRunAsNonRoot(true)
+        .withSeccompProfile(new V1SeccompProfileBuilder().withType("RuntimeDefault").build())
+        .withCapabilities(new V1CapabilitiesBuilder().addToDrop("ALL").build())
+        .build();
+    builder.withSecurityContext(restrictedSecurityContext);
 
     List<V1VolumeMount> containerVolumeMounts = new ArrayList<>();
     for (V1VolumeMount mount : volumeMounts) {
