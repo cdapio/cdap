@@ -264,14 +264,13 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
    */
   private static void requireMetadataFlavorHeader(HttpRequest request)
       throws ForbiddenException {
-    if (request.headers().contains(METADATA_FLAVOR_HEADER_KEY,
+    if (!request.headers().contains(METADATA_FLAVOR_HEADER_KEY,
         METADATA_FLAVOR_HEADER_VALUE, true)) {
-      return;
+      throw new ForbiddenException(
+          String.format("Request is missing required %s header. To access the metadata server, "
+              + "you must add the %s: %s header to your request.", METADATA_FLAVOR_HEADER_KEY,
+              METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE));
     }
-    throw new ForbiddenException(
-        String.format("Request is missing required %s header. To access the metadata server, "
-            + "you must add the %s: %s header to your request.", METADATA_FLAVOR_HEADER_KEY,
-            METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE));
   }
 
   /**
