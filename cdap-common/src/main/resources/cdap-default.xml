@@ -5662,6 +5662,47 @@
   </property>
 
   <property>
+    <name>task.worker.manager.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for the task worker manager service.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.bind.port</name>
+    <value>11025</value>
+    <description>
+      The port to bind the task worker manager service to.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss (acceptor) threads for the task worker manager.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of worker (I/O) threads for the task worker manager.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.manager.drain.timeout.secs</name>
+    <value>60</value>
+    <description>
+      The time in seconds a stopping task worker manager waits for the responses of in-flight task
+      requests before closing them.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.internal.router.enabled</name>
     <value>false</value>
     <description>
@@ -6434,6 +6475,15 @@
       If true, the scheduler waits for a triggering workflow run's final
       workflow token before launching a triggered schedule that maps plugin
       properties.
+    </description>
+  </property>
+
+  <property>
+    <name>feature.task.worker.manager.enabled</name>
+    <value>false</value>
+    <description>
+      If true, task worker requests are routed through the task worker manager, which leases
+      task worker pods per namespace. Only takes effect when security.authorization.enabled is true.
     </description>
   </property>
 

@@ -142,6 +142,7 @@ public final class Constants {
     public static final String INTERNAL_ROUTER = "internal.router";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String TASK_WORKER_MANAGER = "task.worker.manager";
     public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
@@ -562,6 +563,28 @@ public final class Constants {
      */
     public static final String TASK_WORKER_PROBE_ENABLED = "task.worker.probe.enabled";
     public static final String TASK_WORKER_PROBE_PREFIX = "task.worker.probe.";
+  }
+
+  /**
+   * Task worker manager.
+   */
+  public static final class TaskWorkerManager {
+
+    public static final String ADDRESS = "task.worker.manager.bind.address";
+    public static final String PORT = "task.worker.manager.bind.port";
+    public static final String BOSS_THREADS = "task.worker.manager.boss.threads";
+    public static final String WORKER_THREADS = "task.worker.manager.worker.threads";
+    // How long a stopping manager waits for in-flight task responses before closing them.
+    public static final String DRAIN_TIMEOUT_SECS = "task.worker.manager.drain.timeout.secs";
+
+    // Answered by the manager itself for the Kubernetes readiness probe.
+    public static final String PING_PATH = "/ping";
+
+    // Internal HTTP headers exchanged between App Fabric, the manager, and task workers.
+    public static final String HEADER_CDAP_NAMESPACE = "X-CDAP-Namespace";
+    public static final String HEADER_LEASED_NAMESPACE = "X-CDAP-Leased-Namespace";
+    // Sent by task workers on every task response; values are the TaskWorkerStatus names.
+    public static final String HEADER_TASK_WORKER_STATUS = "X-CDAP-Task-Worker-Status";
   }
 
   /**

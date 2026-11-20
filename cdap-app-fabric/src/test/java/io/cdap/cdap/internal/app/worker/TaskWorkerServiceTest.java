@@ -32,6 +32,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -45,6 +46,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -52,6 +54,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
 import org.junit.Assert;
@@ -492,6 +495,163 @@ public class TaskWorkerServiceTest {
     Assert.assertEquals(connectionRefusedCount, 1);
     TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
+  }
+
+  @Test
+  public void testNoStatusHeaderWithoutTaskWorkerManager() throws IOException {
+    HttpResponse response = runTask(taskWorkerService, "100");
+
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Assert.assertNull(statusHeader(response));
+  }
+
+  @Test
+  public void testRunningStatusWhileTheWorkerKeepsRunning() throws Exception {
+    CConfiguration cConf = createTaskWorkerManagerCConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
+    TaskWorkerService service = startService(cConf);
+    try {
+      HttpResponse success = runTask(service, "100");
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, success.getResponseCode());
+      Assert.assertEquals("RUNNING", statusHeader(success));
+
+      // No user code ran, so the worker keeps running.
+      HttpResponse badRequest = runTask(service, RunnableTaskRequest.getBuilder("NoClass")
+          .withNamespace("testNamespace").withParam("100").build());
+      Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, badRequest.getResponseCode());
+      Assert.assertEquals("RUNNING", statusHeader(badRequest));
+    } finally {
+      service.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testTerminatingStatusOnTheTaskThatRestartsTheWorker() throws Exception {
+    CConfiguration cConf = createTaskWorkerManagerCConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 2);
+    TaskWorkerService service = startService(cConf);
+
+    HttpResponse first = runTask(service, "100");
+    Assert.assertEquals("RUNNING", statusHeader(first));
+
+    // The second task reaches the kill count, so its own response says the worker is restarting.
+    HttpResponse second = runTask(service, "100");
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, second.getResponseCode());
+    Assert.assertEquals("100", second.getResponseBodyAsString());
+    Assert.assertEquals("TERMINATING", statusHeader(second));
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+  }
+
+  @Test
+  public void testCapacityRejectionReportsRunning() throws Exception {
+    CConfiguration cConf = createTaskWorkerManagerCConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
+    TaskWorkerService service = startService(cConf);
+    try {
+      // Isolation runs one task at a time, so one of two concurrent tasks is rejected.
+      List<Callable<HttpResponse>> calls = new ArrayList<>();
+      for (int i = 0; i < 2; i++) {
+        calls.add(() -> runTask(service, "1000"));
+      }
+      List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(2).invokeAll(calls);
+
+      List<Integer> codes = new ArrayList<>();
+      for (Future<HttpResponse> response : responses) {
+        codes.add(response.get().getResponseCode());
+        // The rejected task was never admitted and the worker isn't restarting.
+        Assert.assertEquals("RUNNING", statusHeader(response.get()));
+      }
+      Assert.assertTrue(codes.contains(HttpURLConnection.HTTP_OK));
+      Assert.assertTrue(codes.contains(HttpResponseStatus.TOO_MANY_REQUESTS.code()));
+    } finally {
+      service.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testTerminatingStatusOnceARestartIsScheduled() throws Exception {
+    CConfiguration cConf = createTaskWorkerManagerCConf();
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 10);
+    // The restart is scheduled after a whole number of seconds drawn from [(int) 3.6, (int) 4.4),
+    // so 3s in, while the long task below still runs.
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 4);
+    TaskWorkerService service = startService(cConf);
+
+    Future<HttpResponse> longTask =
+        Executors.newSingleThreadExecutor().submit(() -> runTask(service, "6000"));
+    // Let the long task take the worker's only slot first, well before the restart is scheduled.
+    TimeUnit.SECONDS.sleep(1);
+
+    // Every other task is rejected while the long one runs: RUNNING at first, then TERMINATING
+    // once the restart is scheduled.
+    HttpResponse rejection = runTask(service, "0");
+    long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10);
+    while (!"TERMINATING".equals(statusHeader(rejection))) {
+      Assert.assertEquals(HttpResponseStatus.TOO_MANY_REQUESTS.code(),
+          rejection.getResponseCode());
+      Assert.assertEquals("RUNNING", statusHeader(rejection));
+      Assert.assertTrue("No TERMINATING status after 10s", System.currentTimeMillis() < deadline);
+      TimeUnit.MILLISECONDS.sleep(100);
+      rejection = runTask(service, "0");
+    }
+    Assert.assertEquals(HttpResponseStatus.TOO_MANY_REQUESTS.code(), rejection.getResponseCode());
+
+    // The long task still completes, and its response also reports the pending restart.
+    HttpResponse longTaskResponse = longTask.get(15, TimeUnit.SECONDS);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, longTaskResponse.getResponseCode());
+    Assert.assertEquals("TERMINATING", statusHeader(longTaskResponse));
+    TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
+    Assert.assertEquals(Service.State.TERMINATED, service.state());
+  }
+
+  /** Returns a configuration with the task worker manager, and so the status header, enabled. */
+  private CConfiguration createTaskWorkerManagerCConf() {
+    CConfiguration cConf = createCConf();
+    cConf.setBoolean("feature." + Feature.TASK_WORKER_MANAGER.getFeatureFlagString(), true);
+    cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    return cConf;
+  }
+
+  /** Starts a task worker and points {@link #serviceCompletionFuture} at it. */
+  private TaskWorkerService startService(CConfiguration cConf) {
+    InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+    TaskWorkerService service = new TaskWorkerService(
+        cConf, createSConf(), discoveryService, discoveryService,
+        metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService,
+            auditLogContexts -> {}, aeadCipher));
+    serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(service);
+    service.startAndWait();
+    return service;
+  }
+
+  private static HttpResponse runTask(TaskWorkerService service, String sleepMillis)
+      throws IOException {
+    return runTask(service, RunnableTaskRequest.getBuilder(TestRunnableClass.class.getName())
+        .withParam(sleepMillis).withNamespace("testNamespace").build());
+  }
+
+  private static HttpResponse runTask(TaskWorkerService service, RunnableTaskRequest request)
+      throws IOException {
+    InetSocketAddress addr = service.getBindAddress();
+    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    return HttpRequests.execute(
+        HttpRequest.post(uri.resolve("/v3Internal/worker/run").toURL())
+            .withBody(GSON.toJson(request)).build(),
+        new DefaultHttpRequestConfig(false));
+  }
+
+  /** Returns the worker status header of {@code response}, or null if it has none. */
+  @Nullable
+  private static String statusHeader(HttpResponse response) {
+    for (Map.Entry<String, String> header : response.getHeaders().entries()) {
+      if (Constants.TaskWorkerManager.HEADER_TASK_WORKER_STATUS.equalsIgnoreCase(
+          header.getKey())) {
+        return header.getValue();
+      }
+    }
+    return null;
   }
 
   public static class TestRunnableClass implements RunnableTask {

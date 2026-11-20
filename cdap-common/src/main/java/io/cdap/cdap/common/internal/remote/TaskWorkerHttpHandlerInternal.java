@@ -99,6 +99,10 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
    */
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
   private final int concurrentRequestLimit;
+  private final boolean userCodeIsolationEnabled;
+  private final int killAfterRequestCount;
+  /** Only the task worker manager reads the status header; without it, answer as before. */
+  private final boolean sendStatusHeader;
 
   /**
    * Constructs the {@link TaskWorkerHttpHandlerInternal}.
@@ -108,16 +112,16 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
-    final int killAfterRequestCount = cConf.getInt(
+    this.sendStatusHeader = TaskWorkerManagerUtil.isStickyLeaseEnabled(cConf);
+    this.killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
         discoveryService, discoveryServiceClient, metricsCollectionService);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(
         Constants.TaskWorker.METADATA_SERVICE_END_POINT);
-    boolean enableUserCodeIsolationEnabled = cConf.getBoolean(
-        TaskWorker.USER_CODE_ISOLATION_ENABLED);
-    if (enableUserCodeIsolationEnabled) {
+    this.userCodeIsolationEnabled = cConf.getBoolean(TaskWorker.USER_CODE_ISOLATION_ENABLED);
+    if (userCodeIsolationEnabled) {
       // Run only one request at a time in user code isolation mode.
       this.concurrentRequestLimit = 1;
     } else {
@@ -128,23 +132,17 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     // execution.
     this.taskCompletionConsumer = (succeeded, taskDetails) -> {
       taskDetails.emitMetrics(succeeded);
+      boolean hitKillCount =
+          reachesKillCount(taskDetails, requestProcessedCount.incrementAndGet());
+      if (hitKillCount) {
+        // The stop is asynchronous. Refuse new tasks before this task's slot is released, or one
+        // could be admitted while the worker stops.
+        mustRestart.set(true);
+      }
       final int pendingRequests = runningRequestCount.decrementAndGet();
-      requestProcessedCount.incrementAndGet();
 
       String className = taskDetails.getClassName();
-      if (mustRestart.get() && pendingRequests == 0) {
-        stopper.accept(className);
-        return;
-      }
-
-      if (!enableUserCodeIsolationEnabled
-          || !taskDetails.isTerminateOnComplete()
-          || className == null || killAfterRequestCount <= 0) {
-        // No need to restart.
-        return;
-      }
-
-      if (requestProcessedCount.get() >= killAfterRequestCount) {
+      if (hitKillCount || (mustRestart.get() && pendingRequests == 0)) {
         stopper.accept(className);
       }
     };
@@ -212,11 +210,16 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
     if (mustRestart.get()) {
-      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+      // A TERMINATING status tells the manager to back off this pod instead of retrying it.
+      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS,
+          withStatus(new DefaultHttpHeaders(), TaskWorkerStatus.TERMINATING));
       return;
     }
-    if (runningRequestCount.incrementAndGet() > concurrentRequestLimit) {
-      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
+    // Check the restart flag again now that the slot is counted: a task that finished in between
+    // may have reached the kill count.
+    if (runningRequestCount.incrementAndGet() > concurrentRequestLimit || mustRestart.get()) {
+      responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS,
+          withStatus(new DefaultHttpHeaders(), currentStatus()));
       runningRequestCount.decrementAndGet();
       return;
     }
@@ -248,17 +251,17 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
         responder.sendContent(HttpResponseStatus.OK,
             new RunnableTaskBodyProducer(runnableTaskContext,
                 taskCompletionConsumer, taskDetails),
-            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-                MediaType.APPLICATION_OCTET_STREAM));
+            withStatus(new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+                MediaType.APPLICATION_OCTET_STREAM), statusAfter(taskDetails)));
       } catch (ClassNotFoundException | ClassCastException ex) {
+        // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
+        TaskDetails taskDetails = new TaskDetails(metricsCollectionService, startTime, false,
+            runnableTaskRequest);
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
             exceptionToJson(ex),
-            new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-                "application/json"));
-        // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
-        taskCompletionConsumer.accept(false,
-            new TaskDetails(metricsCollectionService, startTime, false,
-                runnableTaskRequest));
+            withStatus(new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
+                "application/json"), statusAfter(taskDetails)));
+        taskCompletionConsumer.accept(false, taskDetails);
       } finally {
         // clear the GcpMetadataTaskContext after the task is completed.
         GcpMetadataTaskContextUtil.clearGcpMetadataTaskContext(cConf);
@@ -266,14 +269,53 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     } catch (Exception ex) {
       LOG.error("Failed to run task {}",
           request.content().toString(StandardCharsets.UTF_8), ex);
+      // Potentially ran user code, hence terminate the runner.
+      TaskDetails taskDetails = new TaskDetails(metricsCollectionService, startTime, true, null);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
           exceptionToJson(ex),
-          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
-              "application/json"));
-      // Potentially ran user code, hence terminate the runner.
-      taskCompletionConsumer.accept(false,
-          new TaskDetails(metricsCollectionService, startTime, true, null));
+          withStatus(new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE,
+              "application/json"), statusAfter(taskDetails)));
+      taskCompletionConsumer.accept(false, taskDetails);
     }
+  }
+
+  /**
+   * Returns whether finishing a task with these details brings the processed count to the
+   * restart threshold of an isolated worker.
+   *
+   * @param processedCount the processed task count including this task
+   */
+  private boolean reachesKillCount(TaskDetails taskDetails, int processedCount) {
+    return userCodeIsolationEnabled
+        && taskDetails.isTerminateOnComplete()
+        && taskDetails.getClassName() != null
+        && killAfterRequestCount > 0
+        && processedCount >= killAfterRequestCount;
+  }
+
+  /** Returns the status for a response that admits no task. */
+  private TaskWorkerStatus currentStatus() {
+    return mustRestart.get() ? TaskWorkerStatus.TERMINATING : TaskWorkerStatus.RUNNING;
+  }
+
+  /**
+   * Returns the status for the response of a task that ran: TERMINATING if a restart is pending
+   * or this task reaches the restart count.
+   */
+  private TaskWorkerStatus statusAfter(TaskDetails taskDetails) {
+    if (reachesKillCount(taskDetails, requestProcessedCount.get() + 1)) {
+      return TaskWorkerStatus.TERMINATING;
+    }
+    return currentStatus();
+  }
+
+  /** Adds the worker status to {@code headers} when the task worker manager reads it. */
+  private io.netty.handler.codec.http.HttpHeaders withStatus(
+      io.netty.handler.codec.http.HttpHeaders headers, TaskWorkerStatus status) {
+    if (sendStatusHeader) {
+      headers.set(Constants.TaskWorkerManager.HEADER_TASK_WORKER_STATUS, status.name());
+    }
+    return headers;
   }
 
   /**
