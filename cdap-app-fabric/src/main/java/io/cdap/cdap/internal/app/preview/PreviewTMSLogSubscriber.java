@@ -49,7 +49,7 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
 
   private static final Logger LOG = LoggerFactory.getLogger(PreviewTMSLogSubscriber.class);
   private static final String CONSUMER_NAME = "preview.log.writer";
-  private static final String TOPIC_NAME = "previewlog0";
+  private static final String TOPIC_NAME = Constants.Preview.LOG_TOPIC;
 
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;

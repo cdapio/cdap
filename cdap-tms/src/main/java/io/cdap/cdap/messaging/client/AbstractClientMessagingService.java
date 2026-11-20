@@ -124,7 +124,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
 
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
         .withBody(GSON.toJson(topicMetadata.getProperties())).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
@@ -140,7 +140,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT,
             createTopicPath(topicId) + "/properties")
         .withBody(GSON.toJson(topicMetadata.getProperties())).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -153,7 +153,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
       throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, createTopicPath(topicId))
         .build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -166,7 +166,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
       throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createTopicPath(topicId))
         .build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -183,7 +183,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
       throws IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
         namespaceId.getNamespace() + "/topics").build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     handleError(response, "Failed to list topics in namespace " + namespaceId);
     List<String> topics = GSON.fromJson(response.getResponseBodyAsString(), TOPIC_LIST_TYPE);
@@ -228,7 +228,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
             createTopicPath(topicId) + "/rollback").addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
         .withBody(requestBody).build();
 
-    HttpResponse response = remoteClient.execute(httpRequest);
+    HttpResponse response = execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -281,7 +281,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
         .withBody(os.toByteBuffer())
         .build();
 
-    HttpResponse response = remoteClient.execute(httpRequest);
+    HttpResponse response = execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -415,7 +415,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
     // messages
     // in memory, hence we use the HttpURLConnection directly instead.
     HttpURLConnection urlConn =
-        remoteClient.openConnection(
+        openConnection(
             HttpMethod.POST, createTopicPath(messageFetchRequest.getTopicId()) + "/poll");
     urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
     if (compressPayload) {
@@ -504,6 +504,22 @@ public abstract class AbstractClientMessagingService implements MessagingService
         urlConn.disconnect();
       }
     };
+  }
+
+  /**
+   * Executes the given {@link HttpRequest} using the underlying {@link RemoteClient}.
+   */
+  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    return remoteClient.execute(request);
+  }
+
+  /**
+   * Opens an {@link HttpURLConnection} for the given method and resource using the underlying
+   * {@link RemoteClient}.
+   */
+  protected HttpURLConnection openConnection(HttpMethod method, String resource)
+      throws IOException {
+    return remoteClient.openConnection(method, resource);
   }
 
   /**

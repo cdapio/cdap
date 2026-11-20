@@ -199,7 +199,7 @@ public abstract class NettyRouterTestBase {
     for (int i = 0; i < numElements; ++i) {
       final int elem = i;
       final Request request = new RequestBuilder("GET")
-          .setUrl(resolveUri(String.format("%s/%s-%d", "/v1/echo", "async", i)))
+          .setUrl(resolveUri(String.format("%s/%s-%d", "/test/echo", "async", i)))
           .build();
       asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
         @Override
@@ -262,9 +262,19 @@ public abstract class NettyRouterTestBase {
   @Test
   public void testHostForward() throws Exception {
     // Test defaultService
-    HttpResponse response = get(resolveUri(String.format("%s/%s", "/v1/ping", "sync")));
+    HttpResponse response = get(resolveUri(String.format("%s/%s", "/test/ping", "sync")));
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     Assert.assertEquals(APP_FABRIC_SERVICE, EntityUtils.toString(response.getEntity()));
+  }
+
+  @Test
+  public void testInternalApiIsNotForwarded() throws Exception {
+    // The test servers are registered and serve /v1/ping/{text}, so the router would answer with their 200
+    // if it forwarded the request. The only way to get a 503 here is for the router to refuse it.
+    HttpResponse response = get(resolveUri("/v1/ping/sync"));
+    Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(),
+        response.getStatusLine().getStatusCode());
+    Assert.assertEquals(0, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
   }
 
   @Test
@@ -275,7 +285,7 @@ public abstract class NettyRouterTestBase {
 
     byte[] requestBody = generatePostData();
     final Request request = new RequestBuilder("POST")
-        .setUrl(resolveUri("/v1/upload"))
+        .setUrl(resolveUri("/test/upload"))
         .setContentLength(requestBody.length)
         .setBody(requestBody)
         .build();
@@ -409,7 +419,7 @@ public abstract class NettyRouterTestBase {
     for (int i = 0; i < 4; i++) {
       // this is an assumption that CONNECTION_IDLE_TIMEOUT_SECS is more than 1 second
       TimeUnit.SECONDS.sleep(1);
-      url = new URL(resolveUri("/v1/ping/" + i));
+      url = new URL(resolveUri("/test/ping/" + i));
       urlConnection = openUrl(url);
       Assert.assertEquals(200, urlConnection.getResponseCode());
       urlConnection.getInputStream().close();
@@ -456,7 +466,7 @@ public abstract class NettyRouterTestBase {
 
   @Test(timeout = 5000L)
   public void testNotFound() throws Exception {
-    URL url = new URL(resolveUri("/v1/not/exists"));
+    URL url = new URL(resolveUri("/test/not/exists"));
     HttpURLConnection urlConn = openUrl(url);
     Assert.assertEquals(404, urlConn.getResponseCode());
 
@@ -469,7 +479,7 @@ public abstract class NettyRouterTestBase {
     // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
     // is not closed because the http request is in progress
     long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500;
-    URL url = new URL(resolveUri("/v1/timeout/" + timeoutMillis));
+    URL url = new URL(resolveUri("/test/timeout/" + timeoutMillis));
     HttpURLConnection urlConnection = openUrl(url);
     Assert.assertEquals(200, urlConnection.getResponseCode());
     urlConnection.disconnect();
@@ -481,7 +491,7 @@ public abstract class NettyRouterTestBase {
     String oldValue = System.getProperty("sun.net.http.retryPost");
     System.setProperty("sun.net.http.retryPost", "false");
     try {
-      URL url = new URL(resolveUri("/v1/sleep"));
+      URL url = new URL(resolveUri("/test/sleep"));
 
       // Disable the server 2 from discovery
       defaultServer2.cancelRegistration();
@@ -591,7 +601,7 @@ public abstract class NettyRouterTestBase {
   private void testSync(int numRequests) throws Exception {
     for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending sync request " + i);
-      HttpResponse response = get(resolveUri(String.format("%s/%s-%d", "/v1/ping", "sync", i)));
+      HttpResponse response = get(resolveUri(String.format("%s/%s-%d", "/test/ping", "sync", i)));
       Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
     }
   }
@@ -599,7 +609,7 @@ public abstract class NettyRouterTestBase {
   private void testSyncServiceUnavailable() throws Exception {
     for (int i = 0; i < 25; ++i) {
       LOG.trace("Sending sync unavailable request " + i);
-      HttpResponse response = get(resolveUri(String.format("%s/%s-%d", "/v1/ping", "sync", i)));
+      HttpResponse response = get(resolveUri(String.format("%s/%s-%d", "/test/ping", "sync", i)));
       Assert.assertEquals(HttpResponseStatus.SERVICE_UNAVAILABLE.code(),
           response.getStatusLine().getStatusCode());
     }
@@ -731,7 +741,7 @@ public abstract class NettyRouterTestBase {
       private final Logger log = LoggerFactory.getLogger(ServerHandler.class);
 
       @GET
-      @Path("/v1/echo/{text}")
+      @Path("/test/echo/{text}")
       public void echo(@SuppressWarnings("UnusedParameters") HttpRequest request,
           final HttpResponder responder,
           @PathParam("text") String text) {
@@ -742,8 +752,22 @@ public abstract class NettyRouterTestBase {
       }
 
       @GET
-      @Path("/v1/ping/{text}")
+      @Path("/test/ping/{text}")
       public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request,
+          final HttpResponder responder,
+          @PathParam("text") String text) {
+        numRequests.incrementAndGet();
+        log.trace("Got text {}", text);
+
+        responder.sendString(HttpResponseStatus.OK, serviceName);
+      }
+
+      /**
+       * Serves a path under the internal API version, which the router must never forward.
+       */
+      @GET
+      @Path("/v1/ping/{text}")
+      public void internalPing(@SuppressWarnings("UnusedParameters") HttpRequest request,
           final HttpResponder responder,
           @PathParam("text") String text) {
         numRequests.incrementAndGet();
@@ -798,7 +822,7 @@ public abstract class NettyRouterTestBase {
       }
 
       @GET
-      @Path("/v1/timeout/{timeout-millis}")
+      @Path("/test/timeout/{timeout-millis}")
       public void timeout(HttpRequest request, HttpResponder responder,
           @PathParam("timeout-millis") int timeoutMillis) throws InterruptedException {
         numRequests.incrementAndGet();
@@ -807,14 +831,14 @@ public abstract class NettyRouterTestBase {
       }
 
       @GET
-      @Path("/v1/exception/{message}")
+      @Path("/test/exception/{message}")
       public void exception(HttpRequest request, HttpResponder responder,
           @PathParam("msg") String msg) throws Exception {
         throw new Exception(msg);
       }
 
       @POST
-      @Path("/v1/upload")
+      @Path("/test/upload")
       public void upload(FullHttpRequest request, HttpResponder responder) throws IOException {
         numRequests.incrementAndGet();
         ByteBuf content = request.content();
@@ -844,7 +868,7 @@ public abstract class NettyRouterTestBase {
       }
 
       @POST
-      @Path("/v1/sleep")
+      @Path("/test/sleep")
       public void sleep(FullHttpRequest request, HttpResponder responder) throws Exception {
         numRequests.incrementAndGet();
         long sleepMillis = Long.parseLong(request.content().toString(StandardCharsets.UTF_8));

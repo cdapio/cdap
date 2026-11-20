@@ -21,7 +21,16 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +41,9 @@ public class DefaultClientMessagingService extends AbstractClientMessagingServic
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultClientMessagingService.class);
 
+  /**
+   * Creates a {@link DefaultClientMessagingService} targeting {@link Constants.Service#MESSAGING_SERVICE}.
+   */
   @Inject
   public DefaultClientMessagingService(CConfiguration cConf,
       RemoteClientFactory remoteClientFactory) {
@@ -46,5 +58,44 @@ public class DefaultClientMessagingService extends AbstractClientMessagingServic
       boolean compressPayload) {
     super(remoteClientFactory.createRemoteClient(Constants.Service.MESSAGING_SERVICE,
         HTTP_REQUEST_CONFIG, "/v1/namespaces/"), compressPayload);
+  }
+
+  /**
+   * Executes the request with {@link SecurityRequestContext} user details cleared so that
+   * service-to-service calls to the internal {@code /v1} messaging endpoints authenticate as the
+   * calling service rather than forwarding an end-user credential from an enclosing {@code /v3}
+   * HTTP request thread.
+   */
+  @Override
+  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    return executeWithoutUserDetails(() -> super.execute(request));
+  }
+
+  @Override
+  protected HttpURLConnection openConnection(HttpMethod method, String resource)
+      throws IOException {
+    return executeWithoutUserDetails(() -> super.openConnection(method, resource));
+  }
+
+  private static <T> T executeWithoutUserDetails(Retries.Callable<T, IOException> callable)
+      throws IOException {
+    String oldUserId = SecurityRequestContext.getUserId();
+    Credential oldUserCredential = SecurityRequestContext.getUserCredential();
+    String oldUserIp = SecurityRequestContext.getUserIp();
+    SecurityRequestContext.resetUserDetails();
+    try {
+      return callable.call();
+    } finally {
+      SecurityRequestContext.resetUserDetails();
+      if (oldUserId != null) {
+        SecurityRequestContext.setUserId(oldUserId);
+      }
+      if (oldUserCredential != null) {
+        SecurityRequestContext.setUserCredential(oldUserCredential);
+      }
+      if (oldUserIp != null) {
+        SecurityRequestContext.setUserIp(oldUserIp);
+      }
+    }
   }
 }

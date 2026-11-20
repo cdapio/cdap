@@ -56,11 +56,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
-  private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
+  private static final String EMPTY_USER_ID = Constants.Security.Authentication.EMPTY_USER_ID;
   private static final Credential EMPTY_USER_CREDENTIAL = new Credential(
-      "CDAP-empty-user-credential",
+      Constants.Security.Authentication.EMPTY_USER_CREDENTIAL,
       Credential.CredentialType.INTERNAL);
-  private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
+  private static final String EMPTY_USER_IP = Constants.Security.Authentication.EMPTY_USER_IP;
   static final String AUDIT_LOG_REQ_BUILDER_ATTR = "AUDIT_LOG_REQ_BUILDER";
   static final String AUDIT_LOG_USER_IP_ATTR = "AUDIT_LOG_USER_IP";
   static final String CDAP_USER_ID_ATTR = "CDAP_USER_ID";
