@@ -259,6 +259,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, "*"), StandardPermission.CREATE);
       String testRequestString = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       ConnectionCreationRequest testRequest = GSON.fromJson(testRequestString, ConnectionCreationRequest.class);
 

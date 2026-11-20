@@ -38,8 +38,11 @@ import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
@@ -214,6 +217,35 @@ public class DraftServiceTest extends DataPipelineServiceTest {
     expectedCode = HttpURLConnection.HTTP_OK;
     user = ALICE_NAME;
     deleteDraft(draftId);
+
+    // Draft operations in system namespace (case-insensitive) are rejected even for privileged users
+    user = null;
+    expectedCode = HttpURLConnection.HTTP_BAD_REQUEST;
+    for (String sysNs : new String[]{NamespaceId.SYSTEM.getNamespace(), "SYSTEM"}) {
+      listDrafts(sysNs, false, "", "", "");
+      DraftId sysDraftId = new DraftId(new NamespaceSummary(sysNs, "", 0), "draft1", ALICE_NAME);
+      getDraft(sysDraftId);
+      createBatchPipelineDraft(sysDraftId, "TestPipeline1", "This is a test pipeline.");
+      deleteDraftAndCheck(sysDraftId);
+    }
+    user = ALICE_NAME;
+
+    // Validation requires CREATE on applications, not just GET/UPDATE on the namespace
+    ETLStage stage = new ETLStage("src", MockSource.getPlugin("dummy1"));
+    StageValidationRequest stageRequest = new StageValidationRequest(stage, Collections.emptyList(), false);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(
+      new ArtifactSummary("cdap-data-pipeline", "1.0.0"),
+      ETLBatchConfig.builder().addStage(stage).addStage(new ETLStage("sink", MockSink.getPlugin("dummy2")))
+        .addConnection("src", "sink").setEngine(Engine.SPARK).build());
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    validate("stage", stageRequest);
+    validate("pipeline", appRequest);
+    Authorizable appAuthorizable = Authorizable.fromEntityId(NamespaceId.DEFAULT, EntityType.APPLICATION);
+    getPermissionManager().grant(appAuthorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.CREATE));
+    expectedCode = HttpURLConnection.HTTP_OK;
+    validate("stage", stageRequest);
+    validate("pipeline", appRequest);
+    getPermissionManager().revoke(appAuthorizable, ALICE_PRINCIPAL, EnumSet.of(StandardPermission.CREATE));
   }
 
   @Test
@@ -406,6 +438,11 @@ public class DraftServiceTest extends DataPipelineServiceTest {
         .withBody(GSON.toJson(draftStoreRequest));
     HttpResponse response = executeRequest(request);
     assertResponseCode(response);
+  }
+
+  private void validate(String type, Object request) throws IOException {
+    URL url = serviceURI.resolve("v1/contexts/default/validations/" + type).toURL();
+    assertResponseCode(executeRequest(HttpRequest.builder(HttpMethod.POST, url).withBody(GSON.toJson(request))));
   }
 
   /**

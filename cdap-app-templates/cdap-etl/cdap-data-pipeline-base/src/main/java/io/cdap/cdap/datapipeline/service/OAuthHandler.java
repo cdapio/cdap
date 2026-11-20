@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
@@ -41,6 +42,8 @@ import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -122,6 +125,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                          @QueryParam("redirect_uri") String redirectURI,
                          @QueryParam("redirect_url") String redirectURL) {
     respond(responder, () -> {
+      enforceOnSecureKey(OAuthStore.getClientCredsKey(provider), StandardPermission.GET);
       OAuthProvider oauthProvider = getProvider(provider);
 
       String formatURL = "%s";
@@ -159,6 +163,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                @QueryParam("reuse_client_credentials") @DefaultValue("false")
                                Boolean reuseClientCredentials) {
     respond(responder, () -> {
+      enforceOnSecureKey(OAuthStore.getClientCredsKey(oauthProvider), StandardPermission.UPDATE);
       PutOAuthProviderRequest putOAuthProviderRequest = GSON.fromJson(
           StandardCharsets.UTF_8.decode(request.getContent()).toString(),
           PutOAuthProviderRequest.class);
@@ -207,6 +212,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                   @QueryParam("preserve_client_credentials") @DefaultValue("false")
                                   boolean preserveClientCredentials) {
     respond(responder, () -> {
+      enforceOnSecureKey(OAuthStore.getClientCredsKey(oauthProvider), StandardPermission.DELETE);
       oauthStore.deleteProvider(oauthProvider, preserveClientCredentials);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
     });
@@ -218,6 +224,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
     respond(responder, () -> {
+      enforceOnSecureKey(OAuthStore.getRefreshTokenKey(provider, credentialId), StandardPermission.UPDATE);
       PutOAuthCredentialRequest putOAuthCredentialRequest = GSON.fromJson(
           StandardCharsets.UTF_8.decode(request.getContent()).toString(),
           PutOAuthCredentialRequest.class);
@@ -292,6 +299,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                  @PathParam("provider") String provider,
                                  @PathParam("credential") String credentialId) {
     respond(responder, () -> {
+      enforceOnSecureKey(OAuthStore.getRefreshTokenKey(provider, credentialId), StandardPermission.GET);
       OAuthProvider oauthProvider = getProvider(provider);
 
       // 1. Check if a valid cached access token is already available
@@ -506,6 +514,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
                                          @PathParam("provider") String provider,
                                          @PathParam("credential") String credentialId) {
     respond(responder, () -> {
+      enforceOnSecureKey(OAuthStore.getRefreshTokenKey(provider, credentialId), StandardPermission.GET);
       OAuthProvider oauthProvider = getProvider(provider);
 
       // 1. Check if a valid cached access token is already available
@@ -723,6 +732,13 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     void run() throws Exception;
   }
 
+  /**
+   * Enforces the given permission on the secure key in the system namespace that backs the OAuth data.
+   */
+  private void enforceOnSecureKey(String secureKey, StandardPermission permission) {
+    getContext().getContextAccessEnforcer().enforce(NamespaceId.SYSTEM.secureKey(secureKey), permission);
+  }
+
   private void respond(HttpServiceResponder responder, EndpointRunnable runnable) {
     try {
       runnable.run();
@@ -737,6 +753,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     } catch (OAuthStoreException e) {
       sendError(responder, HttpURLConnection.HTTP_INTERNAL_ERROR, e.getMessage(), e);
     } catch (Exception e) {
+      if (e instanceof HttpErrorStatusProvider) {
+        responder.sendError(((HttpErrorStatusProvider) e).getStatusCode(), e.getMessage());
+        return;
+      }
       LOG.error("An internal error has occurred", e);
       sendError(responder, HttpURLConnection.HTTP_INTERNAL_ERROR, "Internal error", e);
     }

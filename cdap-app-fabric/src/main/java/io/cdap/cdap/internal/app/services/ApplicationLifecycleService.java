@@ -1380,6 +1380,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public List<PluginInstanceDetail> getPlugins(ApplicationReference appRef)
       throws NotFoundException, IOException {
+    // user needs to pass the visibility check to get the plugins of the app
+    accessEnforcer.enforce(appRef.app(ApplicationId.DEFAULT_VERSION),
+        authenticationContext.getPrincipal(), StandardPermission.GET);
     ApplicationMeta appMeta = store.getLatest(appRef);
     if (appMeta == null || appMeta.getSpec() == null) {
       throw new ApplicationNotFoundException(appRef);

@@ -839,6 +839,15 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                                 EnumSet.of(StandardPermission.DELETE));
     expectedCode = HttpURLConnection.HTTP_OK;
     deleteConnection(conn);
+
+    // Testing a connection requires CREATE on connections in the namespace
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    testConnection(creationRequest);
+    ConnectionEntityId anyConnection = new ConnectionEntityId(NamespaceId.DEFAULT.getNamespace(), "*");
+    getPermissionManager().grant(Authorizable.fromEntityId(anyConnection), ALICE_PRINCIPAL,
+                                 EnumSet.of(StandardPermission.CREATE));
+    expectedCode = HttpURLConnection.HTTP_OK;
+    testConnection(creationRequest);
   }
 
   private HttpResponse executeRequest(URL connectionURL, HttpMethod method) throws IOException {
@@ -870,6 +879,15 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     HttpRequest.Builder request = HttpRequest.builder(HttpMethod.PUT, validatePipelineURL)
       .withBody(GSON.toJson(creationRequest));
     HttpResponse response = executeRequest(request);
+    Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
+                        expectedCode, response.getResponseCode());
+  }
+
+  private void testConnection(ConnectionCreationRequest creationRequest) throws IOException {
+    URL url = serviceURI.resolve(String.format("v1/contexts/%s/connections/test", NamespaceId.DEFAULT.getNamespace()))
+      .toURL();
+    HttpResponse response = executeRequest(
+      HttpRequest.builder(HttpMethod.POST, url).withBody(GSON.toJson(creationRequest)));
     Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
                         expectedCode, response.getResponseCode());
   }
