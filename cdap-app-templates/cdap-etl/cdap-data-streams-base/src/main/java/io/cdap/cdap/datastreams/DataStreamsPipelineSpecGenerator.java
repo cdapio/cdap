@@ -204,7 +204,7 @@ public class DataStreamsPipelineSpecGenerator
           return false;
         }
       }
-      if (stage.getPlugin().getType() == Windower.PLUGIN_TYPE) {
+      if (Windower.PLUGIN_TYPE.equals(stage.getPlugin().getType())) {
         return false;
       }
     }
