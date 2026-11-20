@@ -45,6 +45,9 @@ public final class GcpMetadataTaskContextUtil {
   private static final Logger LOG = LoggerFactory.getLogger(GcpMetadataTaskContextUtil.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(
       BasicThrowable.class, new BasicThrowableCodec()).create();
+  // The sidecar metadata server rejects requests without this header.
+  private static final String METADATA_FLAVOR_HEADER_KEY = "Metadata-Flavor";
+  private static final String METADATA_FLAVOR_HEADER_VALUE = "Google";
 
   private static String getSidecarMetadataServiceEndpoint(CConfiguration cConf) {
     if (cConf.getInt(ArtifactLocalizer.PORT) < 0) {
@@ -75,6 +78,7 @@ public final class GcpMetadataTaskContextUtil {
         HttpRequest.put(new URL(setContextEndpoint))
             .withBody(GSON.toJson(gcpMetadataTaskContext))
             .addHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
             .build();
     HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
     LOG.debug("Set namespace '{}' response: {}", namespaceId.getNamespace(),
@@ -93,7 +97,9 @@ public final class GcpMetadataTaskContextUtil {
     }
     String clearContextEndpoint = String.format("%s/clear-context",
         getSidecarMetadataServiceEndpoint(cConf));
-    HttpRequest httpRequest = HttpRequest.delete(new URL(clearContextEndpoint)).build();
+    HttpRequest httpRequest = HttpRequest.delete(new URL(clearContextEndpoint))
+        .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
+        .build();
     HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
     LOG.debug("Clear context response: {}", tokenResponse.getResponseCode());
   }
