@@ -16,9 +16,12 @@
 
 package io.cdap.cdap.etl.api.relational;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.aggregation.DeduplicateAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.GroupByAggregationDefinition;
 import io.cdap.cdap.etl.api.aggregation.WindowAggregationDefinition;
+
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -103,5 +106,25 @@ public interface Relation {
    */
   default Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
     return new InvalidRelation("Deduplicate is unsupported");
+  }
+
+  /**
+   * Get the {@link Schema} of the relation if available, null otherwise.
+   *
+   * @return the schema of the relation.
+   */
+  @Nullable
+  default Schema getSchema() {
+    return null;
+  }
+
+  /**
+   * Adds schema information to the relation. This can be used for validation purposes.
+   *
+   * @param schema The schema.
+   * @return A new relation with the schema added.
+   */
+  default Relation addSchema(@Nullable Schema schema) {
+    return new InvalidRelation("This relation does not support adding Schema information");
   }
 }
