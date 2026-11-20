@@ -30,6 +30,7 @@ import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.app.MainClassLoader;
+import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -39,7 +40,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -90,6 +93,12 @@ public class ClassLoaderTest {
     // Load class resource that is in allowed package. Should return null.
     resourceName = SchemaGenerator.class.getName().replace('.', '/') + ".class";
     Assert.assertNull(classLoader.getResource(resourceName));
+
+    // Java 11 platform modules moved out of bootstrap must still be loadable.
+    Assert.assertSame(Class.forName("java.sql.Driver"), classLoader.loadClass("java.sql.Driver"));
+    Assert.assertSame(Class.forName("org.ietf.jgss.GSSManager"),
+        classLoader.loadClass("org.ietf.jgss.GSSManager"));
+    Assert.assertNotNull(classLoader.getResource("java/sql/Driver.class"));
   }
 
   @Test
@@ -254,5 +263,51 @@ public class ClassLoaderTest {
     executor.execute(() -> executorThreadName.set(Thread.currentThread().getName()));
 
     Assert.assertEquals(currentThreadName, executorThreadName.get());
+  }
+
+  @Test
+  public void testParseJavaClassPath() throws Exception {
+    File dir = TMP_FOLDER.newFolder();
+    File jar = TMP_FOLDER.newFile("parse-java-class-path.jar");
+    String originalClassPath = System.getProperty("java.class.path");
+    try {
+      // Empty segments are skipped and the order is kept
+      System.setProperty("java.class.path", File.pathSeparator + dir.getAbsolutePath()
+          + File.pathSeparator + File.pathSeparator + jar.getAbsolutePath() + File.pathSeparator);
+      Assert.assertEquals(Arrays.asList(dir.toURI().toURL(), jar.toURI().toURL()),
+          ClassLoaders.parseJavaClassPath());
+
+      System.setProperty("java.class.path", "");
+      Assert.assertEquals(Collections.emptyList(), ClassLoaders.parseJavaClassPath());
+    } finally {
+      System.setProperty("java.class.path", originalClassPath);
+    }
+  }
+
+  @Test
+  public void testGetClassLoaderURLsIncludesSystemClassPath() throws Exception {
+    List<URL> systemUrls = ClassLoaders.parseJavaClassPath();
+    Assert.assertFalse(systemUrls.isEmpty());
+    URL systemUrl = systemUrls.get(0);
+    URL childUrl = TMP_FOLDER.newFolder().toURI().toURL();
+
+    try (URLClassLoader child =
+        new URLClassLoader(new URL[]{childUrl}, ClassLoader.getSystemClassLoader())) {
+      List<URL> childFirst = ClassLoaders.getClassLoaderURLs(child, true, new ArrayList<>());
+      Assert.assertEquals(childUrl, childFirst.get(0));
+      Assert.assertTrue(childFirst.indexOf(systemUrl) > 0);
+
+      List<URL> parentFirst = ClassLoaders.getClassLoaderURLs(child, false, new ArrayList<>());
+      Assert.assertTrue(parentFirst.indexOf(systemUrl) >= 0);
+      Assert.assertTrue(parentFirst.indexOf(systemUrl) < parentFirst.indexOf(childUrl));
+    }
+  }
+
+  @Test
+  public void testClassPathIncludesSystemClassPathOnJava11() throws IOException {
+    ClassPath classPath = ClassPath.from(ClassLoader.getSystemClassLoader());
+    boolean foundSelf = classPath.getAllClasses().stream()
+        .anyMatch(info -> ClassLoaderTest.class.getName().equals(info.getName()));
+    Assert.assertTrue(foundSelf);
   }
 }

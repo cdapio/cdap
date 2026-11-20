@@ -38,7 +38,8 @@ import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.test.XSlowTests;
-import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +58,9 @@ import org.junit.experimental.categories.Category;
 @Category(XSlowTests.class)
 public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
 
-  static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US);
+  private static long parseDateTime(String value) throws ParseException {
+    return new SimpleDateFormat("M/d/yy h:mm a", Locale.US).parse(value).getTime();
+  }
 
 
   @Test
@@ -75,7 +78,7 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
         }
       });
 
-    final long time = DATE_FORMAT.parse("1/15/15 11:15 am").getTime();
+    final long time = parseDateTime("1/15/15 11:15 am");
     final long time5 = time + TimeUnit.MINUTES.toMillis(5);
 
     // run the partition writer m/r with this output partition time

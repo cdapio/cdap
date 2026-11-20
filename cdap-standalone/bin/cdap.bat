@@ -85,22 +85,40 @@ if ["%JAVA_HOME%"] == [] (
 
 REM Check for Java version
 setlocal ENABLEDELAYEDEXPANSION
-set /a counter=0
+REM Use the first line of the form: ... version "<ver>" ...
+REM Lines such as "Picked up JAVA_TOOL_OPTIONS: ..." can come first and are skipped
+set "ver="
 for /f "tokens=* delims= " %%f in ('"%JAVACMD%" -version 2^>^&1') do @(
-  if "!counter!"=="0" set line=%%f
-  set /a counter+=1
-)
-set line=%line:*version "1.=!!%
-set line=%line:~0,1%
-set java_minimum=7
-set java_maximum=8
-if NOT "%line%" == "%java_minimum%" (
-  if NOT "%line%" == "%java_maximum%" (
-    echo ERROR: Java version ^(%line%^) is not supported.
-    echo Please install Java %java_minimum% or %java_maximum%: other versions of Java are not supported.
-    endlocal
-    EXIT /B 1
+  if not defined ver (
+    for /f tokens^=1^,2^ delims^=^" %%a in ("%%f") do (
+      set "head=%%a"
+      if "!head:~-8!"=="version " set "ver=%%b"
+    )
   )
+)
+set "java_major="
+for /f "tokens=1,2 delims=.-_+" %%a in ("!ver!") do (
+  if "%%a"=="1" (
+    set "java_major=%%b"
+  ) else (
+    set "java_major=%%a"
+  )
+)
+set java_minimum=11
+REM LSS falls back to a string compare for non-numbers, so check for digits first
+set "non_digit="
+if "!java_major!"=="" set "non_digit=x"
+for /f "delims=0123456789" %%i in ("!java_major!") do set "non_digit=%%i"
+if defined non_digit (
+  echo ERROR: Could not detect Java version from ^(!ver!^).
+  endlocal
+  EXIT /B 1
+)
+if !java_major! LSS %java_minimum% (
+  echo ERROR: Java version ^(!ver!^) is not supported.
+  echo Please install Java %java_minimum% or higher: older versions of Java are not supported.
+  endlocal
+  EXIT /B 1
 )
 endlocal
 GOTO :EOF
@@ -186,6 +204,7 @@ REM Note the trailing semi-colon so that the last directory entry is interpreted
 SET "CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
+IF %ERRORLEVEL% NEQ 0 GOTO FINALLY
 CALL :CREATE_LOG_DIR
 CALL :SET_ACCESS_TOKEN
 
@@ -216,6 +235,7 @@ REM See TX_DEBUGGER for notes on setting CLASSPATH
 SET "CLASSPATH=%CDAP_HOME%\libexec\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
+IF %ERRORLEVEL% NEQ 0 GOTO FINALLY
 
 set class=io.cdap.cdap.cli.CLIMain
 

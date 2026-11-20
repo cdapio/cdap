@@ -159,6 +159,7 @@ public class AuthEnforceRewriterTest {
                            Class<? extends Exception> expectedException, Object... args) throws NoSuchMethodException {
     try {
       method.invoke(rewrittenObject, args);
+      Assert.fail(String.format("Expected %s to be thrown", expectedException.getName()));
     } catch (Exception e) {
       // Since the above method is invoked through reflection any exception thrown will be wrapped in
       // InvocationTargetException so verify that the root cause is the expected exception confirming that enforce

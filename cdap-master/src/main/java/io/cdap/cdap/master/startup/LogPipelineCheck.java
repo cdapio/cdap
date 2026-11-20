@@ -78,7 +78,8 @@ class LogPipelineCheck extends AbstractMasterCheck {
     // cConf.clear();
     // cConf.addResource(inputStream);
     // new LogPipelineLoader(cConf).validate();
-    ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
+    ClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]),
+        ClassLoader.getPlatformClassLoader());
 
     Class<?> cConfClass = classLoader.loadClass(CConfiguration.class.getName());
     Object cConf = cConfClass.getMethod("create").invoke(null);
