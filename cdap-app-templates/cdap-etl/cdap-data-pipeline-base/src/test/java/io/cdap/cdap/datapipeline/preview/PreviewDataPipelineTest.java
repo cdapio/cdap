@@ -46,8 +46,8 @@ import io.cdap.cdap.etl.mock.condition.MockCondition;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.ExceptionTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
+import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
-import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
@@ -77,7 +77,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.annotation.Nullable;
 
 /**
  * Test for preview for data pipeline app
@@ -91,7 +90,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Security.Store.PROVIDER, "file",
                                                                        Constants.AppFabric.SPARK_COMPAT,
-                                                                       Compat.SPARK_COMPAT);
+                                                                       Compat.SPARK_COMPAT,
+                                                                       Constants.Preview.POLLER_COUNT, 1);
   private static final String DATA_TRACER_PROPERTY = "records.out";
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
@@ -101,6 +101,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     if (startCount++ > 0) {
       return;
     }
+    System.setProperty("spark.ui.enabled", "false");
     setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
   }
 
@@ -281,13 +282,11 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testPreviewStop() throws Exception {
-    testDataPipelinePreviewStop(Engine.MAPREDUCE, null);
-    testDataPipelinePreviewStop(Engine.SPARK, null);
-    testDataPipelinePreviewStop(Engine.MAPREDUCE, 60000L);
-    testDataPipelinePreviewStop(Engine.SPARK, 60000L);
+    testDataPipelinePreviewStop(Engine.MAPREDUCE);
+    testDataPipelinePreviewStop(Engine.SPARK);
   }
 
-  private void testDataPipelinePreviewStop(Engine engine, @Nullable Long sleepInMillis) throws Exception {
+  private void testDataPipelinePreviewStop(Engine engine) throws Exception {
     PreviewManager previewManager = getPreviewManager();
 
     String sourceTableName = "singleInput";
@@ -300,18 +299,15 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     /*
      * source --> transform -> sink
      */
-    ETLPlugin sourcePlugin = sleepInMillis == null ? MockSource.getPlugin(sourceTableName, schema)
-      : MockSource.getPlugin(sourceTableName, schema, sleepInMillis);
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
-      .addStage(new ETLStage("source", sourcePlugin))
-      .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableName, schema)))
+      .addStage(new ETLStage("transform", SleepTransform.getPlugin(60000L)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableName)))
       .addConnection("source", "transform")
       .addConnection("transform", "sink")
       .setEngine(engine)
       .setNumOfRecordsPreview(100)
       .build();
-
 
     // Construct the preview config with the program name and program type
     PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
@@ -327,21 +323,34 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig, previewConfig);
 
-    // Start the preview and get the corresponding PreviewRunner.
-    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    // Start the preview and wait until it is actively running and has emitted its first source record into
+    // SleepTransform, ensuring the single preview poller is occupied and the phase is past initialization.
+    ApplicationId runningPreviewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    Tasks.waitFor(PreviewStatus.Status.RUNNING, () -> {
+      PreviewStatus status = previewManager.getStatus(runningPreviewId);
+      return status == null ? null : status.getStatus();
+    }, 5, TimeUnit.MINUTES);
+    Tasks.waitFor(true, () -> previewManager.getRunId(runningPreviewId) != null, 5, TimeUnit.MINUTES);
+    Tasks.waitFor(true, () -> {
+      Map<String, List<JsonElement>> result = previewManager.getData(runningPreviewId, "source");
+      List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
+      return data != null && !data.isEmpty();
+    }, 5, TimeUnit.MINUTES);
 
-    if (sleepInMillis != null) {
-      // Wait for the preview status go into RUNNING.
-      Tasks.waitFor(PreviewStatus.Status.RUNNING, () -> {
-        PreviewStatus status = previewManager.getStatus(previewId);
-        return status == null ? null : status.getStatus();
-      }, 5, TimeUnit.MINUTES);
-    }
-
-    previewManager.stopPreview(previewId);
-    // Wait for the preview status go into KILLED.
+    // Start a second preview while the single poller is busy so it deterministically remains in WAITING state,
+    // and verify stopping a WAITING preview transitions it to KILLED without a program run ID.
+    ApplicationId waitingPreviewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    previewManager.stopPreview(waitingPreviewId);
     Tasks.waitFor(PreviewStatus.Status.KILLED, () -> {
-      PreviewStatus status = previewManager.getStatus(previewId);
+      PreviewStatus status = previewManager.getStatus(waitingPreviewId);
+      return status == null ? null : status.getStatus();
+    }, 5, TimeUnit.MINUTES);
+    Assert.assertNull(previewManager.getRunId(waitingPreviewId));
+
+    // Stop the running preview and wait for its status to go into KILLED.
+    previewManager.stopPreview(runningPreviewId);
+    Tasks.waitFor(PreviewStatus.Status.KILLED, () -> {
+      PreviewStatus status = previewManager.getStatus(runningPreviewId);
       return status == null ? null : status.getStatus();
     }, 5, TimeUnit.MINUTES);
 
@@ -349,7 +358,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
-    Assert.assertTrue(previewManager.getRunId(previewId) == null || sleepInMillis != null);
+    Assert.assertNotNull(previewManager.getRunId(runningPreviewId));
   }
 
   @Test
@@ -448,12 +457,12 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     addDatasetInstance(Table.class.getName(), source3MultiJoinInput,
                        DatasetProperties.of(ImmutableMap.of("schema", inputSchema3.toString())));
 
+    ingestData(inputSchema1, inputSchema2, inputSchema3, source1MulitJoinInput, source2MultiJoinInput,
+               source3MultiJoinInput);
+
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
-
-    ingestData(inputSchema1, inputSchema2, inputSchema3, source1MulitJoinInput, source2MultiJoinInput,
-               source3MultiJoinInput);
 
     // Wait for the preview status go into COMPLETED.
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
