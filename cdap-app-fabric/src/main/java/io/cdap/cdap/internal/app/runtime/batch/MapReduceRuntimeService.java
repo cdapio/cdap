@@ -41,6 +41,7 @@ import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.JvmOptionsValidator;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -217,6 +218,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // we will now call initialize(), hence destroy() must be called on shutdown/cleanup
       cleanupTask = createCleanupTask((Runnable) this::destroy, cleanupTask);
       beforeSubmit(job);
+
+      for (Map.Entry<String, String> entry : mapredConf) {
+        String key = entry.getKey();
+        if (JvmOptionsValidator.isJvmOptionConfigKey(key) && isProgrammaticConfig(mapredConf, key)) {
+          JvmOptionsValidator.validateUserJvmOptions(entry.getValue());
+        }
+      }
 
       // Localize additional resources that users have requested via BasicMapReduceContext.localize methods
       Map<String, String> localizedUserResources = localizeUserResources(job, tempDir);
@@ -983,8 +991,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private static boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
-    return sources != null && sources.length > 0 && PROGRAMATIC_SOURCE_PATTERN.matcher(sources[0])
-        .matches();
+    if (sources == null) {
+      return false;
+    }
+    for (String source : sources) {
+      if (source != null && PROGRAMATIC_SOURCE_PATTERN.matcher(source).matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
@@ -1179,9 +1194,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // If the job conf has the jvm opts set programmatically, then prepend it with what being determined above;
       // otherwise, append. The reason is, we want to have the one set programmatically has higher precedence,
       // while the one set cluster wide (in mapred-site.xml) has lower precedence.
-      jvmOpts = isProgrammaticConfig(conf, javaOptsKey)
-          ? jvmOpts + " " + conf.get(javaOptsKey, "")
-          : conf.get(javaOptsKey, "") + " " + jvmOpts;
+      String existingJavaOpts = conf.get(javaOptsKey, "");
+      if (isProgrammaticConfig(conf, javaOptsKey)) {
+        JvmOptionsValidator.validateUserJvmOptions(existingJavaOpts);
+        jvmOpts = jvmOpts + " " + existingJavaOpts;
+      } else {
+        jvmOpts = existingJavaOpts + " " + jvmOpts;
+      }
       conf.set(javaOptsKey, jvmOpts.trim());
 
       LOG.debug("MapReduce {} task container memory is {}MB, set {}. "

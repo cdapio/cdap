@@ -72,6 +72,7 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -427,6 +428,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
     if (programName == null || programType == null) {
       throw new IllegalArgumentException("ProgramName or ProgramType cannot be null.");
+    }
+    if (previewConfig.getRuntimeArgs() != null) {
+      SystemArguments.validateJvmOpts(previewConfig.getRuntimeArgs());
     }
 
     return preview.program(programType, programName);

@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.JvmOptionsValidator;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -201,7 +203,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     }
   }
 
-  private void validateKerberos(
+  @VisibleForTesting
+  static void validateKerberos(
       @Nullable String principal, @Nullable String keytab, SSHSession session) {
     if (Strings.isNullOrEmpty(principal) || Strings.isNullOrEmpty(keytab)) {
       return;
@@ -219,7 +222,10 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     }
 
     try {
-      String result = session.executeAndWait(String.format("%s -k -t %s", klistPath, keytab));
+      String result = session.executeAndWait(
+          String.format("%s -k -t %s",
+              JvmOptionsValidator.shellQuote(klistPath),
+              JvmOptionsValidator.shellQuote(keytab)));
       if (!result.contains(principal)) {
         throw new IllegalArgumentException(
             "Kerberos principal " + principal + " not found in the keytab");
@@ -435,6 +441,27 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       Map<String, String> environments,
       @Nullable String kerberosPrincipal,
       @Nullable String kerberosKeytab) {
+    return generateLaunchScript(
+        getProgramRunId().getRun(),
+        targetPath,
+        runnableName,
+        memory,
+        jvmOptions,
+        environments,
+        kerberosPrincipal,
+        kerberosKeytab);
+  }
+
+  @VisibleForTesting
+  static String generateLaunchScript(
+      String runId,
+      String targetPath,
+      String runnableName,
+      int memory,
+      JvmOptions jvmOptions,
+      Map<String, String> environments,
+      @Nullable String kerberosPrincipal,
+      @Nullable String kerberosKeytab) {
 
     StringWriter writer = new StringWriter();
     PrintWriter scriptWriter = new PrintWriter(writer, true);
@@ -442,11 +469,14 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     scriptWriter.println("#!/bin/bash");
 
     for (Map.Entry<String, String> env : environments.entrySet()) {
-      scriptWriter.printf("export %s=\"%s\"\n", env.getKey(), env.getValue());
+      JvmOptionsValidator.validateEnvKey(env.getKey());
+      scriptWriter.printf("export %s=%s\n", env.getKey(),
+          JvmOptionsValidator.shellQuote(env.getValue()));
     }
 
     String logsDir = targetPath + "/logs";
-    scriptWriter.printf("export %s=\"%s\"\n", EnvKeys.TWILL_RUNNABLE_NAME, runnableName);
+    scriptWriter.printf("export %s=%s\n", EnvKeys.TWILL_RUNNABLE_NAME,
+        JvmOptionsValidator.shellQuote(runnableName));
     scriptWriter.printf("mkdir -p %s/tmp\n", targetPath);
     scriptWriter.printf("mkdir -p %s\n", logsDir);
     scriptWriter.printf("cd %s\n", targetPath);
@@ -458,33 +488,41 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
 
     Map<String, String> args = new LinkedHashMap<>();
-    args.put(RemoteExecutionJobMain.RUN_ID, getProgramRunId().getRun());
+    args.put(RemoteExecutionJobMain.RUN_ID, runId);
 
     if (!Strings.isNullOrEmpty(kerberosPrincipal) && !Strings.isNullOrEmpty(kerberosKeytab)) {
       args.put(ClusterProperties.KERBEROS_PRINCIPAL, kerberosPrincipal);
       args.put(ClusterProperties.KERBEROS_KEYTAB, kerberosKeytab);
     }
 
+    String rawExtraOpts = jvmOptions.getAMExtraOptions();
+    String expandedExtraOpts = rawExtraOpts == null
+        ? "" : rawExtraOpts.replace(ApplicationConstants.LOG_DIR_EXPANSION_VAR, logsDir);
+    JvmOptionsValidator.validateLauncherJvmOptions(expandedExtraOpts);
+    String quotedExtraOpts = JvmOptionsValidator.splitJvmOptions(expandedExtraOpts).stream()
+        .map(JvmOptionsValidator::shellQuote)
+        .collect(Collectors.joining(" "));
+    String extraOptsPart = quotedExtraOpts.isEmpty() ? "" : quotedExtraOpts + " ";
+
     scriptWriter.printf(
-        "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s "
+        "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s %s-Xmx%dm %s '%s' true %s "
             + ">%s/stdout 2>%s/stderr &\n",
-        getProgramRunId().getRun(),
+        JvmOptionsValidator.shellQuote(runId),
         targetPath,
         Constants.Files.LAUNCHER_JAR,
+        extraOptsPart,
         memory,
-        jvmOptions.getAMExtraOptions(),
         RemoteLauncher.class.getName(),
         RemoteExecutionJobMain.class.getName(),
         args.entrySet().stream()
-            .map(e -> "--" + e.getKey() + "=" + e.getValue())
+            .map(e -> JvmOptionsValidator.shellQuote("--" + e.getKey() + "=" + e.getValue()))
             .collect(Collectors.joining(" ")),
         logsDir,
         logsDir);
 
     scriptWriter.flush();
 
-    // Expands the <LOG_DIR> placement holder to the log directory
-    return writer.toString().replace(ApplicationConstants.LOG_DIR_EXPANSION_VAR, logsDir);
+    return writer.toString();
   }
 
   /** Localize key store files to the remote host. */

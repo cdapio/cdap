@@ -40,9 +40,50 @@ program_is_installed() { type ${1} >/dev/null 2>&1; local readonly __ret=${?}; r
 
 #
 # split_jvm_opts <variable> [variable] [variable]
-# Splits multiple variables of JVM options into a JVM_OPTS bash array
+# Splits multiple variables of JVM options into a JVM_OPTS bash array without eval or globbing
 #
-split_jvm_opts() { JVM_OPTS=(${@}); };
+split_jvm_opts() {
+  JVM_OPTS=()
+  local IFS=" "
+  local __input="${*}"
+  local __len=${#__input}
+  local __i=0
+  local __token=""
+  local __in_token=0
+  local __quote=""
+  local __ch=""
+  while [[ ${__i} -lt ${__len} ]]; do
+    __ch="${__input:${__i}:1}"
+    if [[ -n "${__quote}" ]]; then
+      if [[ "${__ch}" == "\\" && "${__quote}" == "\"" && $((__i + 1)) -lt ${__len} ]]; then
+        __i=$((__i + 1))
+        __token+="${__input:${__i}:1}"
+      elif [[ "${__ch}" == "${__quote}" ]]; then
+        __quote=""
+      else
+        __token+="${__ch}"
+      fi
+    else
+      if [[ "${__ch}" == "\"" || "${__ch}" == "'" ]]; then
+        __quote="${__ch}"
+        __in_token=1
+      elif [[ "${__ch}" =~ [[:space:]] ]]; then
+        if [[ ${__in_token} -eq 1 ]]; then
+          JVM_OPTS+=("${__token}")
+          __token=""
+          __in_token=0
+        fi
+      else
+        __token+="${__ch}"
+        __in_token=1
+      fi
+    fi
+    __i=$((__i + 1))
+  done
+  if [[ ${__in_token} -eq 1 ]]; then
+    JVM_OPTS+=("${__token}")
+  fi
+}
 
 #
 # rotate_log <file> [num]
@@ -572,12 +613,12 @@ cdap_service() {
       if [[ ${__action} == condrestart ]]; then
         cdap_status_pidfile ${__pidfile} "CDAP ${__name}" >/dev/null && \
           cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" && \
-          cdap_${__svc} ${__action} ${__args}
+          cdap_${__svc} ${__action} "${@}"
       elif [[ ${__action} == restart ]]; then
           cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" ; \
-          cdap_${__svc} ${__action} ${__args}
+          cdap_${__svc} ${__action} "${@}"
       else
-          cdap_${__svc} ${__action} ${__args}
+          cdap_${__svc} ${__action} "${@}"
       fi
       __ret=${?}
       ;;
@@ -587,8 +628,8 @@ cdap_service() {
       echo ${CLASSPATH}
       __ret=0
       ;;
-    run) cdap_run_class ${__args} ; __ret=${?} ;;
-    exec) cdap_exec_class ${__args} ; __ret=${?} ;;
+    run) cdap_run_class "${@}" ; __ret=${?} ;;
+    exec) cdap_exec_class "${@}" ; __ret=${?} ;;
     usage|-h|--help) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath|run|exec}"; __ret=0 ;;
     *) die "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath|run|exec}" ;;
   esac
@@ -650,18 +691,18 @@ cdap_start_java() {
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
   # Split JVM_OPTS array
-  eval split_jvm_opts ${!JAVA_OPTS_VAR} ${OPTS} ${JAVA_OPTS}
-  local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
+  split_jvm_opts "${!JAVA_OPTS_VAR}" "${OPTS}" "${JAVA_OPTS}"
+  local __defines=("-Dcdap.service=${CDAP_SERVICE}" ${JAVA_HEAPMAX} "-Duser.dir=${LOCAL_DIR}" "-Djava.io.tmpdir=${TEMP_DIR}")
   # Enable GC logging
   cdap_create_dir ${__gc_log_and_heapdump_dir}
   if [[ ${HEAPDUMP_ON_OOM} == true ]]; then
-    __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__gc_log_and_heapdump_dir}"
+    __defines+=("-XX:+HeapDumpOnOutOfMemoryError" "-XX:HeapDumpPath=${__gc_log_and_heapdump_dir}")
   fi
 
   if [ "$JAVA_VERSION" -le 8 ]; then
-      __defines+=" -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+      __defines+=("-verbose:gc" "-Xloggc:${__gc_log_and_heapdump_dir}/gc.log" "-XX:+PrintGCDetails" "-XX:+PrintGCDateStamps" "-XX:+UseGCLogFileRotation" "-XX:NumberOfGCLogFiles=10" "-XX:GCLogFileSize=1M")
   else
-      __defines+="-Xlog:gc*:file=${__gc_log_and_heapdump_dir}/gc.log:time,uptime,level,tags:filecount=10,filesize=1M"
+      __defines+=("-Xlog:gc*:file=${__gc_log_and_heapdump_dir}/gc.log:time,uptime,level,tags:filecount=10,filesize=1M")
   fi
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
@@ -669,13 +710,13 @@ cdap_start_java() {
     # Determine SPARK_HOME
     cdap_set_spark || logecho "$(date) Could not determine SPARK_HOME! Spark support unavailable!"
     if [[ -n ${SPARK_COMPAT} ]]; then
-      __defines+=" -Dapp.program.spark.compat=${SPARK_COMPAT}"
+      __defines+=("-Dapp.program.spark.compat=${SPARK_COMPAT}")
     fi
     # Master requires this local directory
     cdap_create_local_dir || die "Could not create Master local directory"
     # Check for JAVA_LIBRARY_PATH
     if [[ -n ${JAVA_LIBRARY_PATH} ]]; then
-      __defines+=" -Djava.library.path=${JAVA_LIBRARY_PATH}"
+      __defines+=("-Djava.library.path=${JAVA_LIBRARY_PATH}")
     fi
     # Check for HDP 2.2+ or IOP, otherwise do nothing and leave up to the user to configure
     for __dist in hdp iop; do
@@ -683,7 +724,7 @@ cdap_start_java() {
         local __auto_version=$(${__dist}-select status hadoop-client | awk '{print $3}')
         # Check for version configured in OPTS
         if [[ ${OPTS} =~ -D${__dist}.version ]]; then
-          local __conf_version=$(echo ${OPTS} | grep -oP "\-D${__dist}.version=\d+\.\d+\.\d+\.\d+-\d+" | cut -d= -f2)
+          local __conf_version=$(echo "${OPTS}" | grep -oP "\-D${__dist}.version=\d+\.\d+\.\d+\.\d+-\d+" | cut -d= -f2)
           if [[ ${__conf_version} != ${__auto_version} ]]; then
             local __caps=$(echo ${__dist} | awk 'BEGIN { getline; print toupper($0) }')
             logecho "$(date) [WARN] ${__caps} version mismatch! Detected: ${__auto_version}, Configured: ${__conf_version}"
@@ -691,7 +732,7 @@ cdap_start_java() {
           fi
         else
           # No version specified in OPTS or incorrect format, appending ours
-          __defines+=" -D${__dist}.version=${__auto_version}"
+          __defines+=("-D${__dist}.version=${__auto_version}")
           logecho "$(date) Detected ${__dist} version ${__auto_version} and adding to CDAP Master command line"
         fi
       fi
@@ -700,7 +741,7 @@ cdap_start_java() {
     __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
     if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
-      "${JAVA}" ${JAVA_HEAPMAX} ${JVM_OPTS[@]} -cp ${CLASSPATH} io.cdap.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
+      "${JAVA}" "${JVM_OPTS[@]}" ${JAVA_HEAPMAX} -cp "${CLASSPATH}" io.cdap.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
       if [ $? -ne 0 ]; then
         die "Master startup checks failed. Please check ${__logfile} to address issues."
       fi
@@ -708,10 +749,9 @@ cdap_start_java() {
   fi
   "${JAVA}" -version 2>>${__logfile}
   ulimit -a >>${__logfile}
-  __defines+=" ${JVM_OPTS[@]}"
-  echo "$(date) Running: ${JAVA} ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@}" >>${__logfile}
+  echo "$(date) Running: ${JAVA} ${__defines[*]} ${JVM_OPTS[*]} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@}" >>${__logfile}
   # Start our JVM
-  nohup nice -n ${NICENESS} "${JAVA}" ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@} </dev/null >>${__logfile} 2>&1 &
+  nohup nice -n ${NICENESS} "${JAVA}" "${JVM_OPTS[@]}" "${__defines[@]}" -cp "${CLASSPATH}" ${MAIN_CLASS} ${MAIN_CLASS_ARGS} "${@}" </dev/null >>${__logfile} 2>&1 &
   echo $! >${__pidfile}
   sleep 2 # Now, wait for JVM spinup
   kill -0 $(<${__pidfile}) >/dev/null 2>&1
@@ -739,13 +779,14 @@ cdap_run_class() {
   cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
   # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
   OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
+  split_jvm_opts "${OPTS}"
   echo "$(date) Major Java version: $JAVA_VERSION"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
     echo "$(date) Running class ${__class}"
   fi
-  "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
+  "${JAVA}" "${JVM_OPTS[@]}" ${JAVA_HEAPMAX} -Dhive.classpath="${HIVE_CLASSPATH}" -Duser.dir="${LOCAL_DIR}" -Djava.io.tmpdir="${TEMP_DIR}" -cp "${CLASSPATH}" "${__class}" "${@}"
   __ret=${?}
   return ${__ret}
 }
@@ -771,13 +812,14 @@ cdap_exec_class() {
   cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
   # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
   OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
+  split_jvm_opts "${OPTS}"
   echo "$(date) Major Java version: $JAVA_VERSION"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
     echo "$(date) Running class ${__class}"
   fi
-  exec "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
+  exec "${JAVA}" "${JVM_OPTS[@]}" ${JAVA_HEAPMAX} -Dhive.classpath="${HIVE_CLASSPATH}" -Duser.dir="${LOCAL_DIR}" -Djava.io.tmpdir="${TEMP_DIR}" -cp "${CLASSPATH}" "${__class}" "${@}"
 }
 
 #
@@ -949,7 +991,7 @@ cdap_sdk_start() {
     CDAP_SDK_OPTS+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${LOG_DIR}"
   fi
 
-  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_SDK_OPTS} ${SDK_GC_OPTS} ${JAVA_OPTS}
+  split_jvm_opts "${KILL_ON_OOM_OPTS}" "${CDAP_SDK_DEFAULT_JVM_OPTS}" "${CDAP_SDK_OPTS}" "${SDK_GC_OPTS}" "${JAVA_OPTS}"
 
   cdap_sdk_check_before_start || return 1
   cdap_create_local_dir || die "Failed to create LOCAL_DIR: ${LOCAL_DIR}"
@@ -980,13 +1022,11 @@ cdap_sdk_start() {
   # Start SDK processes
   echo -n "$(date) Starting CDAP Sandbox ..."
   if ${__foreground}; then
-    # this eval is needed to get around the double quote issue in KILL_ON_OOM_OPTS
-    eval "nice -1 \"${JAVA}\" ${KILL_ON_OOM_OPTS} ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath \"${CLASSPATH}\" io.cdap.cdap.StandaloneMain | tee -a \"${LOG_DIR}\"/cdap.log"
+    nice -1 "${JAVA}" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "${CLASSPATH}" io.cdap.cdap.StandaloneMain | tee -a "${LOG_DIR}"/cdap.log
     __ret=${?}
     return ${__ret}
   else
-    # this eval is needed to get around the double quote issue in KILL_ON_OOM_OPTS
-    eval "nohup nice -1 \"${JAVA}\" ${KILL_ON_OOM_OPTS} ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath \"${CLASSPATH}\" io.cdap.cdap.StandaloneMain </dev/null >>\"${LOG_DIR}\"/cdap.log 2>&1 &"
+    nohup nice -1 "${JAVA}" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "${CLASSPATH}" io.cdap.cdap.StandaloneMain </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
     sleep 2 # wait for JVM spin up
@@ -1183,9 +1223,9 @@ cdap_config_tool() {
 #
 cdap_upgrade_tool() {
   local readonly __ret __class=io.cdap.cdap.data.tools.UpgradeTool
-  set -- "upgrade" ${@}
+  set -- "upgrade" "${@}"
 
-  cdap_run_class ${__class} ${@}
+  cdap_run_class "${__class}" "${@}"
   __ret=${?}
   return ${__ret}
 }
@@ -1234,7 +1274,7 @@ cdap_setup() {
 cdap_setup_coprocessors() {
   local readonly __ret __class=io.cdap.cdap.data.tools.CoprocessorBuildTool
 
-  cdap_run_class ${__class} check ${@}
+  cdap_run_class "${__class}" check "${@}"
   __ret=${?}
   return ${__ret}
 }

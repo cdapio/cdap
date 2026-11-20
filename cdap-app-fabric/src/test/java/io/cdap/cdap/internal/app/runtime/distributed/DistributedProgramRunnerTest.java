@@ -108,6 +108,63 @@ public class DistributedProgramRunnerTest {
   }
 
   @Test
+  public void testJvmOptsPreservesDefaultGcLogDirAndAcceptsProxyProps() throws URISyntaxException {
+    String proxyOpts =
+        "-Dhttp.proxyHost=10.10.1.5 -Dhttp.proxyPort=3128 "
+            + "-Dhttp.nonProxyHosts=es-cluster*|cdap-hdf-*|127.0.0.1|localhost "
+            + "-Dcom.google.api.client.should_use_proxy=true";
+    BasicArguments userArgs =
+        new BasicArguments(ImmutableMap.of(SystemArguments.JVM_OPTS, proxyOpts));
+    ProgramOptions options =
+        new SimpleProgramOptions(program.getId(), new BasicArguments(), userArgs);
+
+    runner.validateOptions(program, options);
+    runner.setJvmOpts(preparer, options, new URI("file:///etc/cdap/conf/logback.xml"),
+        Collections.emptyMap());
+    Assert.assertTrue(preparer.getJvmOpts().contains(proxyOpts));
+    Assert.assertTrue(preparer.getJvmOpts().contains("<LOG_DIR>"));
+  }
+
+  @Test
+  public void testJvmOptsAndValidateOptionsRejectDisallowedInputs() throws URISyntaxException {
+    List<Map<String, String>> invalidArgMaps = Arrays.asList(
+        ImmutableMap.of(
+            SystemArguments.JVM_OPTS,
+            "-Dcustom.flag=test -XX:OnOutOfMemoryError=/bin/id"),
+        ImmutableMap.of(
+            SystemArguments.JVM_OPTS,
+            "-XX:OnOutOfMemoryError=\"curl -s -H Metadata-Flavor:Google "
+                + "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token\""),
+        ImmutableMap.of(SystemArguments.JVM_OPTS, "-Xmx8m"),
+        ImmutableMap.of(SystemArguments.JVM_OPTS, "-javaagent:/tmp/evil.jar"),
+        ImmutableMap.of(SystemArguments.JVM_OPTS, "-Dfoo=$(/bin/id)"),
+        ImmutableMap.of(
+            "workflow.DataPipelineWorkflow." + SystemArguments.JVM_OPTS,
+            "-javaagent:/tmp/evil.jar"),
+        ImmutableMap.of(
+            "workflow.mywf." + SystemArguments.JVM_OPTS,
+            "-Dfoo=`/bin/id`"));
+
+    for (Map<String, String> argMap : invalidArgMaps) {
+      ProgramOptions options = new SimpleProgramOptions(
+          program.getId(), new BasicArguments(), new BasicArguments(argMap));
+      try {
+        runner.validateOptions(program, options);
+        Assert.fail("Expected validateOptions to reject: " + argMap);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+      try {
+        runner.setJvmOpts(preparer, options, new URI("file:///etc/cdap/conf/logback.xml"),
+            Collections.emptyMap());
+        Assert.fail("Expected setJvmOpts to reject: " + argMap);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+  }
+
+  @Test
   public void testTwillConfigs() {
     BasicArguments systemArgs =
         new BasicArguments(ImmutableMap.of(SystemArguments.NAMESPACE_CONFIG_PREFIX + "key", "val"));

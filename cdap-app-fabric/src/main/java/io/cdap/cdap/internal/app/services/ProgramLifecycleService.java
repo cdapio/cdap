@@ -537,6 +537,11 @@ public class ProgramLifecycleService {
       userArgs.putAll(overrides);
     }
 
+    try {
+      SystemArguments.validateJvmOpts(userArgs);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
     authorizePipelineRuntimeImpersonation(userArgs);
     return runInternal(programId, userArgs, sysArgs, debug);
   }
@@ -638,6 +643,11 @@ public class ProgramLifecycleService {
   public RunId runInternal(ProgramId programId, Map<String, String> userArgs,
       Map<String, String> sysArgs,
       boolean debug) throws Exception {
+    try {
+      SystemArguments.validateJvmOpts(userArgs);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
     RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
@@ -693,6 +703,7 @@ public class ProgramLifecycleService {
       Map<String, String> sysArgs,
       boolean debug)
       throws NotFoundException, ProfileConflictException, ProgramRunForbiddenException {
+    SystemArguments.validateJvmOpts(userArgs);
     ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, userArgs);
     Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
     Profile profile = profileService.getProfile(profileId, profileProperties);
@@ -778,6 +789,11 @@ public class ProgramLifecycleService {
       userArgs.putAll(overrides);
     }
 
+    try {
+      SystemArguments.validateJvmOpts(userArgs);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
+    }
     authorizePipelineRuntimeImpersonation(userArgs);
     BasicArguments systemArguments = new BasicArguments(sysArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);

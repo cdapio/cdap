@@ -23,6 +23,7 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.JvmOptionsValidator;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -255,6 +256,29 @@ public final class SystemArguments {
                 argName, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
       }
     }
+  }
+
+  /**
+   * Validates any JVM options specified in the given arguments map (including scoped keys).
+   *
+   * @throws IllegalArgumentException if any JVM option entry contains disallowed flags or syntax
+   */
+  public static void validateJvmOpts(@Nullable Map<String, String> args) {
+    JvmOptionsValidator.validateJvmOptsMap(args);
+  }
+
+  /**
+   * Validates and returns the value of {@link #JVM_OPTS} from the given arguments map, or
+   * {@code null} if not present.
+   *
+   * @throws IllegalArgumentException if the JVM options contain disallowed flags or syntax
+   */
+  @Nullable
+  public static String getJvmOpts(Map<String, String> args) {
+    validateJvmOpts(args);
+    String jvmOpts = args.get(JVM_OPTS);
+    JvmOptionsValidator.validateUserJvmOptions(jvmOpts);
+    return jvmOpts;
   }
 
   /**

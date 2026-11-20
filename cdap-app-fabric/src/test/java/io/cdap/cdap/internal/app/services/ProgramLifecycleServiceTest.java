@@ -25,6 +25,7 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -184,6 +185,65 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
                                                                           Collections.emptyMap(), false);
     Assert.assertEquals(ProjectInfo.getVersion().toString(),
                         options.getArguments().getOption(Constants.APP_CDAP_VERSION));
+
+    String validJvmOpts =
+        "-Dhttp.proxyHost=10.10.1.5 -Dhttp.nonProxyHosts=es-cluster*|cdap-hdf-*|127.0.0.1|localhost";
+    ProgramOptions validOptions = programLifecycleService.createProgramOptions(
+        programId,
+        Collections.singletonMap(SystemArguments.JVM_OPTS, validJvmOpts),
+        Collections.emptyMap(),
+        false);
+    Assert.assertEquals(
+        validJvmOpts, validOptions.getUserArguments().getOption(SystemArguments.JVM_OPTS));
+
+    for (Map<String, String> invalidUserArgs : Arrays.asList(
+        Collections.singletonMap(
+            SystemArguments.JVM_OPTS, "-XX:OnOutOfMemoryError=/bin/id"),
+        Collections.singletonMap(
+            SystemArguments.JVM_OPTS, "-Xmx8m"),
+        Collections.singletonMap(
+            "spark." + AllProgramsApp.NoOpSpark.NAME + "." + SystemArguments.JVM_OPTS,
+            "-javaagent:/tmp/evil.jar"))) {
+      try {
+        programLifecycleService.createProgramOptions(
+            programId, invalidUserArgs, Collections.emptyMap(), false);
+        Assert.fail("Expected IllegalArgumentException for: " + invalidUserArgs);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    programLifecycleService.saveRuntimeArgs(
+        programId, Collections.singletonMap(SystemArguments.JVM_OPTS, "-Dcustom.key=val"));
+    Assert.assertEquals(
+        "-Dcustom.key=val",
+        programLifecycleService.getRuntimeArgs(programId).get(SystemArguments.JVM_OPTS));
+
+    for (Map<String, String> invalidRuntimeArgs : Arrays.asList(
+        Collections.singletonMap(
+            SystemArguments.JVM_OPTS, "-XX:OnOutOfMemoryError=/bin/id"),
+        Collections.singletonMap(
+            "workflow.DataPipelineWorkflow." + SystemArguments.JVM_OPTS,
+            "-javaagent:/tmp/evil.jar"))) {
+      try {
+        programLifecycleService.saveRuntimeArgs(programId, invalidRuntimeArgs);
+        Assert.fail("Expected BadRequestException for saveRuntimeArgs: " + invalidRuntimeArgs);
+      } catch (BadRequestException expected) {
+        Assert.assertTrue(expected.getCause() instanceof IllegalArgumentException);
+      }
+      try {
+        programLifecycleService.run(programId, invalidRuntimeArgs, false);
+        Assert.fail("Expected BadRequestException for run: " + invalidRuntimeArgs);
+      } catch (BadRequestException expected) {
+        Assert.assertTrue(expected.getCause() instanceof IllegalArgumentException);
+      }
+      try {
+        programLifecycleService.prepareStart(programId, invalidRuntimeArgs, false, false);
+        Assert.fail("Expected BadRequestException for prepareStart: " + invalidRuntimeArgs);
+      } catch (BadRequestException expected) {
+        Assert.assertTrue(expected.getCause() instanceof IllegalArgumentException);
+      }
+    }
   }
 
   @Test
