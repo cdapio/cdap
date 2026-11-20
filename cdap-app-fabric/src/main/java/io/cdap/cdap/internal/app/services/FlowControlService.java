@@ -91,8 +91,8 @@ public class FlowControlService extends AbstractIdleService {
     Counter counter = TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
       store.recordProgramPending(programRunId,
-          programOptions.getArguments().asMap(),
           programOptions.getUserArguments().asMap(),
+          programOptions.getArguments().asMap(),
           programDescriptor.getArtifactId().toApiArtifactId());
       int launchingCount = store.getFlowControlLaunchingCount(readStalenessSeconds);
       int runningCount = store.getFlowControlRunningCount(readStalenessSeconds);
