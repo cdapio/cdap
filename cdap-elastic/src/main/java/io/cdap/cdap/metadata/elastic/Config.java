@@ -53,4 +53,7 @@ public final class Config {
   static final String MAPPING_METADATA_VERSION_PLACEHOLDER = "METADATA_VERSION";
   static final String MAPPING_MAPPING_CHECKSUM = "mapping_checksum";
   static final String MAPPING_MAPPING_CHECKSUM_PLACEHOLDER = "MAPPING_CHECKSUM";
+  // set to "true" in the same "_meta" object while the index misses metadata that the metadata
+  // service must write again
+  static final String MAPPING_REBUILD_REQUIRED = "rebuild_required";
 }

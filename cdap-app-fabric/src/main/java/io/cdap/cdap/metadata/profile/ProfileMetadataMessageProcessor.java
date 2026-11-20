@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -150,6 +151,32 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         LOG.warn("Unknown message type for profile metadata update. Ignoring the message {}",
             message);
     }
+  }
+
+  /**
+   * Returns the updates that write the profile metadata of all programs and schedules of a
+   * namespace, and the plugin metadata of its applications. They restore the metadata that this
+   * processor maintains after the metadata storage lost it.
+   *
+   * <p>Several updates can be for the same plugin, one for each application that uses it.
+   */
+  public List<MetadataMutation> collectMetadata(NamespaceId namespaceId) throws IOException {
+    // The scan cannot throw an IOException, so read the applications first. All versions of an
+    // application share its metadata, so the latest version is the one that counts.
+    Map<ApplicationId, ApplicationSpecification> apps = new LinkedHashMap<>();
+    appMetadataStore.scanApplications(
+        ScanApplicationsRequest.builder().setNamespaceId(namespaceId).setLatestOnly(true).build(),
+        entry -> {
+          apps.put(entry.getKey(), entry.getValue().getSpec());
+          return true;
+        });
+    ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
+    List<MetadataMutation> updates = new ArrayList<>();
+    for (Map.Entry<ApplicationId, ApplicationSpecification> app : apps.entrySet()) {
+      collectAppProfileMetadata(app.getKey(), app.getValue(), namespaceProfile, updates);
+      collectPluginMetadata(app.getKey(), app.getValue(), updates);
+    }
+    return updates;
   }
 
   private void validateCreateEntityUpdateTime(EntityId entityId, MetadataMessage message)

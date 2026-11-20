@@ -14,7 +14,8 @@
  * the License.
  */
 
-// Note: Strictly speaking, JSON does not allow comments, but GSON and Elasticsearch appear to be tolerant.
+// Note: Strictly speaking, JSON does not allow comments. This file is parsed with GSON, which is tolerant,
+// and the comments are not sent to the search cluster.
 // This file directly corresponds to the structure of io.cdap.cdap.metadata.elastic.MetadataDocument.
 {
   "_meta": {
@@ -24,13 +25,13 @@
   },
   "properties": {
     "entity": {
-      "enabled": "false"
+      "enabled": false
     },
     "hidden": {
       "type": "boolean"
     },
     "metadata": {
-      "enabled": "false"
+      "enabled": false
     },
     "name": {
       "type": "keyword"

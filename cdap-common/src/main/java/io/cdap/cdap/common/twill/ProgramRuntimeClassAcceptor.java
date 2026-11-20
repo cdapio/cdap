@@ -29,7 +29,7 @@ public class ProgramRuntimeClassAcceptor extends HadoopClassExcluder {
     if (!super.accept(className, classUrl, classPathUrl)) {
       return false;
     }
-    // Exclude metadata search, in which brings in elastic search and lucene. They are not used by program runtime.
+    // Exclude the metadata search storage. The program runtime does not use it.
     return !className.startsWith("io.cdap.cdap.metadata.elastic.");
   }
 }
