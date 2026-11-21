@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Counts and rate-limit logs runtime token validation failures, and reports whether enforcement is
- * enabled.
+ * Counts and rate-limit logs runtime token validation failures, records non-failure scope
+ * admissions, and reports whether enforcement is enabled.
  */
 @Singleton
 final class RuntimeValidationReporter {
@@ -45,6 +45,8 @@ final class RuntimeValidationReporter {
   private static final String FAILURE_LOG_FORMAT =
       "Runtime token validation failure: reason={}, runId={}, service={}, method={}, path={}, "
           + "enforced={}";
+  private static final String ADMISSION_LOG_FORMAT =
+      "Runtime token scope admission: reason={}, runId={}, service={}, method={}, path={}";
   static final long WARN_RATE_LIMIT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
   private final boolean validationEnabled;
@@ -87,5 +89,14 @@ final class RuntimeValidationReporter {
     warnLoggers.get(failure).warn(FAILURE_LOG_FORMAT,
         failure.getReason(), runId, service, method, path, validationEnabled);
     return validationEnabled;
+  }
+
+  /**
+   * Records a non-failure scope admission (metric counter and DEBUG log only, never WARN).
+   */
+  void reportAdmission(RuntimeScopeAdmission admission, ProgramRunId runId,
+      String service, String method, String path) {
+    metricsContext.increment(admission.getMetricName(), 1L);
+    logger.debug(ADMISSION_LOG_FORMAT, admission.getReason(), runId, service, method, path);
   }
 }

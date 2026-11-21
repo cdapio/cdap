@@ -148,18 +148,36 @@ public class RuntimeServiceRoutingHandler extends AbstractServiceRoutingHandler 
 
     ProgramRunId tokenRunId = validated.getTokenRunId();
     RuntimeCallbackAllowlist.MatchResult match = allowlist.match(
-        prefix, request.uri(), service, request.method().name(), tokenRunId);
+        prefix, request.uri(), service, request.method().name(),
+        tokenRunId, validated.getRuntimeScopes());
     if (!match.isAllowed() || (!hasBody && match.requiresBodyCheck())) {
+      RuntimeValidationFailure failure = match.isAllowed()
+          ? RuntimeValidationFailure.API_NOT_ALLOWED : match.getFailure();
       boolean enforce = validationReporter.reportFailure(
-          RuntimeValidationFailure.API_NOT_ALLOWED,
-          tokenRunId, service, request.method().name(), match.getLogPath());
+          failure, tokenRunId, service, request.method().name(), match.getLogPath());
       if (enforce) {
-        throw new UnauthorizedException("Callback API is not allowed");
+        throw new UnauthorizedException(denialMessage(failure));
       }
+    } else if (match.getAdmission() != null) {
+      validationReporter.reportAdmission(
+          match.getAdmission(), tokenRunId, service, request.method().name(), match.getLogPath());
     }
     String servicePath = extractServicePath(request.uri(), prefix);
     HttpRequest forwardRequest = buildExchangedRequest(request);
     return new PreparedRoute(forwardRequest, servicePath, tokenRunId, match);
+  }
+
+  private static String denialMessage(RuntimeValidationFailure failure) {
+    switch (failure) {
+      case SECRET:
+        return "Secret access is not allowed by runtime scopes";
+      case CONNECTION:
+        return "Connection access is not allowed by runtime scopes";
+      case OAUTH:
+        return "OAuth credential access is not allowed by runtime scopes";
+      default:
+        return "Callback API is not allowed";
+    }
   }
 
   /**

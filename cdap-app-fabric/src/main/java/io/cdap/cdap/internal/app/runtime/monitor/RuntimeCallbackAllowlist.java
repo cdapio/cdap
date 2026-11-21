@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -72,7 +73,8 @@ final class RuntimeCallbackAllowlist {
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeCallbackAllowlist.class);
   private static final Gson GSON = new Gson();
   private static final Set<String> ALLOWED_RULE_KEYS = ImmutableSet.of(
-      "service", "methods", "pathTemplate", "namespaceRule", "applicationRule", "bodyRule");
+      "service", "methods", "pathTemplate", "namespaceRule", "applicationRule", "bodyRule",
+      "scopeKind");
   private static final Set<String> SUPPORTED_METHODS = ImmutableSet.of(
       "GET", "POST", "PUT", "DELETE");
   private static final Set<String> BODY_METHODS = ImmutableSet.of("PUT", "POST");
@@ -99,6 +101,28 @@ final class RuntimeCallbackAllowlist {
     NONE,
     DATASET_PUT,
     DATASET_DELETE
+  }
+
+  private enum ScopeKind {
+    NONE(null, null),
+    SECRET(RuntimeValidationFailure.SECRET, RuntimeScopeAdmission.DYNAMIC_SECRET, "name"),
+    CONNECTION(RuntimeValidationFailure.CONNECTION, RuntimeScopeAdmission.WILDCARD_CONNECTION,
+        "connection"),
+    OAUTH(RuntimeValidationFailure.OAUTH, RuntimeScopeAdmission.WILDCARD_OAUTH,
+        "provider", "credential");
+
+    @Nullable
+    private final RuntimeValidationFailure failure;
+    @Nullable
+    private final RuntimeScopeAdmission admission;
+    private final List<String> requiredCaptures;
+
+    ScopeKind(@Nullable RuntimeValidationFailure failure,
+        @Nullable RuntimeScopeAdmission admission, String... requiredCaptures) {
+      this.failure = failure;
+      this.admission = admission;
+      this.requiredCaptures = ImmutableList.copyOf(requiredCaptures);
+    }
   }
 
   @Inject
@@ -129,32 +153,37 @@ final class RuntimeCallbackAllowlist {
   }
 
   /**
-   * Matches an incoming {@code RUNTIME}-token service routing request against the allowlist.
+   * Matches an incoming {@code RUNTIME}-token service routing request against the allowlist and,
+   * when {@code runtimeScopes} is non-null, enforces per-run scope checks for scoped rules.
    *
    * <p>Validates and decodes the target service path, matches path segments against configured
-   * templates, and verifies namespace, application, and path-only body rules (such as
-   * {@code DATASET_DELETE}) against {@code tokenRunId}. For rules with
-   * {@link BodyRule#DATASET_PUT}, the caller must additionally buffer and verify the request body
-   * with {@link #checkBody(MatchResult, ProgramRunId, byte[])}.
+   * templates, and verifies namespace, application, path-only body rules (such as
+   * {@code DATASET_DELETE}), and scope rules against {@code tokenRunId} and {@code runtimeScopes}.
+   * For rules with {@link BodyRule#DATASET_PUT}, the caller must additionally buffer and verify
+   * the request body with {@link #checkBody(MatchResult, ProgramRunId, byte[])}.
    */
   MatchResult match(String prefix, String rawUri, String service, String method,
-      ProgramRunId tokenRunId) {
+      ProgramRunId tokenRunId, @Nullable RuntimeScopes runtimeScopes) {
     if (rawUri == null) {
-      return MatchResult.denied("");
+      return MatchResult.denied(RuntimeValidationFailure.API_NOT_ALLOWED, "");
     }
     List<String> decodedSegments = parseAndValidateServicePath(prefix, rawUri);
     if (decodedSegments == null) {
-      return MatchResult.denied(extractLogPath(prefix, rawUri));
+      return MatchResult.denied(
+          RuntimeValidationFailure.API_NOT_ALLOWED, extractLogPath(prefix, rawUri));
     }
 
     List<Rule> serviceRules = rulesByService.get(service);
     if (serviceRules.isEmpty()) {
-      return MatchResult.denied(extractLogPath(prefix, rawUri));
+      return MatchResult.denied(
+          RuntimeValidationFailure.API_NOT_ALLOWED, extractLogPath(prefix, rawUri));
     }
 
     String normalizedMethod = method.toUpperCase(Locale.ROOT);
     String matchedTemplate = null;
-    MatchResult bodyCheckCandidate = null;
+    RuntimeValidationFailure scopeFailure = null;
+    String scopeFailureTemplate = null;
+    MatchResult fallbackCandidate = null;
     for (Rule rule : serviceRules) {
       if (!rule.methods.contains(normalizedMethod)) {
         continue;
@@ -176,20 +205,40 @@ final class RuntimeCallbackAllowlist {
           && !isWorkflowLocalDataset(captures.get("name"), tokenRunId)) {
         continue;
       }
-      if (rule.bodyRule == BodyRule.DATASET_PUT) {
+
+      RuntimeScopeAdmission admission = null;
+      if (rule.scopeKind != ScopeKind.NONE && runtimeScopes != null) {
+        RuntimeScopes.ScopeMatch scopeMatch = checkScope(rule.scopeKind, captures, runtimeScopes);
+        if (scopeMatch == RuntimeScopes.ScopeMatch.DENIED) {
+          if (scopeFailure == null) {
+            scopeFailure = rule.scopeKind.failure;
+            scopeFailureTemplate = rule.pathTemplate;
+          }
+          continue;
+        }
+        if (scopeMatch == RuntimeScopes.ScopeMatch.ALLOWED_BY_WILDCARD) {
+          admission = rule.scopeKind.admission;
+        }
+      }
+
+      if (rule.bodyRule == BodyRule.DATASET_PUT || admission != null) {
         // Keep scanning so a later unconditional rule (e.g. from extra.rules) can allow without
-        // body checks.
-        if (bodyCheckCandidate == null) {
-          bodyCheckCandidate = MatchResult.allowed(rule.pathTemplate, rule.bodyRule, captures);
+        // body checks or wildcard admission.
+        if (fallbackCandidate == null) {
+          fallbackCandidate = MatchResult.allowed(
+              rule.pathTemplate, rule.bodyRule, captures, admission);
         }
         continue;
       }
-      return MatchResult.allowed(rule.pathTemplate, rule.bodyRule, captures);
+      return MatchResult.allowed(rule.pathTemplate, rule.bodyRule, captures, null);
     }
-    if (bodyCheckCandidate != null) {
-      return bodyCheckCandidate;
+    if (fallbackCandidate != null) {
+      return fallbackCandidate;
     }
-    return MatchResult.denied(
+    if (scopeFailure != null) {
+      return MatchResult.denied(scopeFailure, scopeFailureTemplate);
+    }
+    return MatchResult.denied(RuntimeValidationFailure.API_NOT_ALLOWED,
         matchedTemplate != null ? matchedTemplate : extractLogPath(prefix, rawUri));
   }
 
@@ -329,6 +378,20 @@ final class RuntimeCallbackAllowlist {
         return tokenRunId.getApplication().equals(app);
       default:
         return false;
+    }
+  }
+
+  private static RuntimeScopes.ScopeMatch checkScope(ScopeKind scopeKind,
+      Map<String, String> captures, RuntimeScopes scopes) {
+    switch (scopeKind) {
+      case SECRET:
+        return scopes.checkSecret(captures.get("name"));
+      case CONNECTION:
+        return scopes.checkConnection(captures.get("connection"));
+      case OAUTH:
+        return scopes.checkOauth(captures.get("provider"), captures.get("credential"));
+      default:
+        return RuntimeScopes.ScopeMatch.ALLOWED;
     }
   }
 
@@ -494,12 +557,25 @@ final class RuntimeCallbackAllowlist {
               + "pathTemplate for bodyRule=" + bodyRule);
     }
 
+    ScopeKind scopeKind = parseEnum(
+        obj, "scopeKind", ScopeKind.class, ScopeKind.NONE, index, source);
+    if (bodyRule != BodyRule.NONE && scopeKind != ScopeKind.NONE) {
+      throw new IllegalArgumentException(
+          "Allowlist rule at index " + index + " (" + source + ") cannot combine bodyRule="
+              + bodyRule + " with scopeKind=" + scopeKind);
+    }
+    if (!captureNames.containsAll(scopeKind.requiredCaptures)) {
+      throw new IllegalArgumentException(
+          "Allowlist rule at index " + index + " (" + source + ") requires "
+              + scopeKind.requiredCaptures + " in pathTemplate for scopeKind=" + scopeKind);
+    }
+
     Set<String> methods = parseMethods(obj, index, source);
     validateBodyRuleMethods(bodyRule, methods, index, source);
 
     String service = requireString(obj, "service", index, source);
     return new Rule(service, methods, pathTemplate, segments, namespaceRule, applicationRule,
-        bodyRule);
+        bodyRule, scopeKind);
   }
 
   private static void validateBodyRuleMethods(BodyRule bodyRule, Set<String> methods, int index,
@@ -630,38 +706,55 @@ final class RuntimeCallbackAllowlist {
   }
 
   /**
-   * Result of matching an incoming callback request against the allowlist.
+   * Result of matching an incoming callback request against the allowlist and per-run scopes.
    */
   static final class MatchResult {
 
-    private final boolean allowed;
+    @Nullable
+    private final RuntimeValidationFailure failure;
+    @Nullable
+    private final RuntimeScopeAdmission admission;
     private final String logPath;
     private final BodyRule bodyRule;
     private final Map<String, String> captures;
 
-    private MatchResult(boolean allowed, String logPath, BodyRule bodyRule,
+    private MatchResult(@Nullable RuntimeValidationFailure failure,
+        @Nullable RuntimeScopeAdmission admission, String logPath, BodyRule bodyRule,
         Map<String, String> captures) {
-      this.allowed = allowed;
+      this.failure = failure;
+      this.admission = admission;
       this.logPath = logPath;
       this.bodyRule = bodyRule;
       this.captures = captures;
     }
 
     static MatchResult allowed(String pathTemplate, BodyRule bodyRule,
-        Map<String, String> captures) {
-      return new MatchResult(true, pathTemplate, bodyRule, Collections.unmodifiableMap(captures));
+        Map<String, String> captures, @Nullable RuntimeScopeAdmission admission) {
+      return new MatchResult(null, admission, pathTemplate, bodyRule,
+          Collections.unmodifiableMap(captures));
     }
 
-    static MatchResult denied(String logPath) {
-      return new MatchResult(false, logPath, BodyRule.NONE, Collections.emptyMap());
+    static MatchResult denied(RuntimeValidationFailure failure, String logPath) {
+      return new MatchResult(Objects.requireNonNull(failure, "failure"), null, logPath,
+          BodyRule.NONE, Collections.emptyMap());
     }
 
     boolean isAllowed() {
-      return allowed;
+      return failure == null;
+    }
+
+    @Nullable
+    RuntimeValidationFailure getFailure() {
+      return failure;
+    }
+
+    @Nullable
+    RuntimeScopeAdmission getAdmission() {
+      return admission;
     }
 
     boolean requiresBodyCheck() {
-      return allowed && bodyRule == BodyRule.DATASET_PUT;
+      return failure == null && bodyRule == BodyRule.DATASET_PUT;
     }
 
     String getLogPath() {
@@ -683,10 +776,11 @@ final class RuntimeCallbackAllowlist {
     private final NamespaceRule namespaceRule;
     private final ApplicationRule applicationRule;
     private final BodyRule bodyRule;
+    private final ScopeKind scopeKind;
 
     private Rule(String service, Set<String> methods, String pathTemplate,
         List<TemplateSegment> segments, NamespaceRule namespaceRule,
-        ApplicationRule applicationRule, BodyRule bodyRule) {
+        ApplicationRule applicationRule, BodyRule bodyRule, ScopeKind scopeKind) {
       this.service = service;
       this.methods = methods;
       this.pathTemplate = pathTemplate;
@@ -694,6 +788,7 @@ final class RuntimeCallbackAllowlist {
       this.namespaceRule = namespaceRule;
       this.applicationRule = applicationRule;
       this.bodyRule = bodyRule;
+      this.scopeKind = scopeKind;
     }
 
     @Nullable

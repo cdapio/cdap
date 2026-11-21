@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.util.HashMap;
@@ -77,6 +78,12 @@ public class RuntimeValidationReporterTest {
           "GET", "/test"));
       Assert.assertEquals(Long.valueOf(1L), counters.get(failure.getMetricName()));
     }
+    Assert.assertEquals("runtime.token.validation.failure.secret",
+        RuntimeValidationFailure.SECRET.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.connection",
+        RuntimeValidationFailure.CONNECTION.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.oauth",
+        RuntimeValidationFailure.OAUTH.getMetricName());
 
     // Verify enforcement flag propagates
     cConf.setBoolean(Constants.RuntimeMonitor.RUNTIME_TOKEN_VALIDATION_ENABLED, true);
@@ -150,5 +157,69 @@ public class RuntimeValidationReporterTest {
     Mockito.verify(logger).warn(Mockito.isNull(Marker.class), Mockito.anyString(),
         Mockito.eq("legacy_token"), Mockito.eq(runId), Mockito.eq(Constants.Service.RUNTIME),
         Mockito.eq("GET"), Mockito.eq("/d"), Mockito.eq(false));
+  }
+
+  @Test
+  public void testReportAdmissionCountsAndLogsDebugWithoutWarn() {
+    Map<String, String> capturedTags = new HashMap<>();
+    Map<String, Long> counters = new HashMap<>();
+    MetricsContext metricsContext = Mockito.mock(MetricsContext.class);
+    Mockito.doAnswer(invocation -> {
+      String metricName = (String) invocation.getArguments()[0];
+      long delta = (Long) invocation.getArguments()[1];
+      counters.merge(metricName, delta, Long::sum);
+      return null;
+    }).when(metricsContext).increment(Mockito.anyString(), Mockito.anyLong());
+
+    MetricsCollectionService metricsService = Mockito.mock(MetricsCollectionService.class);
+    Mockito.when(metricsService.getContext(Mockito.anyMap()))
+        .thenAnswer(invocation -> {
+          @SuppressWarnings("unchecked")
+          Map<String, String> tags = (Map<String, String>) invocation.getArguments()[0];
+          capturedTags.putAll(tags);
+          return metricsContext;
+        });
+
+    for (boolean enforcing : new boolean[]{false, true}) {
+      counters.clear();
+      capturedTags.clear();
+      Logger logger = Mockito.mock(Logger.class);
+      Mockito.when(logger.isWarnEnabled()).thenReturn(true);
+      Mockito.when(logger.isWarnEnabled(Mockito.any())).thenReturn(true);
+
+      CConfiguration cConf = CConfiguration.create();
+      cConf.setBoolean(Constants.RuntimeMonitor.RUNTIME_TOKEN_VALIDATION_ENABLED, enforcing);
+      RuntimeValidationReporter reporter = new RuntimeValidationReporter(
+          cConf, metricsService, logger, TimeProvider.SYSTEM_TIME);
+
+      Assert.assertEquals(ImmutableMap.of(
+          Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+          Constants.Metrics.Tag.COMPONENT, Constants.Service.RUNTIME), capturedTags);
+
+      ProgramRunId runId = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf")
+          .run(RunIds.generate());
+      reporter.reportAdmission(RuntimeScopeAdmission.DYNAMIC_SECRET, runId, "svc", "GET", "/s");
+      reporter.reportAdmission(RuntimeScopeAdmission.WILDCARD_CONNECTION, runId, "svc", "GET",
+          "/c");
+      reporter.reportAdmission(RuntimeScopeAdmission.WILDCARD_OAUTH, runId, "svc", "GET", "/o");
+
+      Assert.assertEquals(Long.valueOf(1L), counters.get("runtime.token.dynamic.secret.read"));
+      Assert.assertEquals(Long.valueOf(1L),
+          counters.get("runtime.token.wildcard.connection.read"));
+      Assert.assertEquals(Long.valueOf(1L), counters.get("runtime.token.wildcard.oauth.read"));
+      Assert.assertEquals(3, counters.size());
+
+      Mockito.verify(logger).debug(Mockito.anyString(),
+          Mockito.eq("dynamic_secret"), Mockito.eq(runId), Mockito.eq("svc"),
+          Mockito.eq("GET"), Mockito.eq("/s"));
+      Mockito.verify(logger).debug(Mockito.anyString(),
+          Mockito.eq("wildcard_connection"), Mockito.eq(runId), Mockito.eq("svc"),
+          Mockito.eq("GET"), Mockito.eq("/c"));
+      Mockito.verify(logger).debug(Mockito.anyString(),
+          Mockito.eq("wildcard_oauth"), Mockito.eq(runId), Mockito.eq("svc"),
+          Mockito.eq("GET"), Mockito.eq("/o"));
+      // Verifies no warn() or warn-level check was invoked at all.
+      Mockito.verifyNoMoreInteractions(logger);
+    }
   }
 }

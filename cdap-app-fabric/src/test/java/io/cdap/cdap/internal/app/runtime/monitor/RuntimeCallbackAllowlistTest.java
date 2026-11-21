@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
@@ -44,6 +45,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -85,8 +87,13 @@ public class RuntimeCallbackAllowlistTest {
 
   private RuntimeCallbackAllowlist.MatchResult match(String service, String method,
       String servicePath) {
+    return match(service, method, servicePath, null);
+  }
+
+  private RuntimeCallbackAllowlist.MatchResult match(String service, String method,
+      String servicePath, @Nullable RuntimeScopes scopes) {
     String pfx = prefix(service);
-    return allowlist.match(pfx, pfx + servicePath, service, method, tokenRunId);
+    return allowlist.match(pfx, pfx + servicePath, service, method, tokenRunId, scopes);
   }
 
   @Test
@@ -323,10 +330,12 @@ public class RuntimeCallbackAllowlistTest {
     Assert.assertFalse(match(svc, "GET",
         "/%2fv3/namespaces/runns/securekeys/my-key").isAllowed());
     Assert.assertFalse(allowlist.match(pfx,
-        pfx + "%2fv3/namespaces/runns/securekeys/my-key", svc, "GET", tokenRunId).isAllowed());
-    Assert.assertFalse(allowlist.match(pfx, pfx, svc, "GET", tokenRunId).isAllowed());
+        pfx + "%2fv3/namespaces/runns/securekeys/my-key", svc, "GET", tokenRunId, null)
+        .isAllowed());
+    Assert.assertFalse(allowlist.match(pfx, pfx, svc, "GET", tokenRunId, null).isAllowed());
     Assert.assertFalse(allowlist.match(pfx,
-        pfx + "extra/v3/namespaces/runns/securekeys/my-key", svc, "GET", tokenRunId).isAllowed());
+        pfx + "extra/v3/namespaces/runns/securekeys/my-key", svc, "GET", tokenRunId, null)
+        .isAllowed());
 
     // 3. // and /// (leading or internal empty segments)
     Assert.assertFalse(match(svc, "GET",
@@ -384,12 +393,13 @@ public class RuntimeCallbackAllowlistTest {
 
     // 11. absolute-form URI
     String absUri = "http://localhost:11015" + pfx + "/v3/namespaces/runns/securekeys/my-key";
-    Assert.assertFalse(allowlist.match(pfx, absUri, svc, "GET", tokenRunId).isAllowed());
+    Assert.assertFalse(allowlist.match(pfx, absUri, svc, "GET", tokenRunId, null).isAllowed());
 
     // 12. encoded character in the outer prefix
     String encodedPrefixUri = pfx.replace("/apps/myApp/", "/apps/my%41pp/")
         + "/v3/namespaces/runns/securekeys/my-key";
-    Assert.assertFalse(allowlist.match(pfx, encodedPrefixUri, svc, "GET", tokenRunId).isAllowed());
+    Assert.assertFalse(
+        allowlist.match(pfx, encodedPrefixUri, svc, "GET", tokenRunId, null).isAllowed());
   }
 
   @Test
@@ -575,28 +585,28 @@ public class RuntimeCallbackAllowlistTest {
 
     String pfx = prefix("custom.service");
     Assert.assertTrue(withExtra.match(pfx, pfx + "/v3/namespaces/runns/items/x",
-        "custom.service", "GET", tokenRunId).isAllowed());
+        "custom.service", "GET", tokenRunId, null).isAllowed());
     Assert.assertFalse(withExtra.match(pfx, pfx + "/v3/namespaces/other/items/x",
-        "custom.service", "GET", tokenRunId).isAllowed());
+        "custom.service", "GET", tokenRunId, null).isAllowed());
 
     // Extra dataset PUT rule with bodyRule=NONE overrides bundled DATASET_PUT for special-table
     String dsPfx = prefix(Constants.Service.DATASET_MANAGER);
     RuntimeCallbackAllowlist.MatchResult overriddenPut = withExtra.match(
         dsPfx, dsPfx + "/v3/namespaces/runns/data/datasets/special-table",
-        Constants.Service.DATASET_MANAGER, "PUT", tokenRunId);
+        Constants.Service.DATASET_MANAGER, "PUT", tokenRunId, null);
     Assert.assertTrue(overriddenPut.isAllowed());
     Assert.assertFalse(overriddenPut.requiresBodyCheck());
     // Other dataset names still require body check from bundled rule
     RuntimeCallbackAllowlist.MatchResult normalPut = withExtra.match(
         dsPfx, dsPfx + "/v3/namespaces/runns/data/datasets/other-table",
-        Constants.Service.DATASET_MANAGER, "PUT", tokenRunId);
+        Constants.Service.DATASET_MANAGER, "PUT", tokenRunId, null);
     Assert.assertTrue(normalPut.isAllowed());
     Assert.assertTrue(normalPut.requiresBodyCheck());
 
     // Bundled rules remain intact
     String secPfx = prefix(Constants.Service.SECURE_STORE_SERVICE);
     Assert.assertTrue(withExtra.match(secPfx, secPfx + "/v3/namespaces/runns/securekeys/k",
-        Constants.Service.SECURE_STORE_SERVICE, "GET", tokenRunId).isAllowed());
+        Constants.Service.SECURE_STORE_SERVICE, "GET", tokenRunId, null).isAllowed());
 
     // Malformed or non-array JSON fails the load
     assertLoadFails("[not-json");
@@ -609,6 +619,16 @@ public class RuntimeCallbackAllowlistTest {
         + "\"pathTemplate\":\"/v3/apps/{app}/x\",\"applicationRule\":\"ANY\"}]");
     assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"PUT\"],"
         + "\"pathTemplate\":\"/v3/data/{name}\",\"bodyRule\":\"UNKNOWN_BODY\"}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/secrets/{name}\",\"scopeKind\":\"UNKNOWN_SCOPE\"}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/secrets/{name}\",\"scopeKind\":null}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/secrets/{name}\",\"scopeKind\":123}]");
+    // Combining bodyRule and scopeKind on one rule fails the load
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"PUT\"],"
+        + "\"pathTemplate\":\"/v3/data/{name}\",\"bodyRule\":\"DATASET_PUT\","
+        + "\"scopeKind\":\"SECRET\"}]");
 
     // Unknown JSON field fails the load
     assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
@@ -621,6 +641,14 @@ public class RuntimeCallbackAllowlistTest {
         + "\"pathTemplate\":\"/v3/ping\",\"applicationRule\":\"RUN\"}]");
     assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"PUT\"],"
         + "\"pathTemplate\":\"/v3/data/fixed\",\"bodyRule\":\"DATASET_PUT\"}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/secrets/fixed\",\"scopeKind\":\"SECRET\"}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/conns/fixed\",\"scopeKind\":\"CONNECTION\"}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/oauth/{provider}/fixed\",\"scopeKind\":\"OAUTH\"}]");
+    assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
+        + "\"pathTemplate\":\"/v3/oauth/fixed/{credential}\",\"scopeKind\":\"OAUTH\"}]");
 
     // Omitting or setting null for namespaceRule / applicationRule when captured fails the load
     assertLoadFails("[{\"service\":\"svc\",\"methods\":[\"GET\"],"
@@ -652,6 +680,188 @@ public class RuntimeCallbackAllowlistTest {
     } catch (IllegalArgumentException expected) {
       // expected
     }
+  }
+
+  @Test
+  public void testScopeChecksOnAllowlist() {
+    RuntimeScopes strictScopes = new RuntimeScopes(
+        ImmutableSet.of("my_conn", "_"),
+        ImmutableSet.of("github/cred1"),
+        ImmutableSet.of("db-pass", "region-*-key"),
+        false);
+
+    // 1. Secret value & metadata: exact & pattern pass with null admission; others fail with SECRET
+    RuntimeCallbackAllowlist.MatchResult exactSecret = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/db-pass", strictScopes);
+    Assert.assertTrue(exactSecret.isAllowed());
+    Assert.assertNull(exactSecret.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult patternSecretMeta = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/region-us-key/metadata", strictScopes);
+    Assert.assertTrue(patternSecretMeta.isAllowed());
+    Assert.assertNull(patternSecretMeta.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult deniedSecret = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/other-secret", strictScopes);
+    Assert.assertFalse(deniedSecret.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.SECRET, deniedSecret.getFailure());
+    Assert.assertEquals("/v3/namespaces/{namespace}/securekeys/{name}", deniedSecret.getLogPath());
+
+    RuntimeCallbackAllowlist.MatchResult deniedSecretMeta = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/other-secret/metadata", strictScopes);
+    Assert.assertFalse(deniedSecretMeta.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.SECRET, deniedSecretMeta.getFailure());
+    Assert.assertEquals("/v3/namespaces/{namespace}/securekeys/{name}/metadata",
+        deniedSecretMeta.getLogPath());
+
+    // Wrong namespace fails with API_NOT_ALLOWED (before scope check)
+    RuntimeCallbackAllowlist.MatchResult wrongNsSecret = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/otherns/securekeys/other-secret", strictScopes);
+    Assert.assertFalse(wrongNsSecret.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.API_NOT_ALLOWED, wrongNsSecret.getFailure());
+
+    // 2. Dynamic run: any secret in run's namespace admitted with DYNAMIC_SECRET; otherns denied
+    RuntimeScopes dynamicScopes = new RuntimeScopes(
+        Collections.emptySet(), Collections.emptySet(), Collections.singleton("db-pass"), true);
+    RuntimeCallbackAllowlist.MatchResult dynamicExplicit = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/db-pass", dynamicScopes);
+    Assert.assertTrue(dynamicExplicit.isAllowed());
+    Assert.assertNull(dynamicExplicit.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult dynamicOther = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/runtime-secret", dynamicScopes);
+    Assert.assertTrue(dynamicOther.isAllowed());
+    Assert.assertEquals(RuntimeScopeAdmission.DYNAMIC_SECRET, dynamicOther.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult dynamicWrongNs = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/otherns/securekeys/runtime-secret", dynamicScopes);
+    Assert.assertFalse(dynamicWrongNs.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.API_NOT_ALLOWED, dynamicWrongNs.getFailure());
+
+    // 3. Connections: normalized IDs, literal '*', invalid segment, and wildcard '*'
+    RuntimeCallbackAllowlist.MatchResult allowedConn = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/runns"
+            + "/connections/my+conn", strictScopes);
+    Assert.assertTrue(allowedConn.isAllowed());
+    Assert.assertNull(allowedConn.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult literalStarConn = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/runns"
+            + "/connections/*", strictScopes);
+    Assert.assertTrue(literalStarConn.isAllowed());
+    Assert.assertNull(literalStarConn.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult deniedConn = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/runns"
+            + "/connections/other-conn", strictScopes);
+    Assert.assertFalse(deniedConn.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.CONNECTION, deniedConn.getFailure());
+    Assert.assertEquals(
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/{namespace}"
+            + "/connections/{connection}", deniedConn.getLogPath());
+
+    RuntimeScopes wildcardConnScopes = new RuntimeScopes(
+        Collections.singleton("*"), Collections.emptySet(), Collections.emptySet(), false);
+    RuntimeCallbackAllowlist.MatchResult wildcardConn = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/runns"
+            + "/connections/any%20conn", wildcardConnScopes);
+    Assert.assertTrue(wildcardConn.isAllowed());
+    Assert.assertEquals(RuntimeScopeAdmission.WILDCARD_CONNECTION, wildcardConn.getAdmission());
+
+    // Wrong namespace on connection fails with API_NOT_ALLOWED even with wildcard '*' connection
+    RuntimeCallbackAllowlist.MatchResult wrongNsConn = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/otherns"
+            + "/connections/my+conn", wildcardConnScopes);
+    Assert.assertFalse(wrongNsConn.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.API_NOT_ALLOWED, wrongNsConn.getFailure());
+
+    RuntimeCallbackAllowlist.MatchResult invalidConnSegment = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/runns"
+            + "/connections/$bad", wildcardConnScopes);
+    Assert.assertFalse(invalidConnSegment.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.CONNECTION, invalidConnSegment.getFailure());
+
+    // 4. OAuth: exact, denied, wrong method (allowlist precedence), and wildcard per part
+    RuntimeCallbackAllowlist.MatchResult exactOauth = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+            + "/credential/cred1", strictScopes);
+    Assert.assertTrue(exactOauth.isAllowed());
+    Assert.assertNull(exactOauth.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult deniedOauth = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+            + "/credential/cred2", strictScopes);
+    Assert.assertFalse(deniedOauth.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.OAUTH, deniedOauth.getFailure());
+    Assert.assertEquals(
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/{provider}"
+            + "/credential/{credential}", deniedOauth.getLogPath());
+
+    RuntimeCallbackAllowlist.MatchResult wrongMethodOauth = match(
+        STUDIO_SERVICE, "DELETE",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+            + "/credential/cred1", strictScopes);
+    Assert.assertFalse(wrongMethodOauth.isAllowed());
+    Assert.assertEquals(RuntimeValidationFailure.API_NOT_ALLOWED, wrongMethodOauth.getFailure());
+
+    RuntimeScopes wildcardOauthScopes = new RuntimeScopes(
+        Collections.emptySet(), Collections.singleton("github/*"), Collections.emptySet(), false);
+    RuntimeCallbackAllowlist.MatchResult wildcardOauth = match(
+        STUDIO_SERVICE, "GET",
+        "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+            + "/credential/cred2", wildcardOauthScopes);
+    Assert.assertTrue(wildcardOauth.isAllowed());
+    Assert.assertEquals(RuntimeScopeAdmission.WILDCARD_OAUTH, wildcardOauth.getAdmission());
+
+    // 5. Null scopes (report-only run without scopes): skips scope check, still enforces allowlist
+    RuntimeCallbackAllowlist.MatchResult nullScopesSecret = match(
+        Constants.Service.SECURE_STORE_SERVICE, "GET",
+        "/v3/namespaces/runns/securekeys/any-secret", null);
+    Assert.assertTrue(nullScopesSecret.isAllowed());
+    Assert.assertNull(nullScopesSecret.getAdmission());
+
+    // 6. Extra rule with explicit scopeKind=NONE overrides both denied and dynamic-admitted
+    //    bundled SECRET checks for a specific secret
+    CConfiguration extraConf = CConfiguration.create();
+    extraConf.set(Constants.RuntimeMonitor.RUNTIME_TOKEN_ALLOWLIST_EXTRA_RULES,
+        "[{\"service\":\"secure.store.service\",\"methods\":[\"GET\"],"
+            + "\"pathTemplate\":\"/v3/namespaces/{namespace}/securekeys/shared-key\","
+            + "\"namespaceRule\":\"RUN\",\"scopeKind\":\"NONE\"}]");
+    RuntimeCallbackAllowlist withExtra = new RuntimeCallbackAllowlist(extraConf);
+    String secPfx = prefix(Constants.Service.SECURE_STORE_SERVICE);
+    RuntimeCallbackAllowlist.MatchResult extraAllowed = withExtra.match(
+        secPfx, secPfx + "/v3/namespaces/runns/securekeys/shared-key",
+        Constants.Service.SECURE_STORE_SERVICE, "GET", tokenRunId, strictScopes);
+    Assert.assertTrue(extraAllowed.isAllowed());
+    Assert.assertNull(extraAllowed.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult extraOverridesDynamic = withExtra.match(
+        secPfx, secPfx + "/v3/namespaces/runns/securekeys/shared-key",
+        Constants.Service.SECURE_STORE_SERVICE, "GET", tokenRunId, dynamicScopes);
+    Assert.assertTrue(extraOverridesDynamic.isAllowed());
+    Assert.assertNull(extraOverridesDynamic.getAdmission());
+
+    RuntimeCallbackAllowlist.MatchResult otherStillDynamic = withExtra.match(
+        secPfx, secPfx + "/v3/namespaces/runns/securekeys/other-key",
+        Constants.Service.SECURE_STORE_SERVICE, "GET", tokenRunId, dynamicScopes);
+    Assert.assertTrue(otherStillDynamic.isAllowed());
+    Assert.assertEquals(RuntimeScopeAdmission.DYNAMIC_SECRET, otherStillDynamic.getAdmission());
   }
 
   @Test

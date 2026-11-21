@@ -3402,8 +3402,8 @@
     <description>
       Optional JSON array of extra callback API allowlist rules appended to the bundled
       runtime callback allowlist. Each rule object specifies "service", "methods", and
-      "pathTemplate", plus optional "namespaceRule", "applicationRule", and "bodyRule".
-      Leave empty unless temporary additional rules are needed.
+      "pathTemplate", plus optional "namespaceRule", "applicationRule", "bodyRule", and
+      "scopeKind". Leave empty unless temporary additional rules are needed.
     </description>
   </property>
 

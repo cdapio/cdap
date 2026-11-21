@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -28,17 +29,32 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /**
  * Immutable set of resource scopes allowed for a remote program run.
  */
 public final class RuntimeScopes {
 
+  static final String WILDCARD = "*";
+
   private static final Gson GSON = new Gson();
   private static final String FIELD_CONNECTIONS = "connections";
   private static final String FIELD_OAUTH = "oauth";
   private static final String FIELD_SECRETS = "secrets";
   private static final String FIELD_HAS_EXTERNAL_DYNAMIC_SECRET = "hasExternalDynamicSecret";
+
+  // Keep in sync with io.cdap.cdap.etl.proto.connection.ConnectionId#getConnectionId.
+  private static final Pattern CONNECTION_MACRO_CHARS = Pattern.compile("[${}()]");
+  private static final Pattern CONNECTION_NON_ID_CHARS = Pattern.compile("[^a-zA-Z0-9_]");
+  private static final int MAX_CONNECTION_ID_LENGTH = 50;
+
+  enum ScopeMatch {
+    DENIED,
+    ALLOWED,
+    ALLOWED_BY_WILDCARD
+  }
 
   @SerializedName(FIELD_CONNECTIONS)
   private final Set<String> connections;
@@ -82,6 +98,150 @@ public final class RuntimeScopes {
 
   public boolean hasExternalDynamicSecret() {
     return hasExternalDynamicSecret;
+  }
+
+  /**
+   * Returns {@code true} if the requested secret name is allowed by this scope set (either via an
+   * exact name, a {@code *} wildcard pattern, or the dynamic-secret flag).
+   */
+  public boolean allowsSecret(@Nullable String secretName) {
+    return checkSecret(secretName) != ScopeMatch.DENIED;
+  }
+
+  /**
+   * Returns {@code true} if the requested connection path segment is allowed by this scope set.
+   * Applies the connection ID normalization rule and denies segments rejected by that rule without
+   * throwing.
+   */
+  public boolean allowsConnection(@Nullable String connectionSegment) {
+    return checkConnection(connectionSegment) != ScopeMatch.DENIED;
+  }
+
+  /**
+   * Returns {@code true} if the requested OAuth provider and credential pair is allowed by this
+   * scope set (matching exact names or {@code *} per part).
+   */
+  public boolean allowsOauth(@Nullable String provider, @Nullable String credential) {
+    return checkOauth(provider, credential) != ScopeMatch.DENIED;
+  }
+
+  ScopeMatch checkSecret(@Nullable String secretName) {
+    if (Strings.isNullOrEmpty(secretName)) {
+      return ScopeMatch.DENIED;
+    }
+    if (secretName.indexOf('*') < 0 && secrets.contains(secretName)) {
+      return ScopeMatch.ALLOWED;
+    }
+    boolean matchedAllWildcard = false;
+    for (String entry : secrets) {
+      if (entry.indexOf('*') < 0) {
+        continue;
+      }
+      if (isAllWildcards(entry)) {
+        matchedAllWildcard = true;
+      } else if (matchesWildcard(entry, secretName)) {
+        return ScopeMatch.ALLOWED;
+      }
+    }
+    return (hasExternalDynamicSecret || matchedAllWildcard)
+        ? ScopeMatch.ALLOWED_BY_WILDCARD : ScopeMatch.DENIED;
+  }
+
+  ScopeMatch checkConnection(@Nullable String connectionSegment) {
+    String connectionId = toConnectionId(connectionSegment);
+    if (connectionId == null) {
+      return ScopeMatch.DENIED;
+    }
+    if (connections.contains(connectionId)) {
+      return ScopeMatch.ALLOWED;
+    }
+    return connections.contains(WILDCARD) ? ScopeMatch.ALLOWED_BY_WILDCARD : ScopeMatch.DENIED;
+  }
+
+  ScopeMatch checkOauth(@Nullable String provider, @Nullable String credential) {
+    if (Strings.isNullOrEmpty(provider) || Strings.isNullOrEmpty(credential)
+        || provider.indexOf('/') >= 0 || credential.indexOf('/') >= 0) {
+      return ScopeMatch.DENIED;
+    }
+    if (!WILDCARD.equals(provider) && !WILDCARD.equals(credential)
+        && oauth.contains(provider + "/" + credential)) {
+      return ScopeMatch.ALLOWED;
+    }
+    for (String entry : oauth) {
+      int slash = entry.indexOf('/');
+      if (slash <= 0 || slash >= entry.length() - 1 || entry.indexOf('/', slash + 1) >= 0) {
+        continue;
+      }
+      String entryProvider = entry.substring(0, slash);
+      String entryCredential = entry.substring(slash + 1);
+      boolean providerWildcard = WILDCARD.equals(entryProvider);
+      boolean credentialWildcard = WILDCARD.equals(entryCredential);
+      if ((providerWildcard || credentialWildcard)
+          && (providerWildcard || entryProvider.equals(provider))
+          && (credentialWildcard || entryCredential.equals(credential))) {
+        return ScopeMatch.ALLOWED_BY_WILDCARD;
+      }
+    }
+    return ScopeMatch.DENIED;
+  }
+
+  /**
+   * Computes the normalized connection ID from a requested connection path segment.
+   *
+   * <p>Keep in sync with {@code io.cdap.cdap.etl.proto.connection.ConnectionId#getConnectionId}.
+   * Returns {@code null} instead of throwing when the segment is invalid.
+   */
+  @Nullable
+  private static String toConnectionId(@Nullable String segment) {
+    if (segment == null || CONNECTION_MACRO_CHARS.matcher(segment).find()) {
+      return null;
+    }
+    String normalized = CONNECTION_NON_ID_CHARS.matcher(segment.trim()).replaceAll("_");
+    if (normalized.length() > MAX_CONNECTION_ID_LENGTH) {
+      normalized = normalized.substring(0, MAX_CONNECTION_ID_LENGTH);
+    }
+    return normalized.isEmpty() ? null : normalized;
+  }
+
+  private static boolean isAllWildcards(String pattern) {
+    if (pattern.isEmpty()) {
+      return false;
+    }
+    for (int i = 0; i < pattern.length(); i++) {
+      if (pattern.charAt(i) != '*') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Matches {@code value} against {@code pattern} where {@code '*'} matches any run of zero or
+   * more characters and all other characters match literally.
+   */
+  private static boolean matchesWildcard(String pattern, String value) {
+    int p = 0;
+    int v = 0;
+    int starIdx = -1;
+    int matchIdx = 0;
+    while (v < value.length()) {
+      if (p < pattern.length() && pattern.charAt(p) == '*') {
+        starIdx = p++;
+        matchIdx = v;
+      } else if (p < pattern.length() && pattern.charAt(p) == value.charAt(v)) {
+        p++;
+        v++;
+      } else if (starIdx != -1) {
+        p = starIdx + 1;
+        v = ++matchIdx;
+      } else {
+        return false;
+      }
+    }
+    while (p < pattern.length() && pattern.charAt(p) == '*') {
+      p++;
+    }
+    return p == pattern.length();
   }
 
   /**
