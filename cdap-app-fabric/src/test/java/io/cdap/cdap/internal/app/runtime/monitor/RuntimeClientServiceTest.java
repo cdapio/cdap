@@ -173,7 +173,8 @@ public class RuntimeClientServiceTest {
                   if (runCompleted.get()) {
                     throw new GoneException();
                   }
-                  return new ProgramRunInfo(ProgramRunStatus.RUNNING);
+                  return ValidatedRuntimeRequest.legacy(
+                      new ProgramRunInfo(ProgramRunStatus.RUNNING));
                 });
           }
 
