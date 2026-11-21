@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime;
 
 import ch.qos.logback.classic.Level;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.app.runtime.Arguments;
@@ -34,6 +35,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.http.NettyHttpService;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,6 +54,8 @@ import org.slf4j.LoggerFactory;
 public final class SystemArguments {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemArguments.class);
+  private static final String CLUSTER_SCOPE = "cluster";
+  private static final String APPLICATION_SCOPE = "app";
 
   // Keys for container resources
   public static final String MEMORY_KEY = "system.resources.memory";
@@ -506,20 +510,54 @@ public final class SystemArguments {
   }
 
   /**
+   * Resolves scoped user arguments for {@code programId} in dispatch order: cluster scope (when
+   * {@link Constants#CLUSTER_NAME} is non-empty in {@code systemArgs}), application scope, and
+   * program scope.
+   */
+  public static Map<String, String> resolveScopedUserArguments(ProgramId programId,
+      @Nullable Map<String, String> systemArgs, @Nullable Map<String, String> userArgs) {
+    Map<String, String> resolved = userArgs;
+    String clusterName = systemArgs == null ? null : systemArgs.get(Constants.CLUSTER_NAME);
+    if (!Strings.isNullOrEmpty(clusterName)) {
+      resolved = RuntimeArguments.extractScope(CLUSTER_SCOPE, clusterName, resolved);
+    }
+    resolved = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(),
+        resolved);
+    resolved = RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
+        resolved);
+    return resolved;
+  }
+
+  /**
    * Gets the {@link RuntimeMonitorType} from the given arguments.
    */
   public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf,
       ProgramOptions programOptions) {
+    return getRuntimeMonitorType(cConf, programOptions.getArguments().asMap(),
+        programOptions.getUserArguments().asMap());
+  }
+
+  /**
+   * Gets the {@link RuntimeMonitorType} from operator configuration and the given system and user
+   * argument maps. Operator configuration ({@code app.program.runtime.monitor.type.<provisioner>})
+   * takes precedence over {@link #RUNTIME_MONITOR_TYPE} in user arguments so user runtime arguments
+   * cannot override an operator-configured monitor type. Callers expecting scoped
+   * {@link #RUNTIME_MONITOR_TYPE} fallback when operator configuration is unset should pass user
+   * arguments already resolved via {@link #resolveScopedUserArguments}.
+   */
+  public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf,
+      Map<String, String> systemArgs, Map<String, String> userArgs) {
     if (cConf.get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
       return RuntimeMonitorType.SSH;
     }
 
-    String type = programOptions.getUserArguments().getOption(RUNTIME_MONITOR_TYPE);
+    String provisioner = getProfileProvisioner(systemArgs);
+    String type = provisioner == null
+        ? null
+        : cConf.getTrimmed(String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX,
+            provisioner));
     if (type == null) {
-      // If not in the arguments, read it from cConf based on the provisioner name
-      String provisioner = getProfileProvisioner(programOptions.getArguments().asMap());
-      type = cConf.get(
-          String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
+      type = userArgs.get(RUNTIME_MONITOR_TYPE);
     }
     if (type == null) {
       return RuntimeMonitorType.SSH;
@@ -531,6 +569,18 @@ public final class SystemArguments {
       LOG.warn("Unsupported runtime monitor type {}. Default to SSH", type, e);
       return RuntimeMonitorType.SSH;
     }
+  }
+
+  /**
+   * Returns {@code true} if the program run described by {@code programOptions} should use a
+   * run-scoped {@code RUNTIME} token and matching remote container configuration. Expects
+   * {@code programOptions} to carry dispatch-resolved user arguments (as produced by
+   * {@link #resolveScopedUserArguments}).
+   */
+  public static boolean usesRuntimeToken(CConfiguration cConf, ProgramOptions programOptions) {
+    return SecurityUtil.isInternalAuthEnabled(cConf)
+        && programOptions.getArguments().getOption(ProgramOptionConstants.RUNTIME_SCOPES) != null
+        && getRuntimeMonitorType(cConf, programOptions) == RuntimeMonitorType.URL;
   }
 
   /**

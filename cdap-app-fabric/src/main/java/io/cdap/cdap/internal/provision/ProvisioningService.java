@@ -878,12 +878,15 @@ public class ProvisioningService extends AbstractIdleService {
     }
   }
 
-  private ProvisionerContext createContext(CConfiguration cConf, ProgramOptions programOptions,
+  @VisibleForTesting
+  ProvisionerContext createContext(CConfiguration cConf, ProgramOptions programOptions,
       ProgramRunId programRunId, String userId, Map<String, String> properties,
       @Nullable SSHContext sshContext, ErrorCategory errorCategory) {
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
-        programOptions);
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
+    Map<String, String> resolvedUserArgs = SystemArguments.resolveScopedUserArguments(
+        programRunId.getParent(), systemArgs, programOptions.getUserArguments().asMap());
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
+        systemArgs, resolvedUserArgs);
     String provisionerName = SystemArguments.getProfileProvisioner(systemArgs);
     String profileName = SystemArguments
         .getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs)

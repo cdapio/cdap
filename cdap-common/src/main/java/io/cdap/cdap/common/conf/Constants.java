@@ -1518,6 +1518,7 @@ public final class Constants {
         "app.program.runtime.monitor.url.authenticator.name.";
     public static final String MONITOR_AUDIT_LOG_ENABLED = "app.program.runtime.monitor.audit.log.enabled";
     public static final String MONITOR_AUDIT_LOGGER_NAME = "http-access";
+    public static final String RUNTIME_TOKEN_ENABLED = "app.program.runtime.token.enabled";
     public static final String RUNTIME_TOKEN_VALIDATION_ENABLED =
         "app.program.runtime.token.validation.enabled";
     public static final String RUNTIME_TOKEN_ALLOWLIST_EXTRA_RULES =

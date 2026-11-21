@@ -3388,6 +3388,15 @@
   </property>
 
   <property>
+    <name>app.program.runtime.token.enabled</name>
+    <value>true</value>
+    <description>
+      Enables computing runtime scopes and issuing run-scoped runtime tokens when launching
+      remote programs with URL runtime monitoring and internal authentication enabled.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.token.validation.enabled</name>
     <value>false</value>
     <description>

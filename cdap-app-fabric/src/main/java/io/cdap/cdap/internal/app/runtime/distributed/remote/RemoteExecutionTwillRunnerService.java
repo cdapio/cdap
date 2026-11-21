@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
@@ -359,7 +360,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
     }
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
-          generateAndSaveRuntimeToken(programRunId, keysDirLocation));
+          generateAndSaveRuntimeToken(cConf, programRunId, programOpts, keysDirLocation));
     }
 
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId,
@@ -398,13 +399,22 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
   /**
    * Generates a runtime token to talk back from the execution cluster to CDAP instance.
    */
-  private Location generateAndSaveRuntimeToken(ProgramRunId programRunId, Location keysDir) {
+  @VisibleForTesting
+  Location generateAndSaveRuntimeToken(CConfiguration cConf, ProgramRunId programRunId,
+      ProgramOptions programOpts, Location keysDir) {
     try {
       long currentTimestamp = System.currentTimeMillis();
-      //TODO: Use a better identity & expiration
-      UserIdentity identity = new UserIdentity(Constants.Security.Authentication.RUNTIME_IDENTITY,
-          UserIdentity.IdentifierType.INTERNAL, Collections.emptyList(),
-          currentTimestamp, currentTimestamp + DEFAULT_EXPIRATION);
+      UserIdentity identity;
+      if (SystemArguments.usesRuntimeToken(cConf, programOpts)) {
+        // Keep ProgramRunId JSON format in sync with DirectRuntimeRequestValidator.parseTokenRunId.
+        identity = new UserIdentity(GSON.toJson(programRunId),
+            UserIdentity.IdentifierType.RUNTIME, Collections.emptyList(),
+            currentTimestamp, currentTimestamp + DEFAULT_EXPIRATION);
+      } else {
+        identity = new UserIdentity(Constants.Security.Authentication.RUNTIME_IDENTITY,
+            UserIdentity.IdentifierType.INTERNAL, Collections.emptyList(),
+            currentTimestamp, currentTimestamp + DEFAULT_EXPIRATION);
+      }
       AccessToken accessToken = tokenManager.signIdentifier(identity);
       byte[] encodedAccessToken = Base64.getEncoder().encode(accessTokenCodec.encode(accessToken));
       Location location = keysDir.append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
@@ -536,14 +546,22 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       return null;
     }
 
-    ProgramOptions programOpts = new SimpleProgramOptions(
-        runRecordDetail.getProgramRunId().getParent(),
-        new BasicArguments(runRecordDetail.getSystemArgs()),
-        new BasicArguments(runRecordDetail.getUserArgs()));
+    ProgramOptions programOpts = createProgramOptionsFromRunRecord(runRecordDetail);
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
     return new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5,
         TimeUnit.SECONDS);
+  }
+
+  @VisibleForTesting
+  static ProgramOptions createProgramOptionsFromRunRecord(RunRecordDetail runRecordDetail) {
+    Map<String, String> systemArgs = runRecordDetail.getSystemArgs();
+    Map<String, String> resolvedUserArgs = SystemArguments.resolveScopedUserArguments(
+        runRecordDetail.getProgramRunId().getParent(), systemArgs, runRecordDetail.getUserArgs());
+    return new SimpleProgramOptions(
+        runRecordDetail.getProgramRunId().getParent(),
+        new BasicArguments(systemArgs),
+        new BasicArguments(resolvedUserArgs));
   }
 
   protected void monitorController(ProgramRunId programRunId,
