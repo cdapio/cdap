@@ -81,6 +81,28 @@ public final class Artifacts {
     return artifactNamespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion());
   }
 
+  /**
+   * Loads the application class without running its static initializer ({@code <clinit>}) until it
+   * is verified to implement {@link Application}.
+   */
+  public static Class<? extends Application> loadApplicationClass(
+      ClassLoader classLoader, String className) throws ClassNotFoundException {
+    Class<?> appClass = classLoader.loadClass(className);
+    if (!Application.class.isAssignableFrom(appClass)) {
+      throw new IllegalStateException(
+          String.format("Application main class is of invalid type: %s", appClass.getName()));
+    }
+    return appClass.asSubclass(Application.class);
+  }
+
+  /**
+   * Instantiates an {@link Application} class using its no-arg constructor.
+   */
+  public static Application<?> instantiateApplication(Class<? extends Application> appClass)
+      throws InstantiationException, IllegalAccessException {
+    return appClass.newInstance();
+  }
+
   private Artifacts() {
     // Prevent instantiation of util class.
   }

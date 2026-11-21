@@ -16,28 +16,53 @@
 
 package io.cdap.cdap.internal.app.services.http.handlers;
 
+import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import java.io.File;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.jar.Manifest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 
 public class ArtifactHttpHandlerInternalTest extends ArtifactHttpHandlerTestBase {
+  private static final ArtifactId PARENT_ARTIFACT_ID =
+      NamespaceId.SYSTEM.artifact("sysApp", "1.0.0");
+  private static final PluginClass TEST_PLUGIN_CLASS = PluginClass.builder()
+      .setType("my type")
+      .setName("my plugin")
+      .setDescription("plugin description")
+      .setClassName(AllProgramsApp.class.getName())
+      .setRequirements(new Requirements(Collections.singleton("reqDataset")))
+      .build();
+
   @Test
   public void testListArtifacts() throws Exception {
     List<ArtifactInfo> artifactInfoList = null;
@@ -238,5 +263,136 @@ public class ArtifactHttpHandlerInternalTest extends ArtifactHttpHandlerTestBase
       expectedDetail = getArtifactDetailFromRepository(Id.Artifact.fromEntityId(systemArtifactId));
       Assert.assertTrue(details.get(i).equals(expectedDetail));
     }
+  }
+
+  private RemoteArtifactRepository createRemoteArtifactRepository() {
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    RemoteArtifactRepositoryReader remoteReader =
+        getInjector().getInstance(RemoteArtifactRepositoryReader.class);
+    return new RemoteArtifactRepository(cConf, remoteReader);
+  }
+
+  private RemoteArtifactRepository setupRemoteArtifactRepositoryWithPlugins() throws Exception {
+    addAppAsSystemArtifacts(PARENT_ARTIFACT_ID);
+
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    ArtifactRepository repo = getInjector().getInstance(ArtifactRepository.class);
+    File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    File namespaceBase = new File(
+        new File(localDataDir, cConf.get(Constants.Namespace.NAMESPACES_DIR)),
+        NamespaceId.DEFAULT.getNamespace());
+    namespaceBase.mkdirs();
+
+    Set<ArtifactRange> parentRanges = Collections.singleton(
+        new ArtifactRange(
+            NamespaceId.SYSTEM.getNamespace(),
+            PARENT_ARTIFACT_ID.getArtifact(),
+            new ArtifactVersion("1.0.0"),
+            true,
+            new ArtifactVersion("2.0.0"),
+            false));
+
+    for (String version : new String[]{"1.0.0", "2.0.0"}) {
+      File jarFile = new File(namespaceBase, "myPluginArtifact-" + version + ".jar");
+      buildAppArtifact(AllProgramsApp.class, new Manifest(), jarFile);
+      try {
+        repo.addArtifact(
+            new Id.Artifact(
+                Id.Namespace.fromEntityId(NamespaceId.DEFAULT),
+                "myPluginArtifact",
+                new ArtifactVersion(version)),
+            jarFile,
+            parentRanges,
+            Collections.singleton(TEST_PLUGIN_CLASS));
+      } finally {
+        jarFile.delete();
+      }
+    }
+
+    return createRemoteArtifactRepository();
+  }
+
+  @Test
+  public void testRemoteArtifactRepositoryGetPluginsAscOrder() throws Exception {
+    RemoteArtifactRepository remoteRepo = setupRemoteArtifactRepositoryWithPlugins();
+
+    SortedMap<ArtifactDescriptor, PluginClass> ascPlugins = remoteRepo.getPlugins(
+        NamespaceId.DEFAULT,
+        Id.Artifact.fromEntityId(PARENT_ARTIFACT_ID),
+        "my type",
+        "my plugin",
+        id -> true,
+        10,
+        ArtifactSortOrder.ASC);
+    Assert.assertEquals(2, ascPlugins.size());
+    Assert.assertEquals("1.0.0", ascPlugins.firstKey().getArtifactId().getVersion().getVersion());
+    Assert.assertEquals("2.0.0", ascPlugins.lastKey().getArtifactId().getVersion().getVersion());
+    Assert.assertNotNull(ascPlugins.firstKey().getLocation());
+    Assert.assertNotNull(ascPlugins.lastKey().getLocation());
+    PluginClass resolvedPlugin = ascPlugins.get(ascPlugins.firstKey());
+    Assert.assertEquals(TEST_PLUGIN_CLASS, resolvedPlugin);
+    Assert.assertEquals(
+        Collections.singleton("reqdataset"), resolvedPlugin.getRequirements().getDatasetTypes());
+  }
+
+  @Test
+  public void testRemoteArtifactRepositoryGetPluginsDescWithLimit() throws Exception {
+    RemoteArtifactRepository remoteRepo = setupRemoteArtifactRepositoryWithPlugins();
+
+    SortedMap<ArtifactDescriptor, PluginClass> descLimited = remoteRepo.getPlugins(
+        NamespaceId.DEFAULT,
+        Id.Artifact.fromEntityId(PARENT_ARTIFACT_ID),
+        "my type",
+        "my plugin",
+        id -> true,
+        1,
+        ArtifactSortOrder.DESC);
+    Assert.assertEquals(1, descLimited.size());
+    Assert.assertEquals("2.0.0", descLimited.firstKey().getArtifactId().getVersion().getVersion());
+  }
+
+  @Test
+  public void testRemoteArtifactRepositoryGetPluginsWithPredicate() throws Exception {
+    RemoteArtifactRepository remoteRepo = setupRemoteArtifactRepositoryWithPlugins();
+
+    SortedMap<ArtifactDescriptor, PluginClass> filtered = remoteRepo.getPlugins(
+        NamespaceId.DEFAULT,
+        Id.Artifact.fromEntityId(PARENT_ARTIFACT_ID),
+        "my type",
+        "my plugin",
+        id -> "1.0.0".equals(id.getVersion()),
+        10,
+        ArtifactSortOrder.ASC);
+    Assert.assertEquals(1, filtered.size());
+    Assert.assertEquals("1.0.0", filtered.firstKey().getArtifactId().getVersion().getVersion());
+  }
+
+  @Test(expected = PluginNotExistsException.class)
+  public void testRemoteArtifactRepositoryGetPluginsNotFound() throws Exception {
+    RemoteArtifactRepository remoteRepo = setupRemoteArtifactRepositoryWithPlugins();
+
+    remoteRepo.getPlugins(
+        NamespaceId.DEFAULT,
+        Id.Artifact.fromEntityId(PARENT_ARTIFACT_ID),
+        "my type",
+        "nonExistentPlugin",
+        id -> true,
+        10,
+        ArtifactSortOrder.ASC);
+  }
+
+  @Test(expected = ArtifactNotFoundException.class)
+  public void testRemoteArtifactRepositoryGetPluginsParentArtifactNotFound() throws Exception {
+    RemoteArtifactRepository remoteRepo = createRemoteArtifactRepository();
+    ArtifactId missingParent = NamespaceId.SYSTEM.artifact("missingParent", "1.0.0");
+
+    remoteRepo.getPlugins(
+        NamespaceId.DEFAULT,
+        Id.Artifact.fromEntityId(missingParent),
+        "my type",
+        "my plugin",
+        id -> true,
+        10,
+        ArtifactSortOrder.ASC);
   }
 }

@@ -27,9 +27,15 @@ import io.cdap.cdap.MetadataEmitApp;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.service.worker.RemoteExecutionException;
+import io.cdap.cdap.api.service.worker.RemoteTaskException;
+import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
@@ -37,6 +43,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Namespace;
+import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
@@ -49,6 +56,7 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.worker.AppConfigUpdateTask;
 import io.cdap.cdap.internal.capability.CapabilityConfig;
 import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityStatus;
@@ -97,6 +105,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  *
@@ -861,6 +870,125 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.getApplicationsCount(null);
   }
 
+  /**
+   * Test application subclass that supports config updates.
+   */
+  public static class UpdatableConfigTestApp extends ConfigTestApp {
+    @Override
+    public boolean isUpdateSupported() {
+      return true;
+    }
+
+    @Override
+    public ApplicationUpdateResult<ConfigClass> updateConfig(
+        ApplicationUpdateContext updateContext) throws Exception {
+      ConfigClass currentConfig = updateContext.getConfig(ConfigClass.class);
+      return new ApplicationUpdateResult<>(currentConfig);
+    }
+  }
+
+  @Test
+  public void testUpgradeUserApplicationLocallyWhenPoolDisabled() throws Exception {
+    String appName = "userUpgradeLocalApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteTaskExecutor mockExecutor = Mockito.mock(RemoteTaskExecutor.class);
+    applicationLifecycleService.setRemoteTaskExecutor(mockExecutor);
+    cConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, false);
+
+    try {
+      ApplicationId upgradedId = applicationLifecycleService.upgradeLatestApplication(
+          deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+      Assert.assertEquals(appName, upgradedId.getApplication());
+      Assert.assertNotEquals(deployedAppId.getVersion(), upgradedId.getVersion());
+      Mockito.verify(mockExecutor, Mockito.never()).runTask(Mockito.any());
+    } finally {
+      applicationLifecycleService.setRemoteTaskExecutor(null);
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  @Test
+  public void testUpgradeUserApplicationDelegatesToRemoteTaskExecutor() throws Exception {
+    String appName = "userUpgradeRemoteApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteTaskExecutor mockExecutor = Mockito.mock(RemoteTaskExecutor.class);
+    applicationLifecycleService.setRemoteTaskExecutor(mockExecutor);
+    cConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, true);
+
+    ConfigTestApp.ConfigClass updatedConfig =
+        new ConfigTestApp.ConfigClass("upgradedTable", "upgradedResp");
+    Mockito.when(mockExecutor.runTask(Mockito.any()))
+        .thenAnswer(inv -> {
+          // Reset pool flag so the subsequent in-memory test deployment stage uses InMemoryConfigurator
+          cConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, false);
+          return GSON.toJson(updatedConfig).getBytes(StandardCharsets.UTF_8);
+        });
+
+    try {
+      ApplicationId upgradedId = applicationLifecycleService.upgradeLatestApplication(
+          deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+      Assert.assertEquals(appName, upgradedId.getApplication());
+      org.mockito.ArgumentCaptor<RunnableTaskRequest> requestCaptor =
+          org.mockito.ArgumentCaptor.forClass(RunnableTaskRequest.class);
+      Mockito.verify(mockExecutor, Mockito.times(1)).runTask(requestCaptor.capture());
+      RunnableTaskRequest capturedRequest = requestCaptor.getValue();
+      Assert.assertEquals(
+          AppConfigUpdateTask.class.getName(), capturedRequest.getClassName());
+      Assert.assertEquals(
+          deployedAppId.getNamespace(), capturedRequest.getNamespace());
+      ApplicationDetail upgradedDetail =
+          getAppDetails(Id.Namespace.DEFAULT.getId(), appName);
+      Assert.assertTrue(upgradedDetail.getConfiguration().contains("upgradedTable"));
+      Assert.assertTrue(upgradedDetail.getConfiguration().contains("upgradedResp"));
+    } finally {
+      cConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, false);
+      applicationLifecycleService.setRemoteTaskExecutor(null);
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testUpgradeUserApplicationUnwrapsRemoteTaskException() throws Exception {
+    String appName = "userUpgradeExceptionApp";
+    ApplicationId deployedAppId = deployUserUpgradeTestApp(appName);
+    RemoteTaskExecutor mockExecutor = Mockito.mock(RemoteTaskExecutor.class);
+    applicationLifecycleService.setRemoteTaskExecutor(mockExecutor);
+    cConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, true);
+
+    RemoteTaskException rte = new RemoteTaskException(
+        UnsupportedOperationException.class.getName(), "Update not supported", null);
+    Mockito.when(mockExecutor.runTask(Mockito.any()))
+        .thenThrow(new RemoteExecutionException(rte));
+
+    try {
+      applicationLifecycleService.upgradeLatestApplication(
+          deployedAppId.getAppReference(), Collections.singleton(ArtifactScope.USER), true);
+    } finally {
+      cConf.setBoolean(Constants.TaskWorker.POOL_ENABLE, false);
+      applicationLifecycleService.setRemoteTaskExecutor(null);
+      cleanupUpgradeTestUserApp(deployedAppId, appName);
+    }
+  }
+
+  private ApplicationId deployUserUpgradeTestApp(String appName) throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appName);
+    Id.Artifact artifactId =
+        Id.Artifact.from(Id.Namespace.DEFAULT, appName + "Artifact", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, UpdatableConfigTestApp.class);
+    Assert.assertEquals(200,
+        deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())))
+            .getResponseCode());
+    ApplicationDetail detail = getAppDetails(Id.Namespace.DEFAULT.getId(), appName);
+    return new ApplicationId(Id.Namespace.DEFAULT.getId(), appName, detail.getAppVersion());
+  }
+
+  private void cleanupUpgradeTestUserApp(ApplicationId deployedAppId, String appName)
+      throws Exception {
+    deleteAppAndData(deployedAppId);
+    Id.Artifact artifactId =
+        Id.Artifact.from(Id.Namespace.DEFAULT, appName + "Artifact", "1.0.0-SNAPSHOT");
+    deleteArtifact(artifactId, 200);
+  }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {
     Tasks.waitFor(expected, () -> getProgramRuns(Id.Program.fromEntityId(programId), status).size(),

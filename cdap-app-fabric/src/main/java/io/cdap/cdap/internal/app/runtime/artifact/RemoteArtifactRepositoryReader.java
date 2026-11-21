@@ -25,10 +25,11 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.id.Id;
@@ -38,7 +39,7 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
-import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -51,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,12 +67,18 @@ import org.apache.twill.filesystem.LocationFactory;
  */
 public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader {
 
+  private static final String PLUGINS_URL_FORMAT =
+      "namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?pluginNamespace=%s";
+
   private static final Gson GSON = new GsonBuilder()
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
       .create();
   private static final Type ARTIFACT_DETAIL_TYPE = new TypeToken<ArtifactDetail>() {
   }.getType();
   private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() {
+  }.getType();
+  private static final Type PLUGIN_ENTRY_LIST_TYPE = new TypeToken<List<PluginEntry>>() {
   }.getType();
   private static final Predicate<Throwable> RETRYABLE_PREDICATE =
       throwable -> (throwable instanceof RetryableException);
@@ -249,4 +257,75 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   public RemoteClient getRemoteClient() {
     return remoteClient;
   }
+
+  /**
+   * Fetches plugin entries extending the given parent artifact.
+   */
+  public List<PluginEntry> getPlugins(NamespaceId namespaceId, Id.Artifact parentArtifactId,
+                                      String pluginType, String pluginName)
+      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+
+    String url = buildUrl(namespaceId, parentArtifactId, pluginType, pluginName);
+    HttpRequest.Builder requestBuilder = getRemoteClient().requestBuilder(HttpMethod.GET, url);
+
+    HttpResponse httpResponse;
+    try {
+      httpResponse = execute(requestBuilder.build());
+    } catch (NotFoundException e) {
+      ArtifactNotFoundException ex = new ArtifactNotFoundException(parentArtifactId.toEntityId());
+      ex.addSuppressed(e);
+      throw ex;
+    } catch (UnauthorizedException e) {
+      throw new IOException(e);
+    }
+
+    List<PluginEntry> entries = GSON.fromJson(httpResponse.getResponseBodyAsString(), PLUGIN_ENTRY_LIST_TYPE);
+    if (entries == null || entries.isEmpty()) {
+      throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
+    }
+
+    List<PluginEntry> pluginEntries = new ArrayList<>();
+    for (PluginEntry entry : entries) {
+      if (entry != null && entry.getDescriptor() != null && entry.getPluginClass() != null) {
+        pluginEntries.add(toLocalPluginEntry(entry));
+      }
+    }
+    return pluginEntries;
+  }
+
+  /**
+   * Constructs the HTTP REST URL endpoint by encoding path segments and plugin namespace.
+   */
+  private static String buildUrl(NamespaceId namespaceId, Id.Artifact parentArtifactId,
+                                 String pluginType, String pluginName) throws IOException {
+    return String.format(
+        PLUGINS_URL_FORMAT,
+        encodeUrlSegment(parentArtifactId.getNamespace().getId()),
+        encodeUrlSegment(parentArtifactId.getName()),
+        encodeUrlSegment(parentArtifactId.getVersion().getVersion()),
+        encodeUrlSegment(pluginType),
+        encodeUrlSegment(pluginName),
+        encodeUrlSegment(namespaceId.getNamespace())
+    );
+  }
+
+  /**
+   * Resolves the physical storage location of the artifact descriptor and returns a localized PluginEntry.
+   */
+  private PluginEntry toLocalPluginEntry(PluginEntry entry) throws IOException, ArtifactNotFoundException {
+    ArtifactDescriptor rawDesc = entry.getDescriptor();
+    Location location = getArtifactLocation(rawDesc);
+
+    ArtifactDescriptor descriptorWithLoc = new ArtifactDescriptor(
+        rawDesc.getNamespace(),
+        rawDesc.getArtifactId(),
+        location
+    );
+    return new PluginEntry(descriptorWithLoc, entry.getPluginClass());
+  }
+
+  private static String encodeUrlSegment(String segment) throws IOException {
+    return URLEncoder.encode(segment, StandardCharsets.UTF_8.name()).replace("+", "%20");
+  }
 }
+
