@@ -22,9 +22,13 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
@@ -382,6 +386,60 @@ public class RuntimeScopesTest {
         Collections.emptySet(), ImmutableSet.of("git*/cred1", "github/cred*"),
         Collections.emptySet(), false);
     Assert.assertFalse(partialStar.allowsOauth("github", "cred1"));
+  }
+
+  @Test
+  public void testWildcardAll() {
+    RuntimeScopes all = RuntimeScopes.wildcardAll();
+    Assert.assertEquals(Collections.singleton(RuntimeScopes.WILDCARD), all.getConnections());
+    Assert.assertEquals(Collections.singleton(RuntimeScopes.OAUTH_WILDCARD), all.getOauth());
+    Assert.assertEquals(Collections.singleton(RuntimeScopes.WILDCARD), all.getSecrets());
+    Assert.assertTrue(all.hasExternalDynamicSecret());
+    Assert.assertTrue(all.allowsConnection("any_conn"));
+    Assert.assertTrue(all.allowsOauth("any-provider", "any-cred"));
+    Assert.assertTrue(all.allowsSecret("any-secret"));
+    Assert.assertEquals(all, RuntimeScopes.fromJson(all.toJson()));
+  }
+
+  @Test
+  public void testConnectionIdFromMacroName() throws UnsupportedEncodingException {
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName(null));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName(""));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName("."));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName(".."));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName("/"));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName("a/b"));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName("a$b"));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName("a(b)"));
+    Assert.assertEquals(Optional.empty(), RuntimeScopes.connectionIdFromMacroName("\t"));
+
+    Assert.assertEquals(Optional.of("_"), RuntimeScopes.connectionIdFromMacroName("*"));
+    Assert.assertEquals(Optional.of("___"), RuntimeScopes.connectionIdFromMacroName("..."));
+    Assert.assertEquals(Optional.of("_a"), RuntimeScopes.connectionIdFromMacroName(".a"));
+    Assert.assertEquals(Optional.of("___"), RuntimeScopes.connectionIdFromMacroName("   "));
+    Assert.assertEquals(Optional.of("__my_conn__"),
+        RuntimeScopes.connectionIdFromMacroName("  my conn  "));
+    Assert.assertEquals(Optional.of("my_db_conn"),
+        RuntimeScopes.connectionIdFromMacroName("my-db conn"));
+
+    String longName = Strings.repeat("a", 60);
+    Assert.assertEquals(Optional.of(Strings.repeat("a", 50)),
+        RuntimeScopes.connectionIdFromMacroName(longName));
+
+    // Matches what the runtime client sends (URLEncoder turns spaces into '+')
+    for (String macroName : ImmutableList.of("   ", "  my conn  ", "my conn", "*")) {
+      String id = RuntimeScopes.connectionIdFromMacroName(macroName).orElse(null);
+      Assert.assertNotNull(id);
+      RuntimeScopes scopes = new RuntimeScopes(
+          Collections.singleton(id), Collections.emptySet(), Collections.emptySet(), false);
+      String encodedSegment = URLEncoder.encode(macroName, StandardCharsets.UTF_8.name());
+      // Server URL-decodes %XX in path segments, leaving '+' literal.
+      String decodedPathSegment = encodedSegment.replace("%2A", "*");
+      Assert.assertTrue("Expected scopes to allow " + macroName,
+          scopes.allowsConnection(decodedPathSegment));
+      Assert.assertFalse("Expected scopes not to act as wildcard for " + macroName,
+          scopes.allowsConnection("other_conn"));
+    }
   }
 
   private static void assertThrows(String description, Class<? extends Throwable> expectedType,
