@@ -3397,6 +3397,18 @@
   </property>
 
   <property>
+    <name>app.program.runtime.token.allowlist.extra.rules</name>
+    <value></value>
+    <description>
+      Optional JSON array of extra callback API allowlist rules appended to the bundled
+      runtime callback allowlist. Each rule object specifies "service", "methods", and
+      "pathTemplate", plus optional "namespaceRule", "applicationRule", and "bodyRule".
+      Leave empty unless temporary additional rules are needed. An invalid value is
+      ignored and logged at ERROR, and only the bundled rules apply.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.remote.stop.delay.secs</name>
     <value>10</value>
     <description>

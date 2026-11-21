@@ -25,7 +25,8 @@ enum RuntimeValidationFailure {
 
   LEGACY_TOKEN("legacy_token"),
   URL_MISMATCH("url_mismatch"),
-  MISSING_SCOPES("missing_scopes");
+  MISSING_SCOPES("missing_scopes"),
+  API_NOT_ALLOWED("api_not_allowed");
 
   private final String reason;
 

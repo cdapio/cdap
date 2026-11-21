@@ -1517,6 +1517,8 @@ public final class Constants {
     public static final String MONITOR_AUDIT_LOGGER_NAME = "http-access";
     public static final String RUNTIME_TOKEN_VALIDATION_ENABLED =
         "app.program.runtime.token.validation.enabled";
+    public static final String RUNTIME_TOKEN_ALLOWLIST_EXTRA_RULES =
+        "app.program.runtime.token.allowlist.extra.rules";
 
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
