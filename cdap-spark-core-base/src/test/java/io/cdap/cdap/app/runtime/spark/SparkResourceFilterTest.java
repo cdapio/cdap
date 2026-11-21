@@ -37,4 +37,13 @@ public class SparkResourceFilterTest {
     FilterClassLoader.Filter filter = new SparkResourceFilter();
     Assert.assertTrue(filter.acceptResource(SparkTwillRunnable.class.getName().replace('.', '/')));
   }
+
+  @Test
+  public void testGuavaOptionalBlockedAndDefaultPackagesAccepted() {
+    FilterClassLoader.Filter filter = new SparkResourceFilter();
+    Assert.assertFalse(filter.acceptResource("com/google/common/base/Optional.class"));
+    Assert.assertFalse(filter.acceptPackage("com.google.common.base"));
+    Assert.assertTrue(filter.acceptPackage("io.cdap.cdap.api.spark"));
+    Assert.assertTrue(filter.acceptPackage("io.cdap.cdap.api.app"));
+  }
 }

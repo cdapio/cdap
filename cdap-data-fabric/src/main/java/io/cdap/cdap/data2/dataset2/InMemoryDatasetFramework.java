@@ -506,7 +506,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
         DatasetDefinitionRegistries.register(moduleClassName, classLoader, registry);
       } catch (Exception e) {
         LOG.error("Was not able to load dataset module class {}", moduleClassName, e);
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 

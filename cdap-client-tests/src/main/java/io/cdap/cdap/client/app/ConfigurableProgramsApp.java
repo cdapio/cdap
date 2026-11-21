@@ -104,7 +104,8 @@ public class ConfigurableProgramsApp extends AbstractApplication<ConfigurablePro
           keyValueTable.write("Dwayne", "Johnson");
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

@@ -29,6 +29,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.ChannelPipelineModifier;
@@ -101,7 +102,7 @@ public class PreviewHttpServer extends AbstractIdleService {
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
     if (previewManager instanceof Service) {
-      ((Service) previewManager).startAndWait();
+      Services.startAndAwaitRunning((Service) previewManager);
     }
 
     httpService.start();
@@ -115,9 +116,15 @@ public class PreviewHttpServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     try {
-      cancelHttpService.cancel();
+      if (cancelHttpService != null) {
+        cancelHttpService.cancel();
+      }
       if (previewManager instanceof Service) {
-        ((Service) previewManager).stopAndWait();
+        Service service = (Service) previewManager;
+        State state = service.state();
+        if (state != State.FAILED && state != State.TERMINATED && state != State.NEW) {
+          service.stopAsync().awaitTerminated();
+        }
       }
     } finally {
       httpService.stop();

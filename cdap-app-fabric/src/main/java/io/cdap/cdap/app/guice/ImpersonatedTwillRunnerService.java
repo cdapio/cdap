@@ -188,7 +188,8 @@ public final class ImpersonatedTwillRunnerService implements TwillRunnerService 
         } catch (Exception e) {
           // it should already be a runtime exception anyways, since none of the methods in the above callable
           // throw any checked exceptions
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     };

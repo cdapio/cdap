@@ -71,6 +71,52 @@ public class LogBufferReaderTest {
     reader.close();
   }
 
+  @Test
+  public void testCloseQuietlyAndEmptyMaxFileId() throws Exception {
+    String absolutePath = TMP_FOLDER.newFolder().getAbsolutePath();
+    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
+    writer.write(getLoggingEvents().iterator());
+    writer.close();
+
+    // maxFileId < 0 returns 0 immediately, and repeated close() is quiet
+    LogBufferReader emptyRangeReader = new LogBufferReader(absolutePath, 2, -1, 0, 0);
+    List<LogBufferEvent> events = new LinkedList<>();
+    Assert.assertEquals(0, emptyRangeReader.readEvents(events));
+    emptyRangeReader.close();
+    emptyRangeReader.close();
+
+    // Inject a failing inputStream into the underlying LogBufferEventReader to verify closeQuietly
+    LogBufferReader failingCloseReader = new LogBufferReader(absolutePath, 2, 0, -1, -1);
+    java.lang.reflect.Field eventReaderField =
+        LogBufferReader.class.getDeclaredField("eventReader");
+    eventReaderField.setAccessible(true);
+    Object eventReader = eventReaderField.get(failingCloseReader);
+    java.lang.reflect.Field inputStreamField =
+        eventReader.getClass().getDeclaredField("inputStream");
+    inputStreamField.setAccessible(true);
+    java.io.DataInputStream origStream = (java.io.DataInputStream) inputStreamField.get(eventReader);
+    origStream.close();
+
+    final java.util.concurrent.atomic.AtomicBoolean closeAttempted =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    java.io.DataInputStream throwingStream = new java.io.DataInputStream(new java.io.InputStream() {
+      @Override
+      public int read() {
+        return -1;
+      }
+
+      @Override
+      public void close() throws IOException {
+        closeAttempted.set(true);
+        throw new IOException("simulated input close failure");
+      }
+    });
+    inputStreamField.set(eventReader, throwingStream);
+
+    failingCloseReader.close();
+    Assert.assertTrue(closeAttempted.get());
+  }
+
   private void verifyEvents(List<LogBufferEvent> logBufferEvents, LogBufferReader reader,
                             Iterator<LogBufferEvent> iterator) throws IOException {
     while (reader.readEvents(logBufferEvents) > 0) {

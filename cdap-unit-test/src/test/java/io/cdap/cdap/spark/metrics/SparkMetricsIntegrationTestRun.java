@@ -110,7 +110,8 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
       // since it is totals, we know there's one value only
       return timeValues.get(0).getValue();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewStatus;
@@ -27,6 +28,8 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -56,10 +59,10 @@ public class PreviewRunnerServiceTest {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
     PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
-    runnerService.startAndWait();
+    runnerService.startAsync().awaitRunning();
 
     Tasks.waitFor(true, () -> fetcher.fetchCount.get() > 0, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    runnerService.stopAndWait();
+    runnerService.stopAsync().awaitTerminated();
     Tasks.waitFor(Service.State.TERMINATED, runnerService::state, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
@@ -68,14 +71,14 @@ public class PreviewRunnerServiceTest {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
     PreviewRunnerService runnerService = new PreviewRunnerService(createCConf(), fetcher, mockRunner);
-    runnerService.startAndWait();
+    runnerService.startAsync().awaitRunning();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
     fetcher.addRequest(new PreviewRequest(programId, null, null));
 
     Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    runnerService.stopAndWait();
+    runnerService.stopAsync().awaitTerminated();
     Tasks.waitFor(PreviewStatus.Status.KILLED, () -> mockRunner.requests.get(programId).status.getStatus(),
                   5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     Tasks.waitFor(Service.State.TERMINATED, runnerService::state, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -89,7 +92,7 @@ public class PreviewRunnerServiceTest {
     MockPreviewRunner mockRunner = new MockPreviewRunner();
     MockPreviewRequestFetcher fetcher = new MockPreviewRequestFetcher();
     PreviewRunnerService runnerService = new PreviewRunnerService(cConf, fetcher, mockRunner);
-    runnerService.startAndWait();
+    runnerService.startAsync().awaitRunning();
 
     ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
     fetcher.addRequest(new PreviewRequest(programId, null, null));
@@ -99,6 +102,49 @@ public class PreviewRunnerServiceTest {
     // Finish the preview run and the runner service should be completed as well since max runs == 1
     mockRunner.complete(programId);
     Tasks.waitFor(Service.State.TERMINATED, runnerService::state, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
+  @Test
+  public void testFetchExceptionRecoveryAndRetries()
+      throws InterruptedException, ExecutionException, TimeoutException, NotFoundException {
+    CConfiguration cConf = createCConf();
+    cConf.setLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS, 20L);
+    cConf.setInt(Constants.Preview.MAX_RUNS, 1);
+    cConf.set("system.preview.retry.policy.type", "fixed.delay");
+    cConf.setLong("system.preview.retry.policy.delay.ms", 10L);
+    cConf.setInt("system.preview.retry.policy.max.retries", 2);
+
+    ProgramId programId = NamespaceId.DEFAULT.app("app").program(ProgramType.WORKFLOW, "workflow");
+    PreviewRequest validRequest = new PreviewRequest(programId, null, null);
+    AtomicInteger attempt = new AtomicInteger();
+
+    PreviewRequestFetcher failingThenSucceedingFetcher = () -> {
+      int current = attempt.incrementAndGet();
+      if (current == 1) {
+        throw new IOException("transient io failure");
+      }
+      if (current == 2) {
+        throw new UnauthorizedException("transient auth failure");
+      }
+      if (current == 3) {
+        throw new IllegalStateException("unexpected runtime failure");
+      }
+      if (current == 4) {
+        throw new RetryableException("retryable failure");
+      }
+      return Optional.of(validRequest);
+    };
+
+    MockPreviewRunner mockRunner = new MockPreviewRunner();
+    PreviewRunnerService runnerService =
+        new PreviewRunnerService(cConf, failingThenSucceedingFetcher, mockRunner);
+    runnerService.startAsync().awaitRunning();
+
+    Tasks.waitFor(true, () -> mockRunner.requests.get(programId) != null,
+        5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
+    mockRunner.complete(programId);
+    Tasks.waitFor(Service.State.TERMINATED, runnerService::state,
+        5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
   }
 
   /**

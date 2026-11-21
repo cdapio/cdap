@@ -72,7 +72,7 @@ public class LogBufferRecoveryServiceTest {
       config, checkpointManager, 0);
 
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // write directly to log buffer
     LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
@@ -85,13 +85,59 @@ public class LogBufferRecoveryServiceTest {
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
                                                                     absolutePath, 2, new AtomicBoolean(true));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    service.stopAndWait();
-    pipeline.stopAndWait();
+    service.stopAsync().awaitTerminated();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
+  }
+
+  @Test
+  public void testServiceNameAndFastCompletionWithoutBaseDir() throws Exception {
+    java.io.File missingDir = new java.io.File(TMP_FOLDER.newFolder(), "missing");
+    AtomicBoolean startCleanup = new AtomicBoolean(false);
+    final java.util.concurrent.atomic.AtomicReference<String> executionThreadName =
+        new java.util.concurrent.atomic.AtomicReference<>();
+
+    MockCheckpointManager checkpointManager = new MockCheckpointManager() {
+      @Override
+      public io.cdap.cdap.logging.meta.Checkpoint<io.cdap.cdap.logging.logbuffer.LogBufferFileOffset>
+          getCheckpoint(int partition) throws java.io.IOException {
+        executionThreadName.set(Thread.currentThread().getName());
+        return super.getCheckpoint(partition);
+      }
+    };
+
+    // Exercise fast completion when baseDir does not exist
+    LogBufferRecoveryService fastService = new LogBufferRecoveryService(
+        ImmutableList.of(), ImmutableList.of(checkpointManager),
+        missingDir.getAbsolutePath(), 10, startCleanup);
+    org.junit.Assert.assertTrue(fastService.toString().startsWith("log.buffer.recovery ["));
+    try {
+      fastService.startAsync().awaitRunning();
+    } catch (IllegalStateException e) {
+      if (fastService.state() != com.google.common.util.concurrent.Service.State.STOPPING
+          && fastService.state() != com.google.common.util.concurrent.Service.State.TERMINATED) {
+        throw e;
+      }
+    }
+    fastService.stopAsync().awaitTerminated();
+    org.junit.Assert.assertTrue(startCleanup.get());
+    org.junit.Assert.assertEquals("log.buffer.recovery [TERMINATED]", fastService.toString());
+
+    // Exercise execution thread naming when baseDir exists with a valid buffer file
+    String existingBufDir = TMP_FOLDER.newFolder().getAbsolutePath();
+    try (LogBufferWriter bufWriter = new LogBufferWriter(existingBufDir, 10000L, () -> { })) {
+      bufWriter.write(getLoggingEvents().iterator());
+    }
+    LogBufferRecoveryService namedService = new LogBufferRecoveryService(
+        ImmutableList.of(), ImmutableList.of(checkpointManager),
+        existingBufDir, 10, new AtomicBoolean(false));
+    namedService.startAsync().awaitRunning();
+    namedService.stopAsync().awaitTerminated();
+    org.junit.Assert.assertEquals("log.buffer.recovery", executionThreadName.get());
   }
 
   private ImmutableList<byte[]> getLoggingEvents() {

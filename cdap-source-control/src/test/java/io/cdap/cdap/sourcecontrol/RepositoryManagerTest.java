@@ -32,6 +32,7 @@ import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
+import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager.CommitResult;
@@ -190,6 +191,24 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test
   public void testValidateSuccess() throws Exception {
     RepositoryManager.validateConfig(secureStore, getSourceControlConfig());
+  }
+
+  @Test
+  public void testValidateWrapsUnexpectedExceptionInRemoteRepositoryValidationException()
+      throws Exception {
+    RepositoryConfig spyRepoConfig = Mockito.spy(getRepositoryConfigBuilder().build());
+    IllegalStateException unexpected = new IllegalStateException("unexpected link read error");
+    Mockito.doThrow(unexpected).when(spyRepoConfig).getLink();
+
+    SourceControlConfig spySourceControlConfig = Mockito.spy(getSourceControlConfig());
+    Mockito.doReturn(spyRepoConfig).when(spySourceControlConfig).getRepositoryConfig();
+
+    try {
+      RepositoryManager.validateConfig(secureStore, spySourceControlConfig);
+      Assert.fail("Expected RemoteRepositoryValidationException");
+    } catch (RemoteRepositoryValidationException actual) {
+      Assert.assertSame(unexpected, actual.getCause());
+    }
   }
 
   @Test

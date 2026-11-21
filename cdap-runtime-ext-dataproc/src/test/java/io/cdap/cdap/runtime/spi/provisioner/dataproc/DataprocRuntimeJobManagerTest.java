@@ -24,6 +24,7 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageException;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
@@ -31,6 +32,7 @@ import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +43,7 @@ import org.apache.twill.internal.Constants;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 
@@ -221,5 +224,122 @@ public class DataprocRuntimeJobManagerTest {
     // call the method
     LocalFile localFile = Mockito.mock(LocalFile.class);
     mockedDataprocRuntimeJobManager.uploadFile(bucketName, targetFilePath, localFile, false);
+  }
+
+  private DataprocRuntimeJobManager createSpyJobManager(
+      String bucketName, Storage storage, String versionStr) {
+    GoogleCredentials credentials =
+        Mockito.mock(GoogleCredentials.class, Mockito.withSettings().withoutAnnotations());
+    DataprocRuntimeJobManager manager = new DataprocRuntimeJobManager(
+        new DataprocClusterInfo(new MockProvisionerContext(), "test-cluster", credentials,
+            null, "test-project", "test-region", bucketName, Collections.emptyMap()),
+        Collections.emptyMap(), new MockVersionInfo(versionStr));
+    DataprocRuntimeJobManager spyManager = Mockito.spy(manager);
+    Mockito.doReturn(storage).when(spyManager).getStorageClient();
+    return spyManager;
+  }
+
+  @Test
+  public void uploadCacheableFileReplacesStaleBuildMetadataEvenWhenUpdateTimeNewer()
+      throws Exception {
+    final String bucketName = "bucket";
+    final String targetFilePath = "cdap-job/cached-artifacts/6.12.0-SNAPSHOT/launcher.jar";
+    Storage storage = Mockito.mock(Storage.class);
+    BlobId blobId = BlobId.of(bucketName, targetFilePath, 1L);
+
+    for (Map<String, String> existingMeta :
+        new Map[] {null, ImmutableMap.of(DataprocRuntimeJobManager.CDAP_BUILD_TIME_METADATA_KEY, "900")}) {
+      Mockito.reset(storage);
+      Blob blob = Mockito.mock(Blob.class);
+      Blob.Builder blobBuilder = Mockito.mock(Blob.Builder.class);
+      Blob updatedBlob = Mockito.mock(Blob.class);
+      Mockito.doReturn(blob).when(storage).get(BlobId.of(bucketName, targetFilePath));
+      Mockito.doReturn(true).when(blob).exists();
+      // Simulate GCS upload wallclock later than the new binary's buildTime (1000).
+      Mockito.doReturn(2000L).when(blob).getUpdateTime();
+      Mockito.doReturn(existingMeta).when(blob).getMetadata();
+      Mockito.doReturn(blobBuilder).when(blob).toBuilder();
+      Mockito.doReturn(blobBuilder).when(blobBuilder).setCustomTime(Mockito.anyLong());
+      Mockito.doReturn(blobBuilder).when(blobBuilder).setMetadata(Mockito.any());
+      Mockito.doReturn(updatedBlob).when(blobBuilder).build();
+
+      DataprocRuntimeJobManager spyManager =
+          createSpyJobManager(bucketName, storage, "6.12.0-SNAPSHOT-1000");
+      Mockito.doNothing().when(spyManager).uploadToGcsUtil(
+          Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+          Mockito.any(), Mockito.any());
+
+      LocalFile localFile = Mockito.mock(LocalFile.class);
+      Mockito.doReturn(Constants.Files.LAUNCHER_JAR).when(localFile).getName();
+      Mockito.doReturn(URI.create("file:///tmp/launcher.jar")).when(localFile).getURI();
+
+      spyManager.uploadCacheableFile(bucketName, targetFilePath, localFile);
+
+      @SuppressWarnings("unchecked")
+      ArgumentCaptor<Map<String, String>> metaCaptor = ArgumentCaptor.forClass(Map.class);
+      Mockito.verify(blobBuilder, Mockito.times(1)).setMetadata(metaCaptor.capture());
+      Mockito.verify(spyManager, Mockito.times(1)).uploadToGcsUtil(
+          Mockito.eq(localFile), Mockito.eq(storage), Mockito.eq(targetFilePath),
+          Mockito.eq(updatedBlob),
+          Mockito.eq(Storage.BlobWriteOption.generationMatch()),
+          Mockito.eq(Storage.BlobWriteOption.metagenerationMatch()));
+      Assert.assertEquals(
+          "1000",
+          metaCaptor.getValue().get(DataprocRuntimeJobManager.CDAP_BUILD_TIME_METADATA_KEY));
+    }
+  }
+
+  @Test
+  public void uploadCacheableFileSkipsWhenBuildTimeMetadataMatches() throws Exception {
+    final String bucketName = "bucket";
+    final String targetFilePath = "cdap-job/cached-artifacts/6.12.0-SNAPSHOT/twill.jar";
+    Storage storage = Mockito.mock(Storage.class);
+    Blob blob = Mockito.mock(Blob.class);
+    Mockito.doReturn(blob).when(storage).get(BlobId.of(bucketName, targetFilePath));
+    Mockito.doReturn(true).when(blob).exists();
+    Mockito.doReturn(2000L).when(blob).getUpdateTime();
+    Mockito.doReturn(ImmutableMap.of(DataprocRuntimeJobManager.CDAP_BUILD_TIME_METADATA_KEY, "1000"))
+        .when(blob).getMetadata();
+
+    DataprocRuntimeJobManager spyManager =
+        createSpyJobManager(bucketName, storage, "6.12.0-SNAPSHOT-1000");
+    LocalFile localFile = Mockito.mock(LocalFile.class);
+    Mockito.doReturn(Constants.Files.TWILL_JAR).when(localFile).getName();
+    Mockito.doReturn(URI.create("file:///tmp/twill.jar")).when(localFile).getURI();
+
+    spyManager.uploadCacheableFile(bucketName, targetFilePath, localFile);
+
+    Mockito.verify(spyManager, Mockito.never()).uploadToGcsUtil(
+        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    Mockito.verify(spyManager, Mockito.never()).uploadFile(
+        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+  }
+
+  @Test
+  public void uploadFileSetsBuildTimeMetadataForVersionedCacheableArtifact() throws Exception {
+    final String bucketName = "bucket";
+    final String targetFilePath = "cdap-job/cached-artifacts/6.12.0-SNAPSHOT/launcher.jar";
+    Storage storage = Mockito.mock(Storage.class);
+    Bucket bucket = Mockito.mock(Bucket.class);
+    Mockito.doReturn(bucket).when(storage).get(Matchers.eq(bucketName));
+
+    DataprocRuntimeJobManager spyManager =
+        createSpyJobManager(bucketName, storage, "6.12.0-SNAPSHOT-1000");
+    Mockito.doNothing().when(spyManager).uploadToGcsUtil(
+        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+
+    LocalFile localFile = Mockito.mock(LocalFile.class);
+    Mockito.doReturn(Constants.Files.LAUNCHER_JAR).when(localFile).getName();
+    Mockito.doReturn(URI.create("file:///tmp/launcher.jar")).when(localFile).getURI();
+
+    spyManager.uploadFile(bucketName, targetFilePath, localFile, true);
+
+    ArgumentCaptor<BlobInfo> captor = ArgumentCaptor.forClass(BlobInfo.class);
+    Mockito.verify(spyManager, Mockito.times(1)).uploadToGcsUtil(
+        Mockito.eq(localFile), Mockito.eq(storage), Mockito.eq(targetFilePath), captor.capture(),
+        Mockito.eq(Storage.BlobWriteOption.doesNotExist()));
+    Assert.assertEquals(
+        "1000",
+        captor.getValue().getMetadata().get(DataprocRuntimeJobManager.CDAP_BUILD_TIME_METADATA_KEY));
   }
 }

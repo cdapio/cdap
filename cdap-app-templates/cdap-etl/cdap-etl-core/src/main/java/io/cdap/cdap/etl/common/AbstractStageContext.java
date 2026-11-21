@@ -116,8 +116,9 @@ public abstract class AbstractStageContext implements StageContext {
           () -> pipelineRuntime.getPluginContext()
               .newPluginInstance(scopePluginId(pluginId), macroEvaluator));
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, InstantiationException.class);
-      throw Throwables.propagate(e);
+      Throwables.throwIfInstanceOf(e, InstantiationException.class);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

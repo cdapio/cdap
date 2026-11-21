@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.plugin;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -65,7 +64,7 @@ public final class FindPluginHelper {
     try {
       pluginInstantiator.addArtifact(pluginEntry.getKey().getLocation(), artifact);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     return new Plugin(parents, artifact, pluginEntry.getValue(),
         properties.setMacros(collectMacroEvaluator.getMacros()));

@@ -91,4 +91,16 @@ public class EntityTableTest {
       Assert.assertEquals("app" + i, entityTable.getName(i, "app"));
     }
   }
+
+  @Test
+  public void testEntityNameToStringEqualsAndHashCode() {
+    EntityTable.EntityName name1 = new EntityTable.EntityName("app", "myApp");
+    EntityTable.EntityName name2 = new EntityTable.EntityName("app", "myApp");
+    EntityTable.EntityName name3 = new EntityTable.EntityName("flow", "myApp");
+
+    Assert.assertEquals("EntityName{type=app, name=myApp}", name1.toString());
+    Assert.assertEquals(name1, name2);
+    Assert.assertEquals(name1.hashCode(), name2.hashCode());
+    Assert.assertNotEquals(name1, name3);
+  }
 }

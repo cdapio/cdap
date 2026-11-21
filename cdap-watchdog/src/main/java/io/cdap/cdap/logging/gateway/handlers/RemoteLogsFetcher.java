@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Gateway;
@@ -114,7 +113,10 @@ public class RemoteLogsFetcher implements LogsFetcher {
 
         @Override
         public void onFinished() {
-          Closeables.closeQuietly(channel);
+          try {
+            channel.close();
+          } catch (Exception ignored) {
+          }
         }
       }).build();
       remoteClient.executeStreamingRequest(request);

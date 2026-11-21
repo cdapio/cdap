@@ -169,8 +169,11 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       }
       taskContext.postTxCommit();
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw Throwables.propagate(e);
+      if (e instanceof IOException) {
+        throw (IOException) e;
+      }
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -204,8 +207,11 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       }
       finishDatasets(jobContext, success);
     } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw Throwables.propagate(e);
+      if (e instanceof IOException) {
+        throw (IOException) e;
+      }
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

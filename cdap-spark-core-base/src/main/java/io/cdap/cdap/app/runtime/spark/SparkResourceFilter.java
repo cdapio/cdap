@@ -70,9 +70,6 @@ public final class SparkResourceFilter implements FilterClassLoader.Filter {
       }
       return true;
     }
-    if (resource.startsWith("com/google/common/base/Optional")) {
-      return true;
-    }
     return defaultFilter.acceptResource(resource);
   }
 
@@ -109,7 +106,7 @@ public final class SparkResourceFilter implements FilterClassLoader.Filter {
       }
       return true;
     }
-    return defaultFilter.acceptResource(packageName);
+    return defaultFilter.acceptPackage(packageName);
   }
 
   /**

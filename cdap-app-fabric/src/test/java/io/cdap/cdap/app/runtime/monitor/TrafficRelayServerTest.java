@@ -45,7 +45,7 @@ public class TrafficRelayServerTest {
     try {
       TrafficRelayServer relayServer = new TrafficRelayServer(InetAddress.getLoopbackAddress(),
                                                               httpServer::getBindAddress);
-      relayServer.startAndWait();
+      relayServer.startAsync().awaitRunning();
       try {
         InetSocketAddress relayAddr = relayServer.getBindAddress();
 
@@ -63,7 +63,7 @@ public class TrafficRelayServerTest {
         Assert.assertEquals("Testing", response.getResponseBodyAsString());
 
       } finally {
-        relayServer.stopAndWait();
+        relayServer.stopAsync().awaitTerminated();
       }
     } finally {
       httpServer.stop();

@@ -60,9 +60,9 @@ public class MessagingApp extends AbstractApplication {
   private static Message fetchMessage(MessageFetcher fetcher, String namespace, String topic,
                                       @Nullable String afterMessageId, long timeout, TimeUnit unit) throws Exception {
     CloseableIterator<Message> iterator = fetcher.fetch(namespace, topic, 1, afterMessageId);
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createUnstarted().start();
     try {
-      while (!iterator.hasNext() && stopwatch.elapsedTime(unit) < timeout) {
+      while (!iterator.hasNext() && stopwatch.elapsed(unit) < timeout) {
         TimeUnit.MILLISECONDS.sleep(100);
         iterator = fetcher.fetch(namespace, topic, 1, afterMessageId);
       }
@@ -119,7 +119,8 @@ public class MessagingApp extends AbstractApplication {
         });
 
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }
@@ -168,7 +169,8 @@ public class MessagingApp extends AbstractApplication {
               }
             });
           } catch (TransactionFailureException e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
           }
         }
       };
@@ -230,7 +232,8 @@ public class MessagingApp extends AbstractApplication {
               }
             });
           } catch (Exception e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
           }
         }
       };

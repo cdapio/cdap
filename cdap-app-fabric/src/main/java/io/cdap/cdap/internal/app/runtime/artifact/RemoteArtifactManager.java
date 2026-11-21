@@ -124,7 +124,8 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     } catch (UnauthorizedException | IOException e) {
       throw e;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

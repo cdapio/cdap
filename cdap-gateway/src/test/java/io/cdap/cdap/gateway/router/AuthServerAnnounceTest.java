@@ -145,12 +145,12 @@ public class AuthServerAnnounceTest {
               new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                   new RouterPathLookup()),
               validator, userIdentityExtractor, discoveryServiceClient, new NoOpAeadCipher());
-      router.startAndWait();
+      router.startAsync().awaitRunning();
     }
 
     @Override
     protected void shutDown() {
-      router.stopAndWait();
+      router.stopAsync().awaitTerminated();
     }
 
     InetSocketAddress getRouterAddress() {
