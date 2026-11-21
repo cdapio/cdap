@@ -22,9 +22,11 @@ import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -108,6 +110,31 @@ public final class AuthorizationUtil {
       return callable.call();
     } finally {
       SecurityRequestContext.setUserId(oldUserName);
+    }
+  }
+
+  /**
+   * Runs {@code callable} with request user details (user ID, IP, and credential) cleared so
+   * downstream calls use the system identity, then restores the previous user details.
+   */
+  public static <V, T extends Throwable> V callAsSystem(Retries.Callable<V, T> callable) throws T {
+    String oldUserId = SecurityRequestContext.getUserId();
+    String oldUserIp = SecurityRequestContext.getUserIp();
+    Credential oldUserCredential = SecurityRequestContext.getUserCredential();
+    SecurityRequestContext.resetUserDetails();
+    try {
+      return callable.call();
+    } finally {
+      SecurityRequestContext.resetUserDetails();
+      if (oldUserId != null) {
+        SecurityRequestContext.setUserId(oldUserId);
+      }
+      if (oldUserIp != null) {
+        SecurityRequestContext.setUserIp(oldUserIp);
+      }
+      if (oldUserCredential != null) {
+        SecurityRequestContext.setUserCredential(oldUserCredential);
+      }
     }
   }
 
