@@ -125,7 +125,8 @@ public class RuntimeClientServerTest {
         @Override
         protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance(
-            (programRunId, request) -> new ProgramRunInfo(Long.MAX_VALUE));
+            (programRunId, request) -> ValidatedRuntimeRequest.legacy(
+              new ProgramRunInfo(Long.MAX_VALUE)));
         }
 
         @Override
