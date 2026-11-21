@@ -129,7 +129,9 @@
     <httpcore.version>4.4.16</httpcore.version>
     <hadoop.version>3.3.6</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
-    <jackson.version>2.15.1</jackson.version>
+    <jackson.version>2.23.0</jackson.version>
+    <!-- Since 2.20, jackson-annotations is released without a patch number. -->
+    <jackson.annotations.version>2.23</jackson.annotations.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty9.version>9.4.58.v20250814</jetty9.version>
     <jline.version>2.12</jline.version>
@@ -1481,7 +1483,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
+        <version>${jackson.annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -1492,6 +1494,14 @@
         <groupId>com.fasterxml.jackson.module</groupId>
         <artifactId>jackson-module-scala_2.12</artifactId>
         <version>${jackson.version}</version>
+      </dependency>
+      <!-- Aligns the Jackson modules that are not listed above (for example jaxrs, jaxb, yaml). -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>commons-collections</groupId>
