@@ -1,0 +1,71 @@
+[
+  {
+    "service": "secure.store.service",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/{namespace}/securekeys/{name}",
+    "namespaceRule": "RUN"
+  },
+  {
+    "service": "secure.store.service",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/{namespace}/securekeys/{name}/metadata",
+    "namespaceRule": "RUN"
+  },
+  {
+    "service": "appfabric",
+    "methods": ["GET"],
+    "pathTemplate": "/v3Internal/namespaces/{namespace}/artifacts/{artifact}/versions/{version}/download",
+    "namespaceRule": "RUN_OR_SYSTEM"
+  },
+  {
+    "service": "appfabric",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/{namespace}/artifacts/{artifact}/versions/{version}/extensions/{type}/plugins/{plugin}",
+    "namespaceRule": "RUN"
+  },
+  {
+    "service": "appfabric",
+    "methods": ["GET", "PUT", "DELETE"],
+    "pathTemplate": "/v3Internal/namespaces/{namespace}/apps/{app}/states/{key}",
+    "namespaceRule": "RUN",
+    "applicationRule": "RUN"
+  },
+  {
+    "service": "appfabric",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/{namespace}",
+    "namespaceRule": "RUN"
+  },
+  {
+    "service": "svc.system.pipeline.studio",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/{namespace}/connections/{connection}",
+    "namespaceRule": "RUN"
+  },
+  {
+    "service": "svc.system.pipeline.studio",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/{provider}/credential/{credential}",
+    "namespaceRule": "NONE"
+  },
+  {
+    "service": "dataset.service",
+    "methods": ["GET"],
+    "pathTemplate": "/v3/namespaces/{namespace}/data/datasets/{name}",
+    "namespaceRule": "RUN"
+  },
+  {
+    "service": "dataset.service",
+    "methods": ["PUT"],
+    "pathTemplate": "/v3/namespaces/{namespace}/data/datasets/{name}",
+    "namespaceRule": "RUN",
+    "bodyRule": "DATASET_PUT"
+  },
+  {
+    "service": "dataset.service",
+    "methods": ["DELETE"],
+    "pathTemplate": "/v3/namespaces/{namespace}/data/datasets/{name}",
+    "namespaceRule": "RUN",
+    "bodyRule": "DATASET_DELETE"
+  }
+]
