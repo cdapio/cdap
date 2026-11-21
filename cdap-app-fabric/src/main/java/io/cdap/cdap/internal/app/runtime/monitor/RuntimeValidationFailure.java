@@ -29,7 +29,13 @@ enum RuntimeValidationFailure {
   API_NOT_ALLOWED("api_not_allowed"),
   SECRET("secret"),
   CONNECTION("connection"),
-  OAUTH("oauth");
+  OAUTH("oauth"),
+  MESSAGE_LOGS("message_logs"),
+  MESSAGE_METRICS("message_metrics"),
+  MESSAGE_METADATA("message_metadata"),
+  MESSAGE_AUDIT("message_audit"),
+  MESSAGE_DATA_EVENT("message_data_event"),
+  MESSAGE_TOPIC("message_topic");
 
   private final String reason;
 
