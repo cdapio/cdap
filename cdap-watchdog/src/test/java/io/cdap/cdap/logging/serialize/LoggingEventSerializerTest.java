@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -217,7 +218,8 @@ public class LoggingEventSerializerTest {
     Assert.assertEquals(expected.getCommonFrames(), actual.getCommonFrames());
     Assert.assertEquals(expected.getMessage(), actual.getMessage());
 
-    Assert.assertArrayEquals(expected.getStackTraceElementProxyArray(), actual.getStackTraceElementProxyArray());
+    assertStackTraceElementProxyArrayEquals(expected.getStackTraceElementProxyArray(),
+                                            actual.getStackTraceElementProxyArray());
 
     if (expected.getSuppressed() == actual.getSuppressed()) {
       return;
@@ -225,6 +227,33 @@ public class LoggingEventSerializerTest {
     Assert.assertEquals(expected.getSuppressed().length, actual.getSuppressed().length);
     for (int i = 0; i < expected.getSuppressed().length; ++i) {
       assertThrowableProxyEquals(expected.getSuppressed()[i], actual.getSuppressed()[i]);
+    }
+  }
+
+  private static void assertStackTraceElementProxyArrayEquals(StackTraceElementProxy[] expected,
+                                                              StackTraceElementProxy[] actual) {
+    if (expected == actual) {
+      return;
+    }
+    Assert.assertNotNull(expected);
+    Assert.assertNotNull(actual);
+    Assert.assertEquals(expected.length, actual.length);
+    for (int i = 0; i < expected.length; i++) {
+      StackTraceElementProxy expProxy = expected[i];
+      StackTraceElementProxy actProxy = actual[i];
+      if (expProxy == actProxy) {
+        continue;
+      }
+      Assert.assertNotNull(expProxy);
+      Assert.assertNotNull(actProxy);
+      // Avro LogSchema only encodes the 4 StackTraceElement fields (not Java 9+ classLoaderName/moduleName)
+      StackTraceElement expSte = expProxy.getStackTraceElement();
+      StackTraceElement actSte = actProxy.getStackTraceElement();
+      Assert.assertEquals(expSte.getClassName(), actSte.getClassName());
+      Assert.assertEquals(expSte.getMethodName(), actSte.getMethodName());
+      Assert.assertEquals(expSte.getFileName(), actSte.getFileName());
+      Assert.assertEquals(expSte.getLineNumber(), actSte.getLineNumber());
+      Assert.assertEquals(expProxy.getClassPackagingData(), actProxy.getClassPackagingData());
     }
   }
 }

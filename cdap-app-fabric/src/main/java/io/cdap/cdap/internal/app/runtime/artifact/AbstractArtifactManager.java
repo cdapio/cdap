@@ -30,8 +30,6 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 
@@ -48,7 +46,7 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
         cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
-    this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
+    this.bootstrapClassLoader = ClassLoader.getPlatformClassLoader();
   }
 
   /**

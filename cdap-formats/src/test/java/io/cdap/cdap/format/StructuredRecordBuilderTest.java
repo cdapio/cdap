@@ -108,27 +108,28 @@ public class StructuredRecordBuilderTest {
                                     Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("time", Schema.of(Schema.LogicalType.TIME_MILLIS)));
 
-    LocalTime expected = LocalTime.now();
+    LocalTime expectedMillis = LocalTime.of(11, 11, 11, 123 * 1000 * 1000);
     StructuredRecord record = StructuredRecord.builder(schema)
       .set("id", 1)
       .set("name", "test")
-      .setTime("time", expected).build();
+      .setTime("time", expectedMillis).build();
 
     LocalTime actual = record.getTime("time");
 
-    Assert.assertEquals(expected, actual);
+    Assert.assertEquals(expectedMillis, actual);
 
+    LocalTime expectedMicros = LocalTime.of(11, 11, 11, 123456 * 1000);
     schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
                              Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                              Schema.Field.of("time", Schema.of(Schema.LogicalType.TIME_MICROS)));
     record = StructuredRecord.builder(schema)
       .set("id", 1)
       .set("name", "test")
-      .setTime("time", expected).build();
+      .setTime("time", expectedMicros).build();
 
     actual = record.getTime("time");
 
-    Assert.assertEquals(expected, actual);
+    Assert.assertEquals(expectedMicros, actual);
   }
 
   @Test
