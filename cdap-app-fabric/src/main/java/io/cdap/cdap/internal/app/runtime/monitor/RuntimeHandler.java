@@ -58,6 +58,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -82,6 +83,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final MessagingContext messagingContext;
   private final RuntimeRequestValidator requestValidator;
   private final RemoteExecutionLogProcessor logProcessor;
+  private final RuntimeMessageValidator messageValidator;
+  private final RuntimeValidationReporter validationReporter;
   private final String logsTopicPrefix;
   private final boolean eventLogsEnabled;
   private final Location eventLogsBaseLocation;
@@ -90,9 +93,12 @@ public class RuntimeHandler extends AbstractHttpHandler {
   @Inject
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
       RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator,
-      LocationFactory locationFactory) {
+      LocationFactory locationFactory, RuntimeMessageValidator messageValidator,
+      RuntimeValidationReporter validationReporter) {
     this.requestValidator = requestValidator;
     this.logProcessor = logProcessor;
+    this.messageValidator = messageValidator;
+    this.validationReporter = validationReporter;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
     this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
@@ -148,20 +154,31 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
         ProgramType.valueOfCategoryName(programType, BadRequestException::new),
         program, run);
-    ProgramRunInfo programRunInfo =
-        requestValidator.validate(programRunId, request).getProgramRunInfo();
+    ValidatedRuntimeRequest validated = requestValidator.validate(programRunId, request);
 
     if (!allowedTopics.contains(topic)) {
       throw new UnauthorizedException("Access denied for topic " + topic);
     }
 
     TopicId topicId = NamespaceId.SYSTEM.topic(topic);
+    PayloadProcessor processor;
     if (topic.startsWith(logsTopicPrefix)) {
-      return new MessageBodyConsumer(topicId, logProcessor::process, programRunInfo);
+      processor = logProcessor::process;
+    } else {
+      processor = payloads -> publishAsSystem(topicId, payloads);
     }
 
-    return new MessageBodyConsumer(topicId, payloads -> publishAsSystem(topicId, payloads),
-        programRunInfo);
+    MessagePayloadFilter payloadFilter = null;
+    if (validated.isRuntimeToken()) {
+      RuntimeMessageValidator.TopicKind topicKind = messageValidator.classifyTopic(topic);
+      if (topicKind != RuntimeMessageValidator.TopicKind.PROGRAM_STATUS) {
+        payloadFilter = new MessagePayloadFilter(messageValidator, topicKind,
+            validated.getTokenRunId(), topic, validationReporter);
+      }
+    }
+
+    return new MessageBodyConsumer(topicId, processor, validated.getProgramRunInfo(),
+        payloadFilter);
   }
 
   /**
@@ -258,6 +275,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     private final TopicId topicId;
     private final PayloadProcessor payloadProcessor;
+    @Nullable
+    private final MessagePayloadFilter payloadFilter;
     private final CompositeByteBuf buffer;
     private final DelegatingInputStream inputStream;
     private final Decoder decoder;
@@ -269,9 +288,10 @@ public class RuntimeHandler extends AbstractHttpHandler {
         .create();
 
     MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor,
-        ProgramRunInfo programRunInfo) {
+        ProgramRunInfo programRunInfo, @Nullable MessagePayloadFilter payloadFilter) {
       this.topicId = topicId;
       this.payloadProcessor = payloadProcessor;
+      this.payloadFilter = payloadFilter;
       this.buffer = Unpooled.compositeBuffer();
       this.inputStream = new DelegatingInputStream(new ByteBufInputStream(buffer));
       this.decoder = DecoderFactory.get().directBinaryDecoder(inputStream, null);
@@ -310,7 +330,10 @@ public class RuntimeHandler extends AbstractHttpHandler {
               }
 
               payload = decoder.readBytes(payload);
-              payloads.add(Bytes.toBytes(payload));
+              byte[] bytes = Bytes.toBytes(payload);
+              if (payloadFilter == null || payloadFilter.shouldForward(bytes)) {
+                payloads.add(bytes);
+              }
               items--;
             }
 
@@ -332,6 +355,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
           inputStream.reset();
         }
       } catch (IOException | BadRequestException | AccessException e) {
+        if (payloadFilter != null) {
+          payloadFilter.flushReport();
+        }
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
             "Failed to process request due to exception " + e.getMessage());
         throw new RuntimeException(e);
@@ -341,6 +367,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
     @Override
     public void finished(HttpResponder responder) {
       try {
+        if (payloadFilter != null) {
+          payloadFilter.flushReport();
+        }
         if (payloads.isEmpty()) {
           responder.sendJson(HttpResponseStatus.OK,
               GSON.toJson(programRunInfo, ProgramRunInfo.class));
@@ -366,8 +395,61 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     @Override
     public void handleError(Throwable cause) {
+      if (payloadFilter != null) {
+        payloadFilter.flushReport();
+      }
       LOG.error("Exception raised when processing message body for publishing to topic {}", topicId,
           cause);
+    }
+  }
+
+  /**
+   * Per-request payload filter that applies {@link RuntimeMessageValidator} and aggregates drop
+   * counts so that drops are reported once per request.
+   */
+  private static final class MessagePayloadFilter {
+
+    private final RuntimeMessageValidator validator;
+    private final RuntimeMessageValidator.TopicKind topicKind;
+    private final ProgramRunId tokenRunId;
+    private final String topic;
+    private final RuntimeValidationReporter reporter;
+    private final boolean enforcing;
+    private long droppedCount;
+
+    MessagePayloadFilter(RuntimeMessageValidator validator,
+        RuntimeMessageValidator.TopicKind topicKind, ProgramRunId tokenRunId,
+        String topic, RuntimeValidationReporter reporter) {
+      this.validator = validator;
+      this.topicKind = topicKind;
+      this.tokenRunId = tokenRunId;
+      this.topic = topic;
+      this.reporter = reporter;
+      this.enforcing = reporter.isValidationEnabled();
+    }
+
+    boolean shouldForward(byte[] payload) {
+      RuntimeMessageValidator.Decision decision =
+          validator.validate(topicKind, payload, tokenRunId);
+      switch (decision) {
+        case ACCEPT:
+          return true;
+        case DROP_SILENTLY:
+          return !enforcing;
+        case DROP_AND_COUNT:
+        default:
+          droppedCount++;
+          return !enforcing;
+      }
+    }
+
+    void flushReport() {
+      RuntimeValidationFailure failure = topicKind.getFailure();
+      if (droppedCount > 0L && failure != null) {
+        long count = droppedCount;
+        droppedCount = 0L;
+        reporter.reportMessageDrops(failure, tokenRunId, topic, count);
+      }
     }
   }
 

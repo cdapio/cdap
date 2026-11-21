@@ -21,11 +21,14 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * An {@link Decoder} for binary-format data.
  */
 public final class BinaryDecoder implements Decoder {
+
+  private static final int INITIAL_BUFFER_SIZE = 8192;
 
   private final InputStream input;
 
@@ -118,6 +121,9 @@ public final class BinaryDecoder implements Decoder {
   }
 
   private void skipBytes(long len) throws IOException {
+    if (len < 0) {
+      throw new IOException("Invalid negative byte length: " + len);
+    }
     long skipped = 0;
     while (skipped != len) {
       long skip = input.skip(len - skipped);
@@ -130,13 +136,24 @@ public final class BinaryDecoder implements Decoder {
 
   private byte[] rawReadBytes() throws IOException {
     int toRead = readInt();
-    byte[] bytes = new byte[toRead];
-    while (toRead > 0) {
-      int byteRead = input.read(bytes, bytes.length - toRead, toRead);
+    if (toRead < 0) {
+      throw new IOException("Invalid negative byte length: " + toRead);
+    }
+    if (toRead == 0) {
+      return new byte[0];
+    }
+    byte[] bytes = new byte[Math.min(toRead, INITIAL_BUFFER_SIZE)];
+    int offset = 0;
+    while (offset < toRead) {
+      if (offset == bytes.length) {
+        int nextSize = (int) Math.min((long) toRead, (long) bytes.length * 2L);
+        bytes = Arrays.copyOf(bytes, nextSize);
+      }
+      int byteRead = input.read(bytes, offset, bytes.length - offset);
       if (byteRead == -1) {
         throw new EOFException();
       }
-      toRead -= byteRead;
+      offset += byteRead;
     }
     return bytes;
   }

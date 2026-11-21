@@ -222,4 +222,75 @@ public class RuntimeValidationReporterTest {
       Mockito.verifyNoMoreInteractions(logger);
     }
   }
+
+  @Test
+  public void testReportMessageDropsAndMetrics() {
+    Assert.assertEquals("runtime.token.validation.failure.message_logs",
+        RuntimeValidationFailure.MESSAGE_LOGS.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.message_metrics",
+        RuntimeValidationFailure.MESSAGE_METRICS.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.message_metadata",
+        RuntimeValidationFailure.MESSAGE_METADATA.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.message_audit",
+        RuntimeValidationFailure.MESSAGE_AUDIT.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.message_data_event",
+        RuntimeValidationFailure.MESSAGE_DATA_EVENT.getMetricName());
+    Assert.assertEquals("runtime.token.validation.failure.message_topic",
+        RuntimeValidationFailure.MESSAGE_TOPIC.getMetricName());
+
+    Map<String, Long> counters = new HashMap<>();
+    MetricsContext metricsContext = Mockito.mock(MetricsContext.class);
+    Mockito.doAnswer(invocation -> {
+      String metricName = (String) invocation.getArguments()[0];
+      long delta = (Long) invocation.getArguments()[1];
+      counters.merge(metricName, delta, Long::sum);
+      return null;
+    }).when(metricsContext).increment(Mockito.anyString(), Mockito.anyLong());
+
+    MetricsCollectionService metricsService = Mockito.mock(MetricsCollectionService.class);
+    Mockito.when(metricsService.getContext(Mockito.anyMap())).thenReturn(metricsContext);
+
+    Logger logger = Mockito.mock(Logger.class);
+    Mockito.when(logger.isWarnEnabled()).thenReturn(true);
+    Mockito.when(logger.isWarnEnabled(Mockito.any())).thenReturn(true);
+
+    AtomicLong now = new AtomicLong(500_000L);
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.RuntimeMonitor.RUNTIME_TOKEN_VALIDATION_ENABLED, true);
+    RuntimeValidationReporter reporter = new RuntimeValidationReporter(
+        cConf, metricsService, logger, now::get);
+    Assert.assertTrue(reporter.isValidationEnabled());
+
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf").run(RunIds.generate());
+    reporter.reportMessageDrops(RuntimeValidationFailure.MESSAGE_METADATA, runId, "metadata", 0L);
+    reporter.reportMessageDrops(RuntimeValidationFailure.MESSAGE_METADATA, runId, "metadata", -2L);
+    Assert.assertTrue(counters.isEmpty());
+    Mockito.verifyNoInteractions(logger);
+
+    reporter.reportMessageDrops(RuntimeValidationFailure.MESSAGE_METADATA, runId, "metadata", 3L);
+    now.addAndGet(RuntimeValidationReporter.WARN_RATE_LIMIT_MILLIS - 1L);
+    reporter.reportMessageDrops(RuntimeValidationFailure.MESSAGE_METADATA, runId, "metadata", 2L);
+    now.addAndGet(1L);
+    reporter.reportMessageDrops(RuntimeValidationFailure.MESSAGE_METADATA, runId, "metadata", 4L);
+
+    Assert.assertEquals(Long.valueOf(9L), counters.get("runtime.token.validation.failure.message_metadata"));
+    Mockito.verify(logger).debug(Mockito.anyString(),
+        Mockito.eq("message_metadata"), Mockito.eq(runId), Mockito.eq("metadata"),
+        Mockito.eq(3L), Mockito.eq(true));
+    Mockito.verify(logger).debug(Mockito.anyString(),
+        Mockito.eq("message_metadata"), Mockito.eq(runId), Mockito.eq("metadata"),
+        Mockito.eq(2L), Mockito.eq(true));
+    Mockito.verify(logger).debug(Mockito.anyString(),
+        Mockito.eq("message_metadata"), Mockito.eq(runId), Mockito.eq("metadata"),
+        Mockito.eq(4L), Mockito.eq(true));
+    Mockito.verify(logger).warn(Mockito.isNull(Marker.class), Mockito.anyString(),
+        Mockito.eq("message_metadata"), Mockito.eq(runId), Mockito.eq("metadata"),
+        Mockito.eq(3L), Mockito.eq(true));
+    Mockito.verify(logger, Mockito.never()).warn(Mockito.isNull(Marker.class), Mockito.anyString(),
+        Mockito.eq("message_metadata"), Mockito.eq(runId), Mockito.eq("metadata"),
+        Mockito.eq(2L), Mockito.eq(true));
+    Mockito.verify(logger).warn(Mockito.isNull(Marker.class), Mockito.anyString(),
+        Mockito.eq("message_metadata"), Mockito.eq(runId), Mockito.eq("metadata"),
+        Mockito.eq(4L), Mockito.eq(true));
+  }
 }

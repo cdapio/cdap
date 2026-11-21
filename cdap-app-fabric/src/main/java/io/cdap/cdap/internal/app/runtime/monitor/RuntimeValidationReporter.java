@@ -45,6 +45,9 @@ final class RuntimeValidationReporter {
   private static final String FAILURE_LOG_FORMAT =
       "Runtime token validation failure: reason={}, runId={}, service={}, method={}, path={}, "
           + "enforced={}";
+  private static final String MESSAGE_DROP_LOG_FORMAT =
+      "Runtime token message validation failure: reason={}, runId={}, topic={}, "
+          + "droppedPayloads={}, enforced={}";
   private static final String ADMISSION_LOG_FORMAT =
       "Runtime token scope admission: reason={}, runId={}, service={}, method={}, path={}";
   static final long WARN_RATE_LIMIT_MILLIS = TimeUnit.SECONDS.toMillis(10);
@@ -89,6 +92,30 @@ final class RuntimeValidationReporter {
     warnLoggers.get(failure).warn(FAILURE_LOG_FORMAT,
         failure.getReason(), runId, service, method, path, validationEnabled);
     return validationEnabled;
+  }
+
+  /**
+   * Returns {@code true} if runtime token validation enforcement is enabled.
+   */
+  boolean isValidationEnabled() {
+    return validationEnabled;
+  }
+
+  /**
+   * Records dropped payloads for a message-relay request (incrementing the failure counter by
+   * {@code droppedCount}, logging once at DEBUG and once through the per-reason rate-limited WARN
+   * logger).
+   */
+  void reportMessageDrops(RuntimeValidationFailure failure, ProgramRunId runId,
+      String topic, long droppedCount) {
+    if (droppedCount <= 0L) {
+      return;
+    }
+    metricsContext.increment(failure.getMetricName(), droppedCount);
+    logger.debug(MESSAGE_DROP_LOG_FORMAT,
+        failure.getReason(), runId, topic, droppedCount, validationEnabled);
+    warnLoggers.get(failure).warn(MESSAGE_DROP_LOG_FORMAT,
+        failure.getReason(), runId, topic, droppedCount, validationEnabled);
   }
 
   /**
