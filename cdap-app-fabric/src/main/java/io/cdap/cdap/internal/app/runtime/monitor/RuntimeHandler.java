@@ -27,6 +27,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeProgramStatusValidator.Action;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
@@ -83,6 +84,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final RuntimeRequestValidator requestValidator;
   private final RemoteExecutionLogProcessor logProcessor;
   private final RuntimeMessageValidator messageValidator;
+  private final RuntimeProgramStatusValidator programStatusValidator;
   private final RuntimeValidationReporter validationReporter;
   private final String logsTopicPrefix;
   private final boolean eventLogsEnabled;
@@ -93,10 +95,12 @@ public class RuntimeHandler extends AbstractHttpHandler {
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
       RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator,
       LocationFactory locationFactory, RuntimeMessageValidator messageValidator,
+      RuntimeProgramStatusValidator programStatusValidator,
       RuntimeValidationReporter validationReporter) {
     this.requestValidator = requestValidator;
     this.logProcessor = logProcessor;
     this.messageValidator = messageValidator;
+    this.programStatusValidator = programStatusValidator;
     this.validationReporter = validationReporter;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
@@ -174,10 +178,13 @@ public class RuntimeHandler extends AbstractHttpHandler {
       };
     }
 
-    MessagePayloadFilter payloadFilter = null;
+    PayloadFilter payloadFilter = null;
     if (validated.isRuntimeToken()) {
       RuntimeMessageValidator.TopicKind topicKind = messageValidator.classifyTopic(topic);
-      if (topicKind != RuntimeMessageValidator.TopicKind.PROGRAM_STATUS) {
+      if (topicKind == RuntimeMessageValidator.TopicKind.PROGRAM_STATUS) {
+        payloadFilter = new StatusPayloadFilter(
+            programStatusValidator.newRequestValidator(validated.getTokenRunId(), topic));
+      } else {
         payloadFilter = new MessagePayloadFilter(messageValidator, topicKind,
             validated.getTokenRunId(), topic, validationReporter);
       }
@@ -265,19 +272,20 @@ public class RuntimeHandler extends AbstractHttpHandler {
     private final TopicId topicId;
     private final PayloadProcessor payloadProcessor;
     @Nullable
-    private final MessagePayloadFilter payloadFilter;
+    private final PayloadFilter payloadFilter;
     private final CompositeByteBuf buffer;
     private final DelegatingInputStream inputStream;
     private final Decoder decoder;
     private final List<byte[]> payloads;
     private ByteBuffer payload;
     private long items;
+    private boolean waiting;
     private final ProgramRunInfo programRunInfo;
     private static final Gson GSON = new GsonBuilder()
         .create();
 
     MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor,
-        ProgramRunInfo programRunInfo, @Nullable MessagePayloadFilter payloadFilter) {
+        ProgramRunInfo programRunInfo, @Nullable PayloadFilter payloadFilter) {
       this.topicId = topicId;
       this.payloadProcessor = payloadProcessor;
       this.payloadFilter = payloadFilter;
@@ -291,6 +299,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     @Override
     public void chunk(ByteBuf request, HttpResponder responder) {
+      if (waiting) {
+        return;
+      }
       buffer.discardReadComponents();
       buffer.addComponent(true, request.retain());
       inputStream.setDelegate(new ByteBufInputStream(buffer));
@@ -320,7 +331,13 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
               payload = decoder.readBytes(payload);
               byte[] bytes = Bytes.toBytes(payload);
-              if (payloadFilter == null || payloadFilter.shouldForward(bytes)) {
+              Action action = payloadFilter == null
+                  ? Action.FORWARD : payloadFilter.filter(bytes);
+              if (action == Action.WAIT) {
+                waiting = true;
+                break;
+              }
+              if (action == Action.FORWARD) {
                 payloads.add(bytes);
               }
               items--;
@@ -334,6 +351,10 @@ public class RuntimeHandler extends AbstractHttpHandler {
                 // If we cannot process, just continue to keep buffering messages and retry at the next/finished called.
                 LOG.debug("Failed to process payload for topic {}. Will be retried", topicId, e);
               }
+            }
+
+            if (waiting) {
+              return;
             }
 
             // Read the next array block
@@ -358,6 +379,20 @@ public class RuntimeHandler extends AbstractHttpHandler {
       try {
         if (payloadFilter != null) {
           payloadFilter.flushReport();
+        }
+        if (waiting) {
+          if (!payloads.isEmpty()) {
+            try {
+              payloadProcessor.process(payloads.iterator());
+              payloads.clear();
+            } catch (IOException | BadRequestException | AccessException e) {
+              LOG.debug("Failed to publish buffered payloads before waiting for topic {}",
+                  topicId, e);
+            }
+          }
+          responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
+              "Waiting for inner program run record");
+          return;
         }
         if (payloads.isEmpty()) {
           responder.sendJson(HttpResponseStatus.OK,
@@ -393,10 +428,23 @@ public class RuntimeHandler extends AbstractHttpHandler {
   }
 
   /**
+   * Per-request filter for decoded TMS payloads from {@code RUNTIME}-token requests.
+   */
+  private interface PayloadFilter {
+
+    Action filter(byte[] payload);
+
+    /**
+     * Finalizes per-request state and reports any aggregated validation drops.
+     */
+    void flushReport();
+  }
+
+  /**
    * Per-request payload filter that applies {@link RuntimeMessageValidator} and aggregates drop
    * counts so that drops are reported once per request.
    */
-  private static final class MessagePayloadFilter {
+  private static final class MessagePayloadFilter implements PayloadFilter {
 
     private final RuntimeMessageValidator validator;
     private final RuntimeMessageValidator.TopicKind topicKind;
@@ -417,28 +465,53 @@ public class RuntimeHandler extends AbstractHttpHandler {
       this.enforcing = reporter.isValidationEnabled();
     }
 
-    boolean shouldForward(byte[] payload) {
+    @Override
+    public Action filter(byte[] payload) {
       RuntimeMessageValidator.Decision decision =
           validator.validate(topicKind, payload, tokenRunId);
       switch (decision) {
         case ACCEPT:
-          return true;
+          return Action.FORWARD;
         case DROP_SILENTLY:
-          return !enforcing;
+          return enforcing ? Action.SKIP : Action.FORWARD;
         case DROP_AND_COUNT:
         default:
           droppedCount++;
-          return !enforcing;
+          return enforcing ? Action.SKIP : Action.FORWARD;
       }
     }
 
-    void flushReport() {
+    @Override
+    public void flushReport() {
       RuntimeValidationFailure failure = topicKind.getFailure();
       if (droppedCount > 0L && failure != null) {
         long count = droppedCount;
         droppedCount = 0L;
         reporter.reportMessageDrops(failure, tokenRunId, topic, count);
       }
+    }
+  }
+
+  /**
+   * Per-request payload filter delegating program-status topics to
+   * {@link RuntimeProgramStatusValidator.RequestValidator}.
+   */
+  private static final class StatusPayloadFilter implements PayloadFilter {
+
+    private final RuntimeProgramStatusValidator.RequestValidator requestValidator;
+
+    StatusPayloadFilter(RuntimeProgramStatusValidator.RequestValidator requestValidator) {
+      this.requestValidator = requestValidator;
+    }
+
+    @Override
+    public Action filter(byte[] payload) {
+      return requestValidator.apply(payload);
+    }
+
+    @Override
+    public void flushReport() {
+      requestValidator.finish();
     }
   }
 

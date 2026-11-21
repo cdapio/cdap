@@ -126,6 +126,38 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
     return validateRuntimeTokenRequest(programRunId, request, runtimeToken);
   }
 
+  @Override
+  public Optional<ProgramRunId> getTopLevelRun(ProgramRunId programRunId) {
+    if (!RuntimeMonitors.isWellFormed(programRunId)) {
+      return Optional.empty();
+    }
+    RunLookupResult cached = programRunsCache.getIfPresent(programRunId);
+    if (cached != null
+        && cached.getState() != LookupState.NOT_FOUND
+        && cached.getState() != LookupState.NOT_LAUNCHED) {
+      return Optional.ofNullable(cached.getTopLevelRun());
+    }
+    // Load directly so getTopLevelRun neither reuses a cached NOT_FOUND answer nor leaves a
+    // NOT_FOUND or NOT_LAUNCHED entry in the shared cache.
+    RunLookupResult loaded;
+    try {
+      loaded = loadRun(programRunId);
+    } catch (Exception e) {
+      throw new ServiceUnavailableException(Constants.Service.RUNTIME, e);
+    }
+    if (loaded.getState() == LookupState.NOT_FOUND) {
+      return Optional.empty();
+    }
+    if (loaded.getState() == LookupState.NOT_LAUNCHED) {
+      if (cached != null) {
+        programRunsCache.asMap().remove(programRunId, cached);
+      }
+      return Optional.ofNullable(loaded.getTopLevelRun());
+    }
+    programRunsCache.put(programRunId, loaded);
+    return Optional.ofNullable(loaded.getTopLevelRun());
+  }
+
   private ValidatedRuntimeRequest validateLegacyRequest(ProgramRunId urlRunId, HttpRequest request)
       throws BadRequestException, AccessException, GoneException {
     // Enforce access before any local or remote run-record lookup so unauthorized calls fail fast.

@@ -17,10 +17,12 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.netty.handler.codec.http.HttpRequest;
+import java.util.Optional;
 
 /**
  * Defines validation of incoming requests from program runtime.
@@ -40,4 +42,18 @@ public interface RuntimeRequestValidator {
    */
   ValidatedRuntimeRequest validate(ProgramRunId programRunId, HttpRequest request)
       throws BadRequestException, AccessException, GoneException;
+
+  /**
+   * Returns the top-level program run for {@code programRunId} (either {@code programRunId} itself
+   * or its parent workflow run), or {@link Optional#empty()} when no record exists locally or
+   * remotely.
+   *
+   * @param programRunId the program run id to resolve
+   * @return the top-level program run id, or empty if no record exists
+   * @throws ServiceUnavailableException if the run record cannot be looked up due to a transient
+   *     local or remote error
+   */
+  default Optional<ProgramRunId> getTopLevelRun(ProgramRunId programRunId) {
+    return Optional.empty();
+  }
 }

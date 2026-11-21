@@ -35,7 +35,8 @@ enum RuntimeValidationFailure {
   MESSAGE_METADATA("message_metadata"),
   MESSAGE_AUDIT("message_audit"),
   MESSAGE_DATA_EVENT("message_data_event"),
-  MESSAGE_TOPIC("message_topic");
+  MESSAGE_TOPIC("message_topic"),
+  MESSAGE_STATUS("message_status");
 
   private final String reason;
 
