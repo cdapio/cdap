@@ -51,8 +51,9 @@ public class TriggerCodecTest {
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ?"), "Cron entry must contain 5 or 6 fields.");
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * * 1 ? *"), "Cron entry must contain 5 or 6 fields.");
     // Quartz doesn't support '?' in both day-of-the-month and day-of-the-week
+    // Quartz 2.3 fixed the "specfied" typo in this message, so match only the stable part.
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ? 1 ?"),
-                          "'?' can only be specfied for Day-of-Month -OR- Day-of-Week.");
+                          "for Day-of-Month -OR- Day-of-Week.");
     // Quartz doesn't support '0' in day-of-the-week
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("2 6 ? * 0,1,4,5"),
                           "Day-of-Week values must be between 1 and 7");
