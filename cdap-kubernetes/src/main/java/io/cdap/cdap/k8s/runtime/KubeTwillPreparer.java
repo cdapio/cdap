@@ -51,6 +51,7 @@ import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentBuilder;
+import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EmptyDirVolumeSource;
@@ -215,6 +216,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
   private boolean shouldLocalizeConfigurationAsConfigmap;
+  private boolean recreateStrategy;
+  private Long terminationGracePeriodSeconds;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -277,6 +280,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.globalJvmOptions = new StringBuilder();
     this.workDirVolumeSource = new V1EmptyDirVolumeSource();
     this.containerProbes = new HashMap<>();
+    this.recreateStrategy = false;
+    this.terminationGracePeriodSeconds = null;
   }
 
   @Override
@@ -436,6 +441,14 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     if (config.containsKey(MasterOptionConstants.RUNTIME_NAMESPACE)) {
       cdapRuntimeNamespace = config.get(MasterOptionConstants.RUNTIME_NAMESPACE);
     }
+    if (config.containsKey(MasterOptionConstants.K8S_RECREATE_STRATEGY)) {
+      recreateStrategy = Boolean.parseBoolean(
+          config.get(MasterOptionConstants.K8S_RECREATE_STRATEGY));
+    }
+    if (config.containsKey(MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS)) {
+      terminationGracePeriodSeconds = parseTerminationGracePeriodSeconds(
+          config.get(MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS));
+    }
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
     }
@@ -453,6 +466,21 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       configMap.putAll(config);
     }
     return this;
+  }
+
+  private static long parseTerminationGracePeriodSeconds(String value) {
+    String error = String.format("Invalid value '%s' for %s. It must be a non-negative integer.",
+        value, MasterOptionConstants.K8S_TERMINATION_GRACE_PERIOD_SECONDS);
+    long seconds;
+    try {
+      seconds = Long.parseLong(value);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(error, e);
+    }
+    if (seconds < 0) {
+      throw new IllegalArgumentException(error);
+    }
+    return seconds;
   }
 
   @Override
@@ -637,6 +665,17 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     if (this.mainRunnableName == null && this.twillSpec.getRunnables().size() > 1) {
       throw new RuntimeException("Dependency among Twill runnables has not been specified");
+    }
+
+    if (!recreateStrategy) {
+      return;
+    }
+    String mainRunnable = getMainRuntimeSpecification(twillSpec.getRunnables()).getName();
+    if (statefulRunnables.containsKey(mainRunnable)) {
+      // A StatefulSet has no Recreate strategy, so the option would be silently dropped.
+      throw new IllegalStateException(String.format(
+          "%s is not supported for the stateful runnable %s, which runs as a StatefulSet",
+          MasterOptionConstants.K8S_RECREATE_STRATEGY, mainRunnable));
     }
   }
 
@@ -948,15 +987,21 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Return a {@link V1Deployment} object for the {@link TwillRunnable} represented by the
    * given {@link RuntimeSpecification}.
    */
-  private V1Deployment buildDeployment(V1ObjectMeta metadata,
+  @VisibleForTesting
+  V1Deployment buildDeployment(V1ObjectMeta metadata,
       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification()
         .getInstances();
+    // Null keeps the Kubernetes default, RollingUpdate, which starts the new pod before it deletes
+    // the old one, even at one replica. Recreate deletes the old pod first.
+    V1DeploymentStrategy strategy =
+        recreateStrategy ? new V1DeploymentStrategy().type("Recreate") : null;
     return new V1DeploymentBuilder()
         .withMetadata(metadata)
         .withNewSpec()
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
         .withReplicas(replicas)
+        .withStrategy(strategy)
         .withNewTemplate()
         .withMetadata(metadata)
         .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
@@ -1298,6 +1343,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             containerArgs))
         .withSecurityContext(podInfo.getSecurityContext())
         .withRestartPolicy(restartPolicy)
+        .withTerminationGracePeriodSeconds(terminationGracePeriodSeconds)
         .build();
   }
 
