@@ -3,13 +3,15 @@
     "service": "secure.store.service",
     "methods": ["GET"],
     "pathTemplate": "/v3/namespaces/{namespace}/securekeys/{name}",
-    "namespaceRule": "RUN"
+    "namespaceRule": "RUN",
+    "scopeKind": "SECRET"
   },
   {
     "service": "secure.store.service",
     "methods": ["GET"],
     "pathTemplate": "/v3/namespaces/{namespace}/securekeys/{name}/metadata",
-    "namespaceRule": "RUN"
+    "namespaceRule": "RUN",
+    "scopeKind": "SECRET"
   },
   {
     "service": "appfabric",
@@ -40,13 +42,15 @@
     "service": "svc.system.pipeline.studio",
     "methods": ["GET"],
     "pathTemplate": "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/{namespace}/connections/{connection}",
-    "namespaceRule": "RUN"
+    "namespaceRule": "RUN",
+    "scopeKind": "CONNECTION"
   },
   {
     "service": "svc.system.pipeline.studio",
     "methods": ["GET"],
     "pathTemplate": "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/{provider}/credential/{credential}",
-    "namespaceRule": "NONE"
+    "namespaceRule": "NONE",
+    "scopeKind": "OAUTH"
   },
   {
     "service": "svc.system.dataprep.service",

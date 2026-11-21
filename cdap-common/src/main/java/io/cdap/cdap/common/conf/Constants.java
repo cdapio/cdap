@@ -1330,6 +1330,9 @@ public final class Constants {
     public static final class RuntimeToken {
 
       public static final String VALIDATION_FAILURE_PREFIX = "runtime.token.validation.failure.";
+      public static final String DYNAMIC_SECRET_READ = "runtime.token.dynamic.secret.read";
+      public static final String WILDCARD_CONNECTION_READ = "runtime.token.wildcard.connection.read";
+      public static final String WILDCARD_OAUTH_READ = "runtime.token.wildcard.oauth.read";
     }
 
     /**

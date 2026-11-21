@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -27,12 +28,16 @@ import com.google.inject.Key;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.app.RunIds;
@@ -44,6 +49,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
@@ -55,8 +61,18 @@ import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.TimeProvider;
+import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.lib.external.ExternalDataset;
+import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import io.cdap.cdap.gateway.handlers.PingHandler;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
@@ -64,6 +80,7 @@ import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
@@ -75,10 +92,17 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.InternalAccessEnforcer;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
@@ -119,6 +143,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -140,6 +165,7 @@ public class RuntimeServiceRoutingTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final String MOCK_SERVICE = "mock";
+  private static final String STUDIO_SERVICE = "svc.system.pipeline.studio";
   private static final Gson GSON = new Gson();
 
   private Injector injector;
@@ -1667,6 +1693,447 @@ public class RuntimeServiceRoutingTest {
     }
   }
 
+  @Test
+  public void testPerRunScopeChecksEnforcingAndReportOnly() throws Exception {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf")
+        .run(RunIds.generate());
+    InternalAuthenticator stubAuthenticator =
+        headerSetter -> headerSetter.accept(Constants.Security.Headers.RUNTIME_TOKEN,
+            "CDAP-Internal exchanged");
+
+    AtomicInteger downstreamCalls = new AtomicInteger();
+    NettyHttpService secretService = NettyHttpService.builder(Constants.Service.SECURE_STORE_SERVICE)
+        .setHost(InetAddress.getLocalHost().getCanonicalHostName())
+        .setHttpHandlers(new ScopedServiceCaptureHandler(downstreamCalls))
+        .build();
+    secretService.start();
+    Cancellable secretReg = injector.getInstance(DiscoveryService.class)
+        .register(URIScheme.createDiscoverable(Constants.Service.SECURE_STORE_SERVICE,
+            secretService));
+
+    NettyHttpService studioHttp = null;
+    Cancellable studioReg = null;
+    try {
+      studioHttp = NettyHttpService.builder(STUDIO_SERVICE)
+          .setHost(InetAddress.getLocalHost().getCanonicalHostName())
+          .setHttpHandlers(new ScopedServiceCaptureHandler(downstreamCalls))
+          .build();
+      studioHttp.start();
+      studioReg = injector.getInstance(DiscoveryService.class)
+          .register(URIScheme.createDiscoverable(STUDIO_SERVICE, studioHttp));
+
+      RuntimeCallbackAllowlist allowlist = new RuntimeCallbackAllowlist(CConfiguration.create());
+      String secretUri = serviceUri(runId, Constants.Service.SECURE_STORE_SERVICE,
+          "/v3/namespaces/default/securekeys/db-pass");
+      String connUri = serviceUri(runId, STUDIO_SERVICE,
+          "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/default"
+              + "/connections/my+conn");
+      String oauthUri = serviceUri(runId, STUDIO_SERVICE,
+          "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+              + "/credential/cred1");
+
+      // 1. Enforcing mode with strict scopes: explicit matches pass with zero counters & zero logs;
+      //    out-of-scope secret/connection/oauth throw UnauthorizedException and increment counters.
+      RuntimeScopes strictScopes = new RuntimeScopes(
+          Collections.singleton("my_conn"),
+          Collections.singleton("github/cred1"),
+          Collections.singleton("db-pass"),
+          false);
+      Map<String, Long> strictCounters = new HashMap<>();
+      Logger strictLogger = Mockito.mock(Logger.class);
+      RuntimeServiceRoutingHandler strictHandler = new RuntimeServiceRoutingHandler(
+          injector.getInstance(DiscoveryServiceClient.class),
+          (id, req) -> ValidatedRuntimeRequest.runtimeToken(
+              new ProgramRunInfo(ProgramRunStatus.RUNNING), runId, strictScopes),
+          stubAuthenticator,
+          allowlist,
+          createReporter(true, strictCounters, strictLogger));
+
+      routeGet(strictHandler, runId, Constants.Service.SECURE_STORE_SERVICE, secretUri);
+      routeGet(strictHandler, runId, STUDIO_SERVICE, connUri);
+      routeGet(strictHandler, runId, STUDIO_SERVICE, oauthUri);
+      Assert.assertEquals(3, downstreamCalls.get());
+      Assert.assertTrue(strictCounters.isEmpty());
+      Mockito.verifyNoInteractions(strictLogger);
+
+      String secretDeniedUri = serviceUri(runId, Constants.Service.SECURE_STORE_SERVICE,
+          "/v3/namespaces/default/securekeys/forbidden-secret");
+      assertGetUnauthorized(strictHandler, runId, Constants.Service.SECURE_STORE_SERVICE,
+          secretDeniedUri, "Secret access is not allowed by runtime scopes", "forbidden-secret");
+      String secretMetaDeniedUri = serviceUri(runId, Constants.Service.SECURE_STORE_SERVICE,
+          "/v3/namespaces/default/securekeys/forbidden-secret/metadata");
+      assertGetUnauthorized(strictHandler, runId, Constants.Service.SECURE_STORE_SERVICE,
+          secretMetaDeniedUri, "Secret access is not allowed by runtime scopes",
+          "forbidden-secret");
+      String connDeniedUri = serviceUri(runId, STUDIO_SERVICE,
+          "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/default"
+              + "/connections/other-conn");
+      assertGetUnauthorized(strictHandler, runId, STUDIO_SERVICE, connDeniedUri,
+          "Connection access is not allowed by runtime scopes", "other-conn");
+      String oauthDeniedUri = serviceUri(runId, STUDIO_SERVICE,
+          "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+              + "/credential/cred2");
+      assertGetUnauthorized(strictHandler, runId, STUDIO_SERVICE, oauthDeniedUri,
+          "OAuth credential access is not allowed by runtime scopes", "cred2");
+      Assert.assertEquals(3, downstreamCalls.get());
+      Assert.assertEquals(3, strictCounters.size());
+      Assert.assertEquals(Long.valueOf(2L),
+          strictCounters.get("runtime.token.validation.failure.secret"));
+      Assert.assertEquals(Long.valueOf(1L),
+          strictCounters.get("runtime.token.validation.failure.connection"));
+      Assert.assertEquals(Long.valueOf(1L),
+          strictCounters.get("runtime.token.validation.failure.oauth"));
+      Mockito.verify(strictLogger).debug(Mockito.anyString(),
+          Mockito.eq("secret"), Mockito.eq(runId),
+          Mockito.eq(Constants.Service.SECURE_STORE_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/{namespace}/securekeys/{name}"), Mockito.eq(true));
+      Mockito.verify(strictLogger).debug(Mockito.anyString(),
+          Mockito.eq("secret"), Mockito.eq(runId),
+          Mockito.eq(Constants.Service.SECURE_STORE_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/{namespace}/securekeys/{name}/metadata"), Mockito.eq(true));
+      Mockito.verify(strictLogger).debug(Mockito.anyString(),
+          Mockito.eq("connection"), Mockito.eq(runId), Mockito.eq(STUDIO_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+              + "/contexts/{namespace}/connections/{connection}"), Mockito.eq(true));
+      Mockito.verify(strictLogger).debug(Mockito.anyString(),
+          Mockito.eq("oauth"), Mockito.eq(runId), Mockito.eq(STUDIO_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+              + "/oauth/provider/{provider}/credential/{credential}"), Mockito.eq(true));
+
+      // 2. Dynamic/wildcard admissions: forwarded, all 3 admission counters incremented, DEBUG
+      //    only with matched path templates (zero WARN).
+      RuntimeScopes wildcardScopes = new RuntimeScopes(
+          Collections.singleton("*"),
+          Collections.singleton("github/*"),
+          Collections.emptySet(),
+          true);
+      Map<String, Long> admissionCounters = new HashMap<>();
+      Logger admissionLogger = Mockito.mock(Logger.class);
+      RuntimeServiceRoutingHandler wildcardHandler = new RuntimeServiceRoutingHandler(
+          injector.getInstance(DiscoveryServiceClient.class),
+          (id, req) -> ValidatedRuntimeRequest.runtimeToken(
+              new ProgramRunInfo(ProgramRunStatus.RUNNING), runId, wildcardScopes),
+          stubAuthenticator,
+          allowlist,
+          createReporter(true, admissionCounters, admissionLogger));
+
+      routeGet(wildcardHandler, runId, Constants.Service.SECURE_STORE_SERVICE, secretDeniedUri);
+      routeGet(wildcardHandler, runId, STUDIO_SERVICE, connDeniedUri);
+      routeGet(wildcardHandler, runId, STUDIO_SERVICE, oauthDeniedUri);
+      Assert.assertEquals(6, downstreamCalls.get());
+      Assert.assertEquals(3, admissionCounters.size());
+      Assert.assertEquals(Long.valueOf(1L),
+          admissionCounters.get("runtime.token.dynamic.secret.read"));
+      Assert.assertEquals(Long.valueOf(1L),
+          admissionCounters.get("runtime.token.wildcard.connection.read"));
+      Assert.assertEquals(Long.valueOf(1L),
+          admissionCounters.get("runtime.token.wildcard.oauth.read"));
+      Mockito.verify(admissionLogger).debug(Mockito.anyString(),
+          Mockito.eq("dynamic_secret"), Mockito.eq(runId),
+          Mockito.eq(Constants.Service.SECURE_STORE_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/{namespace}/securekeys/{name}"));
+      Mockito.verify(admissionLogger).debug(Mockito.anyString(),
+          Mockito.eq("wildcard_connection"), Mockito.eq(runId), Mockito.eq(STUDIO_SERVICE),
+          Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+              + "/contexts/{namespace}/connections/{connection}"));
+      Mockito.verify(admissionLogger).debug(Mockito.anyString(),
+          Mockito.eq("wildcard_oauth"), Mockito.eq(runId), Mockito.eq(STUDIO_SERVICE),
+          Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+              + "/oauth/provider/{provider}/credential/{credential}"));
+      // Verifies no warn() or warn-level check was invoked for any admission.
+      Mockito.verifyNoMoreInteractions(admissionLogger);
+
+      // 3. Report-only mode with strict scopes: forwards out-of-scope calls, counts each reason,
+      //    and logs matched templates with enforced=false.
+      Map<String, Long> reportCounters = new HashMap<>();
+      Logger reportLogger = Mockito.mock(Logger.class);
+      RuntimeServiceRoutingHandler reportHandler = new RuntimeServiceRoutingHandler(
+          injector.getInstance(DiscoveryServiceClient.class),
+          (id, req) -> ValidatedRuntimeRequest.runtimeToken(
+              new ProgramRunInfo(ProgramRunStatus.RUNNING), runId, strictScopes),
+          stubAuthenticator,
+          allowlist,
+          createReporter(false, reportCounters, reportLogger));
+
+      routeGet(reportHandler, runId, Constants.Service.SECURE_STORE_SERVICE, secretDeniedUri);
+      routeGet(reportHandler, runId, STUDIO_SERVICE, connDeniedUri);
+      routeGet(reportHandler, runId, STUDIO_SERVICE, oauthDeniedUri);
+      Assert.assertEquals(9, downstreamCalls.get());
+      Assert.assertEquals(3, reportCounters.size());
+      Assert.assertEquals(Long.valueOf(1L),
+          reportCounters.get("runtime.token.validation.failure.secret"));
+      Assert.assertEquals(Long.valueOf(1L),
+          reportCounters.get("runtime.token.validation.failure.connection"));
+      Assert.assertEquals(Long.valueOf(1L),
+          reportCounters.get("runtime.token.validation.failure.oauth"));
+      Mockito.verify(reportLogger).debug(Mockito.anyString(),
+          Mockito.eq("secret"), Mockito.eq(runId),
+          Mockito.eq(Constants.Service.SECURE_STORE_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/{namespace}/securekeys/{name}"), Mockito.eq(false));
+      Mockito.verify(reportLogger).debug(Mockito.anyString(),
+          Mockito.eq("connection"), Mockito.eq(runId), Mockito.eq(STUDIO_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+              + "/contexts/{namespace}/connections/{connection}"), Mockito.eq(false));
+      Mockito.verify(reportLogger).debug(Mockito.anyString(),
+          Mockito.eq("oauth"), Mockito.eq(runId), Mockito.eq(STUDIO_SERVICE), Mockito.eq("GET"),
+          Mockito.eq("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+              + "/oauth/provider/{provider}/credential/{credential}"), Mockito.eq(false));
+    } finally {
+      if (studioReg != null) {
+        studioReg.cancel();
+      }
+      if (studioHttp != null) {
+        studioHttp.stop();
+      }
+      secretReg.cancel();
+      secretService.stop();
+    }
+  }
+
+  @Test
+  public void testMissingScopesReportOnlyWithRealValidator() throws Exception {
+    CConfiguration valConf = CConfiguration.create();
+    valConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    valConf.setBoolean(Constants.Security.ENABLED, true);
+    valConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
+    valConf.setBoolean(Constants.RuntimeMonitor.RUNTIME_TOKEN_VALIDATION_ENABLED, false);
+    valConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 0L);
+
+    Injector valInjector = Guice.createInjector(
+        new ConfigModule(valConf),
+        new IOModule(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new DataSetsModules().getInMemoryModules(),
+        new NamespaceAdminTestModule(),
+        new StorageModule(),
+        new AuthenticationContextModules().getNoOpModule(),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+            bind(AccessEnforcer.class).to(NoOpAccessController.class);
+            bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+            bind(Store.class).to(DefaultStore.class);
+          }
+        });
+
+    TokenManager tokenManager = valInjector.getInstance(TokenManager.class);
+    Services.startAndWait(tokenManager);
+    AtomicInteger downstreamCalls = new AtomicInteger();
+    NettyHttpService secretService = null;
+    Cancellable secretReg = null;
+    NettyHttpService studioHttp = null;
+    Cancellable studioReg = null;
+    try {
+      StoreDefinition.AppMetadataStore.create(
+          valInjector.getInstance(StructuredTableAdmin.class));
+      TransactionRunner txRunner = valInjector.getInstance(TransactionRunner.class);
+
+      ProgramRunId runId = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf")
+          .run(RunIds.generate());
+      // Record an active run WITHOUT runtime.scopes in its system arguments.
+      ArtifactId artifactId = new ArtifactId("test-art", new ArtifactVersion("1.0"),
+          ArtifactScope.USER);
+      TransactionRunners.run(txRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.recordProgramProvisioning(runId, Collections.emptyMap(),
+            Collections.singletonMap(SystemArguments.PROFILE_NAME, "system:default"),
+            new byte[]{1}, artifactId);
+        store.recordProgramProvisioned(runId, 1, new byte[]{2});
+        store.recordProgramStart(runId, null, Collections.emptyMap(), new byte[]{3});
+      });
+
+      secretService = NettyHttpService.builder(Constants.Service.SECURE_STORE_SERVICE)
+          .setHost(InetAddress.getLocalHost().getCanonicalHostName())
+          .setHttpHandlers(new ScopedServiceCaptureHandler(downstreamCalls))
+          .build();
+      secretService.start();
+      secretReg = injector.getInstance(DiscoveryService.class)
+          .register(URIScheme.createDiscoverable(Constants.Service.SECURE_STORE_SERVICE,
+              secretService));
+
+      studioHttp = NettyHttpService.builder(STUDIO_SERVICE)
+          .setHost(InetAddress.getLocalHost().getCanonicalHostName())
+          .setHttpHandlers(new ScopedServiceCaptureHandler(downstreamCalls))
+          .build();
+      studioHttp.start();
+      studioReg = injector.getInstance(DiscoveryService.class)
+          .register(URIScheme.createDiscoverable(STUDIO_SERVICE, studioHttp));
+
+      Map<String, Long> counters = new HashMap<>();
+      Logger logger = Mockito.mock(Logger.class);
+      RuntimeValidationReporter sharedReporter = createReporter(false, counters, logger);
+      ProgramRunRecordFetcher failFetcher = new ProgramRunRecordFetcher() {
+        @Override
+        public RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) {
+          throw new AssertionError("Local store should serve active run " + programRunId);
+        }
+
+        @Override
+        public RunRecordDetail getRunRecordMeta(ProgramReference programRef, String run) {
+          throw new AssertionError("Local store should serve active run " + programRef + "/" + run);
+        }
+      };
+      Codec<AccessToken> tokenCodec = valInjector.getInstance(
+          Key.get(new TypeLiteral<Codec<AccessToken>>() { }));
+      DirectRuntimeRequestValidator realValidator = new DirectRuntimeRequestValidator(
+          valConf,
+          txRunner,
+          failFetcher,
+          valInjector.getInstance(AccessEnforcer.class),
+          valInjector.getInstance(AuthenticationContext.class),
+          tokenManager,
+          tokenCodec,
+          sharedReporter);
+      RuntimeServiceRoutingHandler handler = new RuntimeServiceRoutingHandler(
+          injector.getInstance(DiscoveryServiceClient.class),
+          realValidator,
+          headerSetter -> headerSetter.accept(Constants.Security.Headers.RUNTIME_TOKEN,
+              "CDAP-Internal exchanged"),
+          new RuntimeCallbackAllowlist(valConf),
+          sharedReporter);
+
+      long now = System.currentTimeMillis();
+      AccessToken runtimeToken = tokenManager.signIdentifier(new UserIdentity(
+          GSON.toJson(runId), UserIdentity.IdentifierType.RUNTIME,
+          Collections.emptyList(), now, now + TimeUnit.MINUTES.toMillis(5)));
+      String tokenHeader = Credential.CREDENTIAL_TYPE_INTERNAL + " "
+          + Base64.getEncoder().encodeToString(tokenCodec.encode(runtimeToken));
+
+      routeGetWithToken(handler, runId, Constants.Service.SECURE_STORE_SERVICE,
+          serviceUri(runId, Constants.Service.SECURE_STORE_SERVICE,
+              "/v3/namespaces/default/securekeys/any-secret"),
+          tokenHeader);
+      routeGetWithToken(handler, runId, STUDIO_SERVICE,
+          serviceUri(runId, STUDIO_SERVICE,
+              "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/default"
+                  + "/connections/any-conn"),
+          tokenHeader);
+      routeGetWithToken(handler, runId, STUDIO_SERVICE,
+          serviceUri(runId, STUDIO_SERVICE,
+              "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+                  + "/credential/any-cred"),
+          tokenHeader);
+
+      Assert.assertEquals(3, downstreamCalls.get());
+      Assert.assertEquals(Long.valueOf(3L),
+          counters.get("runtime.token.validation.failure.missing_scopes"));
+      Assert.assertEquals(
+          ImmutableSet.of("runtime.token.validation.failure.missing_scopes"),
+          counters.keySet());
+    } finally {
+      if (studioReg != null) {
+        studioReg.cancel();
+      }
+      if (studioHttp != null) {
+        studioHttp.stop();
+      }
+      if (secretReg != null) {
+        secretReg.cancel();
+      }
+      if (secretService != null) {
+        secretService.stop();
+      }
+      Services.stopAndWait(tokenManager);
+      InMemoryTableService.reset();
+      SecurityRequestContext.reset();
+    }
+  }
+
+  @Test
+  public void testPerRunScopeRefusalsOmitRuntimeTokenFailureHeader() throws Exception {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf")
+        .run(RunIds.generate());
+    RuntimeScopes emptyScopes = new RuntimeScopes(
+        Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), false);
+    RuntimeRequestValidator validator = (id, req) -> ValidatedRuntimeRequest.runtimeToken(
+        new ProgramRunInfo(ProgramRunStatus.RUNNING), runId, emptyScopes);
+    RuntimeServiceRoutingHandler routingHandler = new RuntimeServiceRoutingHandler(
+        injector.getInstance(DiscoveryServiceClient.class),
+        validator,
+        headerSetter -> headerSetter.accept(Constants.Security.Headers.RUNTIME_TOKEN,
+            "CDAP-Internal exchanged"),
+        new RuntimeCallbackAllowlist(CConfiguration.create()),
+        createReporter(true, new HashMap<>(), Mockito.mock(Logger.class)));
+
+    NettyHttpService enforcingServer = NettyHttpService.builder("runtime-scopes-wire")
+        .setHost(InetAddress.getLocalHost().getCanonicalHostName())
+        .setHttpHandlers(routingHandler)
+        .setExceptionHandler(new RuntimeServer.RuntimeHttpExceptionHandler())
+        .build();
+    enforcingServer.start();
+    try {
+      String hostPort = "http://" + enforcingServer.getBindAddress().getHostName() + ":"
+          + enforcingServer.getBindAddress().getPort();
+      String[] scopedUris = new String[]{
+          serviceUri(runId, Constants.Service.SECURE_STORE_SERVICE,
+              "/v3/namespaces/default/securekeys/unscoped-secret"),
+          serviceUri(runId, STUDIO_SERVICE,
+              "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/default"
+                  + "/connections/unscoped-conn"),
+          serviceUri(runId, STUDIO_SERVICE,
+              "/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/oauth/provider/github"
+                  + "/credential/unscoped-cred")
+      };
+      for (String uri : scopedUris) {
+        HttpURLConnection conn = (HttpURLConnection) new URL(hostPort + uri).openConnection();
+        try {
+          conn.setRequestMethod("GET");
+          Assert.assertEquals("Expected 403 for " + uri,
+              HttpURLConnection.HTTP_FORBIDDEN, conn.getResponseCode());
+          Assert.assertNull("Per-run scope 403 must omit X-CDAP-Runtime-Token-Failure for " + uri,
+              conn.getHeaderField(Constants.Security.Headers.RUNTIME_TOKEN_FAILURE));
+        } finally {
+          conn.disconnect();
+        }
+      }
+    } finally {
+      enforcingServer.stop();
+    }
+  }
+
+  private static String serviceUri(ProgramRunId runId, String service, String servicePath) {
+    return String.format(
+        "%s/runtime/namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s/services/%s%s",
+        Constants.Gateway.INTERNAL_API_VERSION_3,
+        runId.getNamespace(), runId.getApplication(), runId.getVersion(),
+        runId.getType().getCategoryName(), runId.getProgram(), runId.getRun(),
+        service, servicePath);
+  }
+
+  private static void routeGet(RuntimeServiceRoutingHandler handler, ProgramRunId runId,
+      String service, String uri) throws Exception {
+    routeGetWithToken(handler, runId, service, uri, null);
+  }
+
+  private static void routeGetWithToken(RuntimeServiceRoutingHandler handler, ProgramRunId runId,
+      String service, String uri, @Nullable String runtimeTokenHeader) throws Exception {
+    DefaultHttpRequest req = new DefaultHttpRequest(HttpVersion.HTTP_1_1,
+        io.netty.handler.codec.http.HttpMethod.GET, uri);
+    if (runtimeTokenHeader != null) {
+      req.headers().set(Constants.Security.Headers.RUNTIME_TOKEN, runtimeTokenHeader);
+    }
+    handler.routeService(req, mockResponder(),
+        runId.getNamespace(), runId.getApplication(), runId.getVersion(),
+        runId.getType().getCategoryName(), runId.getProgram(), runId.getRun(), service);
+  }
+
+  private static void assertGetUnauthorized(RuntimeServiceRoutingHandler handler,
+      ProgramRunId runId, String service, String uri, String expectedMessage,
+      String sensitiveValue) throws Exception {
+    try {
+      routeGet(handler, runId, service, uri);
+      Assert.fail("Expected UnauthorizedException for " + uri);
+    } catch (UnauthorizedException expected) {
+      Assert.assertEquals(expectedMessage, expected.getMessage());
+      Assert.assertFalse("Error message must not disclose requested name: " + expected.getMessage(),
+          expected.getMessage().contains(sensitiveValue));
+    }
+  }
+
   private static BodyConsumer routeWithBody(RuntimeServiceRoutingHandler handler,
       HttpRequest request, HttpResponder responder, ProgramRunId runId, String service)
       throws Exception {
@@ -1816,6 +2283,48 @@ public class RuntimeServiceRoutingTest {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "bad dataset");
         return;
       }
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+  }
+
+  /**
+   * Public HTTP handler simulating scoped secret, connection, and OAuth endpoints.
+   */
+  public static final class ScopedServiceCaptureHandler extends AbstractHttpHandler {
+
+    private final AtomicInteger calls;
+
+    public ScopedServiceCaptureHandler(AtomicInteger calls) {
+      this.calls = calls;
+    }
+
+    @GET
+    @Path("/v3/namespaces/{namespace}/securekeys/{name}")
+    public void getSecret(HttpRequest req, HttpResponder responder) {
+      calls.incrementAndGet();
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+
+    @GET
+    @Path("/v3/namespaces/{namespace}/securekeys/{name}/metadata")
+    public void getSecretMetadata(HttpRequest req, HttpResponder responder) {
+      calls.incrementAndGet();
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+
+    @GET
+    @Path("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+        + "/contexts/{namespace}/connections/{connection}")
+    public void getConnection(HttpRequest req, HttpResponder responder) {
+      calls.incrementAndGet();
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+
+    @GET
+    @Path("/v3/namespaces/system/apps/pipeline/services/studio/methods/v1"
+        + "/oauth/provider/{provider}/credential/{credential}")
+    public void getOauth(HttpRequest req, HttpResponder responder) {
+      calls.incrementAndGet();
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
