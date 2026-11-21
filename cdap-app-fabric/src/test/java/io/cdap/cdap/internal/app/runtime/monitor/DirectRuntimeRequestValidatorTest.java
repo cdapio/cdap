@@ -32,6 +32,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
@@ -112,6 +113,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -119,6 +121,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -1473,6 +1476,152 @@ public class DirectRuntimeRequestValidatorTest {
     Assert.assertFalse(DirectRuntimeRequestValidator.isSameRunExceptVersion(v1, diffNs));
   }
 
+  @Test
+  public void testGetTopLevelRunCacheSemantics() throws Exception {
+    // Positive poll time so any cached NOT_FOUND entry stays resident during the test.
+    CConfiguration conf = createSecurityConf(true, true, 60_000L);
+    MockProgramRunRecordFetcher fetcher = new MockProgramRunRecordFetcher();
+    DirectRuntimeRequestValidator validator = createValidator(conf, fetcher,
+        new NoOpMetricsCollectionService());
+
+    // 1. getTopLevelRun for a run without a record leaves nothing in the cache: a request for that
+    //    run immediately after it is recorded succeeds.
+    ProgramRunId run1 = NamespaceId.DEFAULT.app("app", "1.0").spark("sp").run(RunIds.generate());
+    Assert.assertEquals(Optional.empty(), validator.getTopLevelRun(run1));
+    insertLocalStartingRun(run1, Collections.emptyMap());
+    ValidatedRuntimeRequest validated1 = validator.validate(run1, newGetRequest("/test"));
+    Assert.assertEquals(ProgramRunStatus.STARTING,
+        validated1.getProgramRunInfo().getProgramRunStatus());
+
+    // 2. A request for a missing run caches NOT_FOUND, but getTopLevelRun ignores that cached
+    //    NOT_FOUND and reads the newly available record.
+    final ProgramRunId wfRun = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf")
+        .run(RunIds.generate());
+    ProgramRunId innerRun = NamespaceId.DEFAULT.app("app", "1.0").spark("sp")
+        .run(RunIds.generate());
+    try {
+      validator.validate(innerRun, newGetRequest("/test"));
+      Assert.fail("Expected BadRequestException for missing run");
+    } catch (BadRequestException expected) {
+      // Expected
+    }
+    Assert.assertEquals(1, fetcher.getFetchCount(innerRun));
+    // Second validate hits the cached NOT_FOUND without calling fetcher again.
+    try {
+      validator.validate(innerRun, newGetRequest("/test"));
+      Assert.fail("Expected cached BadRequestException for missing run");
+    } catch (BadRequestException expected) {
+      // Expected
+    }
+    Assert.assertEquals(1, fetcher.getFetchCount(innerRun));
+
+    // Record innerRun remotely as an inner run of wfRun; getTopLevelRun must bypass cached
+    // NOT_FOUND and return wfRun, updating the cache so validate also succeeds immediately.
+    Map<String, String> innerArgs = ImmutableMap.of(
+        ProgramOptionConstants.WORKFLOW_NAME, wfRun.getProgram(),
+        ProgramOptionConstants.WORKFLOW_RUN_ID, wfRun.getRun());
+    fetcher.putRunRecord(createRunRecord(innerRun, ProgramRunStatus.RUNNING,
+        ProgramRunClusterStatus.PROVISIONED, innerArgs));
+    Assert.assertEquals(Optional.of(wfRun), validator.getTopLevelRun(innerRun));
+    Assert.assertEquals(2, fetcher.getFetchCount(innerRun));
+    ValidatedRuntimeRequest validated2 = validator.validate(innerRun, newGetRequest("/test"));
+    Assert.assertEquals(ProgramRunStatus.RUNNING,
+        validated2.getProgramRunInfo().getProgramRunStatus());
+
+    // 3. Stale cached NOT_FOUND replaced by a NOT_LAUNCHED record: getTopLevelRun clears the stale
+    //    NOT_FOUND without caching NOT_LAUNCHED, so once the run starts validate succeeds at once.
+    ProgramRunId pendingRun = NamespaceId.DEFAULT.app("app", "1.0").spark("spPending")
+        .run(RunIds.generate());
+    try {
+      validator.validate(pendingRun, newGetRequest("/test"));
+      Assert.fail("Expected BadRequestException for missing pendingRun");
+    } catch (BadRequestException expected) {
+      // Expected; NOT_FOUND is now cached
+    }
+    Assert.assertEquals(1, fetcher.getFetchCount(pendingRun));
+    fetcher.putRunRecord(createRunRecord(pendingRun, ProgramRunStatus.PENDING,
+        ProgramRunClusterStatus.PROVISIONING, Collections.emptyMap()));
+    Assert.assertEquals(Optional.of(pendingRun), validator.getTopLevelRun(pendingRun));
+    Assert.assertEquals(2, fetcher.getFetchCount(pendingRun));
+    fetcher.putRunRecord(createRunRecord(pendingRun, ProgramRunStatus.RUNNING,
+        ProgramRunClusterStatus.PROVISIONED, Collections.emptyMap()));
+    ValidatedRuntimeRequest validated3 = validator.validate(pendingRun, newGetRequest("/test"));
+    Assert.assertEquals(ProgramRunStatus.RUNNING,
+        validated3.getProgramRunInfo().getProgramRunStatus());
+  }
+
+  @Test
+  public void testGetTopLevelRunSourcesAndErrors() throws Exception {
+    CConfiguration conf = createSecurityConf(true, true, 60_000L);
+    MockProgramRunRecordFetcher fetcher = new MockProgramRunRecordFetcher();
+    DirectRuntimeRequestValidator validator = createValidator(conf, fetcher,
+        new NoOpMetricsCollectionService());
+
+    ProgramRunId wfRun = NamespaceId.DEFAULT.app("app", "1.0").workflow("wf")
+        .run(RunIds.generate());
+    Map<String, String> innerArgs = ImmutableMap.of(
+        ProgramOptionConstants.WORKFLOW_NAME, wfRun.getProgram(),
+        ProgramOptionConstants.WORKFLOW_RUN_ID, wfRun.getRun());
+
+    // Local store inner run
+    ProgramRunId localInner = NamespaceId.DEFAULT.app("app", "1.0").spark("sp")
+        .run(RunIds.generate());
+    insertLocalStartingRun(localInner, innerArgs);
+    Assert.assertEquals(Optional.of(wfRun), validator.getTopLevelRun(localInner));
+    Assert.assertEquals(0, fetcher.getTotalFetchCount());
+
+    // Fetched active inner run
+    ProgramRunId fetchedActive = NamespaceId.DEFAULT.app("app", "1.0").mr("mr")
+        .run(RunIds.generate());
+    fetcher.putRunRecord(createRunRecord(fetchedActive, ProgramRunStatus.RUNNING,
+        ProgramRunClusterStatus.PROVISIONED, innerArgs));
+    Assert.assertEquals(Optional.of(wfRun), validator.getTopLevelRun(fetchedActive));
+
+    // Fetched finished inner run (completed before lookup): cached on first lookup, second hits
+    // cache without re-fetching remotely.
+    ProgramRunId fetchedFinished = NamespaceId.DEFAULT.app("app", "1.0").spark("sp2")
+        .run(RunIds.generate());
+    fetcher.putRunRecord(createRunRecord(fetchedFinished, ProgramRunStatus.COMPLETED,
+        ProgramRunClusterStatus.DEPROVISIONED, innerArgs));
+    Assert.assertEquals(Optional.of(wfRun), validator.getTopLevelRun(fetchedFinished));
+    Assert.assertEquals(1, fetcher.getFetchCount(fetchedFinished));
+    Assert.assertEquals(Optional.of(wfRun), validator.getTopLevelRun(fetchedFinished));
+    Assert.assertEquals(1, fetcher.getFetchCount(fetchedFinished));
+
+    // Standalone not-launched (PENDING) run returns itself and is NOT cached
+    ProgramRunId pendingStandalone = NamespaceId.DEFAULT.app("app", "1.0").spark("standalone")
+        .run(RunIds.generate());
+    fetcher.putRunRecord(createRunRecord(pendingStandalone,
+        ProgramRunStatus.PENDING, ProgramRunClusterStatus.PROVISIONING, Collections.emptyMap()));
+    Assert.assertEquals(Optional.of(pendingStandalone),
+        validator.getTopLevelRun(pendingStandalone));
+    // Transition to RUNNING; validate must succeed immediately (NOT_LAUNCHED was not cached).
+    fetcher.putRunRecord(createRunRecord(pendingStandalone,
+        ProgramRunStatus.RUNNING, ProgramRunClusterStatus.PROVISIONED, Collections.emptyMap()));
+    ValidatedRuntimeRequest validated = validator.validate(pendingStandalone,
+        newGetRequest("/test"));
+    Assert.assertEquals(ProgramRunStatus.RUNNING,
+        validated.getProgramRunInfo().getProgramRunStatus());
+
+    // Malformed run id -> Optional.empty() without fetching
+    int fetchesBeforeMalformed = fetcher.getTotalFetchCount();
+    ProgramRunId malformed = NamespaceId.DEFAULT.app("app", "1.0").spark("sp")
+        .run(UUID.randomUUID().toString());
+    Assert.assertEquals(Optional.empty(), validator.getTopLevelRun(malformed));
+    Assert.assertEquals(fetchesBeforeMalformed, fetcher.getTotalFetchCount());
+
+    // Transient fetch error -> ServiceUnavailableException
+    ProgramRunId failingRun = NamespaceId.DEFAULT.app("app", "1.0").spark("sp")
+        .run(RunIds.generate());
+    fetcher.setFailFetch(true);
+    try {
+      validator.getTopLevelRun(failingRun);
+      Assert.fail("Expected ServiceUnavailableException on fetch failure");
+    } catch (ServiceUnavailableException expected) {
+      // Expected
+    }
+  }
+
   // ---- Helpers ----
 
   private void setupStoreAgain() throws IOException, TableAlreadyExistsException {
@@ -1690,6 +1839,7 @@ public class DirectRuntimeRequestValidatorTest {
     private final Map<ProgramRunId, RunRecordDetail> records = new ConcurrentHashMap<>();
     private final Map<ProgramRunId, AtomicInteger> fetchCounts = new ConcurrentHashMap<>();
     private final AtomicInteger totalFetchCount = new AtomicInteger();
+    private final AtomicBoolean failFetch = new AtomicBoolean(false);
     @Nullable
     private CountDownLatch fetchEntered;
     @Nullable
@@ -1697,6 +1847,11 @@ public class DirectRuntimeRequestValidatorTest {
 
     MockProgramRunRecordFetcher putRunRecord(RunRecordDetail runRecord) {
       records.put(runRecord.getProgramRunId(), runRecord);
+      return this;
+    }
+
+    MockProgramRunRecordFetcher setFailFetch(boolean fail) {
+      failFetch.set(fail);
       return this;
     }
 
@@ -1722,9 +1877,13 @@ public class DirectRuntimeRequestValidatorTest {
     }
 
     @Override
-    public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws NotFoundException {
+    public RunRecordDetail getRunRecordMeta(ProgramRunId runId)
+        throws IOException, NotFoundException {
       totalFetchCount.incrementAndGet();
       fetchCounts.computeIfAbsent(runId, k -> new AtomicInteger()).incrementAndGet();
+      if (failFetch.get()) {
+        throw new IOException("simulated remote failure");
+      }
       if (fetchEntered != null) {
         fetchEntered.countDown();
       }
