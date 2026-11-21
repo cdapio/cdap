@@ -28,6 +28,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -37,7 +38,14 @@ import javax.annotation.Nullable;
  */
 public final class RuntimeScopes {
 
-  static final String WILDCARD = "*";
+  public static final String WILDCARD = "*";
+  public static final String OAUTH_WILDCARD = "*/*";
+
+  private static final RuntimeScopes WILDCARD_ALL = new RuntimeScopes(
+      Collections.singleton(WILDCARD),
+      Collections.singleton(OAUTH_WILDCARD),
+      Collections.singleton(WILDCARD),
+      true);
 
   private static final Gson GSON = new Gson();
   private static final String FIELD_CONNECTIONS = "connections";
@@ -98,6 +106,31 @@ public final class RuntimeScopes {
 
   public boolean hasExternalDynamicSecret() {
     return hasExternalDynamicSecret;
+  }
+
+  /**
+   * Returns a wildcard {@link RuntimeScopes} allowing all connections, OAuth credentials, and
+   * secrets within the run's namespace.
+   */
+  public static RuntimeScopes wildcardAll() {
+    return WILDCARD_ALL;
+  }
+
+  /**
+   * Computes the normalized connection ID for a connection name as written in a
+   * {@code ${conn(...)}} macro. Returns {@link Optional#empty()} for {@code null}, {@code "."},
+   * {@code ".."}, names containing {@code '/'}, or names rejected by the connection ID rule.
+   * Never throws.
+   */
+  public static Optional<String> connectionIdFromMacroName(@Nullable String macroName) {
+    if (macroName == null || ".".equals(macroName) || "..".equals(macroName)
+        || macroName.indexOf('/') >= 0) {
+      return Optional.empty();
+    }
+    // ConnectionMacroEvaluator URL-encodes the connection name, converting spaces to '+'.
+    // Apply the same transformation before the ID rule so leading/trailing or space-only names
+    // match the segment the runtime client sends.
+    return Optional.ofNullable(toConnectionId(macroName.replace(' ', '+')));
   }
 
   /**
