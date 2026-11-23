@@ -28,34 +28,27 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.EndpointStrategy;
-import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * Implementation of {@link MetricsSystemClient} that interacts with the metric system that runs
@@ -68,29 +61,20 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
       false);
 
   private final String adminTopic;
-  private final EndpointStrategy endpointStrategy;
+  private final RemoteClient remoteClient;
   private final MessagingContext messagingContext;
   private final RetryStrategy retryStrategy;
-  private InternalAuthenticator internalAuthenticator;
 
   @Inject
   RemoteMetricsSystemClient(CConfiguration cConf,
-      DiscoveryServiceClient discoveryServiceClient,
+      RemoteClientFactory remoteClientFactory,
       MessagingService messagingService) {
     this.adminTopic = cConf.get(Constants.Metrics.ADMIN_TOPIC);
-    this.endpointStrategy = new RandomEndpointStrategy(
-        () -> discoveryServiceClient.discover(Constants.Service.METRICS));
+    this.remoteClient = remoteClientFactory.createRemoteClient(
+        Constants.Service.METRICS, REQUEST_CONFIG,
+        Constants.Gateway.API_VERSION_3 + "/metrics");
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metrics.");
-  }
-
-  /**
-   * Sets the {@link InternalAuthenticator} used to propagate the caller identity to the metrics
-   * service, which enforces authorization on metrics queries.
-   */
-  @Inject(optional = true)
-  void setInternalAuthenticator(InternalAuthenticator internalAuthenticator) {
-    this.internalAuthenticator = internalAuthenticator;
   }
 
   @Override
@@ -136,8 +120,9 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
         "aggregate=true&start=" + start + "&end=" + end + "&resolution=" + resolution + "s"
             + metricsParam + tagsParam + groupByParam;
 
-    URL url = getBaseURI().resolve("query?" + queryString).toURL();
-    HttpResponse response = HttpRequests.execute(buildPostRequest(url), REQUEST_CONFIG);
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "query?" + queryString)
+        .build();
+    HttpResponse response = remoteClient.execute(request);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Failed to query for metrics " + metrics + ", with tags " + tags
           + ". Error code " + response.getResponseCode()
@@ -164,9 +149,9 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
       queryString = "&tag=" + queryString;
     }
 
-    URL url = getBaseURI().resolve("search?target=metric" + queryString).toURL();
-
-    HttpResponse response = HttpRequests.execute(buildPostRequest(url), REQUEST_CONFIG);
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST,
+        "search?target=metric" + queryString).build();
+    HttpResponse response = remoteClient.execute(request);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Failed to search for metrics names for tags " + tags
           + ". Error code " + response.getResponseCode()
@@ -174,30 +159,5 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
     }
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<String>>() {
     }.getType());
-  }
-
-  /**
-   * Builds a POST request carrying the internal authentication headers, if available.
-   */
-  private HttpRequest buildPostRequest(URL url) {
-    HttpRequest.Builder builder = HttpRequest.post(url);
-    if (internalAuthenticator != null) {
-      internalAuthenticator.applyInternalAuthenticationHeaders(builder::addHeader);
-    }
-    return builder.build();
-  }
-
-  /**
-   * Returns the base URI for the metrics query service based on discovery.
-   */
-  private URI getBaseURI() throws IOException {
-    Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable == null) {
-      discoverable = endpointStrategy.pick(2, TimeUnit.SECONDS);
-      if (discoverable == null) {
-        throw new IOException("Unable to discover metrics service endpoint");
-      }
-    }
-    return URIScheme.createURI(discoverable, "%s/metrics/", Constants.Gateway.API_VERSION_3_TOKEN);
   }
 }

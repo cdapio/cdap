@@ -30,6 +30,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
@@ -51,6 +52,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 /**
  * Authorization tests for program status triggers in {@link ProgramScheduleService}.
@@ -91,12 +93,7 @@ public class ProgramScheduleServiceAuthorizationTest {
 
   @Test
   public void testAddScheduleChecksTriggeringPrograms() throws Exception {
-    try {
-      service.add(schedule("hidden", HIDDEN_UPSTREAM));
-      Assert.fail("Expected UnauthorizedException");
-    } catch (UnauthorizedException e) {
-      // expected
-    }
+    assertUnauthorized(() -> service.add(schedule("hidden", HIDDEN_UPSTREAM)));
     verify(scheduler, never()).addSchedule(any());
 
     ProgramSchedule visible = schedule("visible", VISIBLE_UPSTREAM);
@@ -107,18 +104,29 @@ public class ProgramScheduleServiceAuthorizationTest {
   @Test
   public void testUpdateScheduleChecksTriggeringPrograms() throws Exception {
     ScheduleId scheduleId = APP_ID.schedule("sched");
-    try {
-      service.update(scheduleId, detail(HIDDEN_UPSTREAM));
-      Assert.fail("Expected UnauthorizedException");
-    } catch (UnauthorizedException e) {
-      // expected
-    }
+    assertUnauthorized(() -> service.update(scheduleId, detail(HIDDEN_UPSTREAM)));
     verify(scheduler, never()).getSchedule(any());
     verify(scheduler, never()).updateSchedule(any());
 
     when(scheduler.getSchedule(scheduleId)).thenReturn(schedule("sched", VISIBLE_UPSTREAM));
     service.update(scheduleId, detail(VISIBLE_UPSTREAM));
     verify(scheduler).updateSchedule(any());
+  }
+
+  @Test
+  public void testUpdateScheduleWithNullTriggerRetainsExistingTrigger() throws Exception {
+    ScheduleId scheduleId = APP_ID.schedule("sched");
+    ProgramSchedule existing = schedule("sched", HIDDEN_UPSTREAM);
+    when(scheduler.getSchedule(scheduleId)).thenReturn(existing);
+
+    ScheduleDetail updateWithoutTrigger = new ScheduleDetail(
+        null, "updated description", null, null, null, null, null);
+    service.update(scheduleId, updateWithoutTrigger);
+
+    ArgumentCaptor<ProgramSchedule> updatedCaptor =
+        ArgumentCaptor.forClass(ProgramSchedule.class);
+    verify(scheduler).updateSchedule(updatedCaptor.capture());
+    Assert.assertEquals(existing.getTrigger(), updatedCaptor.getValue().getTrigger());
   }
 
   @Test
@@ -142,17 +150,28 @@ public class ProgramScheduleServiceAuthorizationTest {
   public void testEnforceTriggeringProgramsWithFilter() {
     // Used at app deployment time, where triggers on programs of the deployed app are skipped
     ProgramId sameAppHidden = APP_ID.workflow("otherwf");
-    ProgramScheduleService.enforceTriggeringPrograms(accessController, USER,
+    Schedulers.enforceTriggeringPrograms(accessController, USER,
         schedule("same", sameAppHidden).getTrigger(),
         program -> !program.getAppReference().equals(APP_ID.getAppReference()));
+    assertUnauthorized(() -> Schedulers.enforceTriggeringPrograms(accessController, USER,
+        schedule("hidden", HIDDEN_UPSTREAM).getTrigger(),
+        program -> !program.getAppReference().equals(APP_ID.getAppReference())));
+  }
+
+  private static void assertUnauthorized(ThrowingAction action) {
     try {
-      ProgramScheduleService.enforceTriggeringPrograms(accessController, USER,
-          schedule("hidden", HIDDEN_UPSTREAM).getTrigger(),
-          program -> !program.getAppReference().equals(APP_ID.getAppReference()));
+      action.run();
       Assert.fail("Expected UnauthorizedException");
     } catch (UnauthorizedException e) {
       // expected
+    } catch (Exception e) {
+      throw new AssertionError("Unexpected exception", e);
     }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingAction {
+    void run() throws Exception;
   }
 
   /**

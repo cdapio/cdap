@@ -33,7 +33,6 @@ import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -42,7 +41,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
-import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -377,31 +375,7 @@ public class ProgramScheduleService {
    * @param trigger the trigger to check, can be {@code null}
    */
   private void enforceTriggeringPrograms(@Nullable Trigger trigger) {
-    enforceTriggeringPrograms(accessEnforcer, authenticationContext.getPrincipal(), trigger,
-        program -> true);
-  }
-
-  /**
-   * Enforces {@link StandardPermission#GET} for the given principal on every program referenced by
-   * a program status trigger in the given trigger that matches the filter, recursing into composite
-   * triggers.
-   *
-   * @param accessEnforcer the enforcer to use
-   * @param principal the principal to enforce on
-   * @param trigger the trigger to check, can be {@code null}
-   * @param filter selects the triggering programs to enforce on
-   */
-  public static void enforceTriggeringPrograms(AccessEnforcer accessEnforcer, Principal principal,
-      @Nullable Trigger trigger, Predicate<ProgramId> filter) {
-    if (trigger instanceof ProtoTrigger.ProgramStatusTrigger) {
-      ProgramId programId = ((ProtoTrigger.ProgramStatusTrigger) trigger).getProgramId();
-      if (filter.test(programId)) {
-        accessEnforcer.enforce(programId, principal, StandardPermission.GET);
-      }
-    } else if (trigger instanceof ProtoTrigger.AbstractCompositeTrigger) {
-      for (Trigger child : ((ProtoTrigger.AbstractCompositeTrigger<?>) trigger).getTriggers()) {
-        enforceTriggeringPrograms(accessEnforcer, principal, child, filter);
-      }
-    }
+    Schedulers.enforceTriggeringPrograms(accessEnforcer, authenticationContext.getPrincipal(),
+        trigger, program -> true);
   }
 }

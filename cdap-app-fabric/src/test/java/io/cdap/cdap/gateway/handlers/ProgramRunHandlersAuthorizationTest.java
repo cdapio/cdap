@@ -25,6 +25,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
@@ -36,6 +38,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.proto.BatchRunnableInstances;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -57,7 +60,9 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
@@ -189,13 +194,13 @@ public class ProgramRunHandlersAuthorizationTest {
     assertThrows(UnauthorizedException.class,
         () -> handler.liveInfo(request, responder, NS, APP, "services", SERVICE));
     verifyNoInteractions(runtimeService);
-    Assert.assertTrue(getInstances(handler).contains("\"statusCode\":403"));
+    Assert.assertEquals(Arrays.asList(403, 403), getInstanceStatusCodes(handler));
 
     AuthenticationTestContext.actAsPrincipal(VIEWER);
     handler.liveInfo(request, responder, NS, APP, "services", SERVICE);
     verify(runtimeService).getLiveInfo(SERVICE_ID);
-    // The (mocked) app spec has no such service, so the authorized entry gets a 404 instead
-    Assert.assertTrue(getInstances(handler).contains("\"statusCode\":404"));
+    // VIEWER lacks GET on deniedSvc (403); the (mocked) app spec has no SERVICE (404)
+    Assert.assertEquals(Arrays.asList(403, 404), getInstanceStatusCodes(handler));
   }
 
   @Test
@@ -226,13 +231,17 @@ public class ProgramRunHandlersAuthorizationTest {
     verify(runtimeService).resetProgramLogLevels(eq(versionedServiceId), any(), eq(RUN));
   }
 
-  private String getInstances(ProgramRuntimeHttpHandler handler) throws Exception {
+  private List<Integer> getInstanceStatusCodes(ProgramRuntimeHttpHandler handler)
+      throws Exception {
     HttpResponder responder = mock(HttpResponder.class);
     handler.getInstances(request("[{\"appId\":\"" + APP + "\",\"programType\":\"Service\","
+        + "\"programId\":\"deniedSvc\"},{\"appId\":\"" + APP + "\",\"programType\":\"Service\","
         + "\"programId\":\"" + SERVICE + "\"}]"), responder, NS);
     ArgumentCaptor<String> json = ArgumentCaptor.forClass(String.class);
     verify(responder).sendJson(eq(HttpResponseStatus.OK), json.capture());
-    return json.getValue();
+    List<BatchRunnableInstances> entries = new Gson().fromJson(json.getValue(),
+        new TypeToken<List<BatchRunnableInstances>>() { }.getType());
+    return Arrays.asList(entries.get(0).getStatusCode(), entries.get(1).getStatusCode());
   }
 
   /**

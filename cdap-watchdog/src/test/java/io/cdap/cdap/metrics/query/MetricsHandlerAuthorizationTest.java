@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.metrics.query;
 
+import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -28,6 +29,7 @@ import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -115,7 +117,35 @@ public class MetricsHandlerAuthorizationTest {
         "{\"q1\": {\"tags\": {\"namespace\": \"allowed\"}, \"metrics\": [\"m\"]},"
             + " \"q2\": {\"tags\": {\"app\": \"myapp\"}, \"metrics\": [\"m\"]}}"),
         responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
+        "{\"q1\": {\"tags\": {\"namespace\": null}, \"metrics\": [\"m\"]}}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+    handler.query(createRequest("/v3/metrics/query", "null"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+    handler.query(createRequest("/v3/metrics/query", "{\"q1\": null}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     Mockito.verify(queryHelper).executeBatchQueries(Mockito.any());
+  }
+
+  @Test
+  public void testEmptyBatchNullTagsAndProcessorStatus() throws Exception {
+    handler.query(createRequest("/v3/metrics/query", null), responder,
+        Collections.emptyList(), Collections.emptyList(), null);
+    Mockito.verify(responder).sendJson(HttpResponseStatus.BAD_REQUEST,
+        "Batch request with empty content");
+    Mockito.verifyNoInteractions(enforcer, queryHelper);
+
+    assertUnauthorized(() -> handler.search(null, responder, "tag", null));
+    assertUnauthorized(() -> handler.processorStatus(null, responder));
+    Mockito.verifyNoInteractions(queryHelper);
+
+    Mockito.reset(enforcer);
+    MetricStore metricStore = Mockito.mock(MetricStore.class);
+    Mockito.when(metricStore.getMetricsProcessorStats()).thenReturn(Collections.emptyMap());
+    Mockito.when(queryHelper.getMetricStore()).thenReturn(metricStore);
+    handler.processorStatus(null, responder);
+    Mockito.verify(enforcer).enforce(InstanceId.SELF, StandardPermission.GET);
+    Mockito.verify(responder).sendJson(HttpResponseStatus.OK, "{}");
   }
 
   private static FullHttpRequest createRequest(String uri, String body) {

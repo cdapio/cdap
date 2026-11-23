@@ -19,11 +19,13 @@ package io.cdap.cdap.logging.gateway.handlers;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.logging.read.Callback;
 import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SystemServiceId;
+import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import java.util.Collections;
@@ -38,16 +40,22 @@ import org.mockito.stubbing.Answer;
  */
 public class LogHttpHandlerAuthorizationTest {
 
-  private static final Principal PRINCIPAL = new Principal("alice", Principal.PrincipalType.USER);
+  private static final Principal PRINCIPAL = new Principal("log-reader", Principal.PrincipalType.USER);
 
-  private AccessEnforcer enforcer;
   private LogReader logReader;
   private HttpResponder responder;
   private LogHttpHandler handler;
 
   @Before
   public void setUp() {
-    enforcer = Mockito.mock(AccessEnforcer.class);
+    InMemoryAccessController accessController = new InMemoryAccessController();
+    // NamespaceId.SYSTEM GET alone must not allow reading arbitrary system service logs
+    accessController.grant(Authorizable.fromEntityId(NamespaceId.SYSTEM),
+        PRINCIPAL, Collections.singleton(StandardPermission.GET));
+    accessController.grant(Authorizable.fromEntityId(new SystemServiceId("allowed")),
+        PRINCIPAL, Collections.singleton(StandardPermission.GET));
+    AuthenticationTestContext.actAsPrincipal(PRINCIPAL);
+
     logReader = Mockito.mock(LogReader.class);
     // the log callbacks write to the chunk responder returned by the HttpResponder
     responder = Mockito.mock(HttpResponder.class, Mockito.RETURNS_MOCKS);
@@ -59,12 +67,8 @@ public class LogHttpHandlerAuthorizationTest {
         Mockito.anyInt(), Mockito.any(), Mockito.any());
     Mockito.doAnswer(initCallback).when(logReader).getLogPrev(Mockito.any(), Mockito.any(),
         Mockito.anyInt(), Mockito.any(), Mockito.any());
-    AuthenticationContext authenticationContext = Mockito.mock(AuthenticationContext.class);
-    Mockito.when(authenticationContext.getPrincipal()).thenReturn(PRINCIPAL);
-    Mockito.doThrow(new UnauthorizedException("denied")).when(enforcer)
-        .enforce(new SystemServiceId("denied"), PRINCIPAL, StandardPermission.GET);
-    handler = new LogHttpHandler(enforcer, authenticationContext, logReader, null,
-        CConfiguration.create());
+    handler = new LogHttpHandler(accessController, new AuthenticationTestContext(),
+        logReader, null, CConfiguration.create());
   }
 
   @Test
@@ -75,8 +79,6 @@ public class LogHttpHandlerAuthorizationTest {
         Collections.emptyList());
     handler.sysPrev(null, responder, "services", "allowed", 50, "", true, "", "text",
         Collections.emptyList());
-    Mockito.verify(enforcer, Mockito.times(3))
-        .enforce(new SystemServiceId("allowed"), PRINCIPAL, StandardPermission.GET);
     Mockito.verify(logReader).getLog(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(),
         Mockito.any());
     Mockito.verify(logReader).getLogNext(Mockito.any(), Mockito.any(), Mockito.anyInt(),

@@ -25,8 +25,10 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
@@ -67,5 +69,22 @@ public class LineageHttpHandlerAuthorizationTest {
         ProgramType.WORKFLOW.getCategoryName(), program.getProgram(), runId);
     Mockito.verify(fieldLineageAdmin).getEndpoints(Mockito.eq(program.getNamespace()),
         Mockito.eq(program.getProgramReference()), Mockito.any());
+  }
+
+  @Test
+  public void testGetEndpointSummaryInvalidRunIdReturnsBadRequest() throws Exception {
+    ProgramId program = new NamespaceId("lineagens").app("app").workflow("wf");
+    AccessEnforcer accessEnforcer = Mockito.mock(AccessEnforcer.class);
+    FieldLineageAdmin fieldLineageAdmin = Mockito.mock(FieldLineageAdmin.class);
+    LineageHTTPHandler handler = new LineageHTTPHandler(Mockito.mock(LineageAdmin.class),
+        fieldLineageAdmin, accessEnforcer, new AuthenticationTestContext());
+    HttpResponder responder = Mockito.mock(HttpResponder.class);
+
+    AuthenticationTestContext.actAsPrincipal(BOB);
+    handler.getEndpointSummary(null, responder, program.getNamespace(), program.getApplication(),
+        ProgramType.WORKFLOW.getCategoryName(), program.getProgram(), "not-a-uuid");
+    Mockito.verify(responder).sendJson(
+        Mockito.eq(HttpResponseStatus.BAD_REQUEST), Mockito.anyString());
+    Mockito.verifyNoInteractions(accessEnforcer, fieldLineageAdmin);
   }
 }

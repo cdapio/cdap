@@ -94,12 +94,7 @@ public class AppPluginsAndScmAuthorizationTest {
         new NoOpMetricsCollectionService());
 
     AuthenticationTestContext.actAsPrincipal(CAROL);
-    try {
-      service.getPlugins(appRef);
-      Assert.fail("Expected UnauthorizedException");
-    } catch (UnauthorizedException e) {
-      // expected
-    }
+    assertUnauthorized(() -> service.getPlugins(appRef));
     Mockito.verifyNoInteractions(store);
 
     AuthenticationTestContext.actAsPrincipal(BOB);
@@ -121,28 +116,19 @@ public class AppPluginsAndScmAuthorizationTest {
     Mockito.doReturn(Mockito.mock(RepositoryMeta.class)).when(service).getRepositoryMeta(NAMESPACE);
     PushMultipleAppsRequest pushRequest =
         new PushMultipleAppsRequest(ImmutableList.of(APP1, APP2), "commit");
-    PullMultipleAppsRequest pullRequest = new PullMultipleAppsRequest(ImmutableList.of(APP1, APP2));
 
     // push requires GET on every app, checked before the operation is created
     AuthenticationTestContext.actAsPrincipal(CAROL);
-    try {
-      service.pushApps(NAMESPACE, pushRequest);
-      Assert.fail("Expected UnauthorizedException");
-    } catch (UnauthorizedException e) {
-      // expected
-    }
+    assertUnauthorized(() -> service.pushApps(NAMESPACE, pushRequest));
     AuthenticationTestContext.actAsPrincipal(BOB);
     service.pushApps(NAMESPACE, pushRequest);
     Mockito.verify(operationManager).createPushOperation(Mockito.eq(NAMESPACE.getNamespace()),
         Mockito.any(), Mockito.any(), Mockito.any());
 
     // pull requires CREATE on every app, checked before the operation is created
-    try {
-      service.pullApps(NAMESPACE, pullRequest);
-      Assert.fail("Expected UnauthorizedException");
-    } catch (UnauthorizedException e) {
-      // expected
-    }
+    PullMultipleAppsRequest pullRequest =
+        new PullMultipleAppsRequest(ImmutableList.of(APP1, APP2));
+    assertUnauthorized(() -> service.pullApps(NAMESPACE, pullRequest));
     Mockito.verify(operationManager, Mockito.never()).createPullOperation(Mockito.any(),
         Mockito.any(), Mockito.any(), Mockito.any());
     AuthenticationTestContext.actAsPrincipal(ALICE);
@@ -150,6 +136,22 @@ public class AppPluginsAndScmAuthorizationTest {
     Mockito.verify(operationManager).createPullOperation(Mockito.eq(NAMESPACE.getNamespace()),
         Mockito.any(), Mockito.any(), Mockito.any());
     Mockito.verifyNoMoreInteractions(operationManager);
+  }
+
+  private static void assertUnauthorized(ThrowingAction action) {
+    try {
+      action.run();
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException e) {
+      // expected
+    } catch (Exception e) {
+      throw new AssertionError("Unexpected exception", e);
+    }
+  }
+
+  @FunctionalInterface
+  private interface ThrowingAction {
+    void run() throws Exception;
   }
 
   private static void grant(EntityId entity, Principal principal,

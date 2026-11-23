@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.metrics.query;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.MetricTagValue;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -56,10 +55,6 @@ public class MetricsHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsHandler.class);
   private static final Gson GSON = new Gson();
-  // Both the human readable and the internal tag name select the namespace of a metric
-  private static final Set<String> NAMESPACE_TAGS = ImmutableSet.of(
-      MetricsQueryHelper.NAMESPACE_STRING, Constants.Metrics.Tag.NAMESPACE);
-  private static final String ANY_TAG_VALUE = "*";
 
   private final MetricsQueryHelper metricsQueryHelper;
   private final ContextAccessEnforcer contextAccessEnforcer;
@@ -123,26 +118,34 @@ public class MetricsHandler extends AbstractHttpHandler {
       @QueryParam("tag") List<String> tags) {
     try {
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.uri()).parameters();
-      if (queryParams.isEmpty()) {
-        if (HttpUtil.getContentLength(request) > 0) {
-          Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
-              GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                  new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
-                  }.getType());
-          // Each query is executed independently, so each one must be authorized on its own
-          for (MetricsQueryHelper.QueryRequestFormat query : queries.values()) {
-            enforceOnNamespaces(getNamespaces(query.getTags()));
-          }
-          responder.sendJson(HttpResponseStatus.OK,
-              GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
-          return;
-        }
+      if (!queryParams.isEmpty()) {
+        enforceOnTags(tags);
+        responder.sendJson(HttpResponseStatus.OK,
+            GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
+        return;
+      }
+      if (HttpUtil.getContentLength(request) <= 0) {
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
         return;
       }
-      enforceOnTags(tags);
+      Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
+          GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+              new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
+              }.getType());
+      if (queries == null) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+        return;
+      }
+      // Each query is executed independently, so each one must be authorized on its own
+      for (MetricsQueryHelper.QueryRequestFormat query : queries.values()) {
+        if (query == null) {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch query cannot be null");
+          return;
+        }
+        enforceOnNamespaces(getNamespaces(query.getTags()));
+      }
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
+          GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
     } catch (UnauthorizedException e) {
       throw e;
     } catch (IllegalArgumentException e) {
@@ -159,13 +162,13 @@ public class MetricsHandler extends AbstractHttpHandler {
    * Enforces {@link StandardPermission#GET} on the namespaces selected by the given tags, which are
    * in the form {@code name:value}.
    */
-  private void enforceOnTags(List<String> tags) {
+  private void enforceOnTags(@Nullable List<String> tags) {
     List<String> namespaces = new ArrayList<>();
     if (tags != null) {
-      for (String tag : tags) {
-        String[] tagSplit = tag.split(":", 2);
-        if (tagSplit.length == 2 && NAMESPACE_TAGS.contains(tagSplit[0])) {
-          namespaces.add(tagSplit[1]);
+      for (MetricTagValue tag : MetricsQueryHelper.parseTagValues(tags)) {
+        if (Constants.Metrics.Tag.NAMESPACE.equals(
+            MetricsQueryHelper.humanToTagName(tag.getName()))) {
+          namespaces.add(tag.getValue());
         }
       }
     }
@@ -178,7 +181,8 @@ public class MetricsHandler extends AbstractHttpHandler {
       return namespaces;
     }
     for (Map.Entry<String, String> tag : tags.entrySet()) {
-      if (NAMESPACE_TAGS.contains(tag.getKey())) {
+      if (Constants.Metrics.Tag.NAMESPACE.equals(
+          MetricsQueryHelper.humanToTagName(tag.getKey()))) {
         namespaces.add(tag.getValue());
       }
     }
@@ -191,7 +195,8 @@ public class MetricsHandler extends AbstractHttpHandler {
    * StandardPermission#GET} on the instance is enforced instead.
    */
   private void enforceOnNamespaces(Collection<String> namespaces) {
-    if (namespaces.isEmpty() || namespaces.contains(null) || namespaces.contains(ANY_TAG_VALUE)) {
+    if (namespaces.isEmpty() || namespaces.contains(null)
+        || namespaces.contains(MetricsQueryHelper.ANY_TAG_VALUE)) {
       contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
       return;
     }
@@ -203,6 +208,7 @@ public class MetricsHandler extends AbstractHttpHandler {
   @GET
   @Path("/processor/status")
   public void processorStatus(HttpRequest request, HttpResponder responder) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(metricsQueryHelper.getMetricStore().getMetricsProcessorStats()));
   }

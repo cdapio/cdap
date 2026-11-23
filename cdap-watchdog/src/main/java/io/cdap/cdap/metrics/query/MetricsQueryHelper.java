@@ -72,7 +72,7 @@ public class MetricsQueryHelper {
   private static final String PARAM_MAX_INTERPOLATE_GAP = "maxInterpolateGap";
   private static final String PARAM_AGGREGATE = "aggregate";
   private static final String PARAM_AUTO_RESOLUTION = "auto";
-  private static final String ANY_TAG_VALUE = "*";
+  static final String ANY_TAG_VALUE = "*";
 
   private final MetricStore metricStore;
   private final int minResolution;
@@ -206,7 +206,7 @@ public class MetricsQueryHelper {
     return result;
   }
 
-  private List<MetricTagValue> parseTagValues(List<String> tags) {
+  static List<MetricTagValue> parseTagValues(List<String> tags) {
     List<MetricTagValue> result = Lists.newArrayList();
     for (String tag : tags) {
       // split by ':' and add the tagValue to result list
@@ -219,7 +219,7 @@ public class MetricsQueryHelper {
     return result;
   }
 
-  private String humanToTagName(String humanTagName) {
+  static String humanToTagName(String humanTagName) {
     String replacement = humanToTagName.get(humanTagName);
     return replacement != null ? replacement : humanTagName;
   }

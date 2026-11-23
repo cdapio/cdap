@@ -212,21 +212,41 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     DatasetId systemDsId = NamespaceId.SYSTEM.dataset("sysds");
     SecurityRequestContext.setUserId(BOB.getName());
     assertAuthorizationFailure(() -> instanceService.get(systemDsId), "Bob should not be able to get " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.getOriginalProperties(systemDsId),
+                               "Bob should not be able to get original properties of " + systemDsId);
     assertAuthorizationFailure(() -> instanceService.update(systemDsId, Collections.emptyMap()),
                                "Bob should not be able to update " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.executeAdmin(systemDsId, "exists"),
+                               "Bob should not be able to check existence of " + systemDsId);
     assertAuthorizationFailure(() -> instanceService.executeAdmin(systemDsId, "truncate"),
                                "Bob should not be able to truncate " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.executeAdmin(systemDsId, "upgrade"),
+                               "Bob should not be able to upgrade " + systemDsId);
     assertAuthorizationFailure(() -> instanceService.drop(systemDsId), "Bob should not be able to drop " + systemDsId);
     assertAuthorizationFailure(() -> instanceService.dropAll(NamespaceId.SYSTEM),
                                "Bob should not be able to drop all datasets in the system namespace");
     assertAuthorizationFailure(() -> instanceService.get(reservedDsId),
                                "Bob should not be able to get " + reservedDsId);
+    assertAuthorizationFailure(() -> instanceService.getOriginalProperties(reservedDsId),
+                               "Bob should not be able to get original properties of " + reservedDsId);
+    assertAuthorizationFailure(() -> instanceService.update(reservedDsId, Collections.emptyMap()),
+                               "Bob should not be able to update " + reservedDsId);
 
-    // with the corresponding privileges, Bob can manage datasets with reserved names
-    grantAndAssertSuccess(reservedDsId, BOB, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET,
-                                                        StandardPermission.DELETE));
+    // CREATE on a reserved-name dataset still requires SET_OWNER when ownerPrincipal is specified
+    grantAndAssertSuccess(reservedDsId, BOB, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
+    DatasetInstanceConfiguration impersonatedConfig = new DatasetInstanceConfiguration(
+        Table.class.getName(), Collections.emptyMap(), null, "victim@EXAMPLE.COM");
+    assertAuthorizationFailure(() -> instanceService.create(NamespaceId.DEFAULT.getNamespace(),
+                                                            reservedDsId.getDataset(), impersonatedConfig),
+                               "Bob should not be able to impersonate an owner on " + reservedDsId);
+
+    // dropAll in a user namespace must still require DELETE on reserved-name datasets
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), reservedDsId.getDataset(), config);
     Assert.assertNotNull(instanceService.get(reservedDsId));
+    assertAuthorizationFailure(() -> instanceService.dropAll(NamespaceId.DEFAULT),
+                               "Bob should not be able to dropAll without DELETE on " + reservedDsId);
+
+    grantAndAssertSuccess(reservedDsId, BOB, EnumSet.of(StandardPermission.DELETE));
     instanceService.drop(reservedDsId);
 
     SecurityRequestContext.setUserId(masterUser);

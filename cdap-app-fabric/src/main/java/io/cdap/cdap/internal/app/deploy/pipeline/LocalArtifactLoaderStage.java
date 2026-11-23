@@ -27,6 +27,7 @@ import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
@@ -34,7 +35,6 @@ import io.cdap.cdap.metadata.MetadataValidator;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import java.util.Map;
@@ -110,7 +110,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     // Schedules triggered by programs of other applications expose the triggering run's
     // information to this application, so the caller must be able to see those programs.
     for (ScheduleCreationSpec schedule : specification.getProgramSchedules().values()) {
-      ProgramScheduleService.enforceTriggeringPrograms(accessEnforcer,
+      Schedulers.enforceTriggeringPrograms(accessEnforcer,
           authenticationContext.getPrincipal(), schedule.getTrigger(),
           program -> !program.getAppReference().equals(applicationId.getAppReference()));
     }

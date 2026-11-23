@@ -282,11 +282,10 @@ public class DatasetInstanceService {
     // need to enforce on the principal id if impersonation is involved
     KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, namespace,
         ownerPrincipal);
-    if (DatasetsUtil.isUserDataset(datasetId)) {
+    if (effectiveOwner != null
+        && (DatasetsUtil.isUserDataset(datasetId) || ownerPrincipal != null)) {
       LOG.trace("Authorizing impersonation for dataset {}", name);
-      if (effectiveOwner != null) {
-        accessEnforcer.enforce(effectiveOwner, requestingUser, AccessPermission.SET_OWNER);
-      }
+      accessEnforcer.enforce(effectiveOwner, requestingUser, AccessPermission.SET_OWNER);
       LOG.trace("Authorized impersonation for dataset {}", name);
     }
     // CREATE is also enforced for system datasets (in the system namespace or with a reserved name).
