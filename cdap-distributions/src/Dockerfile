@@ -15,7 +15,10 @@
 # Cask is a trademark of Cask Data, Inc. All rights reserved.
 
 FROM eclipse-temurin:11-jdk-jammy
-MAINTAINER Cask Data <ops@cask.co>
+LABEL maintainer="Cask Data <ops@cask.co>"
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Install OS packages, gosu, and Node.js 22.x
 RUN apt-get update && \
@@ -44,18 +47,23 @@ RUN apt-get update && \
 COPY packer/files /tmp/files
 
 # Create cdap user and install CDAP Sandbox directly without Chef
+ARG SANDBOX_URL=""
 RUN groupadd -r cdap && \
-    useradd -r -g cdap -d /opt/cdap -s /bin/bash cdap && \
-    SANDBOX_URL="$(jq -r '.cdap.sdk.url' /tmp/files/cdap-sdk.json)" && \
-    curl -fsSL -o /tmp/cdap-sandbox.zip "${SANDBOX_URL}" && \
-    mkdir -p /opt/cdap && \
-    unzip -q /tmp/cdap-sandbox.zip -d /opt/cdap && \
-    mv /opt/cdap/cdap-sandbox-* /opt/cdap/sandbox && \
-    chown -R cdap:cdap /opt/cdap && \
-    rm -rf /tmp/cdap-sandbox.zip /tmp/files && \
-    gosu cdap /opt/cdap/sandbox/bin/cdap version
+  useradd -r -g cdap -d /opt/cdap -s /bin/bash cdap && \
+  SANDBOX_URL="${SANDBOX_URL:-$(jq -r '.cdap.sdk.url // empty' /tmp/files/cdap-sdk.json)}" && \
+  if [ -z "${SANDBOX_URL}" ]; then \
+    echo "Error: SANDBOX_URL build-arg not set and '.cdap.sdk.url' is missing or empty in /tmp/files/cdap-sdk.json." >&2; \
+    exit 1; \
+  fi && \
+  curl -fsSL -o /tmp/cdap-sandbox.zip "${SANDBOX_URL}" && \
+  mkdir -p /opt/cdap && \
+  unzip -q /tmp/cdap-sandbox.zip -d /opt/cdap && \
+  mv /opt/cdap/cdap-sandbox-* /opt/cdap/sandbox && \
+  chown -R cdap:cdap /opt/cdap && \
+  rm -rf /tmp/cdap-sandbox.zip /tmp/files && \
+  gosu cdap /opt/cdap/sandbox/bin/cdap version
 
-ENV PATH /opt/cdap/sandbox/bin:${PATH}
+ENV PATH="/opt/cdap/sandbox/bin:${PATH}"
 
 # Copy entrypoint
 COPY docker-entrypoint.sh /
