@@ -125,8 +125,9 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     // Establishes the support bundle configuration
     SupportBundleConfiguration bundleConfig =
         new SupportBundleConfiguration(namespace, application, run,
-            ProgramType.valueOfCategoryName(programType),
+            ProgramType.valueOfCategoryName(programType, BadRequestException::new),
             programName, Optional.ofNullable(maxRunsPerProgram).orElse(1));
+    SupportBundleGenerator.validateConfiguration(bundleConfig);
     // Generates support bundle and returns with uuid
     String prevInProgressUUID = bundleGenerator.getInProgressBundle();
     if (prevInProgressUUID == null) {
@@ -210,7 +211,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     String digestHeader = "";
     SupportBundleRequestFileList bundleRequestFileList;
     try {
-      if (requestContent == null || requestContent.length() == 0) {
+      if (requestContent == null || requestContent.trim().isEmpty()) {
         bundleRequestFileList = new SupportBundleRequestFileList(new ArrayList<>());
         digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath,
             bundleRequestFileList);
