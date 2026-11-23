@@ -46,7 +46,9 @@ public class NettyRouterPipelineAuthTest {
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static final RouterResource ROUTER = new RouterResource(HOSTNAME, DISCOVERY_SERVICE, ImmutableMap.of(
     Constants.Security.ENABLED, "true",
-    Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, "(/v3/test/v1/repeat/.*|/v3/test/v1/echo/dontfail)"
+    Constants.Security.AUTH_SERVER_ANNOUNCE_URLS, "http://127.0.0.1:10000",
+    Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX,
+    "(/v3/test/v1/repeat/.*|/v3/test/v1/echo/dontfail|/v3/test/v1/echo/.*/public)"
   ));
   private static final ServerResource GATEWAY_SERVER = new ServerResource(HOSTNAME, DISCOVERY_SERVICE, SERVICE_NAME);
 
@@ -66,6 +68,8 @@ public class NettyRouterPipelineAuthTest {
     testGet(401, null, "/v3/test/v1/echo/hello", ImmutableMap.of("Authorization", "Bearer failme"));
     // but /v3/test/v1/echo/dontfail is configured to bypass auth
     testGet(200, "dontfail", "/v3/test/v1/echo/dontfail", ImmutableMap.of("Authorization", "Bearer failme"));
+    // query parameters on a bypassed path still bypass auth
+    testGet(200, "dontfail", "/v3/test/v1/echo/dontfail?foo=bar", ImmutableMap.of("Authorization", "Bearer failme"));
     // it only bypasses on exact match, not prefix match
     testGet(401, null, "/v3/test/v1/echo/dontfailme", ImmutableMap.of("Authorization", "Bearer failme"));
 
@@ -75,6 +79,30 @@ public class NettyRouterPipelineAuthTest {
     testGet(200, "hello", "/v3/test/v1/repeat/hello", ImmutableMap.of("Authorization", "Bearer failme"));
     // even with a token that fails validation, we get the correct status code 404
     testGet(404, null, "/v3/test/v1/repeat/dontfail/me", ImmutableMap.of("Authorization", "Bearer failme"));
+  }
+
+  @Test
+  public void testRouterAuthBypassRejectsPathTraversalAndQuerySmuggling() throws Exception {
+    // Literal and percent-encoded path traversal must not bypass auth
+    testGet(401, null, "/v3/test/v1/repeat/../echo/hello");
+    testGet(401, null, "/v3/test/v1/repeat/..%2fecho%2fhello");
+    testGet(401, null, "/v3/test/v1/repeat/%2e%2e/echo/hello");
+
+    // Trailing slash on /v3/test/v1/repeat/ routes to protected @Path("/v3/test/v1/repeat"), so it must not bypass
+    testGet(401, null, "/v3/test/v1/repeat/");
+    testGet(200, "repeat-root", "/v3/test/v1/repeat", ImmutableMap.of("Authorization", "Bearer x"));
+
+    // Query-string suffix matching a wildcard bypass pattern must not bypass auth for a protected path
+    testGet(401, null, "/v3/test/v1/echo/hello?x=/public");
+  }
+
+  @Test
+  public void testRouterAuthBypassPreservesEncodedPathParams() throws Exception {
+    // Bypassed and authenticated requests both preserve URL-encoded spaces (%20) and double-encoded slashes (%252f)
+    testGet(200, "Sample Buckets", "/v3/test/v1/repeat/Sample%20Buckets");
+    testGet(200, "a%2fb", "/v3/test/v1/repeat/a%252fb");
+    testGet(200, "Sample Buckets", "/v3/test/v1/echo/Sample%20Buckets", ImmutableMap.of("Authorization", "Bearer x"));
+    testGet(200, "a%2fb", "/v3/test/v1/echo/a%252fb", ImmutableMap.of("Authorization", "Bearer x"));
   }
 
   private void testGet(int expectedStatus, String expectedResponse, String path) throws Exception {

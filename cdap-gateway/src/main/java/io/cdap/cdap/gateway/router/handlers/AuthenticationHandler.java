@@ -52,6 +52,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,6 +79,10 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHandler.class);
   private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(
       Constants.Router.AUDIT_LOGGER_NAME);
+  // '.'/'..' segments, plus all ISO control characters and U+2028/U+2029: a superset of the line
+  // terminators that '.' in a non-DOTALL bypass regex does not match.
+  private static final Pattern UNSAFE_BYPASS_PATH =
+      Pattern.compile("(^|/)\\.{1,2}(/|$)|[\\x00-\\x1f\\x7f-\\x9f\\u2028\\u2029]");
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -185,7 +190,37 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    * Checks if the given request bypass access token validation.
    */
   private boolean isBypassed(HttpRequest request) {
-    return bypassPattern != null && bypassPattern.matcher(request.uri()).matches();
+    if (bypassPattern == null) {
+      return false;
+    }
+    String path = getBypassPath(request.uri());
+    return path != null && bypassPattern.matcher(path).matches();
+  }
+
+  /**
+   * Returns the decoded, normalized request path to match against
+   * {@code router.bypass.auth.regex}, or {@code null} if the URI is missing, malformed, opaque, or
+   * has an unsafe path.
+   */
+  @Nullable
+  private static String getBypassPath(@Nullable String rawUri) {
+    if (rawUri == null) {
+      return null;
+    }
+    URI uri;
+    try {
+      uri = URI.create(rawUri);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+    // Check before normalize(): handlers that re-parse request.uri() still see literal "..".
+    String decodedPath = uri.getPath();
+    if (decodedPath == null || UNSAFE_BYPASS_PATH.matcher(decodedPath).find()) {
+      return null;
+    }
+    String path = uri.normalize().getPath();
+    // netty-http ignores a trailing slash when it matches routes.
+    return path.length() > 1 && path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
   }
 
   /**
