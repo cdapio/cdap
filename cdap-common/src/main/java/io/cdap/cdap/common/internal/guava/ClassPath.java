@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
@@ -32,6 +33,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.Reflection;
+import io.cdap.cdap.common.lang.ClassLoaders;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -382,21 +384,30 @@ public final class ClassPath {
     if (classloader instanceof URLClassLoader) {
       URLClassLoader urlClassLoader = (URLClassLoader) classloader;
       for (URL entry : urlClassLoader.getURLs()) {
-        URI uri;
-        try {
-          uri = entry.toURI();
-          if (!predicate.apply(uri)) {
-            continue;
-          }
-        } catch (URISyntaxException e) {
-          throw new IllegalArgumentException(e);
-        }
-        if (!entries.containsKey(uri)) {
-          entries.put(uri, classloader);
-        }
+        addClassPathEntry(entries, entry, classloader, predicate);
+      }
+    } else if (Objects.equal(classloader, ClassLoader.getSystemClassLoader())) {
+      for (URL entry : ClassLoaders.parseJavaClassPath()) {
+        addClassPathEntry(entries, entry, classloader, predicate);
       }
     }
     return ImmutableMap.copyOf(entries);
+  }
+
+  private static void addClassPathEntry(Map<URI, ClassLoader> entries, URL entry,
+      ClassLoader classloader, Predicate<URI> predicate) {
+    URI uri;
+    try {
+      uri = entry.toURI();
+      if (!predicate.apply(uri)) {
+        return;
+      }
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
+    if (!entries.containsKey(uri)) {
+      entries.put(uri, classloader);
+    }
   }
 
   @VisibleForTesting

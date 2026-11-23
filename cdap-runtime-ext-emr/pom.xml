@@ -89,6 +89,23 @@
       <artifactId>commons-cli</artifactId>
       <version>${commons.cli.version}</version>
     </dependency>
+    <!-- JAXB was removed from the JDK in Java 11; AWS Java SDK 1.11.x requires it at runtime -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.8</version>
+      <exclusions>
+        <exclusion>
+          <groupId>jakarta.xml.bind</groupId>
+          <artifactId>jakarta.xml.bind-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
