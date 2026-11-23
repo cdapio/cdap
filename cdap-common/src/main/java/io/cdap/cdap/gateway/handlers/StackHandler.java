@@ -19,7 +19,7 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -55,7 +55,9 @@ public class StackHandler extends AbstractHttpHandler {
   public void stacks(HttpRequest request, HttpResponder responder,
       @PathParam("service-name") String serviceName,
       @QueryParam("depth") @DefaultValue("20") int depth) {
-    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.HEALTH_CHECK);
+    // GET on the instance, like the operational stats endpoints. HEALTH_CHECK has no IAM mapping
+    // in Cloud Data Fusion, so it would deny every external caller, including admins.
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     StringWriter stringWriter = new StringWriter();
     getThreadInfo(new PrintWriter(stringWriter), serviceName, depth);
     responder.sendString(HttpResponseStatus.OK, stringWriter.toString());

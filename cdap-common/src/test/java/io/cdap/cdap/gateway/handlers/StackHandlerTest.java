@@ -17,7 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
@@ -32,13 +32,13 @@ import org.mockito.Mockito;
 public class StackHandlerTest {
 
   @Test
-  public void testStacksRequiresHealthCheck() {
+  public void testStacksRequiresInstanceGet() {
     ContextAccessEnforcer enforcer = Mockito.mock(ContextAccessEnforcer.class);
     StackHandler handler = new StackHandler(enforcer);
     HttpResponder responder = Mockito.mock(HttpResponder.class);
 
     Mockito.doThrow(new UnauthorizedException("denied"))
-        .when(enforcer).enforce(InstanceId.SELF, InstancePermission.HEALTH_CHECK);
+        .when(enforcer).enforce(InstanceId.SELF, StandardPermission.GET);
     try {
       handler.stacks(null, responder, "test", 1);
       Assert.fail("Expected UnauthorizedException");
@@ -49,7 +49,7 @@ public class StackHandlerTest {
 
     Mockito.reset(enforcer);
     handler.stacks(null, responder, "test", 1);
-    Mockito.verify(enforcer).enforce(InstanceId.SELF, InstancePermission.HEALTH_CHECK);
+    Mockito.verify(enforcer).enforce(InstanceId.SELF, StandardPermission.GET);
     Mockito.verify(responder).sendString(Mockito.eq(HttpResponseStatus.OK),
         Mockito.contains("Process Thread Dump: test"));
   }
