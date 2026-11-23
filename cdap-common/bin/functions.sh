@@ -723,6 +723,55 @@ cdap_start_java() {
 }
 
 #
+# cdap_set_jacoco_args <class> [arguments]
+# Populates the caller's __jacoco_args array with a loopback JaCoCo tcpserver
+# agent flag on long-lived services/workers and persistent file output on
+# single-run PreviewRunnerTwillRunnable pods when CDAP_ENABLE_JACOCO_AGENT=true
+# (skipping localizer, exporter, and one-shot init/upgrade helpers that share
+# the pod network namespace).
+#
+cdap_set_jacoco_args() {
+  __jacoco_args=()
+  if [[ "${CDAP_ENABLE_JACOCO_AGENT:-}" != "true" ]]; then
+    return 0
+  fi
+  local -r __agent_jar="${CDAP_HOME}/master/ext/jacoco/jacocoagent.jar"
+  if [[ ! -f "${__agent_jar}" ]] ||
+     [[ " ${OPTS:-} " == *"jacocoagent.jar"* ]]; then
+    return 0
+  fi
+  local -r __cmdline="$*"
+  case "${__cmdline}" in
+    *SystemMetricsExporter*|*FileLocalizer*|*ArtifactLocalizerTwillRunnable*|\
+    *StorageMain*|*UpgradeJobMain*|*PostUpgradeJobMain*|*MasterStartupTool*)
+      return 0
+      ;;
+    *PreviewRunnerTwillRunnable*)
+      local __dest_dir="/data"
+      if [[ -n "${CDAP_JACOCO_DEST_DIR:-}" ]]; then
+        __dest_dir="${CDAP_JACOCO_DEST_DIR}"
+      elif [[ ! -d "${__dest_dir}" ]] || [[ ! -w "${__dest_dir}" ]]; then
+        __dest_dir="${LOCAL_DIR:-/var/tmp/cdap}"
+      fi
+      if [[ "${__dest_dir}" == *","* ]] || [[ -z "${__dest_dir}" ]]; then
+        __dest_dir="/var/tmp/cdap"
+      fi
+      local -r __file_opts="output=file,destfile=${__dest_dir}/jacoco-exit.exec,append=true,includes=io.cdap.*,inclnolocationclasses=true"
+      __jacoco_args=("-javaagent:${__agent_jar}=${__file_opts}")
+      return 0
+      ;;
+  esac
+  local -r __port="${CDAP_JACOCO_PORT:-6300}"
+  if [[ ! "${__port}" =~ ^[0-9]+$ ]] ||
+     (( 10#${__port} < 1 || 10#${__port} > 65535 )); then
+    return 0
+  fi
+  local -r __opts="output=tcpserver,address=127.0.0.1,port=${__port},includes=io.cdap.*,inclnolocationclasses=true"
+  __jacoco_args=("-javaagent:${__agent_jar}=${__opts}")
+  return 0
+}
+
+#
 # cdap_run_class <class> [arguments]
 # Executes a given class' main method with the CLASSPATH and environment setup
 #
@@ -743,13 +792,15 @@ cdap_run_class() {
   cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
   # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
   OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
+  local -a __jacoco_args=()
+  cdap_set_jacoco_args "${__class}" "${__args}"
   echo "$(date) Major Java version: $JAVA_VERSION"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
     echo "$(date) Running class ${__class}"
   fi
-  "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
+  "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${__jacoco_args[@]+"${__jacoco_args[@]}"} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
   __ret=${?}
   return ${__ret}
 }
@@ -775,13 +826,15 @@ cdap_exec_class() {
   cdap_create_local_dir || die "Could not create local directory : ${LOCAL_DIR}"
   # Replace the <LOG_DIR> with local directory if present in JVM OPTS.
   OPTS="${OPTS//<LOG_DIR>/$LOCAL_DIR}"
+  local -a __jacoco_args=()
+  cdap_set_jacoco_args "${__class}" "${__args}"
   echo "$(date) Major Java version: $JAVA_VERSION"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args} and JVM OPTS : ${OPTS}"
   else
     echo "$(date) Running class ${__class}"
   fi
-  exec "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
+  exec "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${__jacoco_args[@]+"${__jacoco_args[@]}"} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
 }
 
 #
