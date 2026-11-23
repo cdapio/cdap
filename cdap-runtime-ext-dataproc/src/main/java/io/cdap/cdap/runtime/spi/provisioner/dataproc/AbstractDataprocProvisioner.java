@@ -46,6 +46,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -75,6 +76,13 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
    * @see DataprocProvisioner#findCluster(String, DataprocClient)
    */
   public static final String LABEL_RUN_KEY = "cdap-run-key";
+  /**
+   * Properties that may only be set through system configuration. Each of them must also be a
+   * default context property so that the system value is applied by {@link
+   * #createContextProperties(ProvisionerContext)}.
+   */
+  private static final Set<String> SYSTEM_ONLY_PROPERTIES =
+      Collections.singleton(DataprocConf.TOKEN_ENDPOINT_KEY);
 
   private final ProvisionerSpecification spec;
   private ProvisionerSystemContext systemContext;
@@ -235,11 +243,11 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
    * property name for the dataproc config context.
    */
   protected boolean isDefaultContextProperty(String property) {
-    if (DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(property).find()) {
+    if (DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(property).find()
+        || SYSTEM_ONLY_PROPERTIES.contains(property)) {
       return true;
     }
     return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, DataprocUtils.BUCKET,
-        DataprocConf.TOKEN_ENDPOINT_KEY,
         DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
         DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
         DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);
@@ -268,11 +276,39 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       contextProperties.put(DataprocConf.PROJECT_ID_KEY, projectId);
     }
 
+    // System-only properties may only come from system configuration.
+    contextProperties.keySet().removeAll(SYSTEM_ONLY_PROPERTIES);
+
     // Add default properties
     getDefaultContextProperties().entrySet().stream()
         .filter(e -> !contextProperties.containsKey(e.getKey()))
         .forEach(e -> contextProperties.put(e.getKey(), e.getValue()));
     return contextProperties;
+  }
+
+  /**
+   * Validates that the given profile properties do not contain properties that may only be set
+   * through system configuration.
+   *
+   * @throws IllegalArgumentException if a system-only property is present
+   */
+  protected static void validateNoSystemOnlyProperties(Map<String, String> properties) {
+    for (String property : SYSTEM_ONLY_PROPERTIES) {
+      if (properties.containsKey(property)) {
+        throw new IllegalArgumentException(String.format(
+            "Property '%s' cannot be set in a compute profile.", property));
+      }
+    }
+  }
+
+  /**
+   * Returns a copy of the given properties without the properties that may only be set through
+   * system configuration.
+   */
+  protected static Map<String, String> removeSystemOnlyProperties(Map<String, String> properties) {
+    Map<String, String> result = new HashMap<>(properties);
+    result.keySet().removeAll(SYSTEM_ONLY_PROPERTIES);
+    return result;
   }
 
   /**
