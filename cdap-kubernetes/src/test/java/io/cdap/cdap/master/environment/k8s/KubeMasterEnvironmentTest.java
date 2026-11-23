@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.cdap.cdap.k8s.common.TemporaryLocalFileProvider;
@@ -29,6 +32,7 @@ import io.kubernetes.client.openapi.models.V1ConfigMapProjection;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1KeyToPath;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ProjectedVolumeSource;
@@ -39,6 +43,8 @@ import io.kubernetes.client.openapi.models.V1VolumeProjection;
 import io.kubernetes.client.util.Yaml;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,6 +66,7 @@ public class KubeMasterEnvironmentTest {
   private static final String KUBE_INSTALL_NAMESPACE = "kube-install-namespace";
 
   private CoreV1Api coreV1Api;
+  private CoreV1Api.APIcreateNamespacedConfigMapRequest createConfigMapRequest;
   private KubeMasterEnvironment kubeMasterEnvironment;
   private KubeTwillRunnerService twillRunnerService;
 
@@ -69,6 +76,9 @@ public class KubeMasterEnvironmentTest {
   @Before
   public void init() throws IOException {
     coreV1Api = mock(CoreV1Api.class);
+    createConfigMapRequest = mock(CoreV1Api.APIcreateNamespacedConfigMapRequest.class);
+    when(coreV1Api.createNamespacedConfigMap(eq(KUBE_NAMESPACE), any()))
+        .thenReturn(createConfigMapRequest);
     twillRunnerService = mock(KubeTwillRunnerService.class);
     kubeMasterEnvironment = new KubeMasterEnvironment();
     kubeMasterEnvironment.setCoreV1Api(coreV1Api);
@@ -103,6 +113,7 @@ public class KubeMasterEnvironmentTest {
     config.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, ns);
     SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), config, 1, 1);
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
     Assert.assertEquals(ns, sparkConfig.getConfigs().get("spark.kubernetes.namespace"));
   }
 
@@ -116,6 +127,7 @@ public class KubeMasterEnvironmentTest {
 
     SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), config, 1, 1);
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
     Assert.assertEquals(requestTimeout,
                         sparkConfig.getConfigs().get(KubeMasterEnvironment.SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS));
     Assert.assertEquals(connectTimeout,
@@ -130,6 +142,7 @@ public class KubeMasterEnvironmentTest {
     kubeMasterEnvironment.setReadTimeout(Integer.parseInt(KubeMasterEnvironment.READ_TIMEOUT_DEFAULT));
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
     int readTimeoutMillis = Integer.parseInt(KubeMasterEnvironment.READ_TIMEOUT_DEFAULT) * 1000;
     Assert.assertEquals(String.valueOf(readTimeoutMillis),
                         sparkConfig.getConfigs().get(KubeMasterEnvironment.SPARK_DRIVER_REQUEST_TIMEOUT_MILLIS));
@@ -156,11 +169,15 @@ public class KubeMasterEnvironmentTest {
         1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
 
     // Verify volume, volume mount, and environment variables are set for workload identity
     Map<String, String> configs = sparkConfig.getConfigs();
-    File sparkDriverPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
-    File sparkExecutorPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    File sparkDriverPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
+    File sparkExecutorPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    assertNoEmptyMapsInPodTemplateYaml(sparkDriverPodFile, sparkExecutorPodFile);
     V1Pod driverPod = Yaml.loadAs(sparkDriverPodFile, V1Pod.class);
     V1Pod executorPod = Yaml.loadAs(sparkExecutorPodFile, V1Pod.class);
 
@@ -183,11 +200,15 @@ public class KubeMasterEnvironmentTest {
         1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
 
     // Verify volume, volume mount, and environment variables are set for workload identity
     Map<String, String> configs = sparkConfig.getConfigs();
-    File sparkDriverPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
-    File sparkExecutorPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    File sparkDriverPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
+    File sparkExecutorPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    assertNoEmptyMapsInPodTemplateYaml(sparkDriverPodFile, sparkExecutorPodFile);
     V1Pod driverPod = Yaml.loadAs(sparkDriverPodFile, V1Pod.class);
     V1Pod executorPod = Yaml.loadAs(sparkExecutorPodFile, V1Pod.class);
 
@@ -211,11 +232,15 @@ public class KubeMasterEnvironmentTest {
         1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
 
     // Verify volume, volume mount, and environment variables are set for workload identity
     Map<String, String> configs = sparkConfig.getConfigs();
-    File sparkDriverPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
-    File sparkExecutorPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    File sparkDriverPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
+    File sparkExecutorPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    assertNoEmptyMapsInPodTemplateYaml(sparkDriverPodFile, sparkExecutorPodFile);
     V1Pod driverPod = Yaml.loadAs(sparkDriverPodFile, V1Pod.class);
     V1Pod executorPod = Yaml.loadAs(sparkExecutorPodFile, V1Pod.class);
 
@@ -238,11 +263,15 @@ public class KubeMasterEnvironmentTest {
         1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
+    verify(createConfigMapRequest).execute();
 
     // Verify volume, volume mount, and environment variables are set for workload identity
     Map<String, String> configs = sparkConfig.getConfigs();
-    File sparkDriverPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
-    File sparkExecutorPodFile = new File(configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    File sparkDriverPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_DRIVER_POD_TEMPLATE));
+    File sparkExecutorPodFile = new File(
+        configs.get(KubeMasterEnvironment.SPARK_KUBERNETES_EXECUTOR_POD_TEMPLATE));
+    assertNoEmptyMapsInPodTemplateYaml(sparkDriverPodFile, sparkExecutorPodFile);
     V1Pod driverPod = Yaml.loadAs(sparkDriverPodFile, V1Pod.class);
     V1Pod executorPod = Yaml.loadAs(sparkExecutorPodFile, V1Pod.class);
 
@@ -291,6 +320,36 @@ public class KubeMasterEnvironmentTest {
   public void testParseLoadBalancerAnnotationsEmpty() {
     Assert.assertTrue(kubeMasterEnvironment.parseLoadBalancerAnnotations("").isEmpty());
     Assert.assertTrue(kubeMasterEnvironment.parseLoadBalancerAnnotations(null).isEmpty());
+  }
+
+  @Test
+  public void testSerializePodTemplateSkipsEmptyMapsAndKeepsNonEmptyMaps() throws Exception {
+    V1Pod pod = new V1Pod()
+        .metadata(new V1ObjectMeta().name("driver").putLabelsItem("app", "spark"))
+        .spec(new V1PodSpec().putNodeSelectorItem("pool", "default"));
+    File templateFile = kubeMasterEnvironment.serializePodTemplate(pod);
+    String content = readPodTemplateYamlWithoutEmptyMaps(templateFile);
+    Assert.assertTrue(content.contains("labels:"));
+    Assert.assertTrue(content.contains("nodeSelector:"));
+    V1Pod loaded = Yaml.loadAs(templateFile, V1Pod.class);
+    Assert.assertEquals(Collections.singletonMap("app", "spark"),
+        loaded.getMetadata().getLabels());
+    Assert.assertEquals(Collections.singletonMap("pool", "default"),
+        loaded.getSpec().getNodeSelector());
+  }
+
+  private void assertNoEmptyMapsInPodTemplateYaml(File... podTemplateFiles) throws IOException {
+    for (File file : podTemplateFiles) {
+      readPodTemplateYamlWithoutEmptyMaps(file);
+    }
+  }
+
+  private String readPodTemplateYamlWithoutEmptyMaps(File file) throws IOException {
+    String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+    Assert.assertFalse(
+        String.format("Pod template YAML should not contain empty maps:\n%s", content),
+        content.contains("{}"));
+    return content;
   }
 
   private void assertDoesNotMountWorkloadIdentityVolume(V1Pod driverPod, V1Pod executorPod) {

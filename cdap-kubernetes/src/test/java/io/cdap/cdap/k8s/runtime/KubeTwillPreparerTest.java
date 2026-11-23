@@ -210,7 +210,7 @@ public class KubeTwillPreparerTest {
     preparer.withConfiguration(config);
 
     V1ObjectMeta objectMeta = preparer.createResourceMetadata(V1Job.class, "runnable", 0, true);
-    Assert.assertNull(objectMeta.getOwnerReferences());
+    Assert.assertTrue(objectMeta.getOwnerReferences().isEmpty());
   }
 
   @Test

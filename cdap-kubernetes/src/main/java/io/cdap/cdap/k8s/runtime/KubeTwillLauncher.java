@@ -152,8 +152,9 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       V1DeleteOptions delOptions = new V1DeleteOptions()
           .preconditions(new V1Preconditions().uid(podInfo.getUid()))
           .gracePeriodSeconds(1L);
-      api.deleteNamespacedPodAsync(podInfo.getName(), podInfo.getNamespace(), null,
-          null, null, null, null, delOptions, new ApiCallbackAdapter<>());
+      api.deleteNamespacedPod(podInfo.getName(), podInfo.getNamespace())
+          .body(delOptions)
+          .executeAsync(new ApiCallbackAdapter<>());
     } catch (Exception e) {
       LOG.warn("Failed to delete pod {} with uid {}", podInfo.getName(), podInfo.getUid(), e);
     }

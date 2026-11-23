@@ -258,10 +258,10 @@ public class KubeDiscoveryService implements DiscoveryService,
    */
   private Optional<V1Service> getV1Service(CoreV1Api api,
       String serviceName, String discoveryName) throws ApiException {
-    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null,
-        null, null,
-        "cdap.service=" + namePrefix + discoveryName, 1,
-        null, null, null, null);
+    V1ServiceList serviceList = api.listNamespacedService(namespace)
+        .labelSelector("cdap.service=" + namePrefix + discoveryName)
+        .limit(1)
+        .execute();
     // Find the service with the given name
     return serviceList.getItems().stream()
         .filter(service -> serviceName.equals(service.getMetadata().getName()))
@@ -285,7 +285,7 @@ public class KubeDiscoveryService implements DiscoveryService,
     // Try to create the service
     V1Service service = createService(serviceName, discoverable);
     try {
-      api.createNamespacedService(namespace, service, null, null, null, null);
+      api.createNamespacedService(namespace, service).execute();
       LOG.info(
           "Service created in kubernetes with name {}, type {} and port {}",
           serviceName, service.getSpec().getType(),
@@ -331,7 +331,7 @@ public class KubeDiscoveryService implements DiscoveryService,
         discoverable);
     try {
       api.replaceNamespacedService(service.getMetadata().getName(),
-          namespace, service, null, null, null, null);
+          namespace, service).execute();
       LOG.info(
           "Service updated in kubernetes with name {}, type {} and port {}",
           currentService.getMetadata().getName(), service.getSpec().getType(),
@@ -391,7 +391,7 @@ public class KubeDiscoveryService implements DiscoveryService,
 
   private boolean isPodTerminating(CoreV1Api api) throws ApiException {
     try {
-      V1Pod pod = api.readNamespacedPod(podName, namespace, null);
+      V1Pod pod = api.readNamespacedPod(podName, namespace).execute();
       return Optional.ofNullable(pod.getMetadata()).map(V1ObjectMeta::getDeletionTimestamp)
           .isPresent();
 

@@ -50,8 +50,9 @@ final class PodKillerTask implements MasterEnvironmentTask {
     try {
       CoreV1Api api = getCoreApi();
       LOG.debug("Terminating pods using selector {}", podSelector);
-      api.deleteCollectionNamespacedPod(namespace, null, null, null, null, null, podSelector,
-          null, null, null, null, null, null, null);
+      api.deleteCollectionNamespacedPod(namespace)
+          .labelSelector(podSelector)
+          .execute();
       LOG.debug("Pods termination completed");
     } catch (IOException e) {
       LOG.warn("IO Exception raised when connecting to Kubernetes API server", e);

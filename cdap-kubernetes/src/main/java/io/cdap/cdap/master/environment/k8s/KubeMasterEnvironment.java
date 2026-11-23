@@ -97,6 +97,10 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.nodes.NodeTuple;
+import org.yaml.snakeyaml.nodes.Tag;
 
 /**
  * Implementation of {@link MasterEnvironment} to provide the environment for running in
@@ -421,8 +425,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   public void destroy() {
     if (!Strings.isNullOrEmpty(configMapName)) {
       try {
-        coreV1Api.deleteNamespacedConfigMap(configMapName, podInfo.getNamespace(), null, null, null,
-            null, null, null);
+        coreV1Api.deleteNamespacedConfigMap(configMapName, podInfo.getNamespace()).execute();
       } catch (ApiException e) {
         LOG.warn("Error cleaning up configmap {}, it will be retried. {} ", configMapName,
             e.getResponseBody(), e);
@@ -565,7 +568,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private void createK8sSaIfNotExists(String k8sNamespace, String serviceAccountName)
       throws ApiException {
     try {
-      coreV1Api.readNamespacedServiceAccount(serviceAccountName, k8sNamespace, null);
+      coreV1Api.readNamespacedServiceAccount(serviceAccountName, k8sNamespace).execute();
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
         throw e;
@@ -574,8 +577,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       serviceAccountMetadata.setName(serviceAccountName);
       V1ServiceAccount serviceAccount = new V1ServiceAccount();
       serviceAccount.setMetadata(serviceAccountMetadata);
-      coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount,
-          null, null, null, null);
+      coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount).execute();
     }
   }
 
@@ -587,8 +589,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     LOG.info("Creating credential identity: {}", identity);
     try {
-      coreV1Api.deleteNamespacedServiceAccount(identity, k8sNamespace,
-          null, null, null, null, null, null);
+      coreV1Api.deleteNamespacedServiceAccount(identity, k8sNamespace).execute();
     } catch (ApiException e) {
       if (e.getCode() == 404) {
         // return if not found as it means that service account does not exist.
@@ -686,7 +687,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Query pod information.
     V1Pod pod;
     try {
-      pod = coreV1Api.readNamespacedPod(podName, namespace, null);
+      pod = coreV1Api.readNamespacedPod(podName, namespace).execute();
     } catch (ApiException e) {
       throw new IOException("Error occurred while getting pod. Error code = "
           + e.getCode() + ", Body = " + e.getResponseBody(), e);
@@ -800,8 +801,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                   .withName(configMapName)
                   .withLabels(podInfo.getLabels())
                   .withOwnerReferences(podInfo.getOwnerReferences())
-                  .build()).build(),
-          null, null, null, null);
+                  .build()).build())
+          .execute();
       this.configMapName = configMapName;
 
       // Add configmap and secrets as a volume to be added to the pod template
@@ -858,11 +859,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return serializePodTemplate(executorPod);
   }
 
-  private File serializePodTemplate(V1Pod v1Pod) throws IOException {
+  @VisibleForTesting
+  File serializePodTemplate(V1Pod v1Pod) throws IOException {
     // Uses a relative path to create the Spark driver and executor template files.
     File templateFile = localFileProvider.getWritableFileRef(
         POD_TEMPLATE_FILE_NAME + UUID.randomUUID());
-    String podTemplateYaml = Yaml.dump(v1Pod);
+    String podTemplateYaml = toPodTemplateYaml(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
       writer.write(podTemplateYaml);
     } catch (IOException e) {
@@ -871,6 +873,30 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     LOG.trace("Pod template: {}", podTemplateYaml);
     return templateFile;
+  }
+
+  private static String toPodTemplateYaml(V1Pod v1Pod) {
+    // client-java models initialize map fields to empty maps, while Yaml.CustomRepresenter only
+    // omits nulls and empty lists. Subclass it so pod templates do not emit empty map fields, and
+    // mirror io.kubernetes.client.util.Yaml's DumperOptions because Yaml(Representer) is
+    // deprecated in SnakeYAML 2.
+    Yaml.CustomRepresenter representer = new Yaml.CustomRepresenter() {
+      @Override
+      protected NodeTuple representJavaBeanProperty(Object javaBean, Property property,
+          Object propertyValue, Tag customTag) {
+        if (propertyValue instanceof Map && ((Map<?, ?>) propertyValue).isEmpty()) {
+          return null;
+        }
+        return super.representJavaBeanProperty(javaBean, property, propertyValue, customTag);
+      }
+    };
+    DumperOptions dumperOptions = new DumperOptions();
+    dumperOptions.setDefaultFlowStyle(representer.getDefaultFlowStyle());
+    dumperOptions.setDefaultScalarStyle(representer.getDefaultScalarStyle());
+    dumperOptions.setAllowReadOnlyProperties(
+        representer.getPropertyUtils().isAllowReadOnlyProperties());
+    dumperOptions.setTimeZone(representer.getTimeZone());
+    return new org.yaml.snakeyaml.Yaml(representer, dumperOptions).dump(v1Pod);
   }
 
   /**
