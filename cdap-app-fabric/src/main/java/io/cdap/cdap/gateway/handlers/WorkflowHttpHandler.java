@@ -61,6 +61,11 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.security.ApplicationPermission;
+import io.cdap.cdap.proto.security.Permission;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -104,13 +109,18 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   private final DatasetFramework datasetFramework;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final AccessEnforcer accessEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
-      DatasetFramework datasetFramework) {
+      DatasetFramework datasetFramework, AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
     this.datasetFramework = datasetFramework;
     this.store = store;
     this.runtimeService = runtimeService;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   @POST
@@ -119,6 +129,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
       @PathParam("workflow-name") String workflowName,
       @PathParam("run-id") String runId) throws Exception {
+    enforce(namespaceId, appId, workflowName, ApplicationPermission.EXECUTE);
     ProgramController controller = getProgramController(namespaceId, appId, workflowName, runId);
     if (controller.getState() == ProgramController.State.SUSPENDED) {
       throw new ConflictException("Program run already suspended");
@@ -133,6 +144,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
       @PathParam("workflow-name") String workflowName,
       @PathParam("run-id") String runId) throws Exception {
+    enforce(namespaceId, appId, workflowName, ApplicationPermission.EXECUTE);
     ProgramController controller = getProgramController(namespaceId, appId, workflowName, runId);
     if (controller.getState() == ProgramController.State.ALIVE) {
       throw new ConflictException("Program is already running");
@@ -168,6 +180,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("run-id") String runId,
       @QueryParam("scope") @DefaultValue("user") String scope,
       @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
+    enforce(namespaceId, appId, workflowId, StandardPermission.GET);
     WorkflowToken workflowToken = getWorkflowToken(namespaceId, appId, workflowId, runId);
     WorkflowToken.Scope tokenScope = WorkflowToken.Scope.valueOf(scope.toUpperCase());
     WorkflowTokenDetail workflowTokenDetail = WorkflowTokenDetail.of(
@@ -198,6 +211,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("node-id") String nodeId,
       @QueryParam("scope") @DefaultValue("user") String scope,
       @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
+    enforce(namespaceId, appId, workflowId, StandardPermission.GET);
     WorkflowToken workflowToken = getWorkflowToken(namespaceId, appId, workflowId, runId);
     WorkflowToken.Scope tokenScope = WorkflowToken.Scope.valueOf(scope.toUpperCase());
     Map<String, Value> workflowTokenFromNode = workflowToken.getAllFromNode(nodeId, tokenScope);
@@ -237,6 +251,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("workflow-id") String workflowId,
       @PathParam("run-id") String runId)
       throws NotFoundException {
+    enforce(namespaceId, applicationId, workflowId, StandardPermission.GET);
     NamespaceId namespace = Ids.namespace(namespaceId);
     ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId,
         runId);
@@ -268,6 +283,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("workflow-id") String workflowId,
       @PathParam("run-id") String runId)
       throws NotFoundException, DatasetManagementException, UnauthorizedException {
+    enforce(namespaceId, applicationId, workflowId, StandardPermission.GET);
     WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId,
         workflowId, runId);
     Map<String, DatasetSpecificationSummary> localDatasetSummaries = new HashMap<>();
@@ -293,6 +309,7 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("app-id") String applicationId,
       @PathParam("workflow-id") String workflowId,
       @PathParam("run-id") String runId) throws NotFoundException {
+    enforce(namespaceId, applicationId, workflowId, ApplicationPermission.EXECUTE);
     WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId,
         workflowId, runId);
     Set<String> errorOnDelete = new HashSet<>();
@@ -319,6 +336,17 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
     String errorMessage =
         "Failed to delete Workflow local datasets - " + Joiner.on(",").join(errorOnDelete);
     throw new RuntimeException(errorMessage);
+  }
+
+  /**
+   * Enforces the given permission on the workflow program, irrespective of the application
+   * version (authorization is not version aware).
+   */
+  private void enforce(String namespaceId, String applicationId, String workflowId,
+      Permission permission) {
+    ProgramId programId = Ids.namespace(namespaceId).appReference(applicationId)
+        .program(ProgramType.WORKFLOW, workflowId).id(ApplicationId.DEFAULT_VERSION);
+    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), permission);
   }
 
   /**

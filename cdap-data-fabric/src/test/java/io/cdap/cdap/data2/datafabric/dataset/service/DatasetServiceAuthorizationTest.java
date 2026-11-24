@@ -29,6 +29,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -42,6 +43,7 @@ import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
 import io.cdap.cdap.security.authorization.RoleController;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -49,6 +51,7 @@ import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -189,6 +192,69 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   }
 
   @Test
+  public void testSystemDatasets() throws Exception {
+    // datasets in the system namespace or with reserved system names are not exempt from authorization
+    DatasetInstanceConfiguration config = new DatasetInstanceConfiguration(Table.class.getName(),
+                                                                           Collections.emptyMap());
+    DatasetId reservedDsId = NamespaceId.DEFAULT.dataset("system.queue.myds");
+    SecurityRequestContext.setUserId(BOB.getName());
+    assertAuthorizationFailure(() -> instanceService.create(NamespaceId.SYSTEM.getNamespace(), "sysds", config),
+                               "Bob should not be able to create a dataset in the system namespace");
+    assertAuthorizationFailure(() -> instanceService.create(NamespaceId.DEFAULT.getNamespace(),
+                                                            reservedDsId.getDataset(), config),
+                               "Bob should not be able to create a dataset with a reserved name");
+
+    // the CDAP master user is still allowed to manage datasets in the system namespace
+    String masterUser = AuthorizationUtil.getEffectiveMasterUser(injector.getInstance(CConfiguration.class));
+    SecurityRequestContext.setUserId(masterUser);
+    instanceService.create(NamespaceId.SYSTEM.getNamespace(), "sysds", config);
+
+    DatasetId systemDsId = NamespaceId.SYSTEM.dataset("sysds");
+    SecurityRequestContext.setUserId(BOB.getName());
+    assertAuthorizationFailure(() -> instanceService.get(systemDsId), "Bob should not be able to get " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.getOriginalProperties(systemDsId),
+                               "Bob should not be able to get original properties of " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.update(systemDsId, Collections.emptyMap()),
+                               "Bob should not be able to update " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.executeAdmin(systemDsId, "exists"),
+                               "Bob should not be able to check existence of " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.executeAdmin(systemDsId, "truncate"),
+                               "Bob should not be able to truncate " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.executeAdmin(systemDsId, "upgrade"),
+                               "Bob should not be able to upgrade " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.drop(systemDsId), "Bob should not be able to drop " + systemDsId);
+    assertAuthorizationFailure(() -> instanceService.dropAll(NamespaceId.SYSTEM),
+                               "Bob should not be able to drop all datasets in the system namespace");
+    assertAuthorizationFailure(() -> instanceService.get(reservedDsId),
+                               "Bob should not be able to get " + reservedDsId);
+    assertAuthorizationFailure(() -> instanceService.getOriginalProperties(reservedDsId),
+                               "Bob should not be able to get original properties of " + reservedDsId);
+    assertAuthorizationFailure(() -> instanceService.update(reservedDsId, Collections.emptyMap()),
+                               "Bob should not be able to update " + reservedDsId);
+
+    // CREATE on a reserved-name dataset still requires SET_OWNER when ownerPrincipal is specified
+    grantAndAssertSuccess(reservedDsId, BOB, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
+    DatasetInstanceConfiguration impersonatedConfig = new DatasetInstanceConfiguration(
+        Table.class.getName(), Collections.emptyMap(), null, "victim@EXAMPLE.COM");
+    assertAuthorizationFailure(() -> instanceService.create(NamespaceId.DEFAULT.getNamespace(),
+                                                            reservedDsId.getDataset(), impersonatedConfig),
+                               "Bob should not be able to impersonate an owner on " + reservedDsId);
+
+    // dropAll in a user namespace must still require DELETE on reserved-name datasets
+    instanceService.create(NamespaceId.DEFAULT.getNamespace(), reservedDsId.getDataset(), config);
+    Assert.assertNotNull(instanceService.get(reservedDsId));
+    assertAuthorizationFailure(() -> instanceService.dropAll(NamespaceId.DEFAULT),
+                               "Bob should not be able to dropAll without DELETE on " + reservedDsId);
+
+    grantAndAssertSuccess(reservedDsId, BOB, EnumSet.of(StandardPermission.DELETE));
+    instanceService.drop(reservedDsId);
+
+    SecurityRequestContext.setUserId(masterUser);
+    instanceService.drop(systemDsId);
+    SecurityRequestContext.setUserId(BOB.getName());
+  }
+
+  @Test
   public void testNotFound() throws Exception {
     final DatasetId nonExistingInstance = NamespaceId.DEFAULT.dataset("notfound");
     final DatasetModuleId nonExistingModule = NamespaceId.DEFAULT.datasetModule("notfound");
@@ -254,6 +320,15 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     grantAndAssertSuccess(type1x, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET,
                                                     StandardPermission.DELETE));
     grantAndAssertSuccess(datasetId, ALICE, EnumSet.allOf(StandardPermission.class));
+    dsFramework.addModule(module1, new TestModule1x(), moduleJar);
+    // overwriting an existing module requires UPDATE in addition to CREATE
+    SecurityRequestContext.setUserId(BOB.getName());
+    grantAndAssertSuccess(module1, BOB, EnumSet.of(StandardPermission.CREATE));
+    assertAuthorizationFailure(
+      () -> dsFramework.addModule(module1, new TestModule1x(), moduleJar),
+      String.format("Expected module overwrite to fail for %s because he does not have %s on %s",
+                    BOB, StandardPermission.UPDATE, module1));
+    SecurityRequestContext.setUserId(ALICE.getName());
     dsFramework.addModule(module1, new TestModule1x(), moduleJar);
     // all operations on module1 should succeed as alice
     Assert.assertNotNull(dsFramework.getTypeInfo(type1));

@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.DatasetModuleNotFoundException;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
@@ -88,6 +89,10 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
     final Principal principal = authenticationContext.getPrincipal();
     // enforce that the principal has CREATE access on the dataset module
     accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.CREATE);
+    // overwriting an existing dataset module additionally requires UPDATE access on it
+    if (moduleExists(datasetModuleId)) {
+      accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.UPDATE);
+    }
     return delegate.addModule(datasetModuleId, className, forceUpdate);
   }
 
@@ -124,5 +129,14 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
           StandardPermission.GET);
     }
     return delegate.getType(datasetTypeId);
+  }
+
+  private boolean moduleExists(DatasetModuleId datasetModuleId) throws Exception {
+    try {
+      delegate.getModule(datasetModuleId);
+      return true;
+    } catch (DatasetModuleNotFoundException e) {
+      return false;
+    }
   }
 }

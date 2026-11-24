@@ -36,6 +36,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -51,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Used to interact with the Scheduler. Performs authorization checks and other wrapper like
@@ -122,13 +124,15 @@ public class ProgramScheduleService {
    *     diabled
    * @throws BadRequestException if the schedule is invalid
    * @throws UnauthorizedException if the principal is not authorized as an admin operations on
-   *     the schedule app
+   *     the schedule app, or is not authorized to access a program referenced by a program
+   *     status trigger of the schedule
    * @throws Exception if any other errors occurred while performing the authorization
    *     enforcement check
    */
   public void add(ProgramSchedule schedule) throws Exception {
     accessEnforcer.enforce(schedule.getProgramId().getParent(),
         authenticationContext.getPrincipal(), ApplicationPermission.EXECUTE);
+    enforceTriggeringPrograms(schedule.getTrigger());
     scheduler.addSchedule(schedule);
   }
 
@@ -144,13 +148,15 @@ public class ProgramScheduleService {
    *     diabled
    * @throws BadRequestException if the update is invalid
    * @throws UnauthorizedException if the principal is not authorized as an admin operations on
-   *     the schedule program
+   *     the schedule program, or is not authorized to access a program referenced by a program
+   *     status trigger in the update
    * @throws Exception if any other errors occurred while performing the authorization
    *     enforcement check
    */
   public void update(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
     accessEnforcer.enforce(scheduleId.getParent(), authenticationContext.getPrincipal(),
         ApplicationPermission.EXECUTE);
+    enforceTriggeringPrograms(scheduleDetail.getTrigger());
     ProgramSchedule existing = scheduler.getSchedule(scheduleId);
 
     String description = Objects.firstNonNull(scheduleDetail.getDescription(),
@@ -273,7 +279,8 @@ public class ProgramScheduleService {
    *
    * @param programId the program that is in the trigger
    * @param statusSet statuses that are involved in the trigger
-   * @return schedules triggered by the given program statuses
+   * @return schedules triggered by the given program statuses, limited to the schedules whose
+   *     program is visible to the principal
    * @throws UnauthorizedException if the principal is not authorized to access the application
    * @throws Exception if any other errors occurred while performing the authorization
    *     enforcement check
@@ -287,7 +294,13 @@ public class ProgramScheduleService {
     for (String triggerKey : Schedulers.triggerKeysForProgramStatuses(programId, statusSet)) {
       schedules.addAll(scheduler.findSchedules(triggerKey));
     }
-    return schedules;
+    Set<ProgramId> schedulePrograms = schedules.stream()
+        .map(record -> record.getSchedule().getProgramId()).collect(Collectors.toSet());
+    Set<? extends EntityId> visiblePrograms = accessEnforcer.isVisible(schedulePrograms,
+        authenticationContext.getPrincipal());
+    return schedules.stream()
+        .filter(record -> visiblePrograms.contains(record.getSchedule().getProgramId()))
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -353,5 +366,16 @@ public class ProgramScheduleService {
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         ApplicationPermission.EXECUTE);
     scheduler.reEnableSchedules(namespaceId, startTimeMillis, endTimeMillis);
+  }
+
+  /**
+   * Enforces {@link StandardPermission#GET} on every program referenced by a program status
+   * trigger in the given trigger, recursing into composite triggers.
+   *
+   * @param trigger the trigger to check, can be {@code null}
+   */
+  private void enforceTriggeringPrograms(@Nullable Trigger trigger) {
+    Schedulers.enforceTriggeringPrograms(accessEnforcer, authenticationContext.getPrincipal(),
+        trigger, program -> true);
   }
 }

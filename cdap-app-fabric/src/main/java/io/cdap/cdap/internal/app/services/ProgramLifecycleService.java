@@ -254,7 +254,7 @@ public class ProgramLifecycleService {
   public long getProgramRunCount(ProgramReference programReference)
       throws Exception {
     ProgramId programId = getLatestProgramId(programReference);
-    return store.getProgramRunCount(programId);
+    return getProgramRunCount(programId);
   }
 
   /**

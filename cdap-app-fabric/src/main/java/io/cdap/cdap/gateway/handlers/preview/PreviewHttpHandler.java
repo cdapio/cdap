@@ -130,8 +130,11 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   @Path("/previews/{preview-id}/tracers")
   public void getTracers(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
-      @PathParam("preview-id") String previewId) {
+      @PathParam("preview-id") String previewId) throws Exception {
+    // Same authorization and existence check as the other preview read endpoints
+    validateAndGetAppId(namespaceId, previewId);
     // TODO Implement API in PreviewStore to get all the tracers.
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
   @GET

@@ -27,8 +27,10 @@ import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.capability.CapabilityReader;
+import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.metadata.MetadataValidator;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -105,6 +107,13 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     }
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
         StandardPermission.CREATE);
+    // Schedules triggered by programs of other applications expose the triggering run's
+    // information to this application, so the caller must be able to see those programs.
+    for (ScheduleCreationSpec schedule : specification.getProgramSchedules().values()) {
+      Schedulers.enforceTriggeringPrograms(accessEnforcer,
+          authenticationContext.getPrincipal(), schedule.getTrigger(),
+          program -> !program.getAppReference().equals(applicationId.getAppReference()));
+    }
     capabilityReader.checkAllEnabled(specification);
 
     Map<MetadataScope, Metadata> metadatas = appSpecInfo.getMetadata();

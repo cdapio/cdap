@@ -23,12 +23,17 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.store.StoreDefinition;
@@ -40,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import org.quartz.CronExpression;
 
 /**
@@ -145,6 +152,30 @@ public class Schedulers {
     } else {
       //Use the given cronExpression
       return cronEntry;
+    }
+  }
+
+  /**
+   * Enforces {@link StandardPermission#GET} for the given principal on every program referenced by
+   * a program status trigger in the given trigger that matches the filter, recursing into composite
+   * triggers.
+   *
+   * @param accessEnforcer the enforcer to use
+   * @param principal the principal to enforce on
+   * @param trigger the trigger to check, can be {@code null}
+   * @param filter selects the triggering programs to enforce on
+   */
+  public static void enforceTriggeringPrograms(AccessEnforcer accessEnforcer, Principal principal,
+      @Nullable Trigger trigger, Predicate<ProgramId> filter) {
+    if (trigger instanceof ProtoTrigger.ProgramStatusTrigger) {
+      ProgramId programId = ((ProtoTrigger.ProgramStatusTrigger) trigger).getProgramId();
+      if (filter.test(programId)) {
+        accessEnforcer.enforce(programId, principal, StandardPermission.GET);
+      }
+    } else if (trigger instanceof ProtoTrigger.AbstractCompositeTrigger) {
+      for (Trigger child : ((ProtoTrigger.AbstractCompositeTrigger<?>) trigger).getTriggers()) {
+        enforceTriggeringPrograms(accessEnforcer, principal, child, filter);
+      }
     }
   }
 }
