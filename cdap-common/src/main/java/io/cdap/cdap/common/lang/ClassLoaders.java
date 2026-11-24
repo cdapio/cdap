@@ -248,6 +248,13 @@ public final class ClassLoaders {
    * Returns the URLs listed in the {@code java.class.path} system property, in order. On Java 9+
    * this is how the URLs of {@link ClassLoader#getSystemClassLoader()} are found, since it is no
    * longer a {@link URLClassLoader}.
+   *
+   * <p>Each entry is converted with {@link File#toURI()}, so symlinks are kept as is and entries
+   * that do not exist are kept. Empty entries are skipped instead of being treated as the current
+   * directory. This differs from Java 8's {@code URLClassLoader.getURLs()}, which resolved
+   * symlinks and mapped empty entries to the current directory, and from
+   * {@link ClassPathResources#getClasspathUrls()}, which resolves symlinks and drops entries that
+   * do not exist.
    */
   public static List<URL> parseJavaClassPath() {
     ImmutableList.Builder<URL> urls = ImmutableList.builder();
