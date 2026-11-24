@@ -29,6 +29,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.DatasetModuleCannotBeDeletedException;
 import io.cdap.cdap.common.DatasetModuleNotFoundException;
 import io.cdap.cdap.common.DatasetTypeNotFoundException;
+import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -84,6 +85,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   private final TransactionSystemClientService txClientService;
   private final Map<String, DatasetModule> defaultModules;
   private final Map<String, DatasetModule> extensionModules;
+  private final boolean customModuleEnabled;
 
   @Inject
   @VisibleForTesting
@@ -104,6 +106,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     this.defaultModules = new LinkedHashMap<>(modules);
     this.extensionModules = getExtensionModules(cConf);
     this.transactionRunner = transactionRunner;
+    this.customModuleEnabled = cConf.getBoolean(Constants.Dataset.CUSTOM_MODULE_ENABLED);
   }
 
   @Override
@@ -161,6 +164,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
    * @param forceUpdate if true, an update will be allowed even if there are conflicts with
    *     other modules, or if removal of a type would break other modules' dependencies
    * @return a {@link BodyConsumer} to upload the module jar in chunks
+   * @throws ForbiddenException if custom dataset modules are disabled
    * @throws NotFoundException if the namespace in which the module is being added is not found
    * @throws IOException if there are issues while performing I/O like creating temporary
    *     directories, moving/unpacking module jar files
@@ -170,6 +174,14 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   @Override
   public BodyConsumer addModule(final DatasetModuleId datasetModuleId, final String className,
       final boolean forceUpdate) throws Exception {
+    // Reject before the module jar is uploaded, stored or loaded. Default and extension modules
+    // are added directly through the type manager on startup, so they are not affected.
+    if (!customModuleEnabled) {
+      throw new ForbiddenException(String.format(
+          "Cannot add dataset module '%s'. Custom dataset modules are disabled. "
+              + "Set '%s' to true to enable them.",
+          datasetModuleId, Constants.Dataset.CUSTOM_MODULE_ENABLED));
+    }
     NamespaceId namespaceId = datasetModuleId.getParent();
     ensureNamespaceExists(namespaceId);
 

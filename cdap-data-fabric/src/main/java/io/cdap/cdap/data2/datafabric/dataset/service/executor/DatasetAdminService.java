@@ -28,8 +28,10 @@ import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.api.dataset.Updatable;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetType;
@@ -39,6 +41,7 @@ import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import io.cdap.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -64,6 +67,7 @@ public class DatasetAdminService {
   private final LocationFactory locationFactory;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final Impersonator impersonator;
+  private final boolean customModuleEnabled;
 
   @Inject
   public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf,
@@ -74,6 +78,33 @@ public class DatasetAdminService {
     this.locationFactory = locationFactory;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.impersonator = impersonator;
+    this.customModuleEnabled = cConf.getBoolean(Constants.Dataset.CUSTOM_MODULE_ENABLED);
+  }
+
+  /**
+   * Rejects a dataset type that needs classes loaded from a module jar when custom dataset modules
+   * are disabled. System dataset modules are always on the classpath and never have a jar
+   * location, so they are not affected.
+   *
+   * @param datasetInstanceId the dataset instance the operation is for
+   * @param typeMeta the dataset type meta that came with the request
+   * @throws ForbiddenException if custom dataset modules are disabled and the type meta
+   *     references a module jar
+   */
+  private void ensureModuleJarsAllowed(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta)
+      throws ForbiddenException {
+    if (customModuleEnabled || typeMeta.getModules() == null) {
+      return;
+    }
+    for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+      if (moduleMeta != null && moduleMeta.getJarLocationPath() != null) {
+        throw new ForbiddenException(String.format(
+            "Dataset '%s' is of type '%s', which uses custom dataset module '%s'. "
+                + "Custom dataset modules are disabled. Set '%s' to true to enable them.",
+            datasetInstanceId, typeMeta.getName(), moduleMeta.getName(),
+            Constants.Dataset.CUSTOM_MODULE_ENABLED));
+      }
+    }
   }
 
   /**
@@ -90,6 +121,7 @@ public class DatasetAdminService {
       final DatasetProperties props,
       @Nullable final DatasetSpecification existing) throws Exception {
 
+    ensureModuleJarsAllowed(datasetInstanceId, typeMeta);
     if (existing == null) {
       LOG.info("Creating dataset instance {}, type meta: {}", datasetInstanceId, typeMeta);
     } else {
@@ -205,6 +237,7 @@ public class DatasetAdminService {
 
   public void drop(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
       final DatasetSpecification spec) throws Exception {
+    ensureModuleJarsAllowed(datasetInstanceId, typeMeta);
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     try (DatasetClassLoaderProvider classLoaderProvider =
         new DirectoryClassLoaderProvider(cConf, locationFactory)) {

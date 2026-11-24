@@ -1635,7 +1635,11 @@
     <name>dataset.custom.module.enabled</name>
     <value>true</value>
     <description>
-      Enable the support of custom dataset module
+      Enable the support of custom dataset module. If false, applications
+      that define custom dataset modules or types cannot be deployed, dataset
+      modules cannot be added through the dataset module REST API, and
+      dataset admin operations are rejected for dataset types that load
+      classes from a module jar. System dataset types are not affected
     </description>
   </property>
 
