@@ -14,6 +14,7 @@
 
 package io.cdap.cdap.internal.app.worker.sidecar;
 
+import com.google.common.util.concurrent.Striped;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
@@ -41,6 +42,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +84,7 @@ import org.slf4j.LoggerFactory;
 public class ArtifactLocalizer extends AbstractArtifactLocalizer {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactLocalizer.class);
+  private static final Striped<Lock> UNPACK_LOCKS = Striped.lock(64);
 
   private final CConfiguration cConf;
   private final ArtifactManagerFactory artifactManagerFactory;
@@ -136,25 +139,35 @@ public class ArtifactLocalizer extends AbstractArtifactLocalizer {
       return unpackDir;
     }
 
-    LOG.debug("Unpack directory doesn't exist, unpacking into {}", unpackDir);
+    Lock unpackLock = UNPACK_LOCKS.get(unpackDir.toPath().toAbsolutePath().normalize());
+    unpackLock.lock();
+    try {
+      if (unpackDir.exists()) {
+        LOG.debug("Found unpack directory as {}", unpackDir);
+        return unpackDir;
+      }
 
-    // Ensure the path leading to the unpack directory is created so we can create a temp directory
-    if (!DirUtils.mkdirs(unpackDir.getParentFile())) {
-      throw new IOException(
-          String.format("Failed to create one or more directories along the path %s",
-              unpackDir.getParentFile().getPath()));
+      LOG.debug("Unpack directory doesn't exist, unpacking into {}", unpackDir);
+
+      // Ensure the path leading to the unpack directory is created so we can create a temp directory
+      if (!DirUtils.mkdirs(unpackDir.getParentFile())) {
+        throw new IOException(
+            String.format("Failed to create one or more directories along the path %s",
+                unpackDir.getParentFile().getPath()));
+      }
+
+      // jarLocation is guaranteed to be a file; unpack into a sibling temp directory and atomically
+      // rename it so concurrent readers never observe a partially unpacked directory.
+      try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
+          jarLocation, () -> DirUtils.createTempDir(unpackDir.getParentFile()))) {
+        Files.move(classLoaderFolder.getDir().toPath(), unpackDir.toPath(),
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING);
+      }
+      return unpackDir;
+    } finally {
+      unpackLock.unlock();
     }
-
-    // It is guarantee that the jarLocation is a file, not a directory, as this is the class who cache unpacked
-    // artifact.
-    try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-        jarLocation, () -> DirUtils.createTempDir(unpackDir.getParentFile()))) {
-
-      Files.move(classLoaderFolder.getDir().toPath(), unpackDir.toPath(),
-          StandardCopyOption.ATOMIC_MOVE,
-          StandardCopyOption.REPLACE_EXISTING);
-    }
-    return unpackDir;
   }
 
   /**
