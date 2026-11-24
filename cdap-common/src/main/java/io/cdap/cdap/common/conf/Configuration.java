@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -48,6 +49,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -62,6 +64,7 @@ import org.w3c.dom.Comment;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
@@ -1668,23 +1671,81 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     }
   }
 
+  private static final String XINCLUDE_NS_URI = "http://www.w3.org/2001/XInclude";
+  private static final String XINCLUDE_2003_NS_URI = "http://www.w3.org/2003/XInclude";
+
+  private static DocumentBuilderFactory createDocumentBuilderFactory()
+      throws ParserConfigurationException {
+    DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+    // ignore all comments inside the xml file
+    docBuilderFactory.setIgnoringComments(true);
+    docBuilderFactory.setNamespaceAware(true);
+    docBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    docBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    docBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    docBuilderFactory.setFeature(
+        "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+    try {
+      docBuilderFactory.setXIncludeAware(false);
+    } catch (UnsupportedOperationException e) {
+      LOG.debug("Failed to set setXIncludeAware(false) for parser {}", docBuilderFactory, e);
+    }
+    docBuilderFactory.setExpandEntityReferences(false);
+    setAttributeQuietly(docBuilderFactory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    setAttributeQuietly(docBuilderFactory, XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+    return docBuilderFactory;
+  }
+
+  private static void setAttributeQuietly(
+      DocumentBuilderFactory factory, String name, Object value) {
+    try {
+      factory.setAttribute(name, value);
+    } catch (IllegalArgumentException | UnsupportedOperationException e) {
+      LOG.debug("XML attribute {} is not supported by {}", name, factory.getClass().getName(), e);
+    }
+  }
+
+  private static void rejectXinclude(Element element) throws SAXException {
+    String tagName = element.getTagName();
+    String nodeName = element.getNodeName();
+    if (isXincludeNamespace(element.getNamespaceURI())
+        || "xi:include".equalsIgnoreCase(tagName)
+        || "xi:include".equalsIgnoreCase(nodeName)
+        || (tagName != null && tagName.toLowerCase(Locale.ENGLISH).endsWith(":include"))
+        || (nodeName != null && nodeName.toLowerCase(Locale.ENGLISH).endsWith(":include"))) {
+      throw new SAXException("XInclude is not allowed in configuration resources");
+    }
+    NamedNodeMap attributes = element.getAttributes();
+    if (attributes != null) {
+      for (int i = 0; i < attributes.getLength(); i++) {
+        Node attr = attributes.item(i);
+        if (attr != null && isXincludeNamespace(attr.getNodeValue())) {
+          throw new SAXException("XInclude is not allowed in configuration resources");
+        }
+      }
+    }
+    NodeList children = element.getChildNodes();
+    for (int i = 0; i < children.getLength(); i++) {
+      Node child = children.item(i);
+      if (child instanceof Element) {
+        rejectXinclude((Element) child);
+      }
+    }
+  }
+
+  private static boolean isXincludeNamespace(@Nullable String uri) {
+    if (uri == null) {
+      return false;
+    }
+    String trimmed = uri.trim();
+    return XINCLUDE_NS_URI.equalsIgnoreCase(trimmed)
+        || XINCLUDE_2003_NS_URI.equalsIgnoreCase(trimmed);
+  }
+
   private void loadResource(Properties properties, Object name, boolean quiet) {
     try {
-      DocumentBuilderFactory docBuilderFactory
-          = DocumentBuilderFactory.newInstance();
-      //ignore all comments inside the xml file
-      docBuilderFactory.setIgnoringComments(true);
-
-      //allow includes in the xml file
-      docBuilderFactory.setNamespaceAware(true);
-      try {
-        docBuilderFactory.setXIncludeAware(true);
-      } catch (UnsupportedOperationException e) {
-        LOG.error("Failed to set setXIncludeAware(true) for parser "
-                + docBuilderFactory
-                + ":" + e,
-            e);
-      }
+      DocumentBuilderFactory docBuilderFactory = createDocumentBuilderFactory();
       DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
       Document doc = null;
       Element root = null;
@@ -1725,6 +1786,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       if (root == null) {
         root = doc.getDocumentElement();
       }
+      rejectXinclude(root);
       if (!"configuration".equals(root.getTagName())) {
         LOG.error("bad conf file: top-level element not <configuration>");
       }
@@ -1846,10 +1908,27 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     Document doc = asXmlDocument();
 
     try {
+      TransformerFactory transFactory = TransformerFactory.newInstance();
+      transFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      try {
+        transFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      } catch (IllegalArgumentException | UnsupportedOperationException e) {
+        LOG.debug(
+            "TransformerFactory attribute {} is not supported",
+            XMLConstants.ACCESS_EXTERNAL_DTD,
+            e);
+      }
+      try {
+        transFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+      } catch (IllegalArgumentException | UnsupportedOperationException e) {
+        LOG.debug(
+            "TransformerFactory attribute {} is not supported",
+            XMLConstants.ACCESS_EXTERNAL_STYLESHEET,
+            e);
+      }
+      Transformer transformer = transFactory.newTransformer();
       DOMSource source = new DOMSource(doc);
       StreamResult result = new StreamResult(out);
-      TransformerFactory transFactory = TransformerFactory.newInstance();
-      Transformer transformer = transFactory.newTransformer();
 
       // Important to not hold Configuration log while writing result, since
       // 'out' may be an HDFS stream which needs to lock this configuration
@@ -1866,8 +1945,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   private synchronized Document asXmlDocument() throws IOException {
     Document doc;
     try {
-      doc =
-          DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+      doc = createDocumentBuilderFactory().newDocumentBuilder().newDocument();
     } catch (ParserConfigurationException pe) {
       throw new IOException(pe);
     }
