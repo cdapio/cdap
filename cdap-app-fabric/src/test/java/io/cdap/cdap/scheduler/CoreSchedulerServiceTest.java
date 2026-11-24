@@ -329,8 +329,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     waitUntilProcessed(dataEventTopic, minPublishTime);
     // Wait for 1 run to complete for compositeWorkflow
     waitForCompleteRuns(1, compositeWorkflow);
+    disableSchedule(appId, AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);
+    disableSchedule(appId, AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_2);
+    disableSchedule(appId, AppWithFrequentScheduledWorkflows.COMPOSITE_SCHEDULE);
 
-    for (RunRecordDetail runRecordMeta : store.getRuns(scheduledWorkflow1, ProgramRunStatus.ALL,
+    for (RunRecordDetail runRecordMeta : store.getRuns(scheduledWorkflow1, ProgramRunStatus.COMPLETED,
                                                        0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
       Map<String, String> sysArgs = runRecordMeta.getSystemArgs();
       Assert.assertNotNull(sysArgs);
