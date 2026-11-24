@@ -15,8 +15,8 @@
 # Inlined into the remote launch script by RemoteExecutionTwillPreparer.
 # Picks the java command (JAVA_HOME first, then PATH) and exits unless it is
 # Java 11 or later. Lines such as "Picked up JAVA_TOOL_OPTIONS: ..." can come
-# before the version line and are skipped.
-if [ -n "${JAVA_HOME}" ] && [ -x "${JAVA_HOME}/bin/java" ]; then
+# before the version line and are skipped. Safe to run under "set -u".
+if [ -n "${JAVA_HOME:-}" ] && [ -x "${JAVA_HOME}/bin/java" ]; then
   JAVA_CMD="${JAVA_HOME}/bin/java"
 else
   JAVA_CMD="java"

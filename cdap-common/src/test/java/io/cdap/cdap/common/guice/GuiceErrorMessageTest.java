@@ -37,11 +37,9 @@ public class GuiceErrorMessageTest {
   }
 
   private static final class UnboundConsumer {
-    private final UnboundDependency dependency;
-
     @Inject
     UnboundConsumer(UnboundDependency dependency) {
-      this.dependency = dependency;
+      // Never called: the test only needs Guice to fail to resolve the dependency.
     }
   }
 

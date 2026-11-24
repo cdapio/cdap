@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.distributed;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
@@ -170,15 +169,41 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   /**
-   * Sets a default DNS cache TTL unless the user already set one. Without an explicit TTL,
+   * Sets a default DNS cache TTL unless the user already set a valid one. Without a valid TTL,
    * {@code InetAddressCachePolicy} caches DNS lookups forever once a {@link SecurityManager} is
    * installed, so this must run before {@link System#setSecurityManager}. See CDAP-20781.
+   *
+   * <p>The properties are parsed the same way as {@code sun.net.InetAddressCachePolicy}: a value
+   * that is not an integer is ignored, so it gets the 30 second default instead of FOREVER.
    */
   @VisibleForTesting
   static void initializeDnsCachePolicy() {
-    if (Strings.nullToEmpty(Security.getProperty(NETWORKADDRESS_CACHE_TTL)).trim().isEmpty()
-        && Strings.nullToEmpty(System.getProperty(SUN_NET_INETADDR_TTL)).trim().isEmpty()) {
+    // Security.getProperty() trims the value, System.getProperty() does not.
+    Integer ttl = parseDnsCacheTtl(Security.getProperty(NETWORKADDRESS_CACHE_TTL), false);
+    if (ttl == null) {
+      ttl = parseDnsCacheTtl(System.getProperty(SUN_NET_INETADDR_TTL), true);
+    }
+    if (ttl == null) {
       Security.setProperty(NETWORKADDRESS_CACHE_TTL, DEFAULT_DNS_CACHE_TTL_SECONDS);
+    } else if (ttl < 0) {
+      LOG.warn("InetAddress cache policy is set to FOREVER ({}). IPs will be cached forever. "
+          + "Ensure cache policy is not set to FOREVER.", ttl);
+    }
+  }
+
+  /**
+   * Parses a DNS cache TTL property like {@code sun.net.InetAddressCachePolicy} does, returning
+   * {@code null} if the value is missing or is not an integer.
+   */
+  @Nullable
+  private static Integer parseDnsCacheTtl(@Nullable String value, boolean decode) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      return decode ? Integer.decode(value) : Integer.valueOf(value);
+    } catch (NumberFormatException e) {
+      return null;
     }
   }
 
