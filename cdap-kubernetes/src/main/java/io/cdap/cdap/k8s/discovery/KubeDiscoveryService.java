@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -354,9 +353,9 @@ public class KubeDiscoveryService implements DiscoveryService,
     if (!expectedServiceType.equals(currentServiceType)) {
       return true;
     }
-    Integer port = servicePort.getPort();
+    int port = servicePort.getPort();
     // If the port has changed, we need to update.
-    if (port == null || port != discoverable.getSocketAddress().getPort()) {
+    if (port != discoverable.getSocketAddress().getPort()) {
       return true;
     }
     if (hasOwnerReferencesChanged(currentService, ownerReferences)) {
@@ -562,7 +561,6 @@ public class KubeDiscoveryService implements DiscoveryService,
             name, hostname,
             port, payload)
         )
-        .filter(Objects::nonNull)
         .findFirst()
         .map(Collections::singleton)
         .orElse(Collections.emptySet());
@@ -587,12 +585,10 @@ public class KubeDiscoveryService implements DiscoveryService,
    * @param servicePort the service port exposed by the service
    * @return a {@link Discoverable}
    */
-  @Nullable
   private Discoverable createDiscoverable(String name,
       String host, V1ServicePort servicePort, byte[] payload) {
-    Integer port = servicePort.getPort();
-    return port == null ? null : new Discoverable(name,
-        InetSocketAddress.createUnresolved(host, port),
+    return new Discoverable(name,
+        InetSocketAddress.createUnresolved(host, servicePort.getPort()),
         payload);
   }
 

@@ -86,10 +86,10 @@ public class KubeTwillRunnerServiceTest {
         mock(RbacAuthorizationV1Api.APIcreateClusterRoleBindingRequest.class);
 
     when(coreV1Api.createNamespace(any())).thenReturn(createNamespaceRequest);
-    when(deleteNamespaceRequest.gracePeriodSeconds(eq(0))).thenReturn(deleteNamespaceRequest);
-    when(deleteNamespaceRequest.propagationPolicy(eq("Background")))
+    when(deleteNamespaceRequest.gracePeriodSeconds(0)).thenReturn(deleteNamespaceRequest);
+    when(deleteNamespaceRequest.propagationPolicy("Background"))
         .thenReturn(deleteNamespaceRequest);
-    when(coreV1Api.deleteNamespace(eq(KUBE_NAMESPACE))).thenReturn(deleteNamespaceRequest);
+    when(coreV1Api.deleteNamespace(KUBE_NAMESPACE)).thenReturn(deleteNamespaceRequest);
     when(coreV1Api.createNamespacedServiceAccount(eq(KUBE_NAMESPACE), any()))
         .thenReturn(createSaRequest);
     when(coreV1Api.createNamespacedConfigMap(eq(KUBE_NAMESPACE), any()))
@@ -146,7 +146,7 @@ public class KubeTwillRunnerServiceTest {
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
     V1Namespace returnedNamespace = new V1Namespace().metadata(new V1ObjectMeta().name(KUBE_NAMESPACE));
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute()).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
@@ -163,7 +163,7 @@ public class KubeTwillRunnerServiceTest {
     V1ObjectMeta returnedMeta = new V1ObjectMeta().name(KUBE_NAMESPACE)
       .putLabelsItem("cdap.namespace", "wrong namespace");
     V1Namespace returnedNamespace = new V1Namespace().metadata(returnedMeta);
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute()).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
@@ -195,7 +195,7 @@ public class KubeTwillRunnerServiceTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
@@ -222,7 +222,7 @@ public class KubeTwillRunnerServiceTest {
 
     // throw ApiException when coreV1Api.readNamespace() is called in findOrCreateKubeNamespace()
     // return returnedNamespace when coreV1Api.readNamespace() is called in deleteKubeNamespace()
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"))
         .thenReturn(returnedNamespace);
@@ -252,7 +252,7 @@ public class KubeTwillRunnerServiceTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
@@ -266,7 +266,7 @@ public class KubeTwillRunnerServiceTest {
   public void testOnNamespaceDeletionSkipsUnlabeledNamespace() throws Exception {
     NamespaceDetail detail = new NamespaceDetail(CDAP_NAMESPACE,
         Collections.singletonMap(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE));
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenReturn(new V1Namespace().metadata(new V1ObjectMeta().name(KUBE_NAMESPACE)));
 
@@ -288,10 +288,10 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config")))
+    when(coreV1Api.readNamespacedConfigMap(KUBE_NAMESPACE, "workload-identity-config"))
         .thenReturn(readConfigMapRequest);
     when(readConfigMapRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
@@ -315,10 +315,10 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config")))
+    when(coreV1Api.readNamespacedConfigMap(KUBE_NAMESPACE, "workload-identity-config"))
         .thenReturn(readConfigMapRequest);
     when(readConfigMapRequest.execute())
         .thenReturn(new V1ConfigMap().metadata(new V1ObjectMeta().name("workload-identity-config")
@@ -342,7 +342,7 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     when(coreV1Api.readNamespacedConfigMap(any(), any())).thenReturn(readConfigMapRequest);
@@ -362,10 +362,10 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config")))
+    when(coreV1Api.readNamespacedConfigMap(KUBE_NAMESPACE, "workload-identity-config"))
         .thenReturn(readConfigMapRequest);
     when(readConfigMapRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
@@ -382,7 +382,7 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE))).thenReturn(readNamespaceRequest);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
     when(readNamespaceRequest.execute())
         .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {

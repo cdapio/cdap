@@ -347,7 +347,7 @@ public class KubeMasterEnvironmentTest {
   private String readPodTemplateYamlWithoutEmptyMaps(File file) throws IOException {
     String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
     Assert.assertFalse(
-        String.format("Pod template YAML should not contain empty maps:\n%s", content),
+        String.format("Pod template YAML should not contain empty maps:%n%s", content),
         content.contains("{}"));
     return content;
   }
