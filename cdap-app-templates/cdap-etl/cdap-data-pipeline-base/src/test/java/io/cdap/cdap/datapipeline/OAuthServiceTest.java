@@ -17,14 +17,17 @@ package io.cdap.cdap.datapipeline;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
+import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshType;
 import io.cdap.cdap.security.store.SecureStoreService;
+import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -38,13 +41,16 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
@@ -55,10 +61,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   private static final Gson GSON = new GsonBuilder()
       .setPrettyPrinting()
       .create();
+  @ClassRule
+  public static final TestConfiguration AUTH_CONFIG = new TestConfiguration().enableAuthorization(TMP_FOLDER);
 
   private NettyHttpService mockOAuthServer;
   private String mockTokenUrl;
   private int mockTokenPort;
+  private String user;
 
   public static final class MockTokenHandler extends AbstractHttpHandler {
     @POST
@@ -122,6 +131,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Before
   public void setUpMockServer() throws Exception {
+    user = null;
     setupMockSecureStoreLeasing();
     mockOAuthServer = NettyHttpService.builder("mock-oauth-server")
         .setHost("localhost")
@@ -370,8 +380,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     URL url = serviceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.DELETE, url).build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE, url);
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   @Test
@@ -494,8 +507,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     URL url = serviceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   private <T> T makeGetCall(String endpoint, Class<T> clazz) throws IOException {
@@ -508,10 +524,12 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     URL url = serviceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, url)
-        .withBody(GSON.toJson(body))
-        .build();
-    return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, url)
+        .withBody(GSON.toJson(body));
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   @Test
@@ -602,5 +620,36 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     Assert.assertEquals(200, response.getResponseCode());
     String body = response.getResponseBodyAsString();
     Assert.assertTrue(body.replaceAll("\\s+", "").contains("\"isValid\":false"));
+  }
+
+  @Test
+  public void testEndpointsRequireAuthorization() throws Exception {
+    String provider = "provider/authProvider";
+    String credential = provider + "/credential/cred1";
+    String loginUrl = "http://localhost:" + mockTokenPort + "/login";
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(provider,
+        createPutRequest(loginUrl, mockTokenUrl, "clientid", "clientsecret")).getResponseCode());
+
+    // A user without permissions on the backing secure keys gets 403 from every endpoint
+    user = "alice";
+    int[] codes = {
+        makeGetCall(provider + "/authurl").getResponseCode(),
+        makePutCall(provider + "?reuse_client_credentials=true",
+            createPutRequest("http://attacker.example.com/login", mockTokenUrl, null, null)).getResponseCode(),
+        makeDeleteCall(provider + "?preserve_client_credentials=true").getResponseCode(),
+        makePutCall(credential, new PutOAuthCredentialRequest("mock_code", "http://redirect", null))
+            .getResponseCode(),
+        makeGetCall(credential).getResponseCode(),
+        makeGetCall(credential + "/valid").getResponseCode(),
+    };
+    int[] expected = new int[codes.length];
+    Arrays.fill(expected, HttpURLConnection.HTTP_FORBIDDEN);
+    Assert.assertArrayEquals(expected, codes);
+
+    // The provider was neither hijacked nor deleted
+    user = null;
+    HttpResponse authUrl = makeGetCall(provider + "/authurl");
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, authUrl.getResponseCode());
+    Assert.assertEquals(loginUrl + "?client_id=clientid&redirect_uri=null", authUrl.getResponseBodyAsString());
   }
 }
