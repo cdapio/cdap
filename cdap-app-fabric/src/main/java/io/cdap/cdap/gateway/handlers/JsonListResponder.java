@@ -83,7 +83,8 @@ public abstract class JsonListResponder {
       prepareWrite();
       gson.toJson(value, value.getClass(), jsonWriter);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

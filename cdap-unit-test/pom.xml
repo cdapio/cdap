@@ -37,6 +37,10 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.cdap</groupId>
       <artifactId>cdap-test</artifactId>
       <version>${project.version}</version>

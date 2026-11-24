@@ -19,6 +19,8 @@ package io.cdap.cdap.internal.app.program;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -156,5 +158,48 @@ public class MessagingProgramStatePublisherTest {
     Mockito.verify(messagingService).publish(storeRequestCaptor.capture());
     StoreRequest storeRequest = storeRequestCaptor.getValue();
     Assert.assertEquals("programstatusevent", storeRequest.getTopicId().getTopic());
+  }
+
+  @Test
+  public void testPublishPropagatesServiceUnavailableExceptionUnwrapped()
+      throws TopicNotFoundException, IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
+    cConf.setInt("system.program.state.retry.policy.max.retries", 1);
+
+    MessagingService mockMessaging = Mockito.mock(MessagingService.class);
+    MessagingProgramStatePublisher publisher =
+        new MessagingProgramStatePublisher(cConf, mockMessaging);
+    ServiceUnavailableException expected = new ServiceUnavailableException("messaging");
+    Mockito.when(mockMessaging.publish(Mockito.any())).thenThrow(expected);
+
+    try {
+      publisher.publish(Notification.Type.PROGRAM_STATUS, ImmutableMap.of());
+      Assert.fail("Expected ServiceUnavailableException");
+    } catch (RuntimeException actual) {
+      Assert.assertSame(expected, actual);
+    }
+    Mockito.verify(mockMessaging, Mockito.times(2)).publish(Mockito.any());
+  }
+
+  @Test
+  public void testPublishPropagatesAccessExceptionUnwrapped()
+      throws TopicNotFoundException, IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
+
+    MessagingService mockMessaging = Mockito.mock(MessagingService.class);
+    MessagingProgramStatePublisher publisher =
+        new MessagingProgramStatePublisher(cConf, mockMessaging);
+    AccessException expected = new AccessException("access denied");
+    Mockito.when(mockMessaging.publish(Mockito.any())).thenThrow(expected);
+
+    try {
+      publisher.publish(Notification.Type.PROGRAM_STATUS, ImmutableMap.of());
+      Assert.fail("Expected AccessException");
+    } catch (RuntimeException actual) {
+      Assert.assertSame(expected, actual);
+    }
+    Mockito.verify(mockMessaging, Mockito.times(1)).publish(Mockito.any());
   }
 }

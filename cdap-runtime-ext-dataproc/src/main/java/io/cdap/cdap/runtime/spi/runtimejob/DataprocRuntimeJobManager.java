@@ -74,10 +74,12 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -138,6 +140,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
       Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR)
   );
+  @VisibleForTesting
+  public static final String CDAP_BUILD_TIME_METADATA_KEY = "cdap.build.time";
   private static final int SNAPSHOT_EXPIRE_DAYS = 7;
   private static final int EXPIRE_DAYS = 730;
 
@@ -547,7 +551,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Upload cacheable files uploads the file to GCS if the file does not exists. Once uploaded, it
    * also sets custom time on the object.
    */
-  private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
+  @VisibleForTesting
+  public LocalFile uploadCacheableFile(String bucket, String targetFilePath,
       LocalFile localFile)
       throws IOException, StorageException {
     Storage storage = getStorageClient();
@@ -557,10 +562,14 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     if (blob != null && blob.exists()) {
       if (artifactsCacheablePerCDAPVersion.contains(localFile.getName())
-          && (blob.getUpdateTime() < cdapVersionInfo.getBuildTime())) {
-        // if the GCS object modification time is older than the build time, replace the artifact.
+          && shouldReplaceCachedArtifact(blob)) {
+        // Replace cached artifact if its upload predates buildTime or lacks matching build metadata
+        // (for instance after upgrading/rolling back between builds of the same CDAP version).
+        Map<String, String> metadata = blob.getMetadata() == null
+            ? new LinkedHashMap<>() : new LinkedHashMap<>(blob.getMetadata());
+        metadata.put(CDAP_BUILD_TIME_METADATA_KEY, String.valueOf(cdapVersionInfo.getBuildTime()));
         BlobInfo newBlobInfo =
-            blob.toBuilder().setCustomTime(getCustomTime()).build();
+            blob.toBuilder().setCustomTime(getCustomTime()).setMetadata(metadata).build();
         try {
           LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{}",
               localFile.getSize(), localFile.getURI(), bucket, targetFilePath);
@@ -611,6 +620,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       long customTime = System.currentTimeMillis();
       if (artifactsCacheablePerCDAPVersion.contains(localFile.getName())) {
         customTime = getCustomTime();
+        blobInfoBuilder.setMetadata(
+            Collections.singletonMap(
+                CDAP_BUILD_TIME_METADATA_KEY, String.valueOf(cdapVersionInfo.getBuildTime())));
       }
       blobInfoBuilder.setCustomTime(customTime);
     }
@@ -673,6 +685,16 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
         localFile.getLastModified(), localFile.getSize(),
         localFile.isArchive(), localFile.getPattern());
+  }
+
+  private boolean shouldReplaceCachedArtifact(Blob blob) {
+    Long updateTime = blob.getUpdateTime();
+    if (updateTime == null || updateTime < cdapVersionInfo.getBuildTime()) {
+      return true;
+    }
+    Map<String, String> metadata = blob.getMetadata();
+    String cachedBuildTime = metadata == null ? null : metadata.get(CDAP_BUILD_TIME_METADATA_KEY);
+    return !Objects.equals(String.valueOf(cdapVersionInfo.getBuildTime()), cachedBuildTime);
   }
 
   private long getCustomTime() {

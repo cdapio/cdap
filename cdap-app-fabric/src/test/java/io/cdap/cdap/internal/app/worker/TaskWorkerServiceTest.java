@@ -102,7 +102,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
     this.taskWorkerService = taskWorkerService;
     securityManager = System.getSecurityManager();
     System.setSecurityManager(new NoExitSecurityManager());
@@ -111,7 +111,7 @@ public class TaskWorkerServiceTest {
   @After
   public void afterTest() {
     if (taskWorkerService != null) {
-      taskWorkerService.stopAndWait();
+      taskWorkerService.stopAsync().awaitTerminated();
       taskWorkerService = null;
     }
     System.setSecurityManager(securityManager);
@@ -132,7 +132,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
 
     TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
@@ -153,7 +153,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
 
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
@@ -196,7 +196,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
 
     new Thread(
         () -> {
@@ -241,7 +241,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
 
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
@@ -367,7 +367,7 @@ public class TaskWorkerServiceTest {
         createSConf(), discoveryService, discoveryService,
         metricsCollectionService,
         new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
@@ -410,7 +410,7 @@ public class TaskWorkerServiceTest {
     } catch (TimeoutException e) {
       // ignore.
     }
-    taskWorkerService.stopAndWait();
+    taskWorkerService.stopAsync().awaitTerminated();
     Assert.assertEquals(2, okResponse);
     Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
@@ -430,7 +430,7 @@ public class TaskWorkerServiceTest {
         new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));

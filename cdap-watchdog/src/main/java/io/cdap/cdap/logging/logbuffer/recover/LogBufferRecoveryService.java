@@ -115,8 +115,12 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    if (reader != null) {
-      reader.close();
+    try {
+      if (reader != null) {
+        reader.close();
+      }
+    } finally {
+      startCleanup.set(true);
     }
   }
 
@@ -127,7 +131,7 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return SERVICE_NAME;
   }
 

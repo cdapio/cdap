@@ -46,10 +46,16 @@ import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -57,6 +63,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 public class LogFileManagerTest {
@@ -96,14 +103,14 @@ public class LogFileManagerTest {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     StoreDefinition.LogFileMetaStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
   public static void cleanUp() {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -132,6 +139,87 @@ public class LogFileManagerTest {
     LogFileOutputStream newLogOutStream = logFileManager.getLogFileOutputStream(logPathIdentifier, timestamp);
     // make sure the new location we got is different
     Assert.assertNotEquals(outputStream.getLocation(), newLogOutStream.getLocation());
+  }
+
+  @Test
+  public void testMetadataWriteFailureClosesQuietlyAndDeletesFile() throws Exception {
+    FileMetaDataWriter failingMetaWriter = Mockito.mock(FileMetaDataWriter.class);
+    IOException metaError = new IOException("metadata write failed");
+    Mockito.doThrow(metaError).when(failingMetaWriter)
+        .writeMetaData(Mockito.any(LogPathIdentifier.class), Mockito.anyLong(),
+            Mockito.anyLong(), Mockito.any(Location.class));
+
+    LocalLocationFactory localLocationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    LogFileManager manager = new LogFileManager(
+        "", "", 60000L, 1048576L, 1024, failingMetaWriter, localLocationFactory);
+    LogPathIdentifier identifier = new LogPathIdentifier("ns1", "app1", "worker1");
+    long now = System.currentTimeMillis();
+
+    try {
+      manager.getLogFileOutputStream(identifier, now);
+      Assert.fail("Expected IOException when FileMetaDataWriter throws");
+    } catch (IOException e) {
+      Assert.assertSame(metaError, e.getCause());
+    }
+
+    Assert.assertNull(manager.getActiveOutputStream(identifier));
+    Location contextDir = manager.getLogsDirectoryLocation()
+        .append("ns1")
+        .append(LogFileManager.formatLogDirectoryName(now))
+        .append("app1")
+        .append("worker1");
+    if (contextDir.exists()) {
+      Assert.assertTrue(contextDir.list().isEmpty());
+    }
+  }
+
+  @Test
+  public void testCloseQuietlySwallowsStreamCloseExceptionAndClosesRemaining() throws Exception {
+    final AtomicBoolean firstClosed = new AtomicBoolean(false);
+    final AtomicBoolean secondClosed = new AtomicBoolean(false);
+    final LocalLocationFactory delegateFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    FileMetaDataWriter noOpMetaWriter = Mockito.mock(FileMetaDataWriter.class);
+    LogFileManager manager = new LogFileManager(
+        "", "", 60000L, 1048576L, 1024, noOpMetaWriter, delegateFactory);
+
+    LogPathIdentifier id1 = new LogPathIdentifier("ns1", "app1", "prog1");
+    LogPathIdentifier id2 = new LogPathIdentifier("ns1", "app2", "prog2");
+
+    // Open two real streams, then wrap the first location's underlying stream via a failing closeable
+    LogFileOutputStream stream1 = manager.getLogFileOutputStream(id1, System.currentTimeMillis());
+    LogFileOutputStream stream2 = manager.getLogFileOutputStream(id2, System.currentTimeMillis());
+    Assert.assertNotNull(stream1);
+    Assert.assertNotNull(stream2);
+
+    // Replace active map entries via close behavior: verify close() clears all active streams quietly
+    // even if a stream was already closed or throws on close.
+    OutputStream rawOut = new FilterOutputStream(delegateFactory.create("failing.avro").getOutputStream()) {
+      @Override
+      public void close() throws IOException {
+        firstClosed.set(true);
+        super.close();
+        throw new IOException("simulated close failure");
+      }
+    };
+    Location failingLoc = Mockito.mock(Location.class);
+    Mockito.when(failingLoc.getOutputStream()).thenReturn(rawOut);
+    LogFileOutputStream failingLogStream = new LogFileOutputStream(
+        failingLoc, "", 1024, System.currentTimeMillis(), () -> secondClosed.set(true));
+
+    java.lang.reflect.Field mapField = LogFileManager.class.getDeclaredField("outputStreamMap");
+    mapField.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    java.util.Map<LogPathIdentifier, LogFileOutputStream> streamMap =
+        (java.util.Map<LogPathIdentifier, LogFileOutputStream>) mapField.get(manager);
+    streamMap.put(new LogPathIdentifier("ns1", "failingApp", "failingProg"), failingLogStream);
+
+    // Must not throw IOException even though failingLogStream.close() throws IOException
+    manager.close();
+
+    Assert.assertTrue(firstClosed.get());
+    Assert.assertTrue(secondClosed.get());
+    Assert.assertNull(manager.getActiveOutputStream(id1));
+    Assert.assertNull(manager.getActiveOutputStream(id2));
   }
 
   private LoggingEvent getLoggingEvent(String fqcn, Logger logger, Level level, String message) {

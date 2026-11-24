@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.auth.context;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -51,7 +50,7 @@ public class MasterAuthenticationContext implements AuthenticationContext {
       try {
         userId = UserGroupInformation.getCurrentUser().getShortUserName();
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
     return new Principal(userId, Principal.PrincipalType.USER, userCredential);

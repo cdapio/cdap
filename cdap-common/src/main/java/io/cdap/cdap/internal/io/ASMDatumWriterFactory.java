@@ -63,7 +63,8 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
       return (DatumWriter<T>) writerClass.getConstructor(Schema.class, FieldAccessorFactory.class)
           .newInstance(schema, fieldAccessorFactory);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

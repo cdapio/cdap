@@ -18,10 +18,18 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.security.auth.AuditLogSubscriberService;
+import java.lang.reflect.Field;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests for {@link AppFabricProcessorService}.
+ */
 public class AppFabricProcessorServiceTest {
 
   @Test
@@ -29,12 +37,54 @@ public class AppFabricProcessorServiceTest {
     try {
       Injector injector = AppFabricTestHelper.getInjector();
       AppFabricProcessorService service = injector.getInstance(AppFabricProcessorService.class);
-      Service.State state = service.startAndWait();
+      service.startAsync().awaitRunning();
+      Service.State state = service.state();
       Assert.assertSame(state, Service.State.RUNNING);
 
-      state = service.stopAndWait();
+      service.stopAsync().awaitTerminated();
+      state = service.state();
       Assert.assertSame(state, Service.State.TERMINATED);
     } finally {
+      AppFabricTestHelper.shutdown();
+    }
+  }
+
+  @Test
+  public void startStopServiceWithAuditLogEnabled() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+    cConf.setBoolean("feature." + Feature.DATAPLANE_AUDIT_LOGGING.getFeatureFlagString(), true);
+    AppFabricProcessorService service = null;
+    try {
+      Injector injector = AppFabricTestHelper.getInjector(cConf);
+      service = injector.getInstance(AppFabricProcessorService.class);
+      Field auditField =
+          AppFabricProcessorService.class.getDeclaredField("auditLogSubscriberService");
+      auditField.setAccessible(true);
+      AuditLogSubscriberService auditLogService =
+          (AuditLogSubscriberService) auditField.get(service);
+      Field lifecycleField =
+          AppFabricProcessorService.class.getDeclaredField("applicationLifecycleService");
+      lifecycleField.setAccessible(true);
+      ApplicationLifecycleService lifecycleService =
+          (ApplicationLifecycleService) lifecycleField.get(service);
+
+      service.startAsync().awaitRunning();
+      Service.State state = service.state();
+      Assert.assertSame(Service.State.RUNNING, state);
+      Assert.assertSame(Service.State.RUNNING, auditLogService.state());
+      Assert.assertSame(Service.State.RUNNING, lifecycleService.state());
+
+      service.stopAsync().awaitTerminated();
+      state = service.state();
+      Assert.assertSame(Service.State.TERMINATED, state);
+      Assert.assertSame(Service.State.TERMINATED, auditLogService.state());
+      Assert.assertSame(Service.State.TERMINATED, lifecycleService.state());
+    } finally {
+      if (service != null && service.isRunning()) {
+        service.stopAsync().awaitTerminated();
+      }
       AppFabricTestHelper.shutdown();
     }
   }

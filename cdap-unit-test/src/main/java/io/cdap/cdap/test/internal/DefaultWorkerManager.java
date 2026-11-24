@@ -45,7 +45,8 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
           programId.getProgram(),
           instances);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -56,7 +57,8 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
           programId.getApplication(),
           programId.getProgram()).getInstances();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

@@ -42,7 +42,7 @@ public class NoSqlStructuredTableAdminTest extends StructuredTableAdminTest {
   public static void beforeClass() throws IOException {
     Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
 
     CConfiguration cConf = dsFrameworkUtil.getConfiguration();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
@@ -57,7 +57,7 @@ public class NoSqlStructuredTableAdminTest extends StructuredTableAdminTest {
   @AfterClass
   public static void afterClass() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 }

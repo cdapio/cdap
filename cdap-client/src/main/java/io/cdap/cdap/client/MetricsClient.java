@@ -324,7 +324,8 @@ public class MetricsClient {
       // since it is totals, we know there's one value only
       return timeValues[0].getValue();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

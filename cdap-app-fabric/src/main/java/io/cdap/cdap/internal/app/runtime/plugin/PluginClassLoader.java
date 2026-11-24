@@ -25,8 +25,10 @@ import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.PackageFilterClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * ClassLoader for template plugin. The ClassLoader hierarchy is pretty complicated.
@@ -56,20 +58,46 @@ public class PluginClassLoader extends DirectoryClassLoader {
   private final String topLevelJar;
   private final Set<String> exportPackages;
 
-  static ClassLoader createParent(ClassLoader templateClassLoader) {
-    // Find the ProgramClassLoader from the template ClassLoader
+  /**
+   * Creates a filtered parent {@link CloseableClassLoader} that exposes only {@code Export-Package}
+   * classes from {@code templateClassLoader} alongside its filtered CDAP/program parent loader.
+   */
+  public static CloseableClassLoader createParent(ClassLoader templateClassLoader) {
+    // Collect Export-Package declarations across any intermediate parent plugin DirectoryClassLoaders
+    // as well as the root ProgramClassLoader so non-exported dependencies (such as Guava) stay hidden.
+    Set<String> exportPackages = new HashSet<>();
     ClassLoader programClassLoader = templateClassLoader;
     while (programClassLoader != null
-           && !(programClassLoader instanceof ProgramClassLoader)) {
+        && !(programClassLoader instanceof ProgramClassLoader)) {
+      if (programClassLoader instanceof DirectoryClassLoader) {
+        exportPackages.addAll(
+            ManifestFields.getExportPackages(
+                ((DirectoryClassLoader) programClassLoader).getManifest()));
+      }
       programClassLoader = programClassLoader.getParent();
     }
+
+    if (programClassLoader == null) {
+      ClassLoader unwrapped = unwrapCloseable(templateClassLoader);
+      if (unwrapped instanceof DirectoryClassLoader
+          && unwrapCloseable(unwrapped.getParent()) instanceof CombineClassLoader) {
+        DirectoryClassLoader dirClassLoader = (DirectoryClassLoader) unwrapped;
+        Set<String> dirExportPackages =
+            ManifestFields.getExportPackages(dirClassLoader.getManifest());
+        PackageFilterClassLoader filteredDirClassLoader =
+            new PackageFilterClassLoader(templateClassLoader, dirExportPackages::contains);
+        CombineClassLoader combined =
+            new CombineClassLoader(dirClassLoader.getParent(), filteredDirClassLoader);
+        return new CloseableClassLoader(combined, filteredDirClassLoader);
+      }
+    }
+
     // This shouldn't happen
     Preconditions.checkArgument(programClassLoader != null,
         "Cannot find ProgramClassLoader");
 
-    // Package filtered classloader of the template classloader, which only classes in "Export-Packages" are loadable.
     Manifest manifest = ((ProgramClassLoader) programClassLoader).getManifest();
-    Set<String> exportPackages = ManifestFields.getExportPackages(manifest);
+    exportPackages.addAll(ManifestFields.getExportPackages(manifest));
     PackageFilterClassLoader filteredTemplateClassLoader =
         new PackageFilterClassLoader(templateClassLoader,
             exportPackages::contains);
@@ -113,5 +141,14 @@ public class PluginClassLoader extends DirectoryClassLoader {
    */
   public String getTopLevelJar() {
     return topLevelJar;
+  }
+
+  @Nullable
+  private static ClassLoader unwrapCloseable(@Nullable ClassLoader classLoader) {
+    ClassLoader current = classLoader;
+    while (current instanceof CloseableClassLoader) {
+      current = current.getParent();
+    }
+    return current;
   }
 }

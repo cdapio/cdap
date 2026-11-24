@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package io.cdap.cdap.metrics.query;
 
 import org.junit.Assert;
@@ -36,5 +37,16 @@ public class TimeseriesIdTest {
     Assert.assertTrue(id1.equals(id2));
     Assert.assertTrue(id2.equals(id1));
     Assert.assertEquals(id1.hashCode(), id2.hashCode());
+  }
+
+  @Test
+  public void testToString() {
+    TimeseriesId withTag = new TimeseriesId("ctx1", "records.out", "stageA", "run-99");
+    Assert.assertEquals("TimeseriesId{context=ctx1, metric=records.out, tag=stageA, runId=run-99}",
+        withTag.toString());
+
+    TimeseriesId nullTag = new TimeseriesId("ctx1", "records.out", null, "0");
+    Assert.assertEquals("TimeseriesId{context=ctx1, metric=records.out, tag=null, runId=0}",
+        nullTag.toString());
   }
 }

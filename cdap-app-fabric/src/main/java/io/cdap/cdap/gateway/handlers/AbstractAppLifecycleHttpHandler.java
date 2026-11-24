@@ -136,7 +136,8 @@ public abstract class AbstractAppLifecycleHttpHandler extends AbstractAppFabricH
       // This can only happen when NamespaceAdmin uses HTTP calls to interact with namespaces.
       // In AppFabricServer, NamespaceAdmin is bound to DefaultNamespaceAdmin, which interacts directly with the MDS.
       // Hence, this exception will never be thrown
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     return namespaceId;
   }

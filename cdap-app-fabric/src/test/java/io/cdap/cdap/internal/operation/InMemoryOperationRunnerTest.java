@@ -16,13 +16,16 @@
 
 package io.cdap.cdap.internal.operation;
 
-
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperation;
+import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperationFactory;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsRequest;
+import io.cdap.cdap.internal.app.sourcecontrol.PushAppsOperationFactory;
 import io.cdap.cdap.proto.id.OperationRunId;
 import io.cdap.cdap.proto.operation.OperationMeta;
 import io.cdap.cdap.proto.operation.OperationRun;
@@ -31,11 +34,19 @@ import io.cdap.cdap.proto.operation.OperationType;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+/**
+ * Unit tests for {@link InMemoryOperationRunner}.
+ */
 public class InMemoryOperationRunnerTest {
 
   private InMemoryOperationRunner runner;
@@ -74,6 +85,11 @@ public class InMemoryOperationRunnerTest {
     });
   }
 
+  @AfterClass
+  public static void tearDownClass() {
+    AppFabricTestHelper.shutdown();
+  }
+
   @Before
   public void setupTest() {
     runner = injector.getInstance(InMemoryOperationRunner.class);
@@ -103,6 +119,35 @@ public class InMemoryOperationRunnerTest {
     Mockito.verify(mockPublisher, Mockito.times(1)).publishRunning(runId);
     Mockito.verify(mockPublisher, Mockito.times(1)).publishFailed(Mockito.eq(runId), Mockito.any());
     Mockito.verify(mockPublisher, Mockito.never()).publishSuccess(runId);
+  }
+
+  @Test
+  public void testDirectRunAndStop() throws Exception {
+    OperationStatePublisher localPublisher = Mockito.mock(OperationStatePublisher.class);
+    PullAppsOperationFactory pullFactory = Mockito.mock(PullAppsOperationFactory.class);
+    PushAppsOperationFactory pushFactory = Mockito.mock(PushAppsOperationFactory.class);
+    CountDownLatch startedLatch = new CountDownLatch(1);
+    CountDownLatch stopLatch = new CountDownLatch(1);
+    PullAppsOperation pullOp = Mockito.mock(PullAppsOperation.class);
+    Mockito.when(pullOp.run(Mockito.any())).thenAnswer(invocation -> {
+      startedLatch.countDown();
+      try {
+        stopLatch.await();
+      } catch (InterruptedException e) {
+        // Interrupted by OperationDriver.triggerShutdown() while transitioning to STOPPING.
+      }
+      return Futures.immediateFuture(Collections.emptySet());
+    });
+    Mockito.when(pullFactory.create(Mockito.any())).thenReturn(pullOp);
+
+    InMemoryOperationRunner directRunner =
+        new InMemoryOperationRunner(localPublisher, pullFactory, pushFactory);
+    OperationController controller = directRunner.run(detail);
+    Assert.assertTrue(startedLatch.await(5, TimeUnit.SECONDS));
+    controller.stop().get(5, TimeUnit.SECONDS);
+
+    Mockito.verify(localPublisher).publishRunning(runId);
+    Mockito.verify(localPublisher).publishKilled(runId);
   }
 }
 

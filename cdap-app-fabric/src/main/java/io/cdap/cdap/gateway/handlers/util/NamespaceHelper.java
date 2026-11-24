@@ -49,7 +49,8 @@ public class NamespaceHelper {
       // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
       // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.
       // Hence, this should never happen.
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
     return namespaceId;
   }

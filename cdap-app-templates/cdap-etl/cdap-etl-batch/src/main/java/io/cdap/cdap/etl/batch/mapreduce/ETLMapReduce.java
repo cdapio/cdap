@@ -248,9 +248,11 @@ public class ETLMapReduce extends AbstractMapReduce {
         transformRunner.transform(key, value);
       } catch (StageFailureException e) {
         PIPELINE_LOG.error("{}", e.getMessage(), e.getCause());
-        throw Throwables.propagate(e.getCause());
+        Throwables.throwIfUnchecked(e.getCause());
+        throw new RuntimeException(e.getCause());
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -287,9 +289,11 @@ public class ETLMapReduce extends AbstractMapReduce {
         transformRunner.transform(key, values.iterator());
       } catch (StageFailureException e) {
         PIPELINE_LOG.error("{}", e.getMessage(), e.getCause());
-        throw Throwables.propagate(e.getCause());
+        Throwables.throwIfUnchecked(e.getCause());
+        throw new RuntimeException(e.getCause());
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 

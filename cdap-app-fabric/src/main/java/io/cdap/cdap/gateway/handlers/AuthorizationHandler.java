@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,10 +33,8 @@ import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
-import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.AuthorizationRequest;
 import io.cdap.cdap.proto.security.GrantRequest;
-import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.PermissionAdapterFactory;
 import io.cdap.cdap.proto.security.Principal;
@@ -326,7 +324,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   private void createLogEntry(HttpRequest httpRequest, HttpResponseStatus responseStatus)
       throws UnknownHostException {
     InetAddress clientAddr = InetAddress.getByName(
-        Objects.firstNonNull(SecurityRequestContext.getUserIp(), "0.0.0.0"));
+        MoreObjects.firstNonNull(SecurityRequestContext.getUserIp(), "0.0.0.0"));
     AuditLogEntry logEntry = new AuditLogEntry(httpRequest, clientAddr.getHostAddress());
     logEntry.setUserName(authenticationContext.getPrincipal().getName());
     logEntry.setResponse(responseStatus.code(), 0L);
@@ -334,7 +332,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   }
 
   private Set<? extends Permission> getRequestPermissions(AuthorizationRequest request) {
-    Set<? extends Permission> permissions = Objects.firstNonNull(request.getPermissions(),
+    Set<? extends Permission> permissions = MoreObjects.firstNonNull(request.getPermissions(),
         Collections.emptySet());
     if (request.getActions() != null) {
       permissions = Stream.concat(permissions.stream(),

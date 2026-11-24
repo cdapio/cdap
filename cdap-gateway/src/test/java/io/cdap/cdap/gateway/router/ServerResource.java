@@ -179,7 +179,8 @@ public class ServerResource extends ExternalResource {
 
         @Override
         public void handleError(Throwable cause) {
-          throw Throwables.propagate(cause);
+          Throwables.throwIfUnchecked(cause);
+          throw new RuntimeException(cause);
         }
       };
     }

@@ -232,14 +232,15 @@ public class ConcurrentMessageWriterTest {
       executor.submit(new Runnable() {
         @Override
         public void run() {
-          Stopwatch stopwatch = new Stopwatch();
+          Stopwatch stopwatch = Stopwatch.createUnstarted();
           try {
             barrier.await();
             stopwatch.start();
             for (int i = 0; i < requestPerThread; i++) {
               writer.persist(new TestStoreRequest(topicId, payload), metadata);
             }
-            LOG.info("Complete time for thread {} is {} ms", threadId, stopwatch.elapsedMillis());
+            LOG.info("Complete time for thread {} is {} ms", threadId,
+                stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS));
           } catch (Exception e) {
             LOG.error("Exception raised when persisting.", e);
           }
@@ -247,13 +248,13 @@ public class ConcurrentMessageWriterTest {
       });
     }
 
-    Stopwatch stopwatch = new Stopwatch();
+    Stopwatch stopwatch = Stopwatch.createUnstarted();
     barrier.await();
     stopwatch.start();
     executor.shutdown();
     Assert.assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES));
 
-    LOG.info("Total time passed: {} ms", stopwatch.elapsedMillis());
+    LOG.info("Total time passed: {} ms", stopwatch.elapsed(java.util.concurrent.TimeUnit.MILLISECONDS));
 
     // Validate that the total number of messages written is correct
     List<RawMessage> messages = testWriter.getMessages().get(topicId);
@@ -266,6 +267,83 @@ public class ConcurrentMessageWriterTest {
         Assert.assertTrue(Bytes.compareTo(lastMessage.getId(), message.getId()) < 0);
       }
       lastMessage = message;
+    }
+  }
+
+  @Test
+  public void testPersistPropagatesIoExceptionDirectly() {
+    TopicId topicId = NamespaceId.DEFAULT.topic("failIo");
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, new HashMap<String, String>(), 1);
+    final IOException expectedIo = new IOException("direct write failure");
+
+    StoreRequestWriter<TestEntry> failingWriter =
+        new StoreRequestWriter<TestEntry>(new TimeProvider.IncrementalTimeProvider(), false) {
+          @Override
+          TestEntry getEntry(TopicMetadata meta, boolean transactional, long txWritePointer,
+              long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
+            return new TestEntry(meta.getTopicId(), transactional, txWritePointer,
+                writeTimestamp, sequenceId, payload);
+          }
+
+          @Override
+          protected void doWrite(Iterator<TestEntry> entries) throws IOException {
+            while (entries.hasNext()) {
+              entries.next();
+            }
+            throw expectedIo;
+          }
+
+          @Override
+          public void close() {
+            // no-op
+          }
+        };
+
+    ConcurrentMessageWriter writer = new ConcurrentMessageWriter(failingWriter);
+    try {
+      writer.persist(new TestStoreRequest(topicId, Arrays.asList("p1")), metadata);
+      Assert.fail("Expected IOException");
+    } catch (IOException actual) {
+      Assert.assertSame(expectedIo, actual);
+    }
+  }
+
+  @Test
+  public void testPersistWrapsNonIoFailureInIoException() {
+    TopicId topicId = NamespaceId.DEFAULT.topic("failRuntime");
+    TopicMetadata metadata = new DefaultTopicMetadata(topicId, new HashMap<String, String>(), 1);
+    final IllegalStateException expectedRuntime = new IllegalStateException("unexpected writer failure");
+
+    StoreRequestWriter<TestEntry> failingWriter =
+        new StoreRequestWriter<TestEntry>(new TimeProvider.IncrementalTimeProvider(), false) {
+          @Override
+          TestEntry getEntry(TopicMetadata meta, boolean transactional, long txWritePointer,
+              long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
+            return new TestEntry(meta.getTopicId(), transactional, txWritePointer,
+                writeTimestamp, sequenceId, payload);
+          }
+
+          @Override
+          protected void doWrite(Iterator<TestEntry> entries) {
+            while (entries.hasNext()) {
+              entries.next();
+            }
+            throw expectedRuntime;
+          }
+
+          @Override
+          public void close() {
+            // no-op
+          }
+        };
+
+    ConcurrentMessageWriter writer = new ConcurrentMessageWriter(failingWriter);
+    try {
+      writer.persist(new TestStoreRequest(topicId, Arrays.asList("p1")), metadata);
+      Assert.fail("Expected IOException wrapping RuntimeException");
+    } catch (IOException actual) {
+      Assert.assertSame(expectedRuntime, actual.getCause());
+      Assert.assertTrue(actual.getMessage().contains(topicId.toString()));
     }
   }
 

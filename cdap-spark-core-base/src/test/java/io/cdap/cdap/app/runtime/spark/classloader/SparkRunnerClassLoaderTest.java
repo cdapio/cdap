@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark.classloader;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -70,7 +69,13 @@ public class SparkRunnerClassLoaderTest {
           } catch (Exception e) {
             exception.set(e);
           } finally {
-            Closeables.closeQuietly(secondCL);
+            if (secondCL != null) {
+              try {
+                secondCL.close();
+              } catch (Exception ignored) {
+                // Ignore close exception
+              }
+            }
           }
         }
       };
@@ -141,7 +146,13 @@ public class SparkRunnerClassLoaderTest {
 
     // After closing the ClassLoader,
     // reading from stream acquired through getResourceAsStream() should fail with an exception.
-    Closeables.closeQuietly(cl);
+    if (cl != null) {
+      try {
+        cl.close();
+      } catch (Exception ignored) {
+        // Ignore close exception
+      }
+    }
     is.read();
   }
 

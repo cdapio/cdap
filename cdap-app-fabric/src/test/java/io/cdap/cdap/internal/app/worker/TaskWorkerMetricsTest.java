@@ -82,7 +82,7 @@ public class TaskWorkerMetricsTest {
       }
     };
 
-    mockMetricsCollector.startAndWait();
+    mockMetricsCollector.startAsync().awaitRunning();
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
                                               mockMetricsCollector,
@@ -90,7 +90,7 @@ public class TaskWorkerMetricsTest {
                                                                                 auditLogContexts -> {}));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    taskWorkerService.startAsync().awaitRunning();
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     this.uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
   }
@@ -98,7 +98,7 @@ public class TaskWorkerMetricsTest {
   @After
   public void afterTest() {
     if (taskWorkerService != null) {
-      taskWorkerService.stopAndWait();
+      taskWorkerService.stopAsync().awaitTerminated();
     }
   }
 

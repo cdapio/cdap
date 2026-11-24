@@ -103,6 +103,43 @@ public class LogBufferWriterTest {
                                                                      "instance1")))).iterator());
   }
 
+  @Test
+  public void testCloseQuietlySwallowsStreamFlushAndCloseIoException() throws Exception {
+    LogBufferWriter writer = new LogBufferWriter(
+        TMP_FOLDER.newFolder().getAbsolutePath(), 100000, () -> { });
+    final java.util.concurrent.atomic.AtomicBoolean closeCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    java.io.OutputStream failingStream = new java.io.OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        throw new IOException("write failed");
+      }
+
+      @Override
+      public void flush() throws IOException {
+        throw new IOException("flush failed on close");
+      }
+
+      @Override
+      public void close() throws IOException {
+        closeCalled.set(true);
+        throw new IOException("close failed");
+      }
+    };
+
+    java.lang.reflect.Field streamField = LogBufferWriter.class.getDeclaredField("currOutputStream");
+    streamField.setAccessible(true);
+    java.io.OutputStream original = (java.io.OutputStream) streamField.get(writer);
+    original.close();
+    streamField.set(writer, failingStream);
+
+    // Must swallow both flush() and close() IOExceptions without throwing
+    writer.close();
+    Assert.assertTrue(closeCalled.get());
+    // Repeated close must also succeed quietly
+    writer.close();
+  }
+
   private ImmutableList<byte[]> getLoggingEvents() {
     WorkerLoggingContext loggingContext =
       new WorkerLoggingContext("default", "app1", "worker1", "run1", "instance1");

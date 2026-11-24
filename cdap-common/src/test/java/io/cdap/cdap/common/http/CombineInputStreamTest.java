@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,6 +67,22 @@ public class CombineInputStreamTest {
     try (InputStream is = new CombineInputStream(buffer, file)) {
       testReadAndReset(msg + msg, is);
     }
+  }
+
+  @Test
+  public void testSkipAndCloseAcrossBufferAndSpill() throws IOException {
+    ByteBuf buffer = Unpooled.copiedBuffer("01234", StandardCharsets.UTF_8);
+    Path spillFile = TEMP_FOLDER.newFile().toPath();
+    Files.write(spillFile, "56789".getBytes(StandardCharsets.UTF_8),
+        StandardOpenOption.TRUNCATE_EXISTING);
+
+    CombineInputStream combined = new CombineInputStream(buffer, spillFile);
+    Assert.assertEquals(7L, combined.skip(7L));
+    Assert.assertEquals("789",
+        new String(ByteStreams.toByteArray(combined), StandardCharsets.UTF_8));
+    // Double close should also succeed cleanly.
+    combined.close();
+    combined.close();
   }
 
   private void testReadAndReset(String msg, InputStream is) throws IOException {

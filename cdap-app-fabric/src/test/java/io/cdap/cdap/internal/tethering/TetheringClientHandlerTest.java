@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.tethering;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Guice;
@@ -188,7 +187,7 @@ public class TetheringClientHandlerTest {
       });
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    txManager.startAsync().awaitRunning();
     profileService = injector.getInstance(ProfileService.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_1).build());
@@ -202,7 +201,7 @@ public class TetheringClientHandlerTest {
     namespaceAdmin.delete(new NamespaceId(NAMESPACE_2));
     namespaceAdmin.delete(new NamespaceId(NAMESPACE_3));
     if (txManager != null) {
-      txManager.stopAndWait();
+      txManager.stopAsync().awaitTerminated();
     }
   }
 
@@ -256,7 +255,7 @@ public class TetheringClientHandlerTest {
     tetheringEventPublisher = new TetheringProgramEventPublisher(cConf, tetheringStore, messagingService,
                                                                  injector.getInstance(ProgramRunRecordFetcher.class),
                                                                  transactionRunner);
-    Assert.assertEquals(Service.State.RUNNING, tetheringEventPublisher.startAndWait());
+    tetheringEventPublisher.startAsync().awaitRunning();
     tetheringAgentService = new TetheringAgentService(cConf,
                                                       tetheringStore,
                                                       injector.getInstance(ProgramStateWriter.class),
@@ -265,14 +264,14 @@ public class TetheringClientHandlerTest {
                                                       injector.getInstance(LocationFactory.class),
                                                       injector.getInstance(ProvisionerNotifier.class),
                                                       injector.getInstance(NamespaceQueryAdmin.class));
-    Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
+    tetheringAgentService.startAsync().awaitRunning();
   }
 
   @After
   public void tearDown() throws Exception {
     deleteTetheringIfNeeded(SERVER_INSTANCE);
-    Assert.assertEquals(Service.State.TERMINATED, tetheringEventPublisher.stopAndWait());
-    Assert.assertEquals(Service.State.TERMINATED, tetheringAgentService.stopAndWait());
+    tetheringEventPublisher.stopAsync().awaitTerminated();
+    tetheringAgentService.stopAsync().awaitTerminated();
   }
 
   @Test
