@@ -72,6 +72,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.common.http.HttpResponse;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -186,7 +187,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     Assert.assertNotEquals(0, repository.getUpdatedTimeMillis());
 
     RepositoryConfig newRepoConfig = new RepositoryConfig.Builder(namespaceRepo)
-        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("a new password name", null)))
+        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("a-new-password-name", null)))
         .setLink("a new link")
         .build();
 
@@ -266,6 +267,33 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
         new AuthConfig(AuthType.PAT, new PatConfig("", USERNAME)),
         null);
     assertResponseCode(400, setRepository(NAME, configMissingPasswordName));
+    assertResponseCode(404, getRepository(NAME));
+
+    // Set and validate a repository that has an improperly formatted secure key name
+    RepositoryConfig invalidPasswordNameRepo = new RepositoryConfig.Builder()
+        .setProvider(Provider.GITHUB)
+        .setLink(LINK)
+        .setDefaultBranch(DEFAULT_BRANCH)
+        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("Invalid Name", USERNAME)))
+        .build();
+    SetRepositoryResponse expectedInvalidKeyResponse = new SetRepositoryResponse(
+        new RepositoryConfigValidationException(Collections.singletonList(
+            new RepositoryValidationFailure("Improperly formatted secure key name 'Invalid Name'."
+                + " The name can contain lower case english or latin alphabets,"
+                + " numbers, _, and -"))));
+
+    HttpResponse setInvalidResponse =
+        setRepository(NAME, createRepoRequestString(invalidPasswordNameRepo));
+    assertResponseCode(400, setInvalidResponse);
+    Assert.assertEquals(expectedInvalidKeyResponse,
+        readResponse(setInvalidResponse, SetRepositoryResponse.class));
+    assertResponseCode(404, getRepository(NAME));
+
+    HttpResponse validateInvalidResponse =
+        setRepository(NAME, createRepoValidateString(invalidPasswordNameRepo));
+    assertResponseCode(400, validateInvalidResponse);
+    Assert.assertEquals(expectedInvalidKeyResponse,
+        readResponse(validateInvalidResponse, SetRepositoryResponse.class));
     assertResponseCode(404, getRepository(NAME));
 
     // Set the invalid bitbucket cloud repository that has wrong username
