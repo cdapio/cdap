@@ -17,6 +17,7 @@
 package io.cdap.cdap.datastreams;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.app.RuntimeConfigurer;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -201,6 +202,36 @@ public class DataStreamsPipelineSpecGeneratorTest {
 
     DataStreamsPipelineSpec pipelineSpec = builder.build();
     Assert.assertTrue(pipelineSpec.getStateSpec().getMode() == DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING);
+  }
+
+  @Test
+  public void testConfigureAtleastOnceModeWindowerDeserializedFromJson() throws IOException {
+    DataStreamsConfig rawConfig = DataStreamsConfig.builder()
+      .addStage(new ETLStage("source", MockStateHandlerSource.getPlugin(schema, new ArrayList<>())))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("${tablename}")))
+      .addStage(new ETLStage("windower",
+                             new ETLPlugin("MockWindower", new String(Windower.PLUGIN_TYPE), new HashMap<>(), null)))
+      .addConnection("source", "windower").addConnection("windower", "sink").setCheckpointDir(null)
+      .setBatchInterval("1s").build();
+    Gson gson = new Gson();
+    DataStreamsConfig deserializedConfig = gson.fromJson(gson.toJson(rawConfig), DataStreamsConfig.class);
+    DataStreamsPipelineSpec.Builder builder = DataStreamsPipelineSpec.builder(System.currentTimeMillis(), "test-id");
+    FeatureFlagsProvider featureFlagsProvider = new FeatureFlagsProvider() {
+
+      @Override
+      public boolean isFeatureEnabled(String name) {
+        return true;
+      }
+    };
+    DataStreamsPipelineSpecGenerator specGenerator = new DataStreamsPipelineSpecGenerator("test", null, null,
+                                                                                          SOURCE_PLUGIN_TYPES,
+                                                                                          SINK_PLUGIN_TYPES,
+                                                                                          featureFlagsProvider);
+    specGenerator.configureSourcePlugin("source", new MockStateHandlerSource(new MockSource.Conf()), null, null);
+    specGenerator.configureAtleastOnceMode(deserializedConfig, builder);
+
+    DataStreamsPipelineSpec pipelineSpec = builder.build();
+    Assert.assertEquals(DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING, pipelineSpec.getStateSpec().getMode());
   }
 
   private DataStreamsConfig getDataStreamsConfig(ETLPlugin plugin) throws IOException {
