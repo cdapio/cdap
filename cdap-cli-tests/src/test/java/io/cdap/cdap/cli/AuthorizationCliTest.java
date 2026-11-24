@@ -110,7 +110,8 @@ public class AuthorizationCliTest {
         // grant/revoke is tested in AuthorizationHandlerTest
         Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*",
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
-        Constants.Security.KERBEROS_ENABLED, "false"
+        Constants.Security.KERBEROS_ENABLED, "false",
+        Constants.Security.INTERNAL_AUTH_ENABLED, "false"
       };
     }
   }

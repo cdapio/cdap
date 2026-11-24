@@ -283,7 +283,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   public void testAuthEnforceWithEncryptedCredential() throws AccessException, CipherException {
     SConfiguration sConfCopy = enableCredentialEncryption();
     String cred = fakeAeadCipherService.encryptToBase64("credential",
-        Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+        Encryption.userCredentialAssociatedData("userFoo"));
     Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
         new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
 
@@ -304,6 +304,36 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
         .increment(Constants.Metrics.Authorization.EXTENSION_CHECK_FAILURE_COUNT, 1);
     verify(controllerWrapper.mockMetricsContext, times(3))
         .gauge(eq(Constants.Metrics.Authorization.EXTENSION_CHECK_MILLIS), any(Long.class));
+  }
+
+  @Test
+  public void testAuthEnforceWithMismatchedUserAssociatedDataFails()
+      throws AccessException, CipherException {
+    thrown.expect(AccessException.class);
+    thrown.expectMessage("Failed to decrypt credential in principle:");
+
+    SConfiguration sConfCopy = enableCredentialEncryption();
+    String credForAlice = fakeAeadCipherService.encryptToBase64("credential",
+        Encryption.userCredentialAssociatedData("alice"));
+    Principal spoofedUser = new Principal("userFoo", Principal.PrincipalType.USER, null,
+        new Credential(credForAlice, Credential.CredentialType.EXTERNAL_ENCRYPTED));
+
+    ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
+    controllerWrapper.defaultAccessEnforcer.enforce(NS, spoofedUser, StandardPermission.GET);
+  }
+
+  @Test
+  public void testAuthEnforceRejectsUnencryptedExternalWhenEncryptionEnabled()
+      throws AccessException {
+    thrown.expect(AccessException.class);
+    thrown.expectMessage("Expected encrypted user credential");
+
+    SConfiguration sConfCopy = enableCredentialEncryption();
+    Principal unencryptedUser = new Principal("userFoo", Principal.PrincipalType.USER, null,
+        new Credential("dummy", Credential.CredentialType.EXTERNAL));
+
+    ControllerWrapper controllerWrapper = createControllerWrapper(CCONF, sConfCopy, null);
+    controllerWrapper.defaultAccessEnforcer.enforce(NS, unencryptedUser, StandardPermission.GET);
   }
 
   @Test
@@ -339,7 +369,7 @@ public class DefaultAccessEnforcerTest extends AuthorizationTestBase {
   public void testIsVisibleWithEncryptedCredential() throws AccessException, CipherException {
     SConfiguration sConfCopy = enableCredentialEncryption();
     String cred = fakeAeadCipherService.encryptToBase64("credential",
-        Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+        Encryption.userCredentialAssociatedData("userFoo"));
     Principal userWithCredEncrypted = new Principal("userFoo", Principal.PrincipalType.USER, null,
         new Credential(cred, Credential.CredentialType.EXTERNAL_ENCRYPTED));
 

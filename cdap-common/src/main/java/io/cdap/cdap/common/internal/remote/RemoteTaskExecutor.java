@@ -141,9 +141,11 @@ public class RemoteTaskExecutor {
           // Encrypting user credentials for task worker calls
           Credential currentCredential = SecurityRequestContext.getUserCredential();
           if (isWorkerEncryptionRequired && currentCredential != null) {
-            String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
-                Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-            Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
+            String encryptedValue = userEncryptionAeadCipher.encryptToBase64(
+                currentCredential.getValue(),
+                Encryption.taskWorkerAssociatedData(SecurityRequestContext.getUserId()));
+            Credential encryptedCredential = new Credential(encryptedValue,
+                currentCredential.getType());
             SecurityRequestContext.setUserCredential(encryptedCredential);
           }
 

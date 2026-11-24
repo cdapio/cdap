@@ -318,8 +318,9 @@ public class RemoteClient {
   }
 
   private Multimap<String, String> setHeader(HttpRequest request) throws IOException {
-    Multimap<String, String> headers = request.getHeaders();
-    headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
+    Multimap<String, String> requestHeaders = request.getHeaders();
+    Multimap<String, String> headers =
+        requestHeaders == null ? HashMultimap.create() : HashMultimap.create(requestHeaders);
 
     // Add Authorization header and use a rewritten URL if needed
     if (remoteAuthenticator != null && headers.keySet().stream()
@@ -332,7 +333,10 @@ public class RemoteClient {
       }
     }
 
-    internalAuthenticator.applyInternalAuthenticationHeaders(headers::put);
+    internalAuthenticator.applyInternalAuthenticationHeaders((key, value) -> {
+      headers.removeAll(key);
+      headers.put(key, value);
+    });
     return headers;
   }
 }

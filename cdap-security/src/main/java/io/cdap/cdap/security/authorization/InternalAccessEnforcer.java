@@ -33,12 +33,11 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Enforces access for internal system requests by validating CDAP internal access tokens.
+ */
 public class InternalAccessEnforcer extends AbstractAccessEnforcer {
-
-  private static final Logger LOG = LoggerFactory.getLogger(InternalAccessEnforcer.class);
 
   private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;
@@ -96,7 +95,7 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     }
     UserIdentity userIdentity = accessToken.getIdentifier();
     if (!userIdentity.getUsername().equals(principalName)) {
-      LOG.debug(
+      throw new AccessException(
           String.format("Internal access token username differs from principal name; got token "
                   + "name '%s', expected principal name '%s'",
               userIdentity.getUsername(), principalName));

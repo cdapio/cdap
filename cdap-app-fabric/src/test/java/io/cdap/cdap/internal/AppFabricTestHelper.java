@@ -84,7 +84,9 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.store.StoreDefinition;
@@ -169,6 +171,9 @@ public class AppFabricTestHelper {
 
       injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration, sConf)).with(overrides));
 
+      if (SecurityUtil.isInternalAuthEnabled(configuration)) {
+        startService(injector, TokenManager.class);
+      }
       startService(injector, MessagingService.class);
       startService(injector, TransactionManager.class);
 
@@ -421,6 +426,7 @@ public class AppFabricTestHelper {
     throws IOException {
     confSetter.accept(Constants.Security.ENABLED, Boolean.toString(true));
     confSetter.accept(Constants.Security.KERBEROS_ENABLED, Boolean.toString(false));
+    confSetter.accept(Constants.Security.INTERNAL_AUTH_ENABLED, Boolean.toString(false));
     confSetter.accept(Constants.Security.Authorization.ENABLED, Boolean.toString(true));
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, InMemoryAccessControllerV2.class.getName());

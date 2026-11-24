@@ -288,4 +288,19 @@ public class InternalAccessEnforcerTest {
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
   }
+
+  @Test(expected = AccessException.class)
+  public void testInternalAccessEnforceMismatchedPrincipalThrows() throws IOException {
+    NamespaceId ns = new NamespaceId("namespace");
+    long currentTime = System.currentTimeMillis();
+    UserIdentity userIdentity = new UserIdentity(
+        SYSTEM_PRINCIPAL, UserIdentity.IdentifierType.INTERNAL,
+        Collections.emptyList(), currentTime, currentTime + 5 * MINUTE_MILLIS);
+    String encodedIdentity = Base64.getEncoder()
+        .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
+    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    Principal spoofedPrincipal = new Principal(
+        "admin", Principal.PrincipalType.USER, null, credential);
+    internalAccessEnforcer.enforce(ns, spoofedPrincipal, StandardPermission.GET);
+  }
 }

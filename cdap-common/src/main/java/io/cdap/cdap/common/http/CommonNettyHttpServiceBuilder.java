@@ -28,11 +28,11 @@ import io.cdap.cdap.common.encryption.EncryptionExemptionHook;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.features.Feature;
+import io.cdap.cdap.security.spi.authentication.AccessTokenIdentityValidator;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
-
 import java.util.Arrays;
 import java.util.Collections;
 import javax.annotation.Nullable;
@@ -48,7 +48,8 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier additionalModifier;
 
   /**
-   * Parameterized constructor for CommonNettyHttpServiceBuilder
+   * Parameterized constructor for CommonNettyHttpServiceBuilder.
+   *
    * @param cConf CConfiguration
    * @param serviceName Name of the service
    * @param metricsCollectionService MetricsCollectionService
@@ -59,6 +60,25 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
       MetricsCollectionService metricsCollectionService, boolean workerDecryptionEnabled,
       AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher) {
+    this(cConf, serviceName, metricsCollectionService, workerDecryptionEnabled, auditLogWriter,
+        userEncryptionAeadCipher, null);
+  }
+
+  /**
+   * Parameterized constructor for CommonNettyHttpServiceBuilder.
+   *
+   * @param cConf CConfiguration
+   * @param serviceName Name of the service
+   * @param metricsCollectionService MetricsCollectionService
+   * @param workerDecryptionEnabled flag to check if requests to this service are from task worker
+   * @param auditLogWriter Writer to publish audit log requests
+   * @param userEncryptionAeadCipher cipher used for decrypting user credentials
+   * @param accessTokenIdentityValidator validator for CDAP access tokens, if available
+   */
+  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
+      MetricsCollectionService metricsCollectionService, boolean workerDecryptionEnabled,
+      AuditLogWriter auditLogWriter, AeadCipher userEncryptionAeadCipher,
+      @Nullable AccessTokenIdentityValidator accessTokenIdentityValidator) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
@@ -73,9 +93,10 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           // to remember the user id.
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
-                             new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                 .INTERNAL_AUTH_ENABLED), auditLoggingEnabled, workerDecryptionEnabled,
-                                 auditLogWriter, userEncryptionAeadCipher));
+              new AuthenticationChannelHandler(
+                  cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED),
+                  auditLoggingEnabled, workerDecryptionEnabled,
+                  auditLogWriter, userEncryptionAeadCipher, accessTokenIdentityValidator));
         }
       };
     }

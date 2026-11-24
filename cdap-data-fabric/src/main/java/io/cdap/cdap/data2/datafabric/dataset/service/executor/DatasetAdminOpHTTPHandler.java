@@ -30,7 +30,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -40,8 +39,6 @@ import java.nio.charset.StandardCharsets;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides REST endpoints for {@link DatasetAdmin} operations. The corresponding client is {@link
@@ -50,7 +47,6 @@ import org.slf4j.LoggerFactory;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);
   private static final Gson GSON = new Gson();
 
   private final DatasetAdminService datasetAdminService;
@@ -66,7 +62,6 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void exists(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("name") String instanceName) throws Exception {
-    propagateUserId(request);
     NamespaceId namespace = new NamespaceId(namespaceId);
     DatasetId instanceId = namespace.dataset(instanceName);
     responder.sendJson(HttpResponseStatus.OK,
@@ -78,7 +73,6 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void create(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("name") String name) throws Exception {
-    propagateUserId(request);
     InternalDatasetCreationParams params = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
         InternalDatasetCreationParams.class);
@@ -105,7 +99,6 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void update(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("name") String name) throws Exception {
-    propagateUserId(request);
     InternalDatasetUpdateParams params = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
         InternalDatasetUpdateParams.class);
@@ -135,7 +128,6 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void drop(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("name") String instanceName) throws Exception {
-    propagateUserId(request);
     InternalDatasetDropParams params = GSON.fromJson(
         request.content().toString(StandardCharsets.UTF_8),
         InternalDatasetDropParams.class);
@@ -156,7 +148,6 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("name") String instanceName) throws Exception {
-    propagateUserId(request);
     DatasetId instanceId = new DatasetId(namespaceId, instanceName);
     datasetAdminService.truncate(instanceId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
@@ -167,18 +158,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void upgrade(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("name") String instanceName) throws Exception {
-    propagateUserId(request);
     DatasetId instanceId = new DatasetId(namespaceId, instanceName);
     datasetAdminService.upgrade(instanceId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
-  }
-
-  // propagate user id from the HTTP Request in the current thread
-  private void propagateUserId(HttpRequest request) {
-    String userId = request.headers().get(Constants.Security.Headers.USER_ID);
-    if (userId != null) {
-      LOG.debug("Propagating userId as {}", userId);
-      SecurityRequestContext.setUserId(userId);
-    }
   }
 }

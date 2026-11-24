@@ -32,6 +32,7 @@ public class AccessTokenValidator extends AbstractIdleService implements TokenVa
   private static final Logger LOG = LoggerFactory.getLogger(AccessTokenValidator.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;
+  private boolean startedTokenManager;
 
   @Inject
   public AccessTokenValidator(TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
@@ -42,13 +43,18 @@ public class AccessTokenValidator extends AbstractIdleService implements TokenVa
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting up AccessTokenValidator service");
-    tokenManager.startAndWait();
+    if (!tokenManager.isRunning()) {
+      tokenManager.startAndWait();
+      startedTokenManager = true;
+    }
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down AccessTokenValidator service");
-    tokenManager.stopAndWait();
+    if (startedTokenManager && tokenManager.isRunning()) {
+      tokenManager.stopAndWait();
+    }
   }
 
   @Override

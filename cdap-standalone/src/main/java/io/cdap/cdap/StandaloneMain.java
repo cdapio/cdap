@@ -94,6 +94,7 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
+import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -161,6 +162,7 @@ public class StandaloneMain {
   private final ArtifactLocalizerService artifactLocalizerService;
   private final EventPublishManager eventPublishManager;
   private final EventSubscriberManager eventSubscriberManager;
+  private final TokenManager tokenManager;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
 
@@ -170,6 +172,7 @@ public class StandaloneMain {
 
     injector = Guice.createInjector(modules);
 
+    tokenManager = injector.getInstance(TokenManager.class);
     levelDbTableService = injector.getInstance(LevelDBTableService.class);
     messagingService = injector.getInstance(MessagingService.class);
     accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
@@ -246,6 +249,10 @@ public class StandaloneMain {
     URLConnections.setDefaultUseCaches(false);
 
     ConfigurationLogger.logImportantConfig(cConf);
+
+    if (SecurityUtil.isInternalAuthEnabled(cConf) && !tokenManager.isRunning()) {
+      tokenManager.startAndWait();
+    }
 
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
@@ -374,6 +381,9 @@ public class StandaloneMain {
       if (SecurityUtil.isManagedSecurity(cConf)) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
+      }
+      if (tokenManager.isRunning()) {
+        tokenManager.stopAndWait();
       }
 
       // TODO: CDAP-7688, remove next line after the issue is resolved

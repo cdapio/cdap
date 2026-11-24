@@ -263,15 +263,18 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements Rol
   }
 
   private Principal getUserPrinciple(Principal principal) throws AccessException {
-    if (principal.getFullCredential() == null
+    Credential userCredential = principal.getFullCredential();
+    if (userCredential == null
         || !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED,
         false)) {
       return principal;
     }
 
-    Credential userCredential = principal.getFullCredential();
-    if (userCredential == null || !userCredential.getType()
-        .equals(Credential.CredentialType.EXTERNAL_ENCRYPTED)) {
+    if (userCredential.getType().equals(Credential.CredentialType.EXTERNAL)) {
+      throw new AccessException(
+          "Expected encrypted user credential when user credential encryption is enabled");
+    }
+    if (!userCredential.getType().equals(Credential.CredentialType.EXTERNAL_ENCRYPTED)) {
       return principal;
     }
 
@@ -280,7 +283,7 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer implements Rol
     try {
       String plainCredential = userEncryptionAeadCipher
           .decryptStringFromBase64(userCredential.getValue(),
-              Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+              Encryption.userCredentialAssociatedData(principal.getName()));
       return new Principal(principal.getName(),
           principal.getType(),
           principal.getKerberosPrincipal(),

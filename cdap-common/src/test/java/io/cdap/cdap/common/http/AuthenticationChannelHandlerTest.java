@@ -28,12 +28,15 @@ import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.conf.Constants.Security.Headers;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.FakeAeadCipher;
+import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.encryption.WorkerDecryptionScope;
 import io.cdap.cdap.common.encryption.guice.LazyDelegateAeadCipher;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Credential.CredentialType;
+import io.cdap.cdap.security.spi.authentication.AccessTokenIdentityValidator;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authentication.ValidatedTokenIdentity;
 import io.cdap.cdap.security.spi.authorization.AuditLogContext;
 import io.cdap.cdap.security.spi.authorization.AuditLogRequest;
 import io.cdap.cdap.security.spi.encryption.CipherException;
@@ -444,6 +447,159 @@ public class AuthenticationChannelHandlerTest {
     Assert.assertEquals(Credential.CredentialType.INTERNAL, actualCredential.getType());
     Assert.assertEquals("token", actualCredential.getValue());
     verify(ctx, times(1)).fireChannelRead(any());
+  }
+
+  @Test
+  public void testMissingRuntimeTokenIgnoresSpoofedUserIdHeader() throws Exception {
+    req.headers().set(Headers.USER_ID, "admin");
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher(),
+        token -> {
+          throw new AssertionError("Validator should not be called without runtime token");
+        });
+
+    Mockito.when(ctx.fireChannelRead(any())).thenAnswer(invocation -> {
+      Assert.assertEquals("CDAP-empty-user-id", SecurityRequestContext.getUserId());
+      Credential actualCredential = SecurityRequestContext.getUserCredential();
+      Assert.assertNotNull(actualCredential);
+      Assert.assertEquals(CredentialType.INTERNAL, actualCredential.getType());
+      Assert.assertEquals("CDAP-empty-user-credential", actualCredential.getValue());
+      return null;
+    });
+
+    handler.channelRead(ctx, req);
+
+    verify(ctx.channel().attr(AttributeKey.valueOf(AuthenticationChannelHandler.CDAP_USER_ID_ATTR)),
+        times(1)).set("CDAP-empty-user-id");
+    verify(ctx, times(1)).fireChannelRead(any());
+  }
+
+  @Test(expected = UnauthenticatedException.class)
+  public void testUnencryptedExternalCredentialRejectedWithoutTokenValidator() throws Exception {
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher());
+    req.headers().set(Headers.USER_ID, "admin");
+    req.headers().set(Headers.RUNTIME_TOKEN, CredentialType.EXTERNAL.getQualifiedName() + " dummy");
+
+    handler.channelRead(ctx, req);
+  }
+
+  @Test(expected = UnauthenticatedException.class)
+  public void testUnencryptedExternalDummyTokenRejectedByTokenValidator() throws Exception {
+    AccessTokenIdentityValidator validator = token -> {
+      throw new UnauthenticatedException("Invalid signature");
+    };
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher(),
+        validator);
+    req.headers().set(Headers.USER_ID, "admin");
+    req.headers().set(Headers.RUNTIME_TOKEN, CredentialType.EXTERNAL.getQualifiedName() + " dummy");
+
+    handler.channelRead(ctx, req);
+  }
+
+  @Test
+  public void testValidManagedExternalTokenPopulatesVerifiedUserId() throws Exception {
+    AccessTokenIdentityValidator validator = token -> {
+      if ("valid-managed-token".equals(token)) {
+        return new ValidatedTokenIdentity("alice", false);
+      }
+      throw new UnauthenticatedException("Invalid token");
+    };
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher(),
+        validator);
+    req.headers().set(Headers.USER_ID, "alice");
+    req.headers().set(Headers.RUNTIME_TOKEN,
+        CredentialType.EXTERNAL.getQualifiedName() + " valid-managed-token");
+
+    Mockito.when(ctx.fireChannelRead(any())).thenAnswer(invocation -> {
+      Assert.assertEquals("alice", SecurityRequestContext.getUserId());
+      Credential actualCredential = SecurityRequestContext.getUserCredential();
+      Assert.assertNotNull(actualCredential);
+      Assert.assertEquals(CredentialType.EXTERNAL, actualCredential.getType());
+      Assert.assertEquals("valid-managed-token", actualCredential.getValue());
+      return null;
+    });
+
+    handler.channelRead(ctx, req);
+    verify(ctx, times(1)).fireChannelRead(any());
+  }
+
+  @Test(expected = UnauthenticatedException.class)
+  public void testManagedExternalTokenMismatchedUserIdRejected() throws Exception {
+    AccessTokenIdentityValidator validator = token -> new ValidatedTokenIdentity("alice", false);
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher(),
+        validator);
+    req.headers().set(Headers.USER_ID, "admin");
+    req.headers().set(Headers.RUNTIME_TOKEN,
+        CredentialType.EXTERNAL.getQualifiedName() + " valid-managed-token");
+
+    handler.channelRead(ctx, req);
+  }
+
+  @Test(expected = UnauthenticatedException.class)
+  public void testInternalTokenMismatchedUserIdRejected() throws Exception {
+    AccessTokenIdentityValidator validator = token -> new ValidatedTokenIdentity("system", true);
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher(),
+        validator);
+    req.headers().set(Headers.USER_ID, "admin");
+    req.headers().set(Headers.RUNTIME_TOKEN,
+        CredentialType.INTERNAL.getQualifiedName() + " valid-internal-token");
+
+    handler.channelRead(ctx, req);
+  }
+
+  @Test(expected = UnauthenticatedException.class)
+  public void testExternalTokenPresentedAsInternalRejected() throws Exception {
+    AccessTokenIdentityValidator validator = token -> new ValidatedTokenIdentity("alice", false);
+    handler = new AuthenticationChannelHandler(true, false, true, null, new NoOpAeadCipher(),
+        validator);
+    req.headers().set(Headers.USER_ID, "alice");
+    req.headers().set(Headers.RUNTIME_TOKEN,
+        CredentialType.INTERNAL.getQualifiedName() + " external-token");
+
+    handler.channelRead(ctx, req);
+  }
+
+  @Test
+  public void testEncryptedExternalCredentialBoundToUserId() throws Exception {
+    FakeAeadCipher cipher = new FakeAeadCipher();
+    cipher.initialize();
+    handler = new AuthenticationChannelHandler(true, false, true, null, cipher);
+
+    String encryptedForAlice = cipher.encryptToBase64("oauth-token",
+        Encryption.userCredentialAssociatedData("alice"));
+    req.headers().set(Headers.USER_ID, "alice");
+    req.headers().set(Headers.RUNTIME_TOKEN,
+        CredentialType.EXTERNAL_ENCRYPTED.getQualifiedName() + " " + encryptedForAlice);
+
+    Mockito.when(ctx.fireChannelRead(any())).thenAnswer(invocation -> {
+      Assert.assertEquals("alice", SecurityRequestContext.getUserId());
+      Credential actualCredential = SecurityRequestContext.getUserCredential();
+      Assert.assertNotNull(actualCredential);
+      Assert.assertEquals(CredentialType.EXTERNAL_ENCRYPTED, actualCredential.getType());
+      Assert.assertEquals(encryptedForAlice, actualCredential.getValue());
+      return null;
+    });
+
+    handler.channelRead(ctx, req);
+    verify(ctx, times(1)).fireChannelRead(any());
+
+    // Replaying Alice's encrypted token with CDAP-UserId: admin must fail AEAD verification.
+    DefaultHttpRequest spoofedReq = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET,
+        "foo");
+    spoofedReq.headers().set(Headers.USER_ID, "admin");
+    spoofedReq.headers().set(Headers.RUNTIME_TOKEN,
+        CredentialType.EXTERNAL_ENCRYPTED.getQualifiedName() + " " + encryptedForAlice);
+    try {
+      handler.channelRead(ctx, spoofedReq);
+      Assert.fail("Expected UnauthenticatedException when CDAP-UserId does not match AEAD AD");
+    } catch (UnauthenticatedException expected) {
+      // Verify channel identity attributes were cleared when the second request failed.
+      verify(ctx.channel().attr(
+          AttributeKey.valueOf(AuthenticationChannelHandler.CDAP_USER_ID_ATTR)),
+          times(1)).set(null);
+      verify(ctx.channel().attr(
+          AttributeKey.valueOf(AuthenticationChannelHandler.CDAP_USER_CREDENTIAL_ATTR)),
+          times(1)).set(null);
+    }
   }
 
   private ChannelHandlerContext setAuditLogsInFireChannelRead() {

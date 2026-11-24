@@ -24,10 +24,12 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Constants used by different systems are all defined here.
@@ -2006,6 +2008,41 @@ public final class Constants {
        */
       public static final String PREVIEW_RUNNER_ENCRYPTION_ASSOCIATED_DATA
           = "PreviewRunnerEncryptionAD";
+
+      /**
+       * Builds AEAD associated data for end-user credentials bound to a specific {@code userId}.
+       *
+       * @param userId authenticated user identifier bound to the encrypted credential
+       * @return UTF-8 bytes of the user-bound associated data
+       */
+      public static byte[] userCredentialAssociatedData(@Nullable String userId) {
+        return associatedDataWithUser(USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA, userId);
+      }
+
+      /**
+       * Builds AEAD associated data for task-worker credentials bound to {@code userId}.
+       *
+       * @param userId user identifier in the active request context, if present
+       * @return UTF-8 bytes of the associated data
+       */
+      public static byte[] taskWorkerAssociatedData(@Nullable String userId) {
+        return associatedDataWithUser(TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA, userId);
+      }
+
+      /**
+       * Builds AEAD associated data for preview-runner credentials bound to {@code userId}.
+       *
+       * @param userId user identifier in the active principal, if present
+       * @return UTF-8 bytes of the associated data
+       */
+      public static byte[] previewRunnerAssociatedData(@Nullable String userId) {
+        return associatedDataWithUser(PREVIEW_RUNNER_ENCRYPTION_ASSOCIATED_DATA, userId);
+      }
+
+      private static byte[] associatedDataWithUser(String prefix, @Nullable String userId) {
+        String value = (userId == null || userId.isEmpty()) ? prefix : prefix + ":" + userId;
+        return value.getBytes(StandardCharsets.UTF_8);
+      }
     }
 
     /**

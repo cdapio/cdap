@@ -36,9 +36,12 @@ import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.auth.context.SystemAuthenticationContext;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpMethod;
@@ -77,6 +80,7 @@ public class DatasetServiceClient {
   private final RemoteClient remoteClient;
   private final NamespaceId namespaceId;
   private final boolean securityEnabled;
+  private final boolean internalAuthEnabled;
   private final boolean kerberosEnabled;
   private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
@@ -92,6 +96,7 @@ public class DatasetServiceClient {
             namespaceId.getNamespace()));
     this.namespaceId = namespaceId;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
+    this.internalAuthEnabled = SecurityUtil.isInternalAuthEnabled(cConf);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
@@ -331,6 +336,13 @@ public class DatasetServiceClient {
   private HttpResponse doRequest(HttpRequest.Builder requestBuilder)
       throws DatasetManagementException, UnauthorizedException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
+    boolean useSystemIdentity = shouldUseSystemInternalIdentity();
+    String previousUserId = SecurityRequestContext.getUserId();
+    Credential previousCredential = SecurityRequestContext.getUserCredential();
+    if (useSystemIdentity) {
+      SecurityRequestContext.setUserId(null);
+      SecurityRequestContext.setUserCredential(null);
+    }
     try {
       LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
       HttpResponse response = remoteClient.execute(request, Idempotency.AUTO);
@@ -350,6 +362,11 @@ public class DatasetServiceClient {
     } catch (Throwable e) { // anything unexpected
       LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
       throw e;
+    } finally {
+      if (useSystemIdentity) {
+        SecurityRequestContext.setUserId(previousUserId);
+        SecurityRequestContext.setUserCredential(previousCredential);
+      }
     }
   }
 
@@ -358,12 +375,29 @@ public class DatasetServiceClient {
     return callerId != null ? callerId : "unknown http client";
   }
 
+  private boolean shouldUseSystemInternalIdentity() throws DatasetManagementException {
+    if (!internalAuthEnabled || !securityEnabled || !authorizationEnabled
+        || !NamespaceId.SYSTEM.equals(namespaceId)
+        || !(authenticationContext instanceof SystemAuthenticationContext)) {
+      return false;
+    }
+    if (!kerberosEnabled) {
+      return true;
+    }
+    try {
+      String currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
+      return currUserShortName.equals(masterShortUserName);
+    } catch (IOException e) {
+      throw new DatasetManagementException("Unable to get the current user", e);
+    }
+  }
+
   private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder)
       throws DatasetManagementException {
     if (LOG.isTraceEnabled()) {
       builder = builder.addHeader("callerId", Thread.currentThread().getName());
     }
-    if (!securityEnabled || !authorizationEnabled) {
+    if (internalAuthEnabled || !securityEnabled || !authorizationEnabled) {
       return builder;
     }
 

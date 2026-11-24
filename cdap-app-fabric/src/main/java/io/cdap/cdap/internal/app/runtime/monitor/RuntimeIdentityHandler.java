@@ -20,7 +20,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
-import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -40,9 +39,6 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
   private static final Logger AUDIT_LOGGER = LoggerFactory
       .getLogger(Constants.RuntimeMonitor.MONITOR_AUDIT_LOGGER_NAME);
 
-  private static final String EMPTY_RUNTIME_TOKEN =
-      String.format("%s %s", Credential.CREDENTIAL_TYPE_INTERNAL, "empty-runtime-token");
-
   private final boolean enforceAuthenticatedRequests;
   private final boolean auditLogEnabled;
 
@@ -61,17 +57,19 @@ public class RuntimeIdentityHandler extends ChannelInboundHandlerAdapter {
     HttpRequest request = (HttpRequest) msg;
 
     request.headers().remove(HttpHeaderNames.AUTHORIZATION);
-    request.headers().set(Constants.Security.Headers.USER_ID,
-        Constants.Security.Authentication.RUNTIME_IDENTITY);
+    request.headers().remove(io.cdap.cdap.common.http.HttpHeaderNames.WORKER_DECRYPTION_HDR);
+    if (enforceAuthenticatedRequests
+        && !request.headers().contains(Constants.Security.Headers.RUNTIME_TOKEN)) {
+      request.headers().remove(Constants.Security.Headers.USER_ID);
+    } else {
+      request.headers().set(Constants.Security.Headers.USER_ID,
+          Constants.Security.Authentication.RUNTIME_IDENTITY);
+    }
     String clientIP = Networks.getIP(ctx.channel().remoteAddress());
     if (clientIP != null) {
       request.headers().set(Constants.Security.Headers.USER_IP, clientIP);
     } else {
       request.headers().remove(Constants.Security.Headers.USER_IP);
-    }
-    if (enforceAuthenticatedRequests && !request.headers()
-        .contains(Constants.Security.Headers.RUNTIME_TOKEN)) {
-      request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN, EMPTY_RUNTIME_TOKEN);
     }
     ctx.fireChannelRead(msg);
   }

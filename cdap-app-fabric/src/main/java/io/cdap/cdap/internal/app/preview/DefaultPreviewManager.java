@@ -440,7 +440,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
     Credential credential = originalPrincipal.getFullCredential();
     String encryptedValue = userEncryptionAeadCipher.encryptToBase64(credential.getValue(),
-        Encryption.PREVIEW_RUNNER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+        Encryption.previewRunnerAssociatedData(originalPrincipal.getName()));
     Credential encryptedCredential = new Credential(encryptedValue, credential.getType());
 
     return new Principal(originalPrincipal.getName(), originalPrincipal.getType(),

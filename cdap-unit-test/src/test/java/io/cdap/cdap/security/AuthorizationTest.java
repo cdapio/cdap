@@ -173,6 +173,7 @@ public class AuthorizationTest extends TestBase {
         Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath(),
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
         Constants.Security.KERBEROS_ENABLED, "false",
+        Constants.Security.INTERNAL_AUTH_ENABLED, "false",
       };
     }
   }

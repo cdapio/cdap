@@ -81,6 +81,7 @@ public class AuthorizationHandlerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     conf.setBoolean(Constants.Security.ENABLED, true);
+    conf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, false);
     properties.setProperty("superusers", admin.getName());
     final InMemoryPermissionManager auth = new InMemoryPermissionManager();
     final InMemoryRoleController inMemoryRoleController = new InMemoryRoleController();
@@ -126,6 +127,7 @@ public class AuthorizationHandlerTest {
   public void testAuthorizationDisabled() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Security.ENABLED, true);
+    cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
     testDisabled(cConf, FeatureDisabledException.Feature.AUTHORIZATION, Constants.Security.Authorization.ENABLED);
   }

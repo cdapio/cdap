@@ -24,12 +24,14 @@ import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
 import io.cdap.cdap.security.auth.AccessTokenValidator;
+import io.cdap.cdap.security.auth.DefaultAccessTokenIdentityValidator;
 import io.cdap.cdap.security.auth.KeyIdentifier;
 import io.cdap.cdap.security.auth.KeyIdentifierCodec;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.auth.UserIdentityCodec;
+import io.cdap.cdap.security.spi.authentication.AccessTokenIdentityValidator;
 
 /**
  * Guice bindings for core security related functionality including token and key management. This
@@ -53,9 +55,13 @@ public abstract class CoreSecurityModule extends PrivateModule {
     bindKeyManager(binder());
     bind(TokenManager.class).in(Scopes.SINGLETON);
     bind(TokenValidator.class).to(AccessTokenValidator.class);
+    bind(AccessTokenIdentityValidator.class)
+        .to(DefaultAccessTokenIdentityValidator.class)
+        .in(Scopes.SINGLETON);
 
     expose(TokenValidator.class);
     expose(TokenManager.class);
+    expose(AccessTokenIdentityValidator.class);
     expose(new TypeLiteral<Codec<AccessToken>>() {
     });
     expose(new TypeLiteral<Codec<KeyIdentifier>>() {

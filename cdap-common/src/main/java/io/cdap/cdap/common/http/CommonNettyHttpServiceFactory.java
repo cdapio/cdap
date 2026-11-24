@@ -23,6 +23,8 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
+import io.cdap.cdap.security.spi.authentication.AccessTokenIdentityValidator;
+import javax.annotation.Nullable;
 
 /**
  * Factory to create {@link CommonNettyHttpServiceBuilder} using {@link CConfiguration} and {@link
@@ -34,16 +36,41 @@ public class CommonNettyHttpServiceFactory {
   private final MetricsCollectionService metricsCollectionService;
   private final AuditLogWriter auditLogWriter;
   private final AeadCipher userEncryptionAeadCipher;
+  private AccessTokenIdentityValidator accessTokenIdentityValidator;
 
   @Inject
   public CommonNettyHttpServiceFactory(CConfiguration cConf,
-                                       MetricsCollectionService metricsCollectionService,
-                                        AuditLogWriter auditLogWriter,
-      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION) AeadCipher userEncryptionAeadCipher) {
+      MetricsCollectionService metricsCollectionService,
+      AuditLogWriter auditLogWriter,
+      @Named(UserCredentialAeadEncryptionModule.USER_CREDENTIAL_ENCRYPTION)
+          AeadCipher userEncryptionAeadCipher) {
+    this(cConf, metricsCollectionService, auditLogWriter, userEncryptionAeadCipher, null);
+  }
+
+  /**
+   * Creates a {@link CommonNettyHttpServiceFactory} with an explicit token identity validator.
+   *
+   * @param cConf CDAP configuration
+   * @param metricsCollectionService metrics collection service
+   * @param auditLogWriter writer used to publish audit log events
+   * @param userEncryptionAeadCipher cipher used for user credential decryption
+   * @param accessTokenIdentityValidator validator for CDAP access tokens, if available
+   */
+  public CommonNettyHttpServiceFactory(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      AuditLogWriter auditLogWriter,
+      AeadCipher userEncryptionAeadCipher,
+      @Nullable AccessTokenIdentityValidator accessTokenIdentityValidator) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.auditLogWriter = auditLogWriter;
     this.userEncryptionAeadCipher = userEncryptionAeadCipher;
+    this.accessTokenIdentityValidator = accessTokenIdentityValidator;
+  }
+
+  @Inject(optional = true)
+  void setAccessTokenIdentityValidator(AccessTokenIdentityValidator accessTokenIdentityValidator) {
+    this.accessTokenIdentityValidator = accessTokenIdentityValidator;
   }
 
   /**
@@ -56,8 +83,18 @@ public class CommonNettyHttpServiceFactory {
     return builder(serviceName, true);
   }
 
-  public CommonNettyHttpServiceBuilder builder(String serviceName, boolean workerDecryptionEnabled) {
+  /**
+   * Creates a {@link CommonNettyHttpServiceBuilder} with serviceName and worker decryption setting.
+   *
+   * @param serviceName Name of the service passed to {@link CommonNettyHttpServiceBuilder}
+   * @param workerDecryptionEnabled whether worker credential decryption and token verification are
+   *     enabled on this service
+   * @return {@link CommonNettyHttpServiceBuilder}
+   */
+  public CommonNettyHttpServiceBuilder builder(String serviceName,
+      boolean workerDecryptionEnabled) {
     return new CommonNettyHttpServiceBuilder(cConf, serviceName, metricsCollectionService,
-        workerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher);
+        workerDecryptionEnabled, auditLogWriter, userEncryptionAeadCipher,
+        accessTokenIdentityValidator);
   }
 }

@@ -33,6 +33,7 @@ import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.auth.UserIdentityPair;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.GrantAccessToken;
 import io.cdap.cdap.security.spi.encryption.CipherException;
 import io.netty.buffer.ByteBuf;
@@ -112,6 +113,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     }
 
     HttpRequest request = (HttpRequest) msg;
+    sanitizeInboundHeaders(request);
 
     // Pass if security is bypassed or it has valid access token, process to the next handler
     if (isBypassed(request)) {
@@ -126,9 +128,11 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
       Credential credential = getUserCredential(userIdentityPair);
 
-      // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
-      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true)
-          && credential != null) {
+      // Propagate credentials when configured or when internal auth requires downstream verification.
+      boolean propagateCredential =
+          cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true)
+              || SecurityUtil.isInternalAuthEnabled(cConf);
+      if (propagateCredential && credential != null) {
         request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN,
             String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
       }
@@ -179,6 +183,13 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     } finally {
       ReferenceCountUtil.release(msg);
     }
+  }
+
+  private void sanitizeInboundHeaders(HttpRequest request) {
+    request.headers().remove(Constants.Security.Headers.USER_ID);
+    request.headers().remove(Constants.Security.Headers.USER_IP);
+    request.headers().remove(Constants.Security.Headers.RUNTIME_TOKEN);
+    request.headers().remove(io.cdap.cdap.common.http.HttpHeaderNames.WORKER_DECRYPTION_HDR);
   }
 
   /**
@@ -246,18 +257,20 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private Credential getUserCredential(UserIdentityPair userIdentityPair)
       throws CipherException {
     String userCredential = userIdentityPair.getUserCredential();
+    if (userCredential == null) {
+      return null;
+    }
     UserIdentity userIdentity = userIdentityPair.getUserIdentity();
     if (userIdentity.getIdentifierType() == UserIdentity.IdentifierType.INTERNAL) {
       return new Credential(userCredential, Credential.CredentialType.INTERNAL);
     }
-    if (userCredential == null
-        || !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED,
+    if (!sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED,
         false)) {
       return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
     }
     String encryptedCredential = userCredentialAeadCipher
         .encryptToBase64(userCredential,
-            Encryption.USER_CREDENTIAL_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+            Encryption.userCredentialAssociatedData(userIdentity.getUsername()));
     return new Credential(encryptedCredential, Credential.CredentialType.EXTERNAL_ENCRYPTED);
   }
 
