@@ -28,11 +28,12 @@
   </parent>
 
   <artifactId>cdap-elastic</artifactId>
-  <name>CDAP Elasticsearch Metadata Storage Provider</name>
+  <name>CDAP OpenSearch Metadata Storage Provider</name>
   <packaging>jar</packaging>
 
   <properties>
-    <elasticsearch.version>6.5.3</elasticsearch.version>
+    <opensearch.version>3.10.0</opensearch.version>
+    <opensearch.image>opensearchproject/opensearch:${opensearch.version}</opensearch.image>
   </properties>
 
   <dependencies>
@@ -74,12 +75,26 @@
       <scope>test</scope>
     </dependency>
 
-    <!--- ElasticSearch dependencies -->
+    <!--
+      Hadoop needs Jackson and Commons Logging at run time, but the root pom excludes them from the
+      Hadoop dependencies. The Elasticsearch client, which this module no longer uses, brought them
+      to the classpath of all modules that depend on this module. Keep them there.
+    -->
     <dependency>
-      <groupId>org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-high-level-client</artifactId>
-      <version>${elasticsearch.version}</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.3</version>
+    </dependency>
+
+    <!-- The HTTP client that talks to the REST API of the search cluster -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpcore</artifactId>
@@ -151,38 +166,58 @@
             <configuration>
               <portNames>
                 <portName>elasticHttpPort</portName>
-                <portName>elasticTransportPort</portName>
               </portNames>
             </configuration>
           </execution>
         </executions>
       </plugin>
 
+      <!-- Runs an OpenSearch node in a container for the duration of the integration tests -->
       <plugin>
-        <groupId>com.github.alexcojocaru</groupId>
-        <artifactId>elasticsearch-maven-plugin</artifactId>
-        <version>6.9</version>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.45.1</version>
         <configuration>
           <skip>${skipTests}</skip>
-          <version>${elasticsearch.version}</version>
-          <clusterName>test</clusterName>
-          <transportPort>${elasticTransportPort}</transportPort>
-          <httpPort>${elasticHttpPort}</httpPort>
+          <images>
+            <image>
+              <name>${opensearch.image}</name>
+              <run>
+                <env>
+                  <discovery.type>single-node</discovery.type>
+                  <DISABLE_SECURITY_PLUGIN>true</DISABLE_SECURITY_PLUGIN>
+                  <DISABLE_INSTALL_DEMO_CONFIG>true</DISABLE_INSTALL_DEMO_CONFIG>
+                  <OPENSEARCH_JAVA_OPTS>-Xms512m -Xmx512m</OPENSEARCH_JAVA_OPTS>
+                </env>
+                <ports>
+                  <port>${elasticHttpPort}:9200</port>
+                </ports>
+                <wait>
+                  <http>
+                    <url>http://localhost:${elasticHttpPort}/_cluster/health</url>
+                    <method>GET</method>
+                    <status>200</status>
+                  </http>
+                  <time>180000</time>
+                </wait>
+              </run>
+            </image>
+          </images>
         </configuration>
         <executions>
           <!--
-              The elasticsearch maven plugin goals are by default bound to the
-              pre-integration-test and post-integration-test phases
+              Start the container after the build-helper plugin reserved the port, and stop it
+              after the integration tests
           -->
           <execution>
-            <id>start-elasticsearch</id>
+            <id>start-opensearch</id>
             <phase>pre-integration-test</phase>
             <goals>
-              <goal>runforked</goal>
+              <goal>start</goal>
             </goals>
           </execution>
           <execution>
-            <id>stop-elasticsearch</id>
+            <id>stop-opensearch</id>
             <phase>post-integration-test</phase>
             <goals>
               <goal>stop</goal>
