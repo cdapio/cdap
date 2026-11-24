@@ -18,21 +18,18 @@ package io.cdap.cdap.metadata.elastic;
 
 import java.io.IOException;
 import java.util.Random;
-import org.apache.http.HttpHost;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.settings.Settings;
+import org.apache.hc.core5.http.HttpHost;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opensearch.client.json.jsonb.JsonbJsonpMapper;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
+import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests the way Elasticsearch is set up for "integration" tests (mvn verify).
+ * Tests the way OpenSearch is set up for "integration" tests (mvn verify).
  */
 public class ElasticClientTest {
 
@@ -41,25 +38,22 @@ public class ElasticClientTest {
   @Test
   public void testCreateDelete() throws IOException {
     int elasticPort = Integer.valueOf(System.getProperty("elastic.http.port", "9200"));
-    LOG.info("Elasticsearch port is {}", System.getProperty("elastic.http.port"));
-    try (RestHighLevelClient client =
-           new RestHighLevelClient(RestClient.builder(new HttpHost("localhost", elasticPort)))) {
+    LOG.info("OpenSearch port is {}", System.getProperty("elastic.http.port"));
+    try (ApacheHttpClient5Transport transport = ApacheHttpClient5TransportBuilder
+           .builder(new HttpHost("http", "localhost", elasticPort))
+           .setMapper(new JsonbJsonpMapper()).build()) {
+      OpenSearchClient client = new OpenSearchClient(transport);
 
       String indexName = "test" + new Random(System.currentTimeMillis()).nextInt();
-      CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
-      createIndexRequest.settings(Settings.builder()
-                                    .put("index.number_of_shards", 1)
-                                    .put("index.number_of_replicas", 1));
-      Assert.assertTrue(client.indices().create(createIndexRequest, RequestOptions.DEFAULT).isAcknowledged());
+      Assert.assertTrue(client.indices().create(c -> c.index(indexName)
+                                                  .settings(s -> s.numberOfShards(1).numberOfReplicas(1)))
+                          .acknowledged());
       try {
-        GetIndexRequest request = new GetIndexRequest().indices(indexName);
-        Assert.assertTrue(client.indices().exists(request, RequestOptions.DEFAULT));
+        Assert.assertTrue(client.indices().exists(e -> e.index(indexName)).value());
       } finally {
-        DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indexName);
-        Assert.assertTrue(client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT).isAcknowledged());
+        Assert.assertTrue(client.indices().delete(d -> d.index(indexName)).acknowledged());
       }
-      GetIndexRequest request = new GetIndexRequest().indices(indexName);
-      Assert.assertFalse(client.indices().exists(request, RequestOptions.DEFAULT));
+      Assert.assertFalse(client.indices().exists(e -> e.index(indexName)).value());
     }
   }
 }

@@ -28,11 +28,19 @@
   </parent>
 
   <artifactId>cdap-elastic</artifactId>
-  <name>CDAP Elasticsearch Metadata Storage Provider</name>
+  <!--
+    The metadata storage moved from Elasticsearch 6.x to OpenSearch. The module, package, classes
+    and configuration keys keep the name "elastic", because existing deployments select the
+    provider with metadata.storage.implementation: elastic.
+  -->
+  <name>CDAP OpenSearch Metadata Storage Provider</name>
   <packaging>jar</packaging>
 
   <properties>
-    <elasticsearch.version>6.5.3</elasticsearch.version>
+    <opensearch.version>3.10.0</opensearch.version>
+    <opensearch.arch>x64</opensearch.arch>
+    <!-- Skipping the tests also skips the OpenSearch node that the integration tests need -->
+    <skipITs>${skipTests}</skipITs>
   </properties>
 
   <dependencies>
@@ -74,22 +82,18 @@
       <scope>test</scope>
     </dependency>
 
-    <!--- ElasticSearch dependencies -->
+    <!-- The client for the REST API of the search cluster -->
     <dependency>
-      <groupId>org.elasticsearch.client</groupId>
-      <artifactId>elasticsearch-rest-high-level-client</artifactId>
-      <version>${elasticsearch.version}</version>
+      <groupId>org.opensearch.client</groupId>
+      <artifactId>opensearch-java</artifactId>
     </dependency>
+    <!--
+      The HTTP transport of the client loads Reactive Streams classes, but the client does not
+      declare the dependency.
+    -->
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore</artifactId>
-      <version>${httpcore.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${httpclient.version}</version>
+      <groupId>org.reactivestreams</groupId>
+      <artifactId>reactive-streams</artifactId>
     </dependency>
 
   </dependencies>
@@ -113,7 +117,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <skip>true</skip>
+          <!--
+            Only this test runs without an OpenSearch node. It is set here, not as an include, so
+            that a -Dtest on the command line does not run the integration tests without a node.
+          -->
+          <test>MetadataDocumentTest</test>
         </configuration>
       </plugin>
 
@@ -134,6 +142,10 @@
           <includes>
             <include>**/*Test.java</include>
           </includes>
+          <excludes>
+            <!-- Runs in Surefire -->
+            <exclude>**/MetadataDocumentTest.java</exclude>
+          </excludes>
         </configuration>
       </plugin>
 
@@ -151,46 +163,129 @@
             <configuration>
               <portNames>
                 <portName>elasticHttpPort</portName>
-                <portName>elasticTransportPort</portName>
               </portNames>
             </configuration>
           </execution>
         </executions>
       </plugin>
 
+      <!--
+        Runs an OpenSearch node from the release tarball for the duration of the integration tests
+      -->
       <plugin>
-        <groupId>com.github.alexcojocaru</groupId>
-        <artifactId>elasticsearch-maven-plugin</artifactId>
-        <version>6.9</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
         <configuration>
-          <skip>${skipTests}</skip>
-          <version>${elasticsearch.version}</version>
-          <clusterName>test</clusterName>
-          <transportPort>${elasticTransportPort}</transportPort>
-          <httpPort>${elasticHttpPort}</httpPort>
+          <skip>${skipITs}</skip>
         </configuration>
         <executions>
-          <!--
-              The elasticsearch maven plugin goals are by default bound to the
-              pre-integration-test and post-integration-test phases
-          -->
           <execution>
-            <id>start-elasticsearch</id>
+            <id>start-opensearch</id>
             <phase>pre-integration-test</phase>
             <goals>
-              <goal>runforked</goal>
+              <goal>run</goal>
             </goals>
+            <configuration>
+              <target xmlns:if="ant:if">
+                <property name="opensearch.home"
+                          value="${project.build.directory}/opensearch-${opensearch.version}"/>
+                <property name="opensearch.dist"
+                          value="opensearch-min-${opensearch.version}-linux-${opensearch.arch}.tar.gz"/>
+                <property name="opensearch.url"
+                          value="https://artifacts.opensearch.org/releases/core/opensearch/${opensearch.version}"/>
+                <get src="${opensearch.url}/${opensearch.dist}" dest="${project.build.directory}"/>
+                <get src="${opensearch.url}/${opensearch.dist}.sha512"
+                     dest="${project.build.directory}"/>
+                <checksum file="${project.build.directory}/${opensearch.dist}" algorithm="SHA-512"
+                          fileext=".sha512" pattern="{0}  {1}" verifyproperty="checksum.ok"/>
+                <fail message="Checksum mismatch for ${opensearch.dist}">
+                  <condition>
+                    <isfalse value="${checksum.ok}"/>
+                  </condition>
+                </fail>
+                <!-- A rerun without clean starts without the data of the previous run -->
+                <delete dir="${opensearch.home}"/>
+                <!-- tar keeps the executable bits that the untar task drops -->
+                <exec executable="tar" dir="${project.build.directory}" failonerror="true">
+                  <arg line="-xzf ${opensearch.dist}"/>
+                </exec>
+                <exec executable="${opensearch.home}/bin/opensearch" failonerror="true">
+                  <!-- Use the JDK in the tarball, not the one that runs Maven -->
+                  <env key="OPENSEARCH_JAVA_HOME" value="${opensearch.home}/jdk"/>
+                  <env key="OPENSEARCH_JAVA_OPTS" value="-Xms512m -Xmx512m"/>
+                  <arg line="-d -p ${project.build.directory}/opensearch.pid"/>
+                  <arg line="-Ediscovery.type=single-node -Enetwork.host=127.0.0.1"/>
+                  <arg line="-Ehttp.port=${elasticHttpPort} -Etransport.port=0"/>
+                </exec>
+                <waitfor maxwait="3" maxwaitunit="minute" timeoutproperty="opensearch.timeout">
+                  <http url="http://127.0.0.1:${elasticHttpPort}/_cluster/health"/>
+                </waitfor>
+                <!-- Stop a node that did not become healthy, because the stop step will not run -->
+                <loadfile property="pid" srcFile="${project.build.directory}/opensearch.pid"
+                          failonerror="false">
+                  <filterchain>
+                    <striplinebreaks/>
+                  </filterchain>
+                </loadfile>
+                <exec executable="kill" if:set="opensearch.timeout">
+                  <arg value="${pid}"/>
+                </exec>
+                <fail if="opensearch.timeout" message="OpenSearch did not start"/>
+              </target>
+            </configuration>
           </execution>
           <execution>
-            <id>stop-elasticsearch</id>
+            <id>stop-opensearch</id>
             <phase>post-integration-test</phase>
             <goals>
-              <goal>stop</goal>
+              <goal>run</goal>
             </goals>
+            <configuration>
+              <target xmlns:if="ant:if">
+                <!-- The node removes the file if it exited already -->
+                <loadfile property="pid" srcFile="${project.build.directory}/opensearch.pid"
+                          failonerror="false">
+                  <filterchain>
+                    <striplinebreaks/>
+                  </filterchain>
+                </loadfile>
+                <exec executable="kill" if:set="pid">
+                  <arg value="${pid}"/>
+                </exec>
+              </target>
+            </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>opensearch-arm64</id>
+      <activation>
+        <os>
+          <arch>aarch64</arch>
+        </os>
+      </activation>
+      <properties>
+        <opensearch.arch>arm64</opensearch.arch>
+      </properties>
+    </profile>
+    <profile>
+      <!-- Skipping the compilation of the tests also skips the OpenSearch node -->
+      <id>skip-opensearch</id>
+      <activation>
+        <property>
+          <name>maven.test.skip</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <properties>
+        <skipITs>true</skipITs>
+      </properties>
+    </profile>
+  </profiles>
 
 </project>

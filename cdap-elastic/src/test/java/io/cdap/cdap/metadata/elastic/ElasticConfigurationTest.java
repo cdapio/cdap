@@ -27,19 +27,19 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Random;
 import javax.annotation.Nullable;
-import org.apache.http.HttpHost;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.apache.hc.core5.http.HttpHost;
 import org.junit.Assert;
 import org.junit.Test;
+import org.opensearch.client.json.jsonb.JsonbJsonpMapper;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.indices.IndexSettings;
+import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
+import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tests that the Elasticsearch metadata storage creates indexes with the right settings.
+ * Tests that the metadata storage creates indexes with the right settings.
  */
 public class ElasticConfigurationTest {
 
@@ -53,13 +53,13 @@ public class ElasticConfigurationTest {
     CConfiguration cConf = createCConf();
     SConfiguration sConf = SConfiguration.create();
 
-    // shards defaults to 5, and replicas default 1 in Elasticsearch
+    // shards and replicas both default to 1 in OpenSearch
     // max result window defaults to 10000 but this default is not returned in the settings
-    testIndexConfig(cConf, sConf, indexName, elasticPort, 5, 1, null);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 1, 1, null);
 
     cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
-    testIndexConfig(cConf, sConf, indexName, elasticPort, 5, 1, 100);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 1, 1, 100);
 
     cConf.setInt(Config.CONF_ELASTIC_NUM_SHARDS, 4);
     cConf.setInt(Config.CONF_ELASTIC_NUM_REPLICAS, 2);
@@ -72,7 +72,7 @@ public class ElasticConfigurationTest {
     indexName = "idx" + new Random(System.currentTimeMillis()).nextInt();
     elasticPort = System.getProperty("elastic.http.port");
     elasticPort = (elasticPort != null && !elasticPort.isEmpty()) ? elasticPort : "9200";
-    LOG.info("Elasticsearch port is {}, index name is {}", elasticPort, indexName);
+    LOG.info("OpenSearch port is {}, index name is {}", elasticPort, indexName);
 
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
@@ -87,17 +87,14 @@ public class ElasticConfigurationTest {
     try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf, sConf)) {
       store.createIndex();
       try {
-        try (RestHighLevelClient client = new RestHighLevelClient(
-          RestClient.builder(new HttpHost("localhost", Integer.parseInt(elasticPort))))) {
-          GetIndexResponse response =
-            client.indices().get(new GetIndexRequest().indices(indexName), RequestOptions.DEFAULT);
-          if (windowSize != null) {
-            Assert.assertEquals(String.valueOf(windowSize), response.getSetting(indexName, "index.max_result_window"));
-          } else {
-            Assert.assertNull(response.getSetting(indexName, "index.max_result_window"));
-          }
-          Assert.assertEquals(String.valueOf(replicas), response.getSetting(indexName, "index.number_of_replicas"));
-          Assert.assertEquals(String.valueOf(shards), response.getSetting(indexName, "index.number_of_shards"));
+        try (ApacheHttpClient5Transport transport = ApacheHttpClient5TransportBuilder
+          .builder(new HttpHost("http", "localhost", Integer.parseInt(elasticPort)))
+          .setMapper(new JsonbJsonpMapper()).build()) {
+          IndexSettings settings = new OpenSearchClient(transport).indices()
+            .getSettings(g -> g.index(indexName)).get(indexName).settings().index();
+          Assert.assertEquals(windowSize, settings.maxResultWindow());
+          Assert.assertEquals(replicas, settings.numberOfReplicas());
+          Assert.assertEquals(shards, settings.numberOfShards());
         }
       } finally {
         store.dropIndex();

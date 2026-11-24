@@ -17,27 +17,27 @@
 package io.cdap.cdap.metadata.elastic;
 
 import io.cdap.cdap.spi.metadata.MetadataChange;
-import org.elasticsearch.action.support.WriteRequest;
+import org.opensearch.client.opensearch.core.bulk.BulkOperation;
 
 /**
- * A simple class to pass around an Elasticsearch index write request, along with the metadata
- * change that it effects.
+ * A simple class to pass around a write to the index, along with the metadata change that it
+ * effects.
  */
-public class RequestAndChange {
+final class RequestAndChange {
 
-  private final WriteRequest<?> request;
+  private final BulkOperation operation;
   private final MetadataChange change;
 
-  public RequestAndChange(WriteRequest<?> request, MetadataChange change) {
-    this.request = request;
+  RequestAndChange(BulkOperation operation, MetadataChange change) {
+    this.operation = operation;
     this.change = change;
   }
 
-  public WriteRequest<?> getRequest() {
-    return request;
+  BulkOperation getOperation() {
+    return operation;
   }
 
-  public MetadataChange getChange() {
+  MetadataChange getChange() {
     return change;
   }
 }
