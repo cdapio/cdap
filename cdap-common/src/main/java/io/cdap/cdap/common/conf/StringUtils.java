@@ -28,10 +28,10 @@ import java.util.StringTokenizer;
 public class StringUtils {
 
   /**
-   * Returns an arraylist of strings.
+   * Returns an array of strings.
    *
    * @param str the comma separated string values
-   * @return the arraylist of the comma separated string values
+   * @return the array of comma separated string values
    */
   public static String[] getStrings(String str) {
     Collection<String> values = getStringCollection(str);
