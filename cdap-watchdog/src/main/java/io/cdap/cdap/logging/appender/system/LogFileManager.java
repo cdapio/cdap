@@ -17,8 +17,8 @@
 package io.cdap.cdap.logging.appender.system;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.meta.FileMetaDataWriter;

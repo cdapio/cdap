@@ -930,6 +930,21 @@
                   </target>
                 </configuration>
               </execution>
+              <execution>
+                <id>strip-forked-tephra-classes</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <zip destfile="${stage.lib.dir}/org.apache.tephra.tephra-core-${tephra.version}.jar.tmp" duplicate="preserve">
+                      <zipfileset src="${stage.lib.dir}/org.apache.tephra.tephra-core-${tephra.version}.jar" excludes="${tephra.forked.class.excludes}"/>
+                    </zip>
+                    <move file="${stage.lib.dir}/org.apache.tephra.tephra-core-${tephra.version}.jar.tmp" tofile="${stage.lib.dir}/org.apache.tephra.tephra-core-${tephra.version}.jar" overwrite="true"/>
+                  </target>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>

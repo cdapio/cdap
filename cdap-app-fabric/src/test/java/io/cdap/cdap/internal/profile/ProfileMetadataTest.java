@@ -20,6 +20,7 @@ import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -48,12 +49,12 @@ public class ProfileMetadataTest extends AppFabricTestBase {
   @BeforeClass
   public static void setUp() {
     metadataSubscriberService = getInjector().getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    Services.startAndWait(metadataSubscriberService);
   }
 
   @AfterClass
   public static void tearDown() {
-    metadataSubscriberService.stopAndWait();
+    Services.stopAndWait(metadataSubscriberService);
   }
 
   @Test

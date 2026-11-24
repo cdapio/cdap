@@ -31,6 +31,7 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClient;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -240,7 +241,7 @@ public final class SparkRuntimeUtils {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    driverService.startAndWait();
+    Services.startAndWait(driverService);
     return new SparkProgramCompletion() {
       @Override
       public void completed() {
@@ -267,7 +268,7 @@ public final class SparkRuntimeUtils {
             delegate.completedWithException(t);
           }
         } else {
-          driverService.stop();
+          driverService.stopAsync();
         }
 
         // Wait for the spark execution context to stop to make sure everything related

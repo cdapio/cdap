@@ -32,6 +32,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
@@ -114,25 +115,25 @@ public class MetricsAdminSubscriberServiceTest {
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
 
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
-    metricsCollectionService.startAndWait();
-    metricsQueryService.startAndWait();
+    Services.startAndWait(metricsCollectionService);
+    Services.startAndWait(metricsQueryService);
   }
 
   @AfterClass
   public static void finish() {
-    metricsQueryService.stopAndWait();
-    metricsCollectionService.stopAndWait();
+    Services.stopAndWait(metricsQueryService);
+    Services.stopAndWait(metricsCollectionService);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 
   @Test
   public void test() throws Exception {
     MetricsAdminSubscriberService adminService = injector.getInstance(MetricsAdminSubscriberService.class);
-    adminService.startAndWait();
+    Services.startAndWait(adminService);
 
     // publish a metrics
     MetricsContext metricsContext = metricsCollectionService.getContext(
@@ -220,6 +221,6 @@ public class MetricsAdminSubscriberServiceTest {
       return !foundInc && !foundGauge;
     }, 1000, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
 
-    adminService.stopAndWait();
+    Services.stopAndWait(adminService);
   }
 }

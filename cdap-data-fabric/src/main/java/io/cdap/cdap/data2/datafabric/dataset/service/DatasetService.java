@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.metrics.DatasetMetricsReporter;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -142,7 +143,7 @@ public class DatasetService extends AbstractService {
   private void startUp() {
     try {
       LOG.info("Starting DatasetService...");
-      typeService.startAndWait();
+      Services.startAndWait(typeService);
       httpService.start();
 
       // setting watch for ops executor service that we need to be running to operate correctly
@@ -155,10 +156,10 @@ public class DatasetService extends AbstractService {
               LOG.info("Discovered {} service", Constants.Service.DATASET_EXECUTOR);
               opExecutorDiscovered.set(serviceDiscovered);
             }
-          }, MoreExecutors.sameThreadExecutor());
+          }, MoreExecutors.newDirectExecutorService());
 
       for (DatasetMetricsReporter metricsReporter : metricReporters) {
-        metricsReporter.start();
+        Services.start(metricsReporter);
       }
     } catch (Throwable t) {
       notifyFailed(t);
@@ -234,14 +235,14 @@ public class DatasetService extends AbstractService {
     }
 
     for (DatasetMetricsReporter metricsReporter : metricReporters) {
-      metricsReporter.stop();
+      metricsReporter.stopAsync();
     }
 
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
     }
 
-    typeService.stopAndWait();
+    Services.stopAndWait(typeService);
 
     // Wait for a few seconds for requests to stop
     httpService.stop();
@@ -250,7 +251,7 @@ public class DatasetService extends AbstractService {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("bindAddress", httpService.getBindAddress())
         .toString();
   }

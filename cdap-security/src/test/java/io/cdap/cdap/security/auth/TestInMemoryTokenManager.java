@@ -22,6 +22,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.security.guice.CoreSecurityRuntimeModule;
 
@@ -36,7 +37,7 @@ public class TestInMemoryTokenManager extends TestTokenManager {
     Injector injector = Guice.createInjector(new IOModule(), new CoreSecurityRuntimeModule().getStandaloneModules(),
                                              new ConfigModule(), new InMemoryDiscoveryModule());
     TokenManager tokenManager = injector.getInstance(TokenManager.class);
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
     Codec<AccessToken> tokenCodec = injector.getInstance(AccessTokenCodec.class);
     return new ImmutablePair<>(tokenManager, tokenCodec);
   }

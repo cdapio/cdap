@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import java.util.List;
 import java.util.Random;
@@ -42,7 +43,7 @@ public abstract class TestTokenManager {
   public void testTokenValidation() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -91,14 +92,14 @@ public abstract class TestTokenManager {
       // expected
     }
 
-    tokenManager.stopAndWait();
+    Services.stopAndWait(tokenManager);
   }
 
   @Test
   public void testTokenSerialization() throws Exception {
     ImmutablePair<TokenManager, Codec<AccessToken>> pair = getTokenManagerAndCodec();
     TokenManager tokenManager = pair.getFirst();
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
     Codec<AccessToken> tokenCodec = pair.getSecond();
 
     long now = System.currentTimeMillis();
@@ -116,6 +117,6 @@ public abstract class TestTokenManager {
     // should be valid since we just signed it
     tokenManager.validateSecret(token2);
 
-    tokenManager.stopAndWait();
+    Services.stopAndWait(tokenManager);
   }
 }

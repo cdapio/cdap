@@ -17,7 +17,7 @@
 package io.cdap.cdap.messaging.service;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -25,7 +25,6 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
@@ -35,6 +34,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.utils.TimeProvider;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
@@ -195,7 +195,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       }
       return messageTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
       throw Throwables.propagate(e);
     }
@@ -207,7 +207,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
       TopicMetadata metadata = topicCache.get(request.getTopicId());
       payloadTableWriterCache.get(request.getTopicId()).persist(request, metadata);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
       throw Throwables.propagate(e);
     }
@@ -441,7 +441,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     try {
       return topicCache.get(topicId);
     } catch (ExecutionException e) {
-      Throwable cause = Objects.firstNonNull(e.getCause(), e);
+      Throwable cause = MoreObjects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
       throw Throwables.propagate(e.getCause());
     }

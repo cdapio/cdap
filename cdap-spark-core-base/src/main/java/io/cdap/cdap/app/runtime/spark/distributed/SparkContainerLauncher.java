@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import io.cdap.cdap.app.runtime.spark.python.SparkPythonUtil;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
@@ -32,7 +32,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;

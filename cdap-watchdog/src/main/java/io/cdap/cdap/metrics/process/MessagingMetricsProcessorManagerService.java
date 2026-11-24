@@ -25,6 +25,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.spi.MessagingService;
@@ -144,7 +145,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     }
 
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
-      processorService.startAndWait();
+      Services.startAndWait(processorService);
     }
   }
 
@@ -192,7 +193,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     Exception exceptions = new Exception();
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       try {
-        processorService.stopAndWait();
+        Services.stopAndWait(processorService);
         for (MetricsWriter metricsWriter : metricsWriters) {
           metricsWriter.close();
         }

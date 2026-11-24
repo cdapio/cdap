@@ -36,6 +36,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -174,20 +175,20 @@ public abstract class MetricsSuiteTestBase {
     }));
 
     transactionManager = injector.getInstance(TransactionManager.class);
-    transactionManager.startAndWait();
+    Services.startAndWait(transactionManager);
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    Services.startAndWait(dsOpService);
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
 
     metrics = injector.getInstance(MetricsQueryService.class);
-    metrics.startAndWait();
+    Services.startAndWait(metrics);
 
     collectionService = injector.getInstance(MetricsCollectionService.class);
-    collectionService.startAndWait();
+    Services.startAndWait(collectionService);
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -202,11 +203,11 @@ public abstract class MetricsSuiteTestBase {
   }
 
   public static void stopMetricsService(CConfiguration conf) {
-    collectionService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    transactionManager.stopAndWait();
-    metrics.stopAndWait();
+    Services.stopAndWait(collectionService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(dsOpService);
+    Services.stopAndWait(transactionManager);
+    Services.stopAndWait(metrics);
     conf.clear();
   }
 

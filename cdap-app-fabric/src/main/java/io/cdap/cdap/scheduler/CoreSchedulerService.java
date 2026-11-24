@@ -35,6 +35,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -115,25 +116,26 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
 
       @Override
-      protected Executor executor(final State state) {
+      protected Executor executor() {
+        final State state = state();
         return command -> new Thread(command, "core scheduler service " + state).start();
       }
 
       @Override
       protected void startUp() {
-        timeSchedulerService.startAndWait();
+        Services.startAndWait(timeSchedulerService);
         cleanupJobs();
-        constraintCheckerService.startAndWait();
-        scheduleNotificationSubscriberService.startAndWait();
+        Services.startAndWait(constraintCheckerService);
+        Services.startAndWait(scheduleNotificationSubscriberService);
         startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
       @Override
       protected void shutDown() {
-        scheduleNotificationSubscriberService.stopAndWait();
-        constraintCheckerService.stopAndWait();
-        timeSchedulerService.stopAndWait();
+        Services.stopAndWait(scheduleNotificationSubscriberService);
+        Services.stopAndWait(constraintCheckerService);
+        Services.stopAndWait(timeSchedulerService);
         LOG.info("Stopped core scheduler service.");
       }
     }, io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000,
@@ -203,12 +205,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   protected void startUp() throws Exception {
-    internalService.startAndWait();
+    Services.startAndWait(internalService);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    internalService.stopAndWait();
+    Services.stopAndWait(internalService);
   }
 
   @Override

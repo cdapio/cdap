@@ -19,6 +19,7 @@ package io.cdap.cdap.data2.transaction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.service.Services;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -58,13 +59,13 @@ public class TransactionContextTest {
   @BeforeClass
   public static void setup() {
     txManager = new TransactionManager(new Configuration());
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     txClient = new DummyTxClient(txManager);
   }
 
   @AfterClass
   public static void finish() {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 
   private TransactionContext newTransactionContext(TransactionAware... txAwares) {

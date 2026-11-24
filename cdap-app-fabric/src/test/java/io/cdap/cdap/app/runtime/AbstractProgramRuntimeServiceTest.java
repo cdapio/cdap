@@ -33,6 +33,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.deploy.InMemoryProgramRunDispatcher;
 import io.cdap.cdap.internal.app.deploy.ProgramRunDispatcherFactory;
@@ -110,7 +111,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.start();
+      Services.start(service);
       return controller;
     };
 
@@ -123,7 +124,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                          null, launchDispatcher);
-    runtimeService.startAndWait();
+    Services.startAndWait(runtimeService);
     try {
       List<ProgramController> controllers = new ArrayList<>();
       for (int i = 0; i < 5; i++) {
@@ -151,7 +152,7 @@ public class AbstractProgramRuntimeServiceTest {
 
       Assert.assertEquals(2, threadNames.size());
     } finally {
-      runtimeService.stopAndWait();
+      Services.stopAndWait(runtimeService);
     }
   }
 
@@ -166,7 +167,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                          null, launchDispatcher);
-    runtimeService.startAndWait();
+    Services.startAndWait(runtimeService);
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
@@ -178,7 +179,7 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(true, () ->  runtimeService.list(ProgramType.WORKER).isEmpty(),
                     5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
     } finally {
-      runtimeService.stopAndWait();
+      Services.stopAndWait(runtimeService);
     }
   }
 
@@ -190,20 +191,20 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
     ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId.run(runId));
-    service.startAndWait();
+    Services.startAndWait(service);
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
                                                                              null, null, null);
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                              extraInfo, launchDispatcher);
-    runtimeService.startAndWait();
+    Services.startAndWait(runtimeService);
 
     // The lookup will get deadlock for CDAP-3716
     Assert.assertNotNull(runtimeService.lookup(programId, runId));
-    service.stopAndWait();
+    Services.stopAndWait(service);
 
-    runtimeService.stopAndWait();
+    Services.stopAndWait(runtimeService);
   }
 
   @Test
@@ -229,7 +230,7 @@ public class AbstractProgramRuntimeServiceTest {
         }
       };
 
-    runtimeService.startAndWait();
+    Services.startAndWait(runtimeService);
     try {
       try {
         ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -268,11 +269,11 @@ public class AbstractProgramRuntimeServiceTest {
         }
 
       } finally {
-        runtimeService.stopAndWait();
+        Services.stopAndWait(runtimeService);
       }
 
     } finally {
-      runtimeService.stopAndWait();
+      Services.stopAndWait(runtimeService);
     }
   }
 
@@ -289,7 +290,7 @@ public class AbstractProgramRuntimeServiceTest {
                                    remoteClientFactory, true);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null,
         launchDispatcher);
-    runtimeService.startAndWait();
+    Services.startAndWait(runtimeService);
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
@@ -301,7 +302,7 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
                     5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
-      runtimeService.stopAndWait();
+      Services.stopAndWait(runtimeService);
     }
   }
 
@@ -323,7 +324,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.start();
+      Services.start(service);
       return controller;
     };
   }

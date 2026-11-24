@@ -51,6 +51,7 @@ import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -136,7 +137,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting preview runner manager");
-    previewRunnerManager.start();
+    Services.start(previewRunnerManager);
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -149,7 +150,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping preview runner manager");
-    previewRunnerManager.stop();
+    previewRunnerManager.stopAsync();
   }
 
   @Override

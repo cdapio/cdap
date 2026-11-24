@@ -29,6 +29,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.appender.remote.RemoteLogAppender;
@@ -73,7 +74,7 @@ public class LogBufferHandlerTest {
                                       "Test", MockAppender.class);
 
     LogBufferProcessorPipeline pipeline = getLogPipeline(loggerContext);
-    pipeline.startAndWait();
+    Services.startAndWait(pipeline);
 
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
 
@@ -98,7 +99,7 @@ public class LogBufferHandlerTest {
 
     remoteLogAppender.stop();
     httpService.stop();
-    pipeline.stopAndWait();
+    Services.stopAndWait(pipeline);
     loggerContext.stop();
   }
 

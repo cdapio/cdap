@@ -19,6 +19,7 @@ package io.cdap.cdap.report.main;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.report.util.Constants;
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -108,7 +109,7 @@ public class RunMetaFileManager {
   public void cleanup() {
     Collection<RunMetaFileOutputStream> outputStreams = namespaceToLogFileStreamMap.values();
     for (RunMetaFileOutputStream outputStream : outputStreams) {
-      Closeables.closeQuietly(outputStream);
+      closeQuietly(outputStream);
     }
   }
 
@@ -143,13 +144,24 @@ public class RunMetaFileManager {
     }
   }
 
+  /**
+   * Closes without throwing, the same as the Guava 13 {@code Closeables.closeQuietly(Closeable)}.
+   */
+  private static void closeQuietly(Closeable closeable) {
+    try {
+      Closeables.close(closeable, true);
+    } catch (IOException e) {
+      // Not thrown, since the IOException is swallowed
+    }
+  }
+
   private void rotateOutputStreamIfNeeded(RunMetaFileOutputStream runMetaFileOutputStream,
       String namespace, Long timestamp) throws InterruptedException {
     boolean isExpired =
         (System.currentTimeMillis() - runMetaFileOutputStream.getCreateTime())
             > maxFileOpenDurationMillis;
     if (runMetaFileOutputStream.getSize() > maxFileSizeBytes || isExpired) {
-      Closeables.closeQuietly(runMetaFileOutputStream);
+      closeQuietly(runMetaFileOutputStream);
       createLogFileOutputStreamWithRetry(namespace, timestamp);
     }
   }

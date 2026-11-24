@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -73,13 +74,13 @@ public final class DistributedTimeSchedulerService extends AbstractTimeScheduler
   protected void startUp() throws Exception {
     LOG.info("Starting scheduler.");
     // RetryOnStartFailureservice#startAndWait returns before its service's startAndWait completes
-    serviceDelegate.startAndWait();
+    Services.startAndWait(serviceDelegate);
     startUpLatch.await();
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping scheduler.");
-    serviceDelegate.stopAndWait();
+    Services.stopAndWait(serviceDelegate);
   }
 }

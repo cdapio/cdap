@@ -29,7 +29,6 @@ import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -52,6 +51,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.ReferenceCountUtil;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -209,7 +209,9 @@ public class NettyRouterPipelineTest {
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location programJar = AppJarHelper.createDeploymentJar(lf, DummyApp.class);
-    GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(Locations.newInputSupplier(programJar)));
+    try (InputStream input = programJar.getInputStream()) {
+      GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(input));
+    }
 
     for (int i = 0; i < num; i++) {
       LOG.info("Deploying {}/{}", i, num);
@@ -220,7 +222,9 @@ public class NettyRouterPipelineTest {
       urlConn.setDoOutput(true);
       urlConn.setDoInput(true);
 
-      ByteStreams.copy(Locations.newInputSupplier(programJar), urlConn.getOutputStream());
+      try (InputStream input = programJar.getInputStream()) {
+        ByteStreams.copy(input, urlConn.getOutputStream());
+      }
       Assert.assertEquals(200, urlConn.getResponseCode());
       urlConn.getInputStream().close();
       urlConn.disconnect();

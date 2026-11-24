@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,10 +30,10 @@ public class AppFabricProcessorServiceTest {
     try {
       Injector injector = AppFabricTestHelper.getInjector();
       AppFabricProcessorService service = injector.getInstance(AppFabricProcessorService.class);
-      Service.State state = service.startAndWait();
+      Service.State state = Services.startAndWait(service);
       Assert.assertSame(state, Service.State.RUNNING);
 
-      state = service.stopAndWait();
+      state = Services.stopAndWait(service);
       Assert.assertSame(state, Service.State.TERMINATED);
     } finally {
       AppFabricTestHelper.shutdown();

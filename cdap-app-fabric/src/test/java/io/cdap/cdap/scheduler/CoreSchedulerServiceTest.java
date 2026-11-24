@@ -48,6 +48,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
@@ -146,7 +147,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     cConf = getInjector().getInstance(CConfiguration.class);
     scheduler = getInjector().getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
+      Services.startAndWait((Service) scheduler);
     }
     messagingService = getInjector().getInstance(MessagingService.class);
     store = getInjector().getInstance(Store.class);
@@ -156,7 +157,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @AfterClass
   public static void tearDown() {
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
+      Services.stopAndWait((Service) scheduler);
     }
   }
 

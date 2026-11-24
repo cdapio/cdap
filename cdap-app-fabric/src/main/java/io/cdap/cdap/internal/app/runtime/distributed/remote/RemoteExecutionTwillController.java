@@ -115,12 +115,12 @@ class RemoteExecutionTwillController implements TwillController {
 
   public void release() {
     terminateOnServiceStop = false;
-    executionService.stop();
+    executionService.stopAsync();
   }
 
   public void complete() {
     terminateOnServiceStop = true;
-    executionService.stop();
+    executionService.stopAsync();
     try {
       RuntimeJobStatus status;
       RetryStrategy retryStrategy = RetryStrategies.timeLimit(
