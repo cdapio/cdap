@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.common.BadRequestException;
@@ -44,7 +45,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

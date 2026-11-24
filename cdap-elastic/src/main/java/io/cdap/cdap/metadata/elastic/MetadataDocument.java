@@ -31,7 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -282,16 +281,16 @@ public class MetadataDocument {
     MetadataDocument build() {
       properties.add(
           new Property(MetadataScope.USER.name(), MetadataConstants.TAGS_KEY,
-              Strings.collectionToDelimitedString(userTags, " ")));
+              String.join(" ", userTags)));
       properties.add(
           new Property(MetadataScope.SYSTEM.name(), MetadataConstants.TAGS_KEY,
-              Strings.collectionToDelimitedString(systemTags, " ")));
+              String.join(" ", systemTags)));
       properties.add(
           new Property(MetadataScope.USER.name(), MetadataConstants.PROPERTIES_KEY,
-              Strings.collectionToDelimitedString(userPropertyNames, " ")));
+              String.join(" ", userPropertyNames)));
       properties.add(
           new Property(MetadataScope.SYSTEM.name(), MetadataConstants.PROPERTIES_KEY,
-              Strings.collectionToDelimitedString(systemPropertyNames, " ")));
+              String.join(" ", systemPropertyNames)));
       return
           new MetadataDocument(entity, metadata, namespace, type, name, created, ttl,
               userText.toString(), systemText.toString(), properties);
