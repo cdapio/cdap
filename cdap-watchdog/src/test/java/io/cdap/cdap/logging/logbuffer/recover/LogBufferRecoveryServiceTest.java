@@ -27,6 +27,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.context.WorkerLoggingContext;
@@ -72,7 +73,7 @@ public class LogBufferRecoveryServiceTest {
       config, checkpointManager, 0);
 
     // start the pipeline
-    pipeline.startAndWait();
+    Services.startAndWait(pipeline);
 
     // write directly to log buffer
     LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
@@ -85,12 +86,12 @@ public class LogBufferRecoveryServiceTest {
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
                                                                     absolutePath, 2, new AtomicBoolean(true));
-    service.startAndWait();
+    Services.startAndWait(service);
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    service.stopAndWait();
-    pipeline.stopAndWait();
+    Services.stopAndWait(service);
+    Services.stopAndWait(pipeline);
     loggerContext.stop();
   }
 

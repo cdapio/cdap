@@ -31,6 +31,7 @@ import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -84,7 +85,7 @@ public class TaskWorkerMetricsTest {
       }
     };
 
-    mockMetricsCollector.startAndWait();
+    Services.startAndWait(mockMetricsCollector);
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     AeadCipher aeadCipher = new NoOpAeadCipher();
     taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
@@ -93,7 +94,7 @@ public class TaskWorkerMetricsTest {
                                                                                 auditLogContexts -> {}, aeadCipher));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     this.uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
   }
@@ -101,7 +102,7 @@ public class TaskWorkerMetricsTest {
   @After
   public void afterTest() {
     if (taskWorkerService != null) {
-      taskWorkerService.stopAndWait();
+      Services.stopAndWait(taskWorkerService);
     }
   }
 

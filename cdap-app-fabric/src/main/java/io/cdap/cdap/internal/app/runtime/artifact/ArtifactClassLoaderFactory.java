@@ -18,10 +18,10 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
@@ -29,6 +29,7 @@ import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.security.impersonation.EntityImpersonator;
 import java.io.Closeable;
@@ -158,19 +159,31 @@ final class ArtifactClassLoaderFactory {
       return createClassLoader(artifactLocation, entityImpersonator);
     }
 
+    ClassLoaderFolder classLoaderFolder = null;
+    CloseableClassLoader parentClassLoader = null;
+    CloseableClassLoader filteredParentClassLoader = null;
     try {
-      ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
+      classLoaderFolder = entityImpersonator.impersonate(
           () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
               () -> DirUtils.createTempDir(tmpDir)));
 
-      CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations,
-          entityImpersonator);
-      return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
-          parentClassLoader, "lib"), () -> {
-        Closeables.closeQuietly(parentClassLoader);
-        Closeables.closeQuietly(classLoaderFolder);
+      parentClassLoader = createClassLoader(artifactLocations, entityImpersonator);
+      filteredParentClassLoader = PluginClassLoader.createParent(parentClassLoader);
+      DirectoryClassLoader directoryClassLoader = new DirectoryClassLoader(
+          classLoaderFolder.getDir(), filteredParentClassLoader, "lib");
+      final ClassLoaderFolder finalFolder = classLoaderFolder;
+      final CloseableClassLoader finalParent = parentClassLoader;
+      final CloseableClassLoader finalFilteredParent = filteredParentClassLoader;
+      return new CloseableClassLoader(directoryClassLoader, () -> {
+        Closeables.closeQuietly(directoryClassLoader);
+        Closeables.closeQuietly(finalFilteredParent);
+        Closeables.closeQuietly(finalParent);
+        Closeables.closeQuietly(finalFolder);
       });
     } catch (Exception e) {
+      Closeables.closeQuietly(filteredParentClassLoader);
+      Closeables.closeQuietly(parentClassLoader);
+      Closeables.closeQuietly(classLoaderFolder);
       throw Throwables.propagate(e);
     }
   }

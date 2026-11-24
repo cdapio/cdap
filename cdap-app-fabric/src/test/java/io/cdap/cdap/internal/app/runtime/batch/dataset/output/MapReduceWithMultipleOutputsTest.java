@@ -20,12 +20,13 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.api.dataset.lib.FileSet;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.List;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -70,7 +71,9 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
   private List<String> readFromOutput(FileSet fileSet, String relativePath) throws IOException {
     // small amount of data, so expect all data from just 1 file
     Location location = fileSet.getLocation(relativePath).append("part-m-00000");
-    return CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(location), Charsets.UTF_8));
+    try (Reader reader = new InputStreamReader(location.getInputStream(), Charsets.UTF_8)) {
+      return CharStreams.readLines(reader);
+    }
   }
 
   @Test

@@ -26,6 +26,7 @@ import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.appender.AbstractLogPublisher;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
@@ -75,8 +76,8 @@ public class RemoteLogAppender extends LogAppender {
   public void start() {
     RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, remoteClientFactory);
     Optional.ofNullable(this.publisher.getAndSet(publisher))
-        .ifPresent(RemoteLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(Services::stopAndWait);
+    Services.startAndWait(publisher);
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -84,7 +85,7 @@ public class RemoteLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(RemoteLogPublisher::stopAndWait);
+    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(Services::stopAndWait);
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -177,8 +178,9 @@ public class RemoteLogAppender extends LogAppender {
    * Similar to StringPartitioner, but StringPartitioner class implements kafka Partitioner. As we
    * do not want kafka dependencies in this class, this method is added here.
    */
+  @SuppressWarnings("java:S4790")
   private static int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashUnencodedChars(key).asInt()) % numPartitions;
   }
 
   private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,

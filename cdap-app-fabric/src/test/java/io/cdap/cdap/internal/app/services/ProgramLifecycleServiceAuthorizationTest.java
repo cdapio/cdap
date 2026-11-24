@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -78,9 +79,9 @@ public class ProgramLifecycleServiceAuthorizationTest {
     final Injector injector = AppFabricTestHelper.getInjector(cConf);
     permissionManager = injector.getInstance(PermissionManager.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    Services.startAndWait(appFabricProcessor);
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
 
     // Wait for the default namespace creation
@@ -161,8 +162,8 @@ public class ProgramLifecycleServiceAuthorizationTest {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
+    Services.stopAndWait(appFabricServer);
+    Services.stopAndWait(appFabricProcessor);
     AppFabricTestHelper.shutdown();
   }
 

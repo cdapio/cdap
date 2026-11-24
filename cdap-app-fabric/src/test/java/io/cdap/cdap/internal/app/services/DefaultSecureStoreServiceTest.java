@@ -31,6 +31,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -93,9 +94,9 @@ public class DefaultSecureStoreServiceTest {
     final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    Services.startAndWait(appFabricProcessor);
     waitForService(Constants.Service.DATASET_MANAGER);
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
@@ -127,8 +128,8 @@ public class DefaultSecureStoreServiceTest {
 
   @AfterClass
   public static void cleanup() {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
+    Services.stopAndWait(appFabricServer);
+    Services.stopAndWait(appFabricProcessor);
     AppFabricTestHelper.shutdown();
   }
 

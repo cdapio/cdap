@@ -40,6 +40,7 @@ import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -117,7 +118,7 @@ public class RuntimeServiceRoutingTest {
           bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
             String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
             String expected = "Bearer " + Base64.getEncoder().encodeToString(
-              Hashing.md5().hashString(programRunId.toString()).asBytes());
+              Hashing.md5().hashUnencodedChars(programRunId.toString()).asBytes());
             if (!expected.equals(authHeader)) {
               throw new UnauthenticatedException("Program run " + programRunId + " is not authorized");
             }
@@ -143,12 +144,12 @@ public class RuntimeServiceRoutingTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     messagingService.createTopic(new DefaultTopicMetadata(NamespaceId.SYSTEM.topic("topic")));
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    Services.startAndWait(runtimeServer);
 
     mockService = NettyHttpService.builder(MOCK_SERVICE)
       .setHost(InetAddress.getLocalHost().getCanonicalHostName())
@@ -164,9 +165,9 @@ public class RuntimeServiceRoutingTest {
   public void afterTest() throws Exception {
     mockServiceCancellable.cancel();
     mockService.stop();
-    runtimeServer.stopAndWait();
+    Services.stopAndWait(runtimeServer);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 
@@ -269,8 +270,8 @@ public class RuntimeServiceRoutingTest {
 
     @Override
     public Credential getCredentials() {
-      String credentialValue = Base64.getEncoder().encodeToString(Hashing.md5().hashString(programRunId.toString())
-                                                                    .asBytes());
+      String credentialValue = Base64.getEncoder().encodeToString(
+          Hashing.md5().hashUnencodedChars(programRunId.toString()).asBytes());
       return new Credential(credentialValue, Credential.CredentialType.EXTERNAL_BEARER);
     }
 

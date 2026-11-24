@@ -39,6 +39,7 @@ import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -102,7 +103,7 @@ public class InternalServiceRoutingHandlerTest {
     );
 
     internalRouterService = injector.getInstance(InternalRouterService.class);
-    internalRouterService.startAndWait();
+    Services.startAndWait(internalRouterService);
 
     mockService = NettyHttpService.builder(MOCK_SERVICE)
         .setHost(InetAddress.getLocalHost().getCanonicalHostName())
@@ -118,7 +119,7 @@ public class InternalServiceRoutingHandlerTest {
   public void afterTest() throws Exception {
     mockServiceCancellable.cancel();
     mockService.stop();
-    internalRouterService.stopAndWait();
+    Services.stopAndWait(internalRouterService);
   }
 
   @Test

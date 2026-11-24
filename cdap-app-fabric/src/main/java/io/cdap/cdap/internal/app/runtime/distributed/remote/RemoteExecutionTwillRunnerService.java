@@ -36,6 +36,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor.LoggingContextRestorer
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -217,7 +218,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
     try {
       if (EnumSet.of(Service.State.STARTING, Service.State.RUNNING)
           .contains(serviceSocksProxy.state())) {
-        serviceSocksProxy.stopAndWait();
+        Services.stopAndWait(serviceSocksProxy);
       }
     } catch (Exception e) {
       LOG.warn("Exception raised when stopping runtime monitor socks proxy", e);
@@ -389,7 +390,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
   private int getServiceSocksProxyPort() {
     if (serviceSocksProxy.state() == Service.State.NEW) {
       // It's ok to have multiple threads calling start if the proxy is not running.
-      serviceSocksProxy.startAndWait();
+      Services.startAndWait(serviceSocksProxy);
     }
     return serviceSocksProxy.getBindAddress().getPort();
   }
@@ -428,7 +429,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
       String secret = Hashing.sha1().newHasher()
           .putBytes(salt)
-          .putString(programRunId.getRun())
+          .putUnencodedChars(programRunId.getRun())
           .hash().toString();
 
       Location location = keysDir.append(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
@@ -549,7 +550,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       CompletableFuture<Void> startupTaskCompletion,
       RemoteExecutionTwillController controller,
       RemoteExecutionService remoteExecutionService) {
-    startupTaskCompletion.thenAccept(o -> remoteExecutionService.start());
+    startupTaskCompletion.thenAccept(o -> Services.start(remoteExecutionService));
 
     // On this controller termination, make sure it is removed from the controllers map and have resources released.
     controller.onTerminated(() -> {

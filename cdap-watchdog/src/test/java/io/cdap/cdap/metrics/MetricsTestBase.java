@@ -33,6 +33,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
 import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
@@ -82,7 +83,7 @@ public abstract class MetricsTestBase {
     injector = Guice.createInjector(getModules());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     metricValueType = TypeToken.of(MetricValues.class);
     schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
@@ -93,7 +94,7 @@ public abstract class MetricsTestBase {
   @After
   public void stop() {
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 

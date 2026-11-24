@@ -27,6 +27,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -86,7 +87,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
       }
     );
 
-    injector.getInstance(TransactionManager.class).startAndWait();
+    Services.startAndWait(injector.getInstance(TransactionManager.class));
 
     txRunner = injector.getInstance(TransactionRunner.class);
     StoreDefinition.OwnerStore.create(injector.getInstance(StructuredTableAdmin.class));

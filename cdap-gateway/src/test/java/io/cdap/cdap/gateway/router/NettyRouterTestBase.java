@@ -38,6 +38,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -149,9 +150,9 @@ public abstract class NettyRouterTestBase {
   public void startUp() throws Exception {
     routerService = createRouterService(HOSTNAME, discoveryService);
     List<ListenableFuture<Service.State>> futures = new ArrayList<>();
-    futures.add(routerService.start());
+    futures.add(Services.start(routerService));
     for (ServerService server : allServers) {
-      futures.add(server.start());
+      futures.add(Services.start(server));
     }
     Futures.allAsList(futures).get();
 
@@ -175,9 +176,9 @@ public abstract class NettyRouterTestBase {
   public void tearDown() throws Exception {
     List<ListenableFuture<Service.State>> futures = new ArrayList<>();
     for (ServerService server : allServers) {
-      futures.add(server.stop());
+      futures.add(Services.stop(server));
     }
-    futures.add(routerService.stop());
+    futures.add(Services.stop(routerService));
     Futures.successfulAsList(futures).get();
   }
 
@@ -531,7 +532,7 @@ public abstract class NettyRouterTestBase {
       });
       t.start();
 
-      defaultServer1.stopAndWait();
+      Services.stopAndWait(defaultServer1);
       Assert.assertEquals(200, result.get().intValue());
       Assert.assertEquals(1, defaultServer1.getNumRequests());
       Assert.assertEquals(1, defaultServer2.getNumRequests());
@@ -561,7 +562,7 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router1.startAndWait();
+    Services.startAndWait(router1);
 
     // Configure router with config-reloading time set to 0
     CConfiguration cConfSpy2 = Mockito.spy(CConfiguration.create());
@@ -573,15 +574,15 @@ public abstract class NettyRouterTestBase {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router2.startAndWait();
+    Services.startAndWait(router2);
 
     // Wait sometime for cConf to reload
     Thread.sleep(TimeUnit.MILLISECONDS.convert(reloadIntervalSeconds + 2, TimeUnit.SECONDS));
 
     Mockito.verify(cConfSpy1, Mockito.times(1)).reloadConfiguration();
     Mockito.verify(cConfSpy2, Mockito.never()).reloadConfiguration();
-    router1.stopAndWait();
-    router2.stopAndWait();
+    Services.stopAndWait(router1);
+    Services.stopAndWait(router2);
   }
 
   protected HttpURLConnection openUrl(URL url) throws Exception {

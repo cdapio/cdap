@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;

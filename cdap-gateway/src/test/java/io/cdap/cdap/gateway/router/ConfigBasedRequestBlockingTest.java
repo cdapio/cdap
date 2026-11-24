@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -68,7 +69,7 @@ public class ConfigBasedRequestBlockingTest {
         successValidator,
         new MockAccessTokenIdentityExtractor(successValidator), discoveryService,
         new NoOpAeadCipher());
-    router.startAndWait();
+    Services.startAndWait(router);
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new AuditLogTest.TestHandler())
         .build();
@@ -121,7 +122,7 @@ public class ConfigBasedRequestBlockingTest {
   public static void finish() throws Exception {
     cancelDiscovery.cancel();
     httpService.stop();
-    router.stopAndWait();
+    Services.stopAndWait(router);
   }
 
   private void testGet(int expectedStatus, String expectedResponse, String path)

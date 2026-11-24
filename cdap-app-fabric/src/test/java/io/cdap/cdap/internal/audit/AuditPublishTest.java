@@ -30,6 +30,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -87,7 +88,7 @@ public class AuditPublishTest {
     Injector injector = AppFabricTestHelper.getInjector(cConf, new AuditModule());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
   }
@@ -95,7 +96,7 @@ public class AuditPublishTest {
   @AfterClass
   public static void stop() {
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
     AppFabricTestHelper.shutdown();
   }

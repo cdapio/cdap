@@ -23,6 +23,7 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -73,7 +74,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     progmMgmtSvc = new SystemProgramManagementService(getInjector().getInstance(CConfiguration.class),
                                                       getInjector().getInstance(ProgramRuntimeService.class),
                                                       programLifecycleService);
-    progmMgmtSvc.stopAndWait();
+    Services.stopAndWait(progmMgmtSvc);
   }
 
   @AfterClass

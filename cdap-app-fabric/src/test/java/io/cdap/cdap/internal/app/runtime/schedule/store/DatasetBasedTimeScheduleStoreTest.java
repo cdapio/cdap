@@ -29,6 +29,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -124,20 +125,20 @@ public class DatasetBasedTimeScheduleStoreTest {
                                       }
                                     });
     txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
+    Services.startAndWait(txService);
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     dsOpsService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpsService.startAndWait();
+    Services.startAndWait(dsOpsService);
     dsService = injector.getInstance(DatasetService.class);
-    dsService.startAndWait();
+    Services.startAndWait(dsService);
     transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
   @AfterClass
   public static void afterClass() {
-    dsService.stopAndWait();
-    dsOpsService.stopAndWait();
-    txService.stopAndWait();
+    Services.stopAndWait(dsService);
+    Services.stopAndWait(dsOpsService);
+    Services.stopAndWait(txService);
   }
 
   private static void schedulerSetup(boolean enablePersistence) throws SchedulerException {

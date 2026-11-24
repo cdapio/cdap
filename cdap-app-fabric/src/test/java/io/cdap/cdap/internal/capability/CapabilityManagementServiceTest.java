@@ -36,6 +36,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -100,7 +101,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
     programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
     runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
-    capabilityManagementService.stopAndWait();
+    Services.stopAndWait(capabilityManagementService);
   }
 
   @AfterClass

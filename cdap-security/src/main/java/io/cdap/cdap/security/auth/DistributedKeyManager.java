@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.zookeeper.ResourceListener;
 import io.cdap.cdap.security.zookeeper.SharedResourceCache;
@@ -114,7 +115,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
         LOG.debug("Transitioned to follower");
       }
     });
-    this.leaderElection.start();
+    Services.start(this.leaderElection);
     startExpirationThread();
   }
 
@@ -123,7 +124,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements
     if (timer != null) {
       timer.cancel();
     }
-    leaderElection.stopAndWait();
+    Services.stopAndWait(leaderElection);
   }
 
   @Override

@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -50,6 +49,7 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.URLConnections;
 import io.cdap.cdap.common.logging.LoggerLogHandler;
 import io.cdap.cdap.common.runtime.DaemonMain;
@@ -250,7 +250,7 @@ public class MasterServiceMain extends DaemonMain {
           System.exit(1);
         }
       }
-    }, MoreExecutors.sameThreadExecutor());
+    }, MoreExecutors.newDirectExecutorService());
   }
 
   @Override
@@ -273,8 +273,8 @@ public class MasterServiceMain extends DaemonMain {
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
         KeeperException.NodeExistsException.class, null));
-    electionInfoService.startAndWait();
-    leaderElection.startAndWait();
+    Services.startAndWait(electionInfoService);
+    Services.startAndWait(leaderElection);
   }
 
   @Override
@@ -400,7 +400,7 @@ public class MasterServiceMain extends DaemonMain {
   private static <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
     T service = injector.getInstance(cls);
     LOG.debug("Starting service in master {}", service);
-    service.startAndWait();
+    Services.startAndWait(service);
     LOG.info("Service {} started in master", service);
     return service;
   }
@@ -412,7 +412,7 @@ public class MasterServiceMain extends DaemonMain {
     try {
       if (service != null) {
         LOG.debug("Stopping service in master: {}", service);
-        service.stopAndWait();
+        Services.stopAndWait(service);
         LOG.info("Service {} stopped in master", service);
       }
     } catch (Exception e) {
@@ -672,7 +672,7 @@ public class MasterServiceMain extends DaemonMain {
         }
         LOG.info("Starting service in master: {}", service);
         try {
-          service.startAndWait();
+          Services.startAndWait(service);
         } catch (Throwable t) {
           // shut down the executor and stop the twill app,
           // then throw an exception to cause the leader election service to stop

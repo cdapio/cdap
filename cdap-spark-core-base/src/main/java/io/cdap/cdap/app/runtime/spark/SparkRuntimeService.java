@@ -26,7 +26,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -52,6 +51,7 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -74,7 +74,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.RunId;
@@ -205,7 +204,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "Spark - " + runtimeContext.getSparkSpecification().getName();
   }
 
@@ -285,7 +284,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           // In case of spark-on-k8s, artifactFetcherService is used by spark-drivers for fetching artifacts bundle.
           Location location = createBundle(new File("./artifacts").getAbsoluteFile().toPath());
           artifactFetcherService = new ArtifactFetcherService(cConf, location, commonNettyHttpServiceFactory);
-          artifactFetcherService.startAndWait();
+          Services.startAndWait(artifactFetcherService);
         }
 
       } else if (isLocal) {
@@ -472,7 +471,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } finally {
       try {
         if (artifactFetcherService != null) {
-          artifactFetcherService.stopAndWait();
+          Services.stopAndWait(artifactFetcherService);
         }
       } finally {
         cleanupTask.run();
@@ -511,7 +510,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   public ListenableFuture<State> stop(long timeout, TimeUnit timeoutUnit) {
     gracefulTimeoutMillis = timeoutUnit.toMillis(timeout);
-    return stop();
+    return Services.stop(this);
   }
 
   @Override
@@ -858,7 +857,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         FileSystem fs = FileSystem.get(scriptURI, hConf);
         InputStream is = fs.open(new Path(scriptURI))
       ) {
-        ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+        Files.asByteSink(pythonFile).writeFrom(is);
         return pythonFile.toURI();
       }
     } catch (IOException e) {
@@ -868,7 +867,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     // Last resort, turn the URI to URL and try to copy from it.
     try (InputStream is = scriptURI.toURL().openStream()) {
-      ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+      Files.asByteSink(pythonFile).writeFrom(is);
     }
     return pythonFile.toURI();
   }

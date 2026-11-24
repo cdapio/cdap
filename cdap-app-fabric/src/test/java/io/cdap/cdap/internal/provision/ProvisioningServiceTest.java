@@ -33,6 +33,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
@@ -98,32 +99,32 @@ public class ProvisioningServiceTest {
 
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
     messagingService = injector.getInstance(MessagingService.class);
     provisionerStore = injector.getInstance(ProvisionerStore.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
 
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
+    Services.startAndWait(provisioningService);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
   }
 
   @AfterClass
   public static void cleanupClass() {
-    provisioningService.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
+    Services.stopAndWait(provisioningService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(txManager);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 

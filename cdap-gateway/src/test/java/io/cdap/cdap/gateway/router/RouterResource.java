@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -77,12 +78,12 @@ class RouterResource extends ExternalResource {
             new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                 new RouterPathLookup()),
             mockValidator, extractor, discoveryServiceClient, new NoOpAeadCipher());
-    router.startAndWait();
+    Services.startAndWait(router);
   }
 
   @Override
   protected void after() {
-    router.stopAndWait();
+    Services.stopAndWait(router);
   }
 
   InetSocketAddress getRouterAddress() {

@@ -69,6 +69,8 @@ import io.cdap.cdap.security.store.SecureStoreUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -190,7 +192,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "MapReduceRunner-" + specification.getName();
   }
 
@@ -454,7 +456,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           }
         });
         t.setDaemon(true);
-        t.setName(getServiceName());
+        t.setName(serviceName());
         t.start();
       }
     };
@@ -1012,7 +1014,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
-    Files.copy(file, Locations.newOutputSupplier(targetLocation));
+    try (OutputStream output = targetLocation.getOutputStream()) {
+      Files.asByteSource(file).copyTo(output);
+    }
     return targetLocation;
   }
 
@@ -1024,8 +1028,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    ByteStreams.copy(Locations.newInputSupplier(programJarLocation),
-        Locations.newOutputSupplier(programJarCopy));
+    try (InputStream input = programJarLocation.getInputStream();
+        OutputStream output = programJarCopy.getOutputStream()) {
+      ByteStreams.copy(input, output);
+    }
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }

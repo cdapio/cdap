@@ -31,6 +31,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
@@ -77,12 +78,12 @@ public class SystemMetadataWriterStageTest {
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataServiceClient = injector.getInstance(MetadataServiceClient.class);
     metadataSubscriber = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriber.startAndWait();
+    Services.startAndWait(metadataSubscriber);
   }
 
   @AfterClass
   public static void stop() {
-    metadataSubscriber.stopAndWait();
+    Services.stopAndWait(metadataSubscriber);
     AppFabricTestHelper.shutdown();
   }
 

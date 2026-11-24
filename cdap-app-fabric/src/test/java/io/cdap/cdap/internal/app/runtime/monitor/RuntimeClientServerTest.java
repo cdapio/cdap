@@ -37,6 +37,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -146,12 +147,12 @@ public class RuntimeClientServerTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     messagingService.createTopic(new DefaultTopicMetadata(NamespaceId.SYSTEM.topic("topic")));
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    Services.startAndWait(runtimeServer);
 
     runtimeClient = injector.getInstance(RuntimeClient.class);
     locationFactory = injector.getInstance(LocationFactory.class);
@@ -160,9 +161,9 @@ public class RuntimeClientServerTest {
   @After
   public void afterTest() {
     logEntries.clear();
-    runtimeServer.stopAndWait();
+    Services.stopAndWait(runtimeServer);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 

@@ -59,6 +59,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -191,7 +192,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
     StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class));
-    metricsCollectionService.start();
+    Services.start(metricsCollectionService);
     logAppender = previewInjector.getInstance(LogAppender.class);
     logAppender.start();
     LoggingContextAccessor.setLoggingContext(
@@ -199,10 +200,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
     logSubscriberService = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
-    logSubscriberService.startAndWait();
+    Services.startAndWait(logSubscriberService);
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
-    dataSubscriberService.startAndWait();
-    previewDataCleanupService.startAndWait();
+    Services.startAndWait(dataSubscriberService);
+    Services.startAndWait(previewDataCleanupService);
   }
 
   @Override
@@ -449,7 +450,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   private void stopQuietly(Service service) {
     try {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     } catch (Exception e) {
       LOG.warn("Exception when stopping service {}", service, e);
     }

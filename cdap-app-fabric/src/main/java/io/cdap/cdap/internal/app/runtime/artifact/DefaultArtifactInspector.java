@@ -160,7 +160,7 @@ final class DefaultArtifactInspector implements ArtifactInspector {
             new PluginInstantiator(cConf,
                 parentClassLoader == null ? artifactClassLoader : parentClassLoader,
                 Files.createTempDirectory(stageDir, "plugins-").toFile(),
-                false)) {
+                parentClassLoader != null)) {
       pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
       ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
           artifactLocation, artifactClassLoader);

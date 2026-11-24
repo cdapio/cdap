@@ -20,8 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -66,8 +64,11 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.internal.remote.DefaultInternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.io.Closeables;
+import io.cdap.cdap.common.io.InputSupplier;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.ImmutablePair;
@@ -268,38 +269,38 @@ public abstract class AppFabricTestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    Services.startAndWait(dsOpService);
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     appFabricProcessorService = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessorService.startAndWait();
+    Services.startAndWait(appFabricProcessorService);
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    Services.startAndWait(metricsCollectionService);
     serviceStore = injector.getInstance(ServiceStore.class);
-    serviceStore.startAndWait();
+    Services.startAndWait(serviceStore);
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    Services.startAndWait(metadataService);
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    Services.startAndWait(metadataSubscriberService);
     logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+    Services.startAndWait(logQueryService);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     remoteClientFactory = new RemoteClientFactory(discoveryClient,
@@ -323,18 +324,18 @@ public abstract class AppFabricTestBase {
 
   @AfterClass
   public static void afterClass() {
-    appFabricServer.stopAndWait();
-    appFabricProcessorService.stopAndWait();
-    metricsCollectionService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    txManager.stopAndWait();
-    serviceStore.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    metadataService.stopAndWait();
-    logQueryService.stopAndWait();
+    Services.stopAndWait(appFabricServer);
+    Services.stopAndWait(appFabricProcessorService);
+    Services.stopAndWait(metricsCollectionService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(dsOpService);
+    Services.stopAndWait(txManager);
+    Services.stopAndWait(serviceStore);
+    Services.stopAndWait(metadataSubscriberService);
+    Services.stopAndWait(metadataService);
+    Services.stopAndWait(logQueryService);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
     Closeables.closeQuietly(metadataStorage);
   }
@@ -527,7 +528,7 @@ public abstract class AppFabricTestBase {
     if (pluginClassesJson != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJson);
     }
-    builder.withBody(artifactContents);
+    builder.withBody(artifactContents::getInput);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 

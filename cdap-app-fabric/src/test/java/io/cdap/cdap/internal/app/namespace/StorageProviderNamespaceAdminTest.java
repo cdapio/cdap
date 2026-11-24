@@ -24,6 +24,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.DefaultNamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -76,12 +77,12 @@ public class StorageProviderNamespaceAdminTest {
     storageProviderNamespaceAdmin = injector.getInstance(StorageProviderNamespaceAdmin.class);
     // start the dataset service for namespace store to work
     transactionManager = injector.getInstance(TransactionManager.class);
-    transactionManager.startAndWait();
+    Services.startAndWait(transactionManager);
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
     // we don't use namespace admin here but the store because namespaceadmin will try to create the
     // home directory for namespace which we don't want. We just want to store the namespace meta in store
     // to look up during the delete.
@@ -234,7 +235,7 @@ public class StorageProviderNamespaceAdminTest {
 
   @AfterClass
   public static void cleanup() throws Exception {
-    transactionManager.stopAndWait();
-    datasetService.stopAndWait();
+    Services.stopAndWait(transactionManager);
+    Services.stopAndWait(datasetService);
   }
 }

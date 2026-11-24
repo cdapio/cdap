@@ -29,6 +29,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.authorization.DefaultAccessEnforcer;
@@ -106,7 +107,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting SystemWorkerService");
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
     provisioningService.initializeProvisionersAndExecutors();
     twillRunnerService.start();
     remoteTwillRunnerService.start();
@@ -121,7 +122,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down SystemWorkerService");
-    tokenManager.stop();
+    tokenManager.stopAsync();
     twillRunnerService.stop();
     remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);

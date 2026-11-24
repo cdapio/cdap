@@ -24,7 +24,6 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.common.lang.GuavaClassRewriter;
 import io.cdap.cdap.common.lang.InterceptableClassLoader;
 import io.cdap.cdap.common.leveldb.LevelDBClassRewriter;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
@@ -53,7 +52,6 @@ import javax.annotation.Nullable;
 public class MainClassLoader extends InterceptableClassLoader {
 
   private static final String DATASET_CLASS_NAME = Dataset.class.getName();
-  private final GuavaClassRewriter guavaClassRewriter;
   private final DatasetClassRewriter datasetRewriter;
   private final AuthEnforceRewriter authEnforceRewriter;
   private final LevelDBClassRewriter levelDBClassRewriter;
@@ -137,7 +135,6 @@ public class MainClassLoader extends InterceptableClassLoader {
    */
   public MainClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, parent);
-    this.guavaClassRewriter = new GuavaClassRewriter();
     this.datasetRewriter = new DatasetClassRewriter();
     this.authEnforceRewriter = new AuthEnforceRewriter();
     this.levelDBClassRewriter = new LevelDBClassRewriter();
@@ -159,10 +156,6 @@ public class MainClassLoader extends InterceptableClassLoader {
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
     byte[] rewrittenCode = null;
 
-    if (guavaClassRewriter.needRewrite(className)) {
-      rewrittenCode = guavaClassRewriter.rewriteClass(className, input);
-    }
-
     if (isDatasetRewriteNeeded(className)) {
       rewrittenCode = datasetRewriter.rewriteClass(className, input);
     }
@@ -179,8 +172,7 @@ public class MainClassLoader extends InterceptableClassLoader {
   }
 
   private boolean isRewriteNeeded(String className) throws IOException {
-    return guavaClassRewriter.needRewrite(className)
-        || levelDBClassRewriter.needRewrite(className)
+    return levelDBClassRewriter.needRewrite(className)
         || isDatasetRewriteNeeded(className)
         || isAuthRewriteNeeded(className);
   }

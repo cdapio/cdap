@@ -37,6 +37,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -125,7 +126,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       = new ProgramRunStatusMonitorService(cConf, store, testService,
                                            metricsCollectionService, new NoOpProgramStateWriter(),
                                            5, 3, 2, 2);
-    programRunStatusMonitorService.startAndWait();
+    Services.startAndWait(programRunStatusMonitorService);
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -198,7 +199,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
       = new ProgramRunStatusMonitorService(cConf, store, testService,
                                            metricsCollectionService, new NoOpProgramStateWriter(),
                                            5, 3, 2, 2);
-    programRunStatusMonitorService.startAndWait();
+    Services.startAndWait(programRunStatusMonitorService);
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -238,7 +239,7 @@ public class ProgramRunStatusMonitorServiceTest extends AppFabricTestBase {
     ProgramRunStatusMonitorService programRunStatusMonitorService
       = new ProgramRunStatusMonitorService(cConf, store, testService, metricsCollectionService, psw,
                                            5, 3, 2, 2);
-    programRunStatusMonitorService.startAndWait();
+    Services.startAndWait(programRunStatusMonitorService);
     Assert.assertEquals(1, latch.getCount());
     programRunStatusMonitorService.terminatePrograms();
     Assert.assertTrue(latch.await(10, TimeUnit.SECONDS));

@@ -31,6 +31,7 @@ import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.common.http.HttpRequest;
@@ -105,7 +106,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
     this.taskWorkerService = taskWorkerService;
     securityManager = System.getSecurityManager();
     System.setSecurityManager(new NoExitSecurityManager());
@@ -114,7 +115,7 @@ public class TaskWorkerServiceTest {
   @After
   public void afterTest() {
     if (taskWorkerService != null) {
-      taskWorkerService.stopAndWait();
+      Services.stopAndWait(taskWorkerService);
       taskWorkerService = null;
     }
     System.setSecurityManager(securityManager);
@@ -135,7 +136,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
 
     TaskWorkerTestUtil.waitForServiceCompletion(serviceCompletionFuture);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
@@ -156,7 +157,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
 
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
@@ -199,7 +200,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
 
     new Thread(
         () -> {
@@ -244,7 +245,7 @@ public class TaskWorkerServiceTest {
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
 
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
@@ -370,7 +371,7 @@ public class TaskWorkerServiceTest {
         createSConf(), discoveryService, discoveryService,
         metricsCollectionService,
         new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher));
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
@@ -413,7 +414,7 @@ public class TaskWorkerServiceTest {
     } catch (TimeoutException e) {
       // ignore.
     }
-    taskWorkerService.stopAndWait();
+    Services.stopAndWait(taskWorkerService);
     Assert.assertEquals(2, okResponse);
     Assert.assertEquals(concurrentRequests, okResponse + conflictResponse);
     Assert.assertEquals(Service.State.TERMINATED, taskWorkerService.state());
@@ -433,7 +434,7 @@ public class TaskWorkerServiceTest {
         new CommonNettyHttpServiceFactory(cConf, metricsCollectionService, auditLogContexts -> {}, aeadCipher));
     serviceCompletionFuture = TaskWorkerTestUtil.getServiceCompletionFuture(
         taskWorkerService);
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));

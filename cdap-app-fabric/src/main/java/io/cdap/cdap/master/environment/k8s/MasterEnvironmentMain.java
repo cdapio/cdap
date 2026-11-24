@@ -30,6 +30,7 @@ import io.cdap.cdap.common.internal.remote.InternalAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.options.OptionsParser;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.master.environment.DefaultMasterEnvironmentRunnableContext;
 import io.cdap.cdap.master.environment.MasterEnvironments;
@@ -159,7 +160,7 @@ public class MasterEnvironmentMain {
             runnable.stop();
             Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
-          Optional.ofNullable(tokenManager).ifPresent(TokenManager::stopAndWait);
+          Optional.ofNullable(tokenManager).ifPresent(Services::stopAndWait);
         }));
         runnable.run(runnableArgs);
         completed.set(true);
@@ -192,7 +193,7 @@ public class MasterEnvironmentMain {
           new AuthenticationContextModules().getMasterModule());
       if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
         tokenManager = injector.getInstance(TokenManager.class);
-        tokenManager.startAndWait();
+        Services.startAndWait(tokenManager);
       }
     } else {
       // cdap-secret is NOT mounted, use worker authentication context

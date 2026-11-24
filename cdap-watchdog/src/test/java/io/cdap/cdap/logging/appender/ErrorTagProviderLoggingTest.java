@@ -20,6 +20,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.error.api.ErrorTagProvider.ErrorTag;
 import io.cdap.cdap.logging.context.WorkerLoggingContext;
@@ -104,7 +105,7 @@ public class ErrorTagProviderLoggingTest {
 
   @AfterClass
   public static void cleanUp() throws Exception {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 
 }

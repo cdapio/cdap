@@ -35,6 +35,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RunnableTaskModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -116,14 +117,14 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
             new RunnableTaskModule(discoveryService, discoveryService,
                 new NoOpMetricsCollectionService())),
         new AuthenticationTestContext(), new NoOpAccessController());
-    service.startAndWait();
+    Services.startAndWait(service);
     this.systemWorkerService = service;
   }
 
   @After
   public void afterTest() {
     if (systemWorkerService != null) {
-      systemWorkerService.stopAndWait();
+      Services.stopAndWait(systemWorkerService);
       systemWorkerService = null;
     }
   }
