@@ -22,6 +22,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.BufferedReader;
 import java.io.File;
@@ -62,7 +63,7 @@ public class KafkaClientModuleTest {
   @Before
   public void beforeTest() throws Exception {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    Services.startAndWait(zkServer);
 
     CConfiguration cConf = CConfiguration.create();
     String kafkaZkNamespace = cConf.get(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
@@ -71,21 +72,21 @@ public class KafkaClientModuleTest {
     if (kafkaZkNamespace != null) {
       ZKClientService zkClient = new DefaultZKClientService(zkServer.getConnectionStr(), 2000, null,
           ImmutableMultimap.<String, byte[]>of());
-      zkClient.startAndWait();
+      Services.startAndWait(zkClient);
       zkClient.create("/" + kafkaZkNamespace, null, CreateMode.PERSISTENT);
-      zkClient.stopAndWait();
+      Services.stopAndWait(zkClient);
 
       kafkaZkConnect += "/" + kafkaZkNamespace;
     }
 
     kafkaServer = createKafkaServer(kafkaZkConnect, TEMP_FOLDER.newFolder());
-    kafkaServer.startAndWait();
+    Services.startAndWait(kafkaServer);
   }
 
   @After
   public void afterTest() {
-    kafkaServer.stopAndWait();
-    zkServer.stopAndWait();
+    Services.stopAndWait(kafkaServer);
+    Services.stopAndWait(zkServer);
   }
 
   @Test
@@ -101,7 +102,7 @@ public class KafkaClientModuleTest {
 
     // Get the shared zkclient and start it
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.startAndWait();
+    Services.startAndWait(zkClientService);
 
     final int baseZkConns = getZkConnections();
 
@@ -109,8 +110,8 @@ public class KafkaClientModuleTest {
     final BrokerService brokerService = injector.getInstance(BrokerService.class);
 
     // Start both kafka and broker services, it shouldn't affect the state of the shared zk client
-    kafkaClientService.startAndWait();
-    brokerService.startAndWait();
+    Services.startAndWait(kafkaClientService);
+    Services.startAndWait(brokerService);
 
     // Shouldn't affect the shared zk client state
     Assert.assertTrue(zkClientService.isRunning());
@@ -127,8 +128,8 @@ public class KafkaClientModuleTest {
     }, 5L, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Stop both, still shouldn't affect the state of the shared zk client
-    kafkaClientService.stopAndWait();
-    brokerService.stopAndWait();
+    Services.stopAndWait(kafkaClientService);
+    Services.stopAndWait(brokerService);
 
     // Still shouldn't affect the shared zk client
     Assert.assertTrue(zkClientService.isRunning());
@@ -136,7 +137,7 @@ public class KafkaClientModuleTest {
     // It still shouldn't increase the number of zk client connections
     Assert.assertEquals(baseZkConns, getZkConnections());
 
-    zkClientService.stopAndWait();
+    Services.stopAndWait(zkClientService);
   }
 
   @Test
@@ -154,7 +155,7 @@ public class KafkaClientModuleTest {
 
     // Get the shared zkclient and start it
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.startAndWait();
+    Services.startAndWait(zkClientService);
 
     int baseZkConns = getZkConnections();
 
@@ -162,12 +163,12 @@ public class KafkaClientModuleTest {
     final BrokerService brokerService = injector.getInstance(BrokerService.class);
 
     // Start the kafka client, it should increase the zk connections by 1
-    kafkaClientService.startAndWait();
+    Services.startAndWait(kafkaClientService);
     Assert.assertEquals(baseZkConns + 1, getZkConnections());
 
     // Start the broker service,
     // it shouldn't affect the zk connections, as it share the same zk client with kafka client
-    brokerService.startAndWait();
+    Services.startAndWait(brokerService);
     Assert.assertEquals(baseZkConns + 1, getZkConnections());
 
     // Make sure it is talking to Kafka.
@@ -182,17 +183,17 @@ public class KafkaClientModuleTest {
     Assert.assertTrue(zkClientService.isRunning());
 
     // Stop the broker service, it shouldn't affect the zk connections, as it is still used by the kafka client
-    brokerService.stopAndWait();
+    Services.stopAndWait(brokerService);
     Assert.assertEquals(baseZkConns + 1, getZkConnections());
 
     // Stop the kafka client, the zk connections should be reduced by 1
-    kafkaClientService.stopAndWait();
+    Services.stopAndWait(kafkaClientService);
     Assert.assertEquals(baseZkConns, getZkConnections());
 
     // Still shouldn't affect the shared zk client
     Assert.assertTrue(zkClientService.isRunning());
 
-    zkClientService.stopAndWait();
+    Services.stopAndWait(zkClientService);
   }
 
   /**

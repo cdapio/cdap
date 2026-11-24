@@ -19,6 +19,7 @@ package io.cdap.cdap.common.resource;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -59,12 +60,12 @@ public class ResourceBalancerServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    Services.startAndWait(zkServer);
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    Services.stopAndWait(zkServer);
   }
 
   @Test
@@ -72,13 +73,13 @@ public class ResourceBalancerServiceTest {
     // Simple test for resource balancer does react to discovery changes correct
     // More detailed tests are in ResourceCoordinatorTest, which the ResourceBalancerService depends on
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient);
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       // Test the failure on stop case
       final TestBalancerService stopFailureService = new TestBalancerService("test", 4, zkClient, discoveryService,
                                                                              discoveryService, false, false);
-      stopFailureService.startAndWait();
+      Services.startAndWait(stopFailureService);
 
       // Should get all four partitions
       Tasks.waitFor(ImmutableSet.of(0, 1, 2, 3), new Callable<Set<Integer>>() {
@@ -103,20 +104,20 @@ public class ResourceBalancerServiceTest {
         cancellable.cancel();
       }
     } finally {
-      zkClient.stopAndWait();
+      Services.stopAndWait(zkClient);
     }
   }
 
   @Test
   public void testServiceStartFailure() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient);
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       // Test the failure on start case
       final TestBalancerService startFailureService = new TestBalancerService("test", 4, zkClient, discoveryService,
                                                                               discoveryService, true, false);
-      startFailureService.startAndWait();
+      Services.startAndWait(startFailureService);
 
       // The resource balance service should fail
       Tasks.waitFor(Service.State.FAILED, new Callable<Service.State>() {
@@ -126,20 +127,20 @@ public class ResourceBalancerServiceTest {
         }
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
-      zkClient.stopAndWait();
+      Services.stopAndWait(zkClient);
     }
   }
 
   @Test
   public void testServiceStopFailure() throws Exception {
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient);
 
     try (ZKDiscoveryService discoveryService = new ZKDiscoveryService(zkClient)) {
       // Test the failure on stop case
       final TestBalancerService stopFailureService = new TestBalancerService("test", 4, zkClient, discoveryService,
                                                                               discoveryService, false, true);
-      stopFailureService.startAndWait();
+      Services.startAndWait(stopFailureService);
 
       // Should get four partitions
       Tasks.waitFor(ImmutableSet.of(0, 1, 2, 3), new Callable<Set<Integer>>() {
@@ -165,7 +166,7 @@ public class ResourceBalancerServiceTest {
         cancellable.cancel();
       }
     } finally {
-      zkClient.stopAndWait();
+      Services.stopAndWait(zkClient);
     }
   }
 

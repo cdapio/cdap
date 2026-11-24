@@ -24,7 +24,9 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.List;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -80,8 +82,11 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     // will only be 1 part file, due to the small amount of data
     Location outputLocation = outputFileSet.getBaseLocation().append("output").append("part-r-00000");
 
-    List<String> lines = CharStreams.readLines(
-      CharStreams.newReaderSupplier(Locations.newInputSupplier(outputLocation), Charsets.UTF_8));
+    List<String> lines;
+    try (Reader reader = new InputStreamReader(Locations.newInputSupplier(outputLocation).getInput(),
+                                               Charsets.UTF_8)) {
+      lines = CharStreams.readLines(reader);
+    }
 
     Assert.assertEquals(ImmutableList.of("1 Bob 75", "2 Samuel 18", "3 Joe 60"),
                         lines);

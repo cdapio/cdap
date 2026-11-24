@@ -50,6 +50,7 @@ import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.io.DatumReader;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.program.MessagingProgramStatePublisher;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
@@ -198,11 +199,11 @@ public class RuntimeClientServiceTest {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
 
     runtimeServer = injector.getInstance(RuntimeServer.class);
-    runtimeServer.startAndWait();
+    Services.startAndWait(runtimeServer);
 
     // Injector for the client side
     clientCConf = CConfiguration.create();
@@ -244,7 +245,7 @@ public class RuntimeClientServiceTest {
 
     clientMessagingService = clientInjector.getInstance(MessagingService.class);
     if (clientMessagingService instanceof Service) {
-      ((Service) clientMessagingService).startAndWait();
+      Services.startAndWait((Service) clientMessagingService);
     }
     clientProgramStatePublisher = clientInjector.getInstance(
         ProgramStatePublisher.class);
@@ -253,16 +254,16 @@ public class RuntimeClientServiceTest {
   @After
   public void afterTest() {
     if (runtimeClientService != null) {
-      runtimeClientService.stopAndWait();
+      Services.stopAndWait(runtimeClientService);
     }
     runtimeClientService = null;
     if (clientMessagingService instanceof Service) {
-      ((Service) clientMessagingService).stopAndWait();
+      Services.stopAndWait((Service) clientMessagingService);
     }
 
-    runtimeServer.stopAndWait();
+    Services.stopAndWait(runtimeServer);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 
@@ -270,7 +271,7 @@ public class RuntimeClientServiceTest {
   public void testBasicRelay() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    Services.startAndWait(runtimeClientService);
     // Send some messages to multiple topics in the client side TMS, they should get replicated to the server side TMS.
     MessagingContext messagingContext = new MultiThreadMessagingContext(
         clientMessagingService);
@@ -327,7 +328,7 @@ public class RuntimeClientServiceTest {
 
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    Services.startAndWait(runtimeClientService);
     Map<String, String> tags = new HashMap<>();
     tags.put("key1", "value1");
     tags.put("key2", "value2");
@@ -435,7 +436,7 @@ public class RuntimeClientServiceTest {
   public void testProgramTerminate() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    Services.startAndWait(runtimeClientService);
     MessagingContext messagingContext = new MultiThreadMessagingContext(
         clientMessagingService);
     MessagePublisher messagePublisher = messagingContext.getDirectMessagePublisher();
@@ -483,11 +484,11 @@ public class RuntimeClientServiceTest {
   public void testRuntimeClientStop() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    Services.startAndWait(runtimeClientService);
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
 
-    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    ListenableFuture<Service.State> stopFuture = Services.stop(runtimeClientService);
     try {
       stopFuture.get(2, TimeUnit.SECONDS);
       Assert.fail("Expected runtime client service not stopped");
@@ -507,7 +508,7 @@ public class RuntimeClientServiceTest {
   public void testExternalStop() throws Exception {
     runtimeClientService = clientInjector.getInstance(
         RuntimeClientService.class);
-    runtimeClientService.startAndWait();
+    Services.startAndWait(runtimeClientService);
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(
         clientProgramStatePublisher);
     MessagingContext messagingContext = new MultiThreadMessagingContext(
@@ -527,7 +528,7 @@ public class RuntimeClientServiceTest {
     messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
         "msg1" + topic, "msg2" + topic);
 
-    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    ListenableFuture<Service.State> stopFuture = Services.stop(runtimeClientService);
     try {
       stopFuture.get(2, TimeUnit.SECONDS);
       Assert.fail("Expected runtime client service not stopped");

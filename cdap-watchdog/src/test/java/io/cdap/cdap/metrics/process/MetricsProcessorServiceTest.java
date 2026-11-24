@@ -28,6 +28,7 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -59,10 +60,10 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
   @Test
   public void testMetricsProcessor() throws Exception {
-    injector.getInstance(TransactionManager.class).startAndWait();
+    Services.startAndWait(injector.getInstance(TransactionManager.class));
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
-    injector.getInstance(DatasetOpExecutorService.class).startAndWait();
-    injector.getInstance(DatasetService.class).startAndWait();
+    Services.startAndWait(injector.getInstance(DatasetOpExecutorService.class));
+    Services.startAndWait(injector.getInstance(DatasetService.class));
 
     final MetricStore metricStore = injector.getInstance(MetricStore.class);
 
@@ -81,7 +82,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                                   injector.getInstance(DatumReaderFactory.class),
                                                   metricStore, injector.getInstance(MetricsWriterProvider.class),
                                                   partitions, new NoopMetricsContext(), 50, 0);
-    messagingMetricsProcessorManagerService.startAndWait();
+    Services.startAndWait(messagingMetricsProcessorManagerService);
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // Publish metrics with messaging service and record expected metrics
@@ -91,7 +92,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     Thread.sleep(500);
     // Stop and restart messagingMetricsProcessorManagerService
-    messagingMetricsProcessorManagerService.stopAndWait();
+    Services.stopAndWait(messagingMetricsProcessorManagerService);
     // Intentionally set queue size to a large value, so that MessagingMetricsProcessorManagerService
     // internally only persists metrics during terminating.
     messagingMetricsProcessorManagerService =
@@ -100,7 +101,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                                   injector.getInstance(DatumReaderFactory.class),
                                                   metricStore, injector.getInstance(MetricsWriterProvider.class),
                                                   partitions, new NoopMetricsContext(), 50, 0);
-    messagingMetricsProcessorManagerService.startAndWait();
+    Services.startAndWait(messagingMetricsProcessorManagerService);
 
     // Publish metrics after MessagingMetricsProcessorManagerService restarts and record expected metrics
     for (int i = 20; i < 30; i++) {
@@ -138,7 +139,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     }
 
     // Stop services and servers
-    messagingMetricsProcessorManagerService.stopAndWait();
+    Services.stopAndWait(messagingMetricsProcessorManagerService);
     // Delete all metrics
     metricStore.deleteAll();
   }

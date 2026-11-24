@@ -18,6 +18,7 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.metrics.jmx.JmxMetricsCollector;
 import io.cdap.cdap.metrics.jmx.JmxMetricsCollectorFactory;
 import java.util.HashMap;
@@ -38,9 +39,9 @@ public class SystemMetricsExporterServiceMainTest extends MasterServiceMainTestB
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
     JmxMetricsCollector metricsCollector = factory.create(metricTags);
     // JMX server isn't running, but that shouldn't raise exceptions, errors will be logged.
-    metricsCollector.startAndWait();
+    Services.startAndWait(metricsCollector);
     Assert.assertTrue(metricsCollector.isRunning());
-    metricsCollector.stopAndWait();
+    Services.stopAndWait(metricsCollector);
     Assert.assertFalse(metricsCollector.isRunning());
   }
 

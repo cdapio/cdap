@@ -40,6 +40,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.GcpMetadataTaskContextUtil;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -329,10 +330,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     LOG.debug("Starting preview runner service");
     StoreDefinition.createAllTables(structuredTableAdmin);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
-    dsOpExecService.startAndWait();
-    datasetService.startAndWait();
+    Services.startAndWait(dsOpExecService);
+    Services.startAndWait(datasetService);
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -343,11 +344,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
             Constants.Logging.COMPONENT_NAME,
             Constants.Service.PREVIEW_HTTP));
     Futures.allAsList(
-        applicationLifecycleService.start(),
-        programRuntimeService.start(),
-        metricsCollectionService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start()
+        Services.start(applicationLifecycleService),
+        Services.start(programRuntimeService),
+        Services.start(metricsCollectionService),
+        Services.start(programNotificationSubscriberService),
+        Services.start(programStopSubscriberService)
     ).get();
 
     Files.createDirectories(previewIdDirPath);
@@ -375,16 +376,16 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Stopping preview runner service");
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
+    Services.stopAndWait(programRuntimeService);
+    Services.stopAndWait(applicationLifecycleService);
     logAppenderInitializer.close();
-    metricsCollectionService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpExecService.stopAndWait();
+    Services.stopAndWait(metricsCollectionService);
+    Services.stopAndWait(programNotificationSubscriberService);
+    Services.stopAndWait(programStopSubscriberService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(dsOpExecService);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
     levelDBTableService.close();
   }

@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -57,6 +56,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
@@ -64,6 +64,7 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Networks;
@@ -527,7 +528,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     // Starts the core services
     for (Service service : coreServices) {
       LOG.debug("Starting core service {}", service);
-      service.startAndWait();
+      Services.startAndWait(service);
     }
   }
 
@@ -540,7 +541,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       LOG.debug("Stopping core service {}", service);
       try {
-        service.stopAndWait();
+        Services.stopAndWait(service);
       } catch (Exception e) {
         LOG.warn(
             "Exception raised when stopping service {} during program termination.",
@@ -721,7 +722,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     protected void startUp() throws Exception {
       // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
       relayServer = new TrafficRelayServer(InetAddress.getLocalHost(), this::getTrafficRelayTarget);
-      relayServer.startAndWait();
+      Services.startAndWait(relayServer);
 
       // Set the traffic relay service address to cConf. It will be used as the proxy address for all worker processes
       Networks.setAddress(cConf, Constants.RuntimeMonitor.SERVICE_PROXY_ADDRESS,
@@ -732,7 +733,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     @Override
     protected void shutDown() {
-      relayServer.stopAndWait();
+      Services.stopAndWait(relayServer);
       getServiceProxyFile().delete();
     }
 

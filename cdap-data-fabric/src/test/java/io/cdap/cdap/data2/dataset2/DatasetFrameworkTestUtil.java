@@ -33,6 +33,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.NonCustomLocationUnitTestModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
@@ -102,7 +103,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     framework = injector.getInstance(DatasetFramework.class);
   }
@@ -110,7 +111,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
   @Override
   protected void after() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
     if (tmpFolder != null) {
       tmpFolder.delete();

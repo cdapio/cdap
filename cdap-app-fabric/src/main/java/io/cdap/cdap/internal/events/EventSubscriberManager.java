@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class EventSubscriberManager extends AbstractIdleService {
       // Initialize the event subscribers with all the event readers provided by provider
       try {
         eventSubscriber.initialize();
-        eventSubscriber.startAndWait();
+        Services.startAndWait(eventSubscriber);
         LOG.info("Successfully initialized eventSubscriber: {}",
             eventSubscriber);
       } catch (Exception e) {
@@ -67,7 +68,7 @@ public class EventSubscriberManager extends AbstractIdleService {
     }
     eventSubscribers.forEach(eventSubscriber -> {
       try {
-        eventSubscriber.stopAndWait();
+        Services.stopAndWait(eventSubscriber);
       } catch (Exception e) {
         LOG.error("Failed to stop subscriber", e);
       }

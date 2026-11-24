@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
@@ -40,10 +41,10 @@ public class StandaloneMainTest {
 
     Assert.assertSame(previewRunnerManager, previewRunStopper);
     TransactionManager txManager = sdk.getInjector().getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    previewHttpServer.startAndWait();
-    ((Service) previewRunnerManager).startAndWait();
-    ((Service) previewRunnerManager).stopAndWait();
-    previewHttpServer.stopAndWait();
+    Services.startAndWait(txManager);
+    Services.startAndWait(previewHttpServer);
+    Services.startAndWait((Service) previewRunnerManager);
+    Services.stopAndWait((Service) previewRunnerManager);
+    Services.stopAndWait(previewHttpServer);
   }
 }

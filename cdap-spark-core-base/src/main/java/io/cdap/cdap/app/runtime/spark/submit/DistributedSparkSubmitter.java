@@ -24,6 +24,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeEnv;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkExecutionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -113,7 +114,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
       }
     }
 
-    sparkExecutionService.startAndWait();
+    Services.startAndWait(sparkExecutionService);
     SparkRuntimeEnv.setProperty("spark.yarn.appMasterEnv." + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
                                 sparkExecutionService.getBaseURI().toString());
     return Collections.emptyList();
@@ -124,7 +125,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     // Just stop the execution service and block on that.
     // It will wait until the "completed" call from the Spark driver.
     sparkExecutionService.setShutdownWaitSeconds(timeoutTimeUnit.toSeconds(timeout));
-    sparkExecutionService.stopAndWait();
+    Services.stopAndWait(sparkExecutionService);
   }
 
   @Override

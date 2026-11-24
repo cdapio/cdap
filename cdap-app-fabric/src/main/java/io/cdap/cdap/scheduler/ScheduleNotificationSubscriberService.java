@@ -29,6 +29,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -97,20 +98,20 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
     Futures.successfulAsList(
-        subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
+        subscriberServices.stream().map(Services::start).collect(Collectors.toList())).get();
   }
 
   @Override
   protected void shutDown() throws Exception {
     // This never throw
     Futures.successfulAsList(
-        subscriberServices.stream().map(Service::stop).collect(Collectors.toList())).get();
+        subscriberServices.stream().map(Services::stop).collect(Collectors.toList())).get();
 
     for (Service service : subscriberServices) {
       // The service must have been stopped, and calling stop again will just return immediate with the
       // future that carries the stop state.
       try {
-        service.stop().get();
+        Services.stop(service).get();
       } catch (ExecutionException e) {
         LOG.warn("Exception raised when stopping service {}", service, e.getCause());
       }

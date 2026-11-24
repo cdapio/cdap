@@ -29,6 +29,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.handlers.AppStateHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -88,7 +89,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
 
     applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     // Endpoint for all state APIs
     endpoint = "namespaces/" + NAMESPACE_1 + "/apps/" + APP_NAME + "/states/" + STATE_KEY;
@@ -104,7 +105,7 @@ public class AppStateHandlerTest extends AppFabricTestBase {
     }
 
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 

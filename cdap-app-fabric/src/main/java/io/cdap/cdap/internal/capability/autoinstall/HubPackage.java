@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.capability.autoinstall;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -27,6 +26,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.capability.HttpClients;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;

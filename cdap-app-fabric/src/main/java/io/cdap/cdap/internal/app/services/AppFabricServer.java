@@ -37,6 +37,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
@@ -146,15 +147,15 @@ public class AppFabricServer extends AbstractIdleService {
     List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (Feature.NAMESPACED_SERVICE_ACCOUNTS.isEnabled(featureFlagsProvider)) {
-      futuresList.add(namespaceCredentialProviderService.start());
+      futuresList.add(Services.start(namespaceCredentialProviderService));
     }
     futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        credentialProviderService.start(),
-        sourceControlOperationRunner.start(),
-        repositoryCleanupService.start()
+        Services.start(provisioningService),
+        Services.start(applicationLifecycleService),
+        Services.start(bootstrapService),
+        Services.start(credentialProviderService),
+        Services.start(sourceControlOperationRunner),
+        Services.start(repositoryCleanupService)
     ));
     Futures.allAsList(futuresList).get();
 
@@ -212,13 +213,13 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     cancelHttpService.cancel();
-    applicationLifecycleService.stopAndWait();
-    bootstrapService.stopAndWait();
-    provisioningService.stopAndWait();
-    sourceControlOperationRunner.stopAndWait();
-    repositoryCleanupService.stopAndWait();
-    credentialProviderService.stopAndWait();
-    namespaceCredentialProviderService.stopAndWait();
+    Services.stopAndWait(applicationLifecycleService);
+    Services.stopAndWait(bootstrapService);
+    Services.stopAndWait(provisioningService);
+    Services.stopAndWait(sourceControlOperationRunner);
+    Services.stopAndWait(repositoryCleanupService);
+    Services.stopAndWait(credentialProviderService);
+    Services.stopAndWait(namespaceCredentialProviderService);
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

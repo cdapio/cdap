@@ -39,6 +39,7 @@ import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
@@ -89,7 +90,7 @@ public class LeaderElectionMessagingServiceTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(TEMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
+    Services.startAndWait(zkServer);
 
     cConf = CConfiguration.create();
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
@@ -106,7 +107,7 @@ public class LeaderElectionMessagingServiceTest {
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    Services.stopAndWait(zkServer);
   }
 
   @Test
@@ -118,11 +119,11 @@ public class LeaderElectionMessagingServiceTest {
 
     // Start a messaging service, which would becomes leader
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
-    zkClient1.startAndWait();
+    Services.startAndWait(zkClient1);
 
     final MessagingService firstService = injector1.getInstance(MessagingService.class);
     if (firstService instanceof Service) {
-      ((Service) firstService).startAndWait();
+      Services.startAndWait((Service) firstService);
     }
 
     // Publish a message with the leader
@@ -130,11 +131,11 @@ public class LeaderElectionMessagingServiceTest {
 
     // Start another messaging service, this one would be follower
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
-    zkClient2.startAndWait();
+    Services.startAndWait(zkClient2);
 
     final MessagingService secondService = injector2.getInstance(MessagingService.class);
     if (secondService instanceof Service) {
-      ((Service) secondService).startAndWait();
+      Services.startAndWait((Service) secondService);
     }
 
     // Try to call the follower, should get service unavailable.
@@ -175,7 +176,7 @@ public class LeaderElectionMessagingServiceTest {
 
     // Shutdown the current leader. The session timeout one should becomes leader again.
     if (secondService instanceof Service) {
-      ((Service) secondService).stopAndWait();
+      Services.stopAndWait((Service) secondService);
     }
 
     // Try to fetch message from the current leader again.
@@ -201,8 +202,8 @@ public class LeaderElectionMessagingServiceTest {
 
     Assert.assertEquals(Arrays.asList("Testing1", "Testing2"), messages);
 
-    zkClient1.stopAndWait();
-    zkClient2.stopAndWait();
+    Services.stopAndWait(zkClient1);
+    Services.stopAndWait(zkClient2);
   }
 
   @Test
@@ -217,11 +218,11 @@ public class LeaderElectionMessagingServiceTest {
     try {
       Injector injector = createInjector(0);
       ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-      zkClient.startAndWait();
+      Services.startAndWait(zkClient);
 
       final MessagingService messagingService = injector.getInstance(MessagingService.class);
       if (messagingService instanceof Service) {
-        ((Service) messagingService).startAndWait();
+        Services.startAndWait((Service) messagingService);
       }
 
       // Shouldn't be serving request yet.
@@ -246,9 +247,9 @@ public class LeaderElectionMessagingServiceTest {
       }, 10L, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
       if (messagingService instanceof Service) {
-        ((Service) messagingService).stopAndWait();
+        Services.stopAndWait((Service) messagingService);
       }
-      zkClient.stopAndWait();
+      Services.stopAndWait(zkClient);
 
     } finally {
       cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, oldFencingDelay);

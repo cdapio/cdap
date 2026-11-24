@@ -109,6 +109,12 @@ public class WorkerDriver extends AbstractExecutionThreadService {
   }
 
   @Override
+  protected String serviceName() {
+    // Guava renames the executor thread to serviceName(), so keep the same thread name
+    return String.format("worker-%s-%d", program.getName(), context.getInstanceId());
+  }
+
+  @Override
   protected Executor executor() {
     return new Executor() {
       @Override

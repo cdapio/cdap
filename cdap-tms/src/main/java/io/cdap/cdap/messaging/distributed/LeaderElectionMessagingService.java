@@ -25,6 +25,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.messaging.service.CoreMessagingService;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
@@ -127,14 +128,14 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
             latch.countDown();
           }
         });
-    leaderElection.startAndWait();
+    Services.startAndWait(leaderElection);
     latch.await();
   }
 
   @Override
   protected void shutDown() throws Exception {
     try {
-      leaderElection.stopAndWait();
+      Services.stopAndWait(leaderElection);
     } catch (Exception e) {
       // It can happen if it is currently disconnected from ZK. There is no harm in just continue the shutdown process.
       LOG.warn("Exception during shutting down leader election", e);
@@ -209,7 +210,7 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     }
 
     if (oldService != null) {
-      oldService.stopAndWait();
+      Services.stopAndWait(oldService);
     }
   }
 
@@ -217,11 +218,11 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        service.startAndWait();
+        Services.startAndWait(service);
         // If failed to mark the service to become available, this means the follower() call happened before this,
         // so just go ahead and shutdown the service.
         if (!delegate.attemptMark(service, true)) {
-          service.stopAndWait();
+          Services.stopAndWait(service);
         }
       }
     };
@@ -260,15 +261,15 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
 
     @Override
     protected void startUp() throws Exception {
-      messagingService.startAndWait();
-      httpService.startAndWait();
+      Services.startAndWait(messagingService);
+      Services.startAndWait(httpService);
     }
 
     @Override
     protected void shutDown() throws Exception {
       try {
-        httpService.stopAndWait();
-        messagingService.stopAndWait();
+        Services.stopAndWait(httpService);
+        Services.stopAndWait(messagingService);
       } finally {
         // Clear the table cache on shutting down.
         cacheProvider.clear();

@@ -32,6 +32,7 @@ import io.cdap.cdap.common.internal.remote.NoOpRemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -90,7 +91,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
         new NoOpAeadCipher()),
         remoteClientFactory, new NoOpRemoteAuthenticator());
     // start the service
-    artifactLocalizerService.startAndWait();
+    Services.startAndWait(artifactLocalizerService);
 
     return artifactLocalizerService;
   }
@@ -104,7 +105,7 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
 
   @After
   public void tearDown() throws Exception {
-    this.localizerService.stopAndWait();
+    Services.stopAndWait(this.localizerService);
   }
 
   @Test

@@ -16,7 +16,6 @@
 package io.cdap.cdap.common.twill;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
@@ -27,7 +26,9 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.program.ProgramStateWriterWithHeartBeat;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -124,7 +125,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
       if (clusterMode == ClusterMode.ON_PREMISE) {
         zkClientService = injector.getInstance(ZKClientService.class);
-        zkClientService.startAndWait();
+        Services.startAndWait(zkClientService);
       }
 
       LoggingContextAccessor.setLoggingContext(
@@ -212,7 +213,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   public void destroy() {
     Closeables.closeQuietly(logAppenderInitializer);
     if (zkClientService != null) {
-      zkClientService.stop();
+      zkClientService.stopAsync();
     }
   }
 

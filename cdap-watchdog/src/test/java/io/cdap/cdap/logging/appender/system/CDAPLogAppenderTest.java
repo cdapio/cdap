@@ -33,6 +33,7 @@ import io.cdap.cdap.common.logging.NamespaceLoggingContext;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -110,14 +111,14 @@ public class CDAPLogAppenderTest {
     );
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     StoreDefinition.LogFileMetaStore.create(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
   public static void cleanUp() {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 
   @Test

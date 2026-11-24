@@ -50,6 +50,7 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
@@ -189,7 +190,7 @@ public class TetheringClientHandlerTest {
       });
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     profileService = injector.getInstance(ProfileService.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(NAMESPACE_1).build());
@@ -203,7 +204,7 @@ public class TetheringClientHandlerTest {
     namespaceAdmin.delete(new NamespaceId(NAMESPACE_2));
     namespaceAdmin.delete(new NamespaceId(NAMESPACE_3));
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 
@@ -259,7 +260,7 @@ public class TetheringClientHandlerTest {
     tetheringEventPublisher = new TetheringProgramEventPublisher(cConf, tetheringStore, messagingService,
                                                                  injector.getInstance(ProgramRunRecordFetcher.class),
                                                                  transactionRunner);
-    Assert.assertEquals(Service.State.RUNNING, tetheringEventPublisher.startAndWait());
+    Assert.assertEquals(Service.State.RUNNING, Services.startAndWait(tetheringEventPublisher));
     tetheringAgentService = new TetheringAgentService(cConf,
                                                       tetheringStore,
                                                       injector.getInstance(ProgramStateWriter.class),
@@ -268,14 +269,14 @@ public class TetheringClientHandlerTest {
                                                       injector.getInstance(LocationFactory.class),
                                                       injector.getInstance(ProvisionerNotifier.class),
                                                       injector.getInstance(NamespaceQueryAdmin.class));
-    Assert.assertEquals(Service.State.RUNNING, tetheringAgentService.startAndWait());
+    Assert.assertEquals(Service.State.RUNNING, Services.startAndWait(tetheringAgentService));
   }
 
   @After
   public void tearDown() throws Exception {
     deleteTetheringIfNeeded(SERVER_INSTANCE);
-    Assert.assertEquals(Service.State.TERMINATED, tetheringEventPublisher.stopAndWait());
-    Assert.assertEquals(Service.State.TERMINATED, tetheringAgentService.stopAndWait());
+    Assert.assertEquals(Service.State.TERMINATED, Services.stopAndWait(tetheringEventPublisher));
+    Assert.assertEquals(Service.State.TERMINATED, Services.stopAndWait(tetheringAgentService));
   }
 
   @Test

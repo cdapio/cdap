@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.classloader;
 
-import com.google.common.io.Closeables;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

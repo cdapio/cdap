@@ -21,6 +21,7 @@ import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
@@ -64,7 +65,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
     stopRequested = true;
     long gracefulTimeoutMillis = getGracefulTimeoutMillis();
     if (gracefulTimeoutMillis < 0) {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     } else {
       gracefulStop(gracefulTimeoutMillis);
     }
@@ -77,7 +78,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
    * supports graceful termination with timeout.
    */
   protected void gracefulStop(long gracefulTimeoutMillis) {
-    service.stopAndWait();
+    Services.stopAndWait(service);
   }
 
   @Override

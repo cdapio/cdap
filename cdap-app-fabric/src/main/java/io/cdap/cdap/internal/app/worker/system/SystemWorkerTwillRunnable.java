@@ -52,6 +52,7 @@ import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -286,9 +287,9 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting system worker");
-    systemWorker.start();
+    Services.start(systemWorker);
     if (artifactLocalizerService != null) {
-      artifactLocalizerService.start();
+      Services.start(artifactLocalizerService);
     }
 
     try {
@@ -302,12 +303,12 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping system worker");
-    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
+    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stopAsync);
     if (systemWorker != null) {
-      systemWorker.stop();
+      systemWorker.stopAsync();
     }
     if (artifactLocalizerService != null) {
-      artifactLocalizerService.stop();
+      artifactLocalizerService.stopAsync();
     }
   }
 
@@ -342,7 +343,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    Services.startAndWait(metricsCollectionService);
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,

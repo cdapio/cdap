@@ -22,8 +22,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
+import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Admin;
@@ -60,6 +60,7 @@ import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
 import io.cdap.cdap.api.service.http.ServicePluginConfigurer;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.NoopAdmin;
 import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
@@ -481,7 +482,7 @@ public class HttpHandlerGeneratorTest {
         String.format("http://%s:%d/content/download/test.txt",
                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       try {
-        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        Files.asByteSink(downloadFile).writeFrom(urlConn.getInputStream());
       } finally {
         urlConn.disconnect();
       }
@@ -506,7 +507,7 @@ public class HttpHandlerGeneratorTest {
         urlConn.setDoOutput(true);
         urlConn.setRequestMethod("POST");
         Files.copy(file, urlConn.getOutputStream());
-        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        Files.asByteSink(downloadFile).writeFrom(urlConn.getInputStream());
         Assert.assertEquals(200, urlConn.getResponseCode());
         Assert.assertTrue(Files.equal(file, downloadFile));
       } finally {
@@ -558,7 +559,7 @@ public class HttpHandlerGeneratorTest {
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
-      ByteStreams.copy(ByteStreams.newInputStreamSupplier("Hello".getBytes(Charsets.UTF_8)),
+      ByteSource.wrap("Hello".getBytes(Charsets.UTF_8)).copyTo(
                        urlConn.getOutputStream());
 
       Assert.assertEquals("Hello test",

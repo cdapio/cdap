@@ -39,6 +39,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -124,12 +125,12 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     // Starts common services
     runner = previewInjector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
-      ((Service) runner).startAndWait();
+      Services.startAndWait((Service) runner);
     }
 
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
-      createPreviewRunnerService().startAndWait();
+      Services.startAndWait(createPreviewRunnerService());
     }
   }
 
@@ -144,7 +145,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
 
   private void stopQuietly(Service service) {
     try {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     } catch (Exception e) {
       LOG.warn("Error stopping the preview runner.", e);
     }
@@ -163,8 +164,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
     }
 
     PreviewRunnerService newRunnerService = createPreviewRunnerService();
-    runnerService.stopAndWait();
-    newRunnerService.startAndWait();
+    Services.stopAndWait(runnerService);
+    Services.startAndWait(newRunnerService);
   }
 
   @Override
@@ -244,7 +245,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements
         previewRunnerServices.remove(previewRunnerService);
         if (previewRunnerServices.isEmpty()) {
           try {
-            stop();
+            stopAsync();
           } catch (Exception e) {
             // should not happen
             LOG.error("Failed to shutdown the preview runner manager service.", e);

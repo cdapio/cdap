@@ -19,6 +19,7 @@ package io.cdap.cdap.logging.appender.file;
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.LoggingTester;
@@ -66,7 +67,7 @@ public class TestFileLogging {
 
   @AfterClass
   public static void cleanUp() throws Exception {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 
   @Test

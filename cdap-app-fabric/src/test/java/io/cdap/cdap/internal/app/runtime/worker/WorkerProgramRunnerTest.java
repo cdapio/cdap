@@ -35,6 +35,7 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
@@ -119,12 +120,12 @@ public class WorkerProgramRunnerTest {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
-    txService.startAndWait();
+    Services.startAndWait(txService);
   }
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAndWait();
+    Services.stopAndWait(txService);
     AppFabricTestHelper.shutdown();
   }
 

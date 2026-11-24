@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.test.SlowTests;
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,7 +75,7 @@ public class AggregatedMetricsCollectionServiceTest {
       }
     };
 
-    service.startAndWait();
+    Services.startAndWait(service);
 
     // non-empty tags.
     final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
@@ -139,7 +140,7 @@ public class AggregatedMetricsCollectionServiceTest {
       metricsContext.gauge(GAUGE_METRIC, 0);
       verifyCounterMetricsValue(published, ImmutableMap.of(6, ImmutableMap.of(GAUGE_METRIC, 0L)));
     } finally {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
   }
 
@@ -211,7 +212,7 @@ public class AggregatedMetricsCollectionServiceTest {
       }
     };
 
-    service.startAndWait();
+    Services.startAndWait(service);
 
     // non-empty tags.
     final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
@@ -245,7 +246,7 @@ public class AggregatedMetricsCollectionServiceTest {
       verifyDistribtionMetricValues(published, 2, 4);
 
     } finally {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
   }
 
