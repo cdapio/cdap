@@ -16,29 +16,48 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
+import io.cdap.cdap.internal.app.runtime.schedule.queue.SimpleJob;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.scheduler.ProgramScheduleService;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.authorization.InMemoryAccessControllerV2;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.PermissionManager;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -67,21 +86,26 @@ public class ProgramLifecycleServiceAuthorizationTest {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
 
   private static CConfiguration cConf;
+  private static Injector injector;
   private static PermissionManager permissionManager;
   private static AppFabricServer appFabricServer;
   private static AppFabricProcessorService appFabricProcessor;
   private static ProgramLifecycleService programLifecycleService;
+  private static PreferencesService preferencesService;
+  private static ProgramScheduleService programScheduleService;
 
   @BeforeClass
   public static void setup() throws Exception {
     cConf = createCconf();
-    final Injector injector = AppFabricTestHelper.getInjector(cConf);
+    injector = AppFabricTestHelper.getInjector(cConf);
     permissionManager = injector.getInstance(PermissionManager.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
     appFabricProcessor.startAndWait();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
+    preferencesService = injector.getInstance(PreferencesService.class);
+    programScheduleService = injector.getInstance(ProgramScheduleService.class);
 
     // Wait for the default namespace creation
     String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
@@ -157,6 +181,122 @@ public class ProgramLifecycleServiceAuthorizationTest {
         SecurityRequestContext.setUserId("alice");
       }
     }
+
+    verifyRuntimeImpersonationEnforcement(applicationId);
+  }
+
+  private void verifyRuntimeImpersonationEnforcement(ApplicationId applicationId) throws Exception {
+    SecurityRequestContext.setUserId(ALICE.getName());
+    String deployedVersion =
+        injector.getInstance(Store.class).getLatest(applicationId.getAppReference()).getSpec().getAppVersion();
+    ProgramId workflowId =
+        applicationId.program(ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME);
+    ProgramId deployedWorkflowId = new ProgramId(
+        applicationId.getNamespace(), applicationId.getApplication(), deployedVersion,
+        ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME);
+    permissionManager.grant(Authorizable.fromEntityId(workflowId), ALICE,
+        EnumSet.allOf(StandardPermission.class));
+    permissionManager.grant(Authorizable.fromEntityId(applicationId), ALICE,
+        EnumSet.of(ApplicationPermission.EXECUTE));
+
+    String targetPrincipal = "targetUser/host@REALM";
+    KerberosPrincipalId targetPrincipalId = new KerberosPrincipalId(targetPrincipal);
+
+    Map<String, String> principalOnlyArgs = ImmutableMap.of(
+        SystemArguments.RUNTIME_PRINCIPAL_NAME, targetPrincipal);
+    Map<String, String> principalAndKeytabArgs = ImmutableMap.of(
+        SystemArguments.RUNTIME_PRINCIPAL_NAME, targetPrincipal,
+        SystemArguments.RUNTIME_KEYTAB_PATH, "/tmp/target.keytab");
+    Map<String, String> scopedPrincipalArgs = ImmutableMap.of(
+        "workflow." + AllProgramsApp.NoOpWorkflow.NAME + "." + SystemArguments.RUNTIME_PRINCIPAL_NAME,
+        targetPrincipal);
+
+    // 1. Direct run, prepareStart, and saveRuntimeArgs must reject unauthorized runtime principal
+    //    both with and without keytab path, and when scoped
+    assertUnauthorized(() -> programLifecycleService.run(deployedWorkflowId, principalOnlyArgs, false));
+    assertUnauthorized(() -> programLifecycleService.run(deployedWorkflowId, principalAndKeytabArgs, false));
+    assertUnauthorized(() -> programLifecycleService.run(deployedWorkflowId, scopedPrincipalArgs, false));
+    assertUnauthorized(() -> programLifecycleService.prepareStart(deployedWorkflowId, principalOnlyArgs, false, false));
+    assertUnauthorized(() -> programLifecycleService.saveRuntimeArgs(deployedWorkflowId, principalOnlyArgs));
+    assertUnauthorized(() -> programLifecycleService.saveRuntimeArgs(deployedWorkflowId, scopedPrincipalArgs));
+
+    // 2. PreferencesService mutations must reject unauthorized runtime principal across all scopes
+    assertUnauthorized(() -> preferencesService.setProperties(principalOnlyArgs));
+    assertUnauthorized(() -> preferencesService.addProperties(principalOnlyArgs));
+    assertUnauthorized(() -> preferencesService.setProperties(NamespaceId.DEFAULT, principalOnlyArgs));
+    assertUnauthorized(() -> preferencesService.setProperties(applicationId, principalOnlyArgs));
+    assertUnauthorized(() -> preferencesService.setProperties(workflowId, principalOnlyArgs));
+    assertUnauthorized(() -> preferencesService.setProperties(workflowId, scopedPrincipalArgs));
+
+    // 3. ProgramScheduleService add/update/resume must reject unauthorized runtime principal
+    ProgramSchedule unauthorizedSchedule = new ProgramSchedule(
+        "impersonationSched", "desc", workflowId,
+        principalAndKeytabArgs, new TimeTrigger("0 * * * *"), Collections.emptyList());
+    assertUnauthorized(() -> programScheduleService.add(unauthorizedSchedule));
+
+    ProgramSchedule cleanSchedule = new ProgramSchedule(
+        "impersonationSched", "desc", workflowId,
+        Collections.emptyMap(), new TimeTrigger("0 * * * *"), Collections.emptyList());
+    programScheduleService.add(cleanSchedule);
+    try {
+      ScheduleDetail updateWithPrincipal = new ScheduleDetail(
+          "impersonationSched", "desc", null, principalOnlyArgs,
+          new TimeTrigger("0 * * * *"), Collections.emptyList(), null);
+      assertUnauthorized(() -> programScheduleService.update(cleanSchedule.getScheduleId(), updateWithPrincipal));
+    } finally {
+      programScheduleService.delete(cleanSchedule.getScheduleId());
+    }
+
+    // 4. ScheduleTaskRunner.launch must reject unauthorized runtime principal injected via schedule
+    //    or trigger notification USER_OVERRIDES
+    ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(
+        injector.getInstance(Store.class),
+        programLifecycleService,
+        injector.getInstance(PropertiesResolver.class),
+        injector.getInstance(NamespaceQueryAdmin.class),
+        cConf);
+    Job directScheduleJob = new SimpleJob(
+        unauthorizedSchedule, 0, 0L, Collections.emptyList(), Job.State.PENDING_LAUNCH, 0L);
+    assertUnauthorized(() -> taskRunner.launch(directScheduleJob));
+
+    Notification overrideNotification = new Notification(
+        Notification.Type.TIME,
+        ImmutableMap.of(
+            ProgramOptionConstants.SCHEDULE_NAME, cleanSchedule.getName(),
+            ProgramOptionConstants.SYSTEM_OVERRIDES,
+            new Gson().toJson(ImmutableMap.of(ProgramOptionConstants.CRON_EXPRESSION, "0 * * * *")),
+            ProgramOptionConstants.USER_OVERRIDES, new Gson().toJson(principalAndKeytabArgs)));
+    Job notificationOverrideJob = new SimpleJob(
+        cleanSchedule, 0, 0L, ImmutableList.of(overrideNotification), Job.State.PENDING_LAUNCH, 0L);
+    assertUnauthorized(() -> taskRunner.launch(notificationOverrideJob));
+
+    // 5. Granting AccessPermission.IMPERSONATE on targetPrincipalId permits configuration and execution
+    permissionManager.grant(Authorizable.fromEntityId(targetPrincipalId), ALICE,
+        Collections.singleton(AccessPermission.IMPERSONATE));
+    try {
+      programLifecycleService.saveRuntimeArgs(deployedWorkflowId, principalAndKeytabArgs);
+      preferencesService.deleteProperties(deployedWorkflowId);
+
+      programScheduleService.add(unauthorizedSchedule);
+      programScheduleService.resume(unauthorizedSchedule.getScheduleId());
+      programScheduleService.delete(unauthorizedSchedule.getScheduleId());
+    } finally {
+      permissionManager.revoke(Authorizable.fromEntityId(targetPrincipalId), ALICE,
+          Collections.singleton(AccessPermission.IMPERSONATE));
+    }
+  }
+
+  private void assertUnauthorized( ThrowingRunnable runnable) throws Exception {
+    try {
+      runnable.run();
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException expected) {
+      // expected
+    }
+  }
+
+  private interface ThrowingRunnable {
+    void run() throws Exception;
   }
 
   @AfterClass

@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.schedule;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.schedule.TriggerInfo;
@@ -30,6 +31,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.UserErrors;
 import io.cdap.cdap.internal.UserMessages;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
@@ -81,13 +83,21 @@ public final class ScheduleTaskRunner {
 
     Map<String, String> userArgs = getUserArgs(schedule, propertiesResolver);
 
-    Map<String, String> systemArgs = new HashMap<>(
-        propertiesResolver.getSystemProperties(programId));
+    Map<String, String> resolvedSystemProperties =
+        propertiesResolver.getSystemProperties(programId);
+    Map<String, String> systemArgs = new HashMap<>(resolvedSystemProperties);
 
     // Let the triggers update the arguments first before setting the triggering schedule info
     ((SatisfiableTrigger) job.getSchedule().getTrigger()).updateLaunchArguments(job.getSchedule(),
         job.getNotifications(),
-        userArgs, systemArgs);
+        systemArgs, userArgs);
+
+    // Ensure trigger notifications cannot inject or overwrite authoritative system properties
+    systemArgs.remove(ProgramOptionConstants.PRINCIPAL);
+    systemArgs.remove(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
+    systemArgs.keySet().removeIf(
+        key -> key != null && key.startsWith(SystemArguments.NAMESPACE_CONFIG_PREFIX));
+    systemArgs.putAll(resolvedSystemProperties);
 
     TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
     systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO,
@@ -130,12 +140,26 @@ public final class ScheduleTaskRunner {
       throws Exception {
     String originalUserId = SecurityRequestContext.getUserId();
     try {
-      // if the program has a namespace user configured then set that user in the security request context.
+      // if the program has an app or namespace user configured then set that user in the security request context.
       // See: CDAP-7396
       String nsPrincipal = namespaceQueryAdmin.get(id.getNamespaceId()).getConfig().getPrincipal();
-      if (nsPrincipal != null && SecurityUtil.isKerberosEnabled(cConf)) {
-        SecurityRequestContext.setUserId(new KerberosName(nsPrincipal).getServiceName());
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        String effectivePrincipal = null;
+        if (sysArgs != null
+            && Boolean.parseBoolean(sysArgs.get(ProgramOptionConstants.APP_PRINCIPAL_EXISTS))
+            && !Strings.isNullOrEmpty(sysArgs.get(ProgramOptionConstants.PRINCIPAL))) {
+          effectivePrincipal = sysArgs.get(ProgramOptionConstants.PRINCIPAL);
+        } else if (!Strings.isNullOrEmpty(nsPrincipal)) {
+          effectivePrincipal = nsPrincipal;
+        } else if (originalUserId == null && sysArgs != null
+            && !Strings.isNullOrEmpty(sysArgs.get(ProgramOptionConstants.PRINCIPAL))) {
+          effectivePrincipal = sysArgs.get(ProgramOptionConstants.PRINCIPAL);
+        }
+        if (effectivePrincipal != null) {
+          SecurityRequestContext.setUserId(new KerberosName(effectivePrincipal).getServiceName());
+        }
       }
+      lifecycleService.authorizePipelineRuntimeImpersonation(userArgs);
       lifecycleService.runInternal(id, userArgs, sysArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(

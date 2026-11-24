@@ -23,10 +23,11 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.element.EntityType;
@@ -38,6 +39,8 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
@@ -46,6 +49,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This class is to manage preference related functions. It will wrap the {@link PreferencesTable}
@@ -55,14 +59,27 @@ public class PreferencesService {
 
   private final AdminEventPublisher adminEventPublisher;
   private final TransactionRunner transactionRunner;
+  @Nullable
+  private final AccessEnforcer accessEnforcer;
+  @Nullable
+  private final AuthenticationContext authenticationContext;
+
+  public PreferencesService(MessagingService messagingService,
+      CConfiguration cConf, TransactionRunner transactionRunner) {
+    this(messagingService, cConf, transactionRunner, null, null);
+  }
 
   @Inject
   public PreferencesService(MessagingService messagingService,
-      CConfiguration cConf, TransactionRunner transactionRunner) {
+      CConfiguration cConf, TransactionRunner transactionRunner,
+      @Nullable AccessEnforcer accessEnforcer,
+      @Nullable AuthenticationContext authenticationContext) {
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(
         messagingService);
     this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
     this.transactionRunner = transactionRunner;
+    this.accessEnforcer = accessEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   private PreferencesDetail get(EntityId entityId) {
@@ -91,6 +108,8 @@ public class PreferencesService {
   private void setConfig(EntityId entityId,
       Map<String, String> propertyMap)
       throws NotFoundException, ProfileConflictException, BadRequestException {
+    ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+        accessEnforcer, authenticationContext, propertyMap);
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       PreferencesTable preferencesTable = new PreferencesTable(context);
@@ -105,6 +124,8 @@ public class PreferencesService {
       EntityId entityId,
       Map<String, String> propertyMap)
       throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
+    ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+        accessEnforcer, authenticationContext, propertyMap);
 
     boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
     NamespaceId namespaceId = isInstanceLevel
@@ -290,6 +311,8 @@ public class PreferencesService {
    */
   public Set<String> addProperties(Map<String, String> properties)
       throws NotFoundException, ProfileConflictException, BadRequestException {
+    ProgramLifecycleService.authorizePipelineRuntimeImpersonation(
+        accessEnforcer, authenticationContext, properties);
     InstanceId instanceId = new InstanceId("");
 
     Set<String> added = new HashSet<>();

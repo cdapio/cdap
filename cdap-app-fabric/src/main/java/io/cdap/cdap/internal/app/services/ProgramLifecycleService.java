@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -537,7 +538,6 @@ public class ProgramLifecycleService {
       userArgs.putAll(overrides);
     }
 
-    authorizePipelineRuntimeImpersonation(userArgs);
     return runInternal(programId, userArgs, sysArgs, debug);
   }
 
@@ -638,6 +638,7 @@ public class ProgramLifecycleService {
   public RunId runInternal(ProgramId programId, Map<String, String> userArgs,
       Map<String, String> sysArgs,
       boolean debug) throws Exception {
+    authorizePipelineRuntimeImpersonation(userArgs);
     RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
@@ -990,6 +991,12 @@ public class ProgramLifecycleService {
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(),
         StandardPermission.UPDATE);
     ensureProgramExists(programId);
+    Map<String, String> effectiveUserArgs =
+        new HashMap<>(propertiesResolver.getUserProperties(programId));
+    if (runtimeArgs != null) {
+      effectiveUserArgs.putAll(runtimeArgs);
+    }
+    authorizePipelineRuntimeImpersonation(effectiveUserArgs);
     preferencesService.setProperties(programId, runtimeArgs);
   }
 
@@ -1262,15 +1269,29 @@ public class ProgramLifecycleService {
     }
   }
 
-  private void authorizePipelineRuntimeImpersonation(Map<String, String> userArgs) {
-    if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))
-        && (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
-      String principal = userArgs.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
-      LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
-          authenticationContext.getPrincipal(), principal);
-      KerberosPrincipalId kid = new KerberosPrincipalId(principal);
-      accessEnforcer.enforce(kid, authenticationContext.getPrincipal(),
-          AccessPermission.IMPERSONATE);
+  public void authorizePipelineRuntimeImpersonation(@Nullable Map<String, String> userArgs) {
+    authorizePipelineRuntimeImpersonation(accessEnforcer, authenticationContext, userArgs);
+  }
+
+  public static void authorizePipelineRuntimeImpersonation(
+      @Nullable AccessEnforcer accessEnforcer,
+      @Nullable AuthenticationContext authenticationContext,
+      @Nullable Map<String, String> userArgs) {
+    if (userArgs == null || accessEnforcer == null || authenticationContext == null) {
+      return;
+    }
+    for (Map.Entry<String, String> entry : userArgs.entrySet()) {
+      String key = entry.getKey();
+      String principal = entry.getValue();
+      if (!Strings.isNullOrEmpty(principal)
+          && (SystemArguments.RUNTIME_PRINCIPAL_NAME.equals(key)
+              || (key != null && key.endsWith("." + SystemArguments.RUNTIME_PRINCIPAL_NAME)))) {
+        LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
+            authenticationContext.getPrincipal(), principal);
+        KerberosPrincipalId kid = new KerberosPrincipalId(principal);
+        accessEnforcer.enforce(kid, authenticationContext.getPrincipal(),
+            AccessPermission.IMPERSONATE);
+      }
     }
   }
 
