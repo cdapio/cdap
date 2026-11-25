@@ -97,7 +97,7 @@ public class AccessTokenGeneratorService extends DaemonMain {
   @Override
   public void start() throws Exception {
     LOG.info("Starting AccessTokenGeneratorService.");
-    handler.tokenManager.startUp();
+    handler.tokenManager.startAsync().awaitRunning();
     httpService.start();
   }
 
@@ -109,7 +109,7 @@ public class AccessTokenGeneratorService extends DaemonMain {
     } catch (Exception e) {
       LOG.warn("Exception when stopping AccessTokenGeneratorService", e);
     }
-    handler.tokenManager.stopAndWait();
+    handler.tokenManager.stopAsync().awaitTerminated();
   }
 
   @Override

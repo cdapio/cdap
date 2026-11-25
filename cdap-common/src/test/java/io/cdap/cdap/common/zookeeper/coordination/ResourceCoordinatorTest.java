@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2023 Cask Data, Inc.
+ * Copyright © 2014-2024 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.zookeeper.coordination;
 
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -24,6 +25,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
+import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -35,11 +37,22 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.internal.zookeeper.SettableOperationFuture;
+import org.apache.twill.zookeeper.ForwardingZKClient;
+import org.apache.twill.zookeeper.OperationFuture;
+import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.twill.zookeeper.ZKClients;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.data.ACL;
+import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -60,6 +73,17 @@ public class ResourceCoordinatorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   private static InMemoryZKServer zkServer;
 
+  @BeforeClass
+  public static void init() throws IOException {
+    zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
+    zkServer.startAsync().awaitRunning();
+  }
+
+  @AfterClass
+  public static void finish() {
+    zkServer.stopAsync().awaitTerminated();
+  }
+
   @Test
   public void testAssignment() throws InterruptedException, ExecutionException {
     CConfiguration cConf = CConfiguration.create();
@@ -71,126 +95,146 @@ public class ResourceCoordinatorTest {
         new ZkClientModule(),
         new ZkDiscoveryModule());
     ZKClientService zkClient = injector.getInstance(ZKClientService.class);
-    zkClient.startAndWait();
+    zkClient.startAsync().awaitRunning();
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
 
     try {
       ResourceCoordinator coordinator = new ResourceCoordinator(zkClient,
           injector.getInstance(DiscoveryServiceClient.class),
           new BalancedAssignmentStrategy());
-      coordinator.startAndWait();
+      coordinator.startAsync().awaitRunning();
 
       try {
         ResourceCoordinatorClient client = new ResourceCoordinatorClient(zkClient);
-        client.startAndWait();
+        client.startAsync().awaitRunning();
 
         try {
-          // Create a requirement
           ResourceRequirement requirement = ResourceRequirement.builder(serviceName)
               .addPartitions("p", 5, 1).build();
           client.submitRequirement(requirement).get();
 
-          // Fetch the requirement, just to verify it's the same as the one get submitted.
           Assert.assertEquals(requirement, client.fetchRequirement(requirement.getName()).get());
 
-          // Register a discovery endpoint
           final Discoverable discoverable1 = createDiscoverable(serviceName, 10000);
           Cancellable cancelDiscoverable1 = discoveryService
               .register(ResolvingDiscoverable.of(discoverable1));
 
-          // Add a change handler for this discoverable.
           final BlockingQueue<Collection<PartitionReplica>> assignmentQueue =
               new SynchronousQueue<>();
           final Semaphore finishSemaphore = new Semaphore(0);
           final Cancellable cancelSubscribe1 = subscribe(client, discoverable1, assignmentQueue,
               finishSemaphore);
 
-          // Assert that it received the changes.
           Collection<PartitionReplica> assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
-          // Unregister from discovery, the handler should receive a change with empty collection
           cancelDiscoverable1.cancel();
           Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
-          // Register to discovery again, would receive changes.
           cancelDiscoverable1 = discoveryService.register(ResolvingDiscoverable.of(discoverable1));
           assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
-          // Register another discoverable
           final Discoverable discoverable2 = createDiscoverable(serviceName, 10001);
           final Cancellable cancelDiscoverable2 = discoveryService
               .register(ResolvingDiscoverable.of(discoverable2));
 
-          // Changes should be received by the handler, with only 3 resources,
-          // as 2 out of 5 should get moved to the new discoverable.
           assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(3, assigned.size());
 
-          // Cancel the first discoverable again, should expect empty result.
-          // This also make sure the latest assignment get cached in the ResourceCoordinatorClient.
-          // It is the the next test step.
           cancelDiscoverable1.cancel();
           Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
-          // Cancel the handler.
           cancelSubscribe1.cancel();
           Assert.assertTrue(finishSemaphore.tryAcquire(2, TimeUnit.SECONDS));
 
-          // Subscribe to changes for the second discoverable,
-          // it should see the latest assignment, even though no new fetch from ZK is triggered.
           final Cancellable cancelSubscribe2 = subscribe(client, discoverable2, assignmentQueue,
               finishSemaphore);
           assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
-          // Update the requirement to be an empty requirement, the handler should receive an empty collection
           client.submitRequirement(ResourceRequirement.builder(serviceName).build());
           Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
-          // Update the requirement to have one partition, the handler should receive one resource
           client.submitRequirement(
               ResourceRequirement.builder(serviceName).addPartitions("p", 1, 1).build());
           assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(1, assigned.size());
 
-          // Delete the requirement, the handler should receive a empty collection
           client.deleteRequirement(requirement.getName());
           Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
-          // Cancel the second handler.
           cancelSubscribe2.cancel();
           Assert.assertTrue(finishSemaphore.tryAcquire(2, TimeUnit.SECONDS));
 
           cancelDiscoverable2.cancel();
-
         } finally {
-          client.stopAndWait();
+          client.stopAsync().awaitTerminated();
         }
       } finally {
-        coordinator.stopAndWait();
+        coordinator.stopAsync().awaitTerminated();
       }
-
     } finally {
-      zkClient.stopAndWait();
+      zkClient.stopAsync().awaitTerminated();
     }
   }
 
-  @BeforeClass
-  public static void init() throws IOException {
-    zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
-    zkServer.startAndWait();
-  }
+  @Test
+  public void testSaveAssignmentFailureNotifiesFailed() throws Exception {
+    ZKClientService rawZkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
+    rawZkClient.startAsync().awaitRunning();
+    try {
+      ZKClient namespaced = ZKClients.namespace(rawZkClient, "/save-fail-ns");
+      ZKClient failingSaveZk = new ForwardingZKClient(namespaced) {
+        @Override
+        public OperationFuture<String> create(String path, byte[] data, CreateMode createMode,
+            boolean createParent, Iterable<ACL> acl) {
+          if (path.startsWith(CoordinationConstants.ASSIGNMENTS_PATH)) {
+            SettableOperationFuture<String> failed = SettableOperationFuture.create(
+                path, Threads.SAME_THREAD_EXECUTOR);
+            failed.setException(new KeeperException.AuthFailedException());
+            return failed;
+          }
+          return super.create(path, data, createMode, createParent, acl);
+        }
 
-  @AfterClass
-  public static void finish() {
-    zkServer.stopAndWait();
+        @Override
+        public OperationFuture<Stat> setData(String path, byte[] data, int version) {
+          if (path.startsWith(CoordinationConstants.ASSIGNMENTS_PATH)) {
+            SettableOperationFuture<Stat> failed = SettableOperationFuture.create(
+                path, Threads.SAME_THREAD_EXECUTOR);
+            failed.setException(new KeeperException.AuthFailedException());
+            return failed;
+          }
+          return super.setData(path, data, version);
+        }
+      };
+
+      InMemoryDiscoveryService discovery = new InMemoryDiscoveryService();
+      String serviceName = "save-fail-svc";
+      Cancellable reg = discovery.register(createDiscoverable(serviceName, 12345));
+      try {
+        ResourceCoordinator coordinator = new ResourceCoordinator(
+            failingSaveZk, discovery, new BalancedAssignmentStrategy());
+        coordinator.startAsync().awaitRunning();
+
+        ResourceCoordinatorClient client = new ResourceCoordinatorClient(namespaced);
+        client.submitRequirement(
+            ResourceRequirement.builder(serviceName).addPartitions("p", 2, 1).build()).get();
+
+        Tasks.waitFor(Service.State.FAILED, coordinator::state,
+            5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
+      } finally {
+        reg.cancel();
+      }
+    } finally {
+      rawZkClient.stopAsync().awaitTerminated();
+    }
   }
 
   private Cancellable subscribe(ResourceCoordinatorClient client,

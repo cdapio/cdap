@@ -609,7 +609,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
             }
             return scheduler;
           } catch (Exception e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
           }
         }
       };

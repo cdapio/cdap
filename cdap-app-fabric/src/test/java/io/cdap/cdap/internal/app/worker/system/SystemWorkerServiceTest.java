@@ -113,14 +113,14 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
             new RunnableTaskModule(discoveryService, discoveryService,
                 new NoOpMetricsCollectionService())),
         new AuthenticationTestContext(), new NoOpAccessController());
-    service.startAndWait();
+    service.startAsync().awaitRunning();
     this.systemWorkerService = service;
   }
 
   @After
   public void afterTest() {
     if (systemWorkerService != null) {
-      systemWorkerService.stopAndWait();
+      systemWorkerService.stopAsync().awaitTerminated();
       systemWorkerService = null;
     }
   }

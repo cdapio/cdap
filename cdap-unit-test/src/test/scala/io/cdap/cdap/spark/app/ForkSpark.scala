@@ -47,8 +47,8 @@ class ForkSpark(name: String) extends AbstractSpark with SparkMain {
     val file = new File(barrierDir, sec.getRunId.getId)
     require(file.createNewFile())
     val branchSize = getBranchSize(sec)
-    val stopWatch = new Stopwatch().start()
-    while (barrierDir.list().length < branchSize && stopWatch.elapsedTime(TimeUnit.SECONDS) < 10) {
+    val stopWatch = Stopwatch.createStarted()
+    while (barrierDir.list().length < branchSize && stopWatch.elapsed(TimeUnit.SECONDS) < 10) {
       TimeUnit.MILLISECONDS.sleep(100)
     }
 

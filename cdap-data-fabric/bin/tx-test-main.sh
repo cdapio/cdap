@@ -57,14 +57,30 @@ if [ ! -e "$pid" ] ; then
 fi
 
 
+# Deterministically sort JARs in a directory so forked Tephra classes in cdap-data-fabric
+# always precede upstream org.apache.tephra jars regardless of filesystem readdir order.
+append_sorted_lib_jars() {
+  local lib_dir="$1"
+  local target_cp="$2"
+  local sorted_jars=""
+  if [ -d "${lib_dir}" ]; then
+    sorted_jars=$(find -L "${lib_dir}" -maxdepth 1 -type f -name '*.jar' 2>/dev/null | LC_ALL=C sort | tr '\n' ':' | sed 's/:$//')
+  fi
+  if [ -n "${sorted_jars}" ]; then
+    if [ -z "${target_cp}" ]; then
+      printf '%s' "${sorted_jars}"
+    else
+      printf '%s:%s' "${target_cp}" "${sorted_jars}"
+    fi
+  else
+    printf '%s' "${target_cp}"
+  fi
+}
+
 # In other environment, the jars are expected to be in <HOME>/lib directory.
 # Load all the jar files. Not ideal, but we need to load only the things that
 # is needed by this script.
-if [ "$CLASSPATH" = "" ]; then
-  CLASSPATH=${lib}/*
-else
-  CLASSPATH=$CLASSPATH:${lib}/*
-fi
+CLASSPATH=$(append_sorted_lib_jars "${lib}" "${CLASSPATH}")
 
 # Load the configuration too.
 if [ -d "$CDAP_CONF" ]; then
@@ -95,12 +111,17 @@ set_classpath()
 
   export HBASE_CP
 
+  local comp_jars=""
+  if [ -n "$COMP_HOME" ] && [ -d "$COMP_HOME/lib" ]; then
+    comp_jars=$(append_sorted_lib_jars "$COMP_HOME/lib" "")
+  fi
+
   if [ -n "$HBASE_CP" ]; then
-    CP=$COMP_HOME/lib/*:$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+    CP=${comp_jars:+$comp_jars:}$HBASE_CP:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
   else
     # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
     echo "WARN: could not find Hadoop and HBase libraries"
-    CP=$COMP_HOME/lib/*:$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
+    CP=${comp_jars:+$comp_jars:}$CCONF/:$COMP_HOME/conf/:$EXTRA_CLASSPATH
   fi
 
   # Setup classpaths.
@@ -148,7 +169,7 @@ if [ $# -ne 1 ]; then
 fi
 
 if [ "x$1" == "xstart" ]; then
-  java -cp ${CLASSPATH} -Dscript=$script io.cdap.cdap.data2.transaction.TransactionServiceMain "$@" <$loglog >>$loglog 2>&1 &
+  java -cp "${CLASSPATH}" -Dscript=$script io.cdap.cdap.data2.transaction.TransactionServiceMain "$@" <$loglog >>$loglog 2>&1 &
   echo $! >$pid
   exit 0
 fi

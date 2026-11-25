@@ -74,7 +74,8 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
       }
       return GSON.fromJson(line, Alert.class);
     } catch (IOException e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -84,7 +85,8 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
       try {
         currentReader.close();
       } catch (IOException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

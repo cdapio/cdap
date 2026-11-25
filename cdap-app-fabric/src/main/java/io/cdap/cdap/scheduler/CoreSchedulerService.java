@@ -35,6 +35,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -115,25 +116,26 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     this.internalService = new RetryOnStartFailureService(() -> new AbstractIdleService() {
 
       @Override
-      protected Executor executor(final State state) {
-        return command -> new Thread(command, "core scheduler service " + state).start();
+      protected Executor executor() {
+        return command -> new Thread(command, "core scheduler service " + state()).start();
       }
 
       @Override
       protected void startUp() {
-        timeSchedulerService.startAndWait();
+        timeSchedulerService.startAsync().awaitRunning();
         cleanupJobs();
-        constraintCheckerService.startAndWait();
-        scheduleNotificationSubscriberService.startAndWait();
+        constraintCheckerService.startAsync().awaitRunning();
+        scheduleNotificationSubscriberService.startAsync().awaitRunning();
         startedLatch.countDown();
         LOG.info("Started core scheduler service.");
       }
 
       @Override
       protected void shutDown() {
-        scheduleNotificationSubscriberService.stopAndWait();
-        constraintCheckerService.stopAndWait();
-        timeSchedulerService.stopAndWait();
+        Services.stopAllQuietly(
+            scheduleNotificationSubscriberService,
+            constraintCheckerService,
+            timeSchedulerService);
         LOG.info("Stopped core scheduler service.");
       }
     }, io.cdap.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000,
@@ -203,12 +205,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   protected void startUp() throws Exception {
-    internalService.startAndWait();
+    internalService.startAsync().awaitRunning();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    internalService.stopAndWait();
+    internalService.stopAsync().awaitTerminated();
   }
 
   @Override
@@ -276,7 +278,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     } catch (NotFoundException | ProfileConflictException | AlreadyExistsException e) {
       throw e;
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -320,7 +323,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedule " + scheduleId, e);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -344,7 +348,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedule " + scheduleId, e);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -565,7 +570,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw RuntimeException.
       throw new RuntimeException("Exception occurs when enabling schedules", e);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

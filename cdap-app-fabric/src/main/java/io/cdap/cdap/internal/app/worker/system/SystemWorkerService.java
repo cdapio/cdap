@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -106,7 +105,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting SystemWorkerService");
-    tokenManager.startAndWait();
+    tokenManager.startAsync().awaitRunning();
     provisioningService.initializeProvisionersAndExecutors();
     twillRunnerService.start();
     remoteTwillRunnerService.start();
@@ -121,7 +120,7 @@ public class SystemWorkerService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Shutting down SystemWorkerService");
-    tokenManager.stop();
+    tokenManager.stopAsync();
     twillRunnerService.stop();
     remoteTwillRunnerService.stop();
     httpService.stop(1, 2, TimeUnit.SECONDS);

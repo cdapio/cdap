@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.service;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -91,7 +90,13 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
     TaskContext.get().addTaskCompletionListener(new TaskCompletionListener() {
       @Override
       public void onTaskCompletion(TaskContext context) {
-        Closeables.closeQuietly(pluginInstantiator);
+        if (pluginInstantiator != null) {
+          try {
+            pluginInstantiator.close();
+          } catch (Exception ignored) {
+            // Ignore close exception
+          }
+        }
       }
     });
   }
@@ -201,7 +206,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
       throw new IllegalArgumentException("Plugin class not found", e);
     } catch (IOException e) {
       // This is fatal, since jar cannot be expanded.
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -229,7 +235,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
       throw new IllegalArgumentException("Plugin class not found", e);
     } catch (IOException e) {
       // This is fatal, since jar cannot be expanded.
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -261,7 +268,13 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
 
   @Override
   public void close() {
-    Closeables.closeQuietly(pluginInstantiator);
+    if (pluginInstantiator != null) {
+      try {
+        pluginInstantiator.close();
+      } catch (Exception ignored) {
+        // Ignore close exception
+      }
+    }
   }
 
   @Override

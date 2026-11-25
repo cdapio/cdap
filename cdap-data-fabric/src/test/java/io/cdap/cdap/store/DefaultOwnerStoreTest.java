@@ -86,7 +86,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
       }
     );
 
-    injector.getInstance(TransactionManager.class).startAndWait();
+    injector.getInstance(TransactionManager.class).startAsync().awaitRunning();
 
     txRunner = injector.getInstance(TransactionRunner.class);
     StoreDefinition.OwnerStore.create(injector.getInstance(StructuredTableAdmin.class));

@@ -104,7 +104,6 @@ import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.LogEntry;
-import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -335,7 +334,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     } catch (Exception e) {
       deleteDirectory(tempDir);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

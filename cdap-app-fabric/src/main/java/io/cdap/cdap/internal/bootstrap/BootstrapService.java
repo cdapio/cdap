@@ -24,6 +24,7 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import io.cdap.cdap.internal.capability.CapabilityManagementService;
@@ -108,13 +109,13 @@ public class BootstrapService extends AbstractIdleService {
       // LOAD_SYSTEM_ARTIFACT step.
       // TODO(CDAP-16243): Find better way to add dependency between BootStrapService and SystemAppManagementService.
       try {
-        this.systemAppManagementService.start();
+        this.systemAppManagementService.startAsync();
       } catch (Exception e) {
         LOG.info("SystemAppManagementService could not start due to exception.", e);
       }
       // TODO - Move this back to AppFabricServer once CDAP-17578 is fixed
-      systemProgramManagementService.start();
-      capabilityManagementService.start();
+      systemProgramManagementService.startAsync();
+      capabilityManagementService.startAsync();
     });
     LOG.info("Started {}", getClass().getSimpleName());
   }
@@ -125,9 +126,10 @@ public class BootstrapService extends AbstractIdleService {
     // Shutdown the executor, which will issue an interrupt to the running thread.
     // There is only a single daemon thread, so no need to wait for termination
     executorService.shutdownNow();
-    this.systemAppManagementService.stopAndWait();
-    capabilityManagementService.stopAndWait();
-    systemProgramManagementService.stopAndWait();
+    Services.stopAllQuietly(
+        this.systemAppManagementService,
+        capabilityManagementService,
+        systemProgramManagementService);
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 

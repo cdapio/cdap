@@ -151,7 +151,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
         long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
         if (retryMillis < 0) {
           LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
         LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
             e.getMessage(), retryMillis);
@@ -164,7 +165,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
           done = true;
         }
       } catch (AccessException | IOException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

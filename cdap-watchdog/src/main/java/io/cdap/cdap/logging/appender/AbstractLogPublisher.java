@@ -115,12 +115,12 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
 
   @Override
   protected void logTaskFailure(Throwable t) {
-    OUTAGE_LOG.error("Publish log message failed for {}. Will be retried.", getServiceName(), t);
+    OUTAGE_LOG.error("Publish log message failed for {}. Will be retried.", serviceName(), t);
   }
 
   @Override
   protected long handleRetriesExhausted(Exception e) {
-    logError("Failed to publish log message by " + getServiceName(), e);
+    logError("Failed to publish log message by " + serviceName(), e);
     return 0;
   }
 
@@ -146,7 +146,7 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
       try {
         publishMessages(buffer, false);
       } catch (Exception e) {
-        logError("Failed to publish log message by " + getServiceName(), e);
+        logError("Failed to publish log message by " + serviceName(), e);
       }
       // Ignore those that cannot be publish since we are already in shutdown sequence
       buffer.clear();

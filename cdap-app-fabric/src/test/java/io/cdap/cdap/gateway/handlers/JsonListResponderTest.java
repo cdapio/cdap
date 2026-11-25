@@ -105,4 +105,45 @@ public class JsonListResponderTest {
     Assert.assertEquals(array.get(0).getAsString(), "application");
   }
 
+  @Test
+  public void testSendPropagatesRuntimeExceptionUnwrapped() {
+    HttpResponder responder = Mockito.mock(HttpResponder.class);
+    IllegalStateException expected = new IllegalStateException("chunk start failed");
+    Mockito.when(responder.sendChunkStart(HttpResponseStatus.OK)).thenThrow(expected);
+
+    try {
+      JsonWholeListResponder.respond(new Gson(), responder,
+          jsonListResponder -> jsonListResponder.send("item"));
+      Assert.fail("Expected IllegalStateException");
+    } catch (RuntimeException actual) {
+      Assert.assertSame(expected, actual);
+    } catch (IOException e) {
+      Assert.fail("Unexpected IOException: " + e);
+    }
+  }
+
+  @Test
+  public void testSendWrapsCheckedIoExceptionInRuntimeException() {
+    HttpResponder responder = Mockito.mock(HttpResponder.class);
+    ChunkResponder chunkResponder = Mockito.mock(ChunkResponder.class);
+    Mockito.when(responder.sendChunkStart(HttpResponseStatus.OK)).thenReturn(chunkResponder);
+
+    IOException ioException = new IOException("stream broken");
+    JsonListResponder failingResponder = new JsonListResponder(new Gson(), responder) {
+      @Override
+      protected void startResponse() throws IOException {
+        throw ioException;
+      }
+
+      @Override
+      protected void finishResponse() {
+        // no-op
+      }
+    };
+
+    RuntimeException thrown = Assert.assertThrows(
+        RuntimeException.class, () -> failingResponder.send("item"));
+    Assert.assertSame(ioException, thrown.getCause());
+  }
+
 }

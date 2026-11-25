@@ -31,7 +31,6 @@
 
   <properties>
     <gcpoauth2.version>1.5.3</gcpoauth2.version>
-    <guava.version>31.1-jre</guava.version>
   </properties>
 
   <dependencies>

@@ -78,7 +78,8 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
         Class<?> cls = Thread.currentThread().getContextClassLoader().loadClass(getClass().getName());
         Assert.assertSame(cls, getClass());
       } catch (ClassNotFoundException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -99,7 +100,8 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
         try (OutputStream out = fs.getLocation("test").getOutputStream()) {
           out.write(42);
         } catch (IOException e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
 
         URL serviceURL = getContext().getServiceURL(CUSTOM_SERVICE);
@@ -112,7 +114,8 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
               con.disconnect();
             }
           } catch (IOException e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
           }
         }
       }

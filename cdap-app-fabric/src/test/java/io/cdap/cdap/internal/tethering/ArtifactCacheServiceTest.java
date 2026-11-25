@@ -80,7 +80,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     artifactCacheService = new ArtifactCacheService(
       cConf, artifactCache, tetheringStore, null, discoveryService,
       new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {}));
-    artifactCacheService.startAndWait();
+    artifactCacheService.startAsync().awaitRunning();
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -95,7 +95,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
 
   @After
   public void tearDown() throws Exception {
-    artifactCacheService.stopAndWait();
+    artifactCacheService.stopAsync().awaitTerminated();
     artifactRepository.deleteArtifact(artifactId);
     appJar.delete();
     deletePeer();
