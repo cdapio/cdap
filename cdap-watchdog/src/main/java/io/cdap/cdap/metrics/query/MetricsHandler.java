@@ -20,6 +20,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.MetricTagValue;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -28,8 +34,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,10 +57,13 @@ public class MetricsHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
 
   private final MetricsQueryHelper metricsQueryHelper;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   @Inject
-  public MetricsHandler(MetricsQueryHelper metricsQueryHelper) {
+  public MetricsHandler(MetricsQueryHelper metricsQueryHelper,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.metricsQueryHelper = metricsQueryHelper;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @POST
@@ -63,6 +76,7 @@ public class MetricsHandler extends AbstractHttpHandler {
       return;
     }
     try {
+      enforceOnTags(tags);
       switch (target) {
         case "tag":
           responder.sendJson(HttpResponseStatus.OK,
@@ -77,6 +91,8 @@ public class MetricsHandler extends AbstractHttpHandler {
               "Unknown target param value: " + target);
           break;
       }
+    } catch (UnauthorizedException e) {
+      throw e;
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -102,20 +118,36 @@ public class MetricsHandler extends AbstractHttpHandler {
       @QueryParam("tag") List<String> tags) {
     try {
       Map<String, List<String>> queryParams = new QueryStringDecoder(request.uri()).parameters();
-      if (queryParams.isEmpty()) {
-        if (HttpUtil.getContentLength(request) > 0) {
-          Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
-              GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                  new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
-                  }.getType());
-          responder.sendJson(HttpResponseStatus.OK,
-              GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
+      if (!queryParams.isEmpty()) {
+        enforceOnTags(tags);
+        responder.sendJson(HttpResponseStatus.OK,
+            GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
+        return;
+      }
+      if (HttpUtil.getContentLength(request) <= 0) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+        return;
+      }
+      Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
+          GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+              new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
+              }.getType());
+      if (queries == null) {
+        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+        return;
+      }
+      // Each query is executed independently, so each one must be authorized on its own.
+      for (MetricsQueryHelper.QueryRequestFormat query : queries.values()) {
+        if (query == null) {
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch query cannot be null");
           return;
         }
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
+        enforceOnNamespaces(getNamespaces(query.getTags()));
       }
       responder.sendJson(HttpResponseStatus.OK,
-          GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
+          GSON.toJson(metricsQueryHelper.executeBatchQueries(queries)));
+    } catch (UnauthorizedException e) {
+      throw e;
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -126,9 +158,57 @@ public class MetricsHandler extends AbstractHttpHandler {
     }
   }
 
+  private void enforceOnTags(@Nullable List<String> tags) {
+    List<String> namespaces = new ArrayList<>();
+    if (tags != null) {
+      for (MetricTagValue tag : MetricsQueryHelper.parseTagValues(tags)) {
+        if (Constants.Metrics.Tag.NAMESPACE.equals(
+            MetricsQueryHelper.humanToTagName(tag.getName()))) {
+          namespaces.add(tag.getValue());
+        }
+      }
+    }
+    enforceOnNamespaces(namespaces);
+  }
+
+  private List<String> getNamespaces(@Nullable Map<String, String> tags) {
+    List<String> namespaces = new ArrayList<>();
+    if (tags == null) {
+      return namespaces;
+    }
+    for (Map.Entry<String, String> tag : tags.entrySet()) {
+      if (Constants.Metrics.Tag.NAMESPACE.equals(
+          MetricsQueryHelper.humanToTagName(tag.getKey()))) {
+        namespaces.add(tag.getValue());
+      }
+    }
+    return namespaces;
+  }
+
+  /**
+   * Enforces {@link StandardPermission#GET} on each queried user namespace. Queries with no
+   * namespace, a wildcard namespace, or the {@code system} namespace require {@link
+   * StandardPermission#UPDATE} on {@link InstanceId#SELF}.
+   */
+  private void enforceOnNamespaces(Collection<String> namespaces) {
+    if (namespaces.isEmpty() || namespaces.contains(null)
+        || namespaces.contains(MetricsQueryHelper.ANY_TAG_VALUE)) {
+      contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
+      return;
+    }
+    for (String namespace : new HashSet<>(namespaces)) {
+      if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+        contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
+      } else {
+        contextAccessEnforcer.enforce(new NamespaceId(namespace), StandardPermission.GET);
+      }
+    }
+  }
+
   @GET
   @Path("/processor/status")
   public void processorStatus(HttpRequest request, HttpResponder responder) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(metricsQueryHelper.getMetricStore().getMetricsProcessorStats()));
   }

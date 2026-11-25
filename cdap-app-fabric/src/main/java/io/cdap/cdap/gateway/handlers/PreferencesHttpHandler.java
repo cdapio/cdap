@@ -23,6 +23,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.config.PreferencesService;
@@ -34,6 +35,7 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.store.NamespaceStore;
@@ -62,26 +64,28 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesService preferencesService;
   private final Store store;
   private final NamespaceStore nsStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   PreferencesHttpHandler(AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
       PreferencesService preferencesService,
-      Store store, NamespaceStore nsStore) {
+      Store store, NamespaceStore nsStore,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.preferencesService = preferencesService;
     this.store = store;
     this.nsStore = nsStore;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   //Instance Level Properties
   @Path("/preferences")
   @GET
   public void getInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
-    InstanceId instanceId = new InstanceId("");
-    accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(),
-        StandardPermission.GET);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+        authenticationContext.getPrincipal());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties()));
   }
 

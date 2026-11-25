@@ -17,6 +17,9 @@
 package io.cdap.cdap.gateway.handlers;
 
 import io.cdap.cdap.operations.OperationalStatsUtils;
+import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -32,7 +35,9 @@ import org.junit.Test;
  */
 public class OperationalStatsHttpHanderTest {
 
-  private final  OperationalStatsHttpHandler handler = new OperationalStatsHttpHandler();
+  private final OperationalStatsHttpHandler handler = new OperationalStatsHttpHandler(
+      new DefaultContextAccessEnforcer(new AuthenticationTestContext(),
+          new NoOpAccessController()));
 
   @BeforeClass
   public static void setup() throws Exception {

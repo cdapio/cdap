@@ -69,6 +69,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -252,6 +253,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throws Exception {
 
     validateNamespace(namespaceId);
+    enforceSystemNamespaceReadAccess(namespaceId);
 
     Set<String> names = new HashSet<>();
     if (!Strings.isNullOrEmpty(artifactName)) {
@@ -352,6 +354,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
+    enforceSystemNamespaceReadAccess(namespaceId);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(applicationLifecycleService.getLatestAppDetail(
             new ApplicationReference(namespaceId, appName))));
@@ -366,6 +369,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
+    enforceSystemNamespaceReadAccess(namespaceId);
     // enforce GET privileges on the app
     accessEnforcer.enforce(new ApplicationId(namespaceId, appName), authenticationContext.getPrincipal(),
                            StandardPermission.GET);
@@ -389,6 +393,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throws Exception {
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
+    enforceSystemNamespaceReadAccess(namespaceId);
     ApplicationDetail appDetail = ApplicationId.DEFAULT_VERSION.equals(versionId)
         ? applicationLifecycleService.getLatestAppDetail(applicationId.getAppReference())
         : applicationLifecycleService.getAppDetail(applicationId);
@@ -405,6 +410,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appName) throws Exception {
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
+    enforceSystemNamespaceReadAccess(namespaceId);
     responder.sendJson(HttpResponseStatus.OK,
         GSON.toJson(applicationLifecycleService.getPlugins(
             new ApplicationReference(namespaceId, appName))));
@@ -508,6 +514,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getAppsCount(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = validateNamespace(namespaceId);
+    enforceSystemNamespaceReadAccess(namespaceId);
     long count = applicationLifecycleService.getApplicationsCount(namespace);
     responder.sendString(HttpResponseStatus.OK, String.valueOf(count));
   }
@@ -667,7 +674,9 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
 
-    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace),
+    NamespaceId namespaceId = validateNamespace(namespace);
+    enforceSystemNamespaceReadAccess(namespace);
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(namespaceId,
         request);
     Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.getAppDetails(
         appIds);
@@ -894,6 +903,13 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throw new BadRequestException(String.format(
           "Invalid value '%s' for query parameter 'deployStrategy'. Allowed values are: %s",
           strategy, AppDeployStrategy.getAllowedValues()));
+    }
+  }
+
+  private void enforceSystemNamespaceReadAccess(String namespace) throws Exception {
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+          authenticationContext.getPrincipal());
     }
   }
 }

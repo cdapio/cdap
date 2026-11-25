@@ -27,10 +27,13 @@ import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.spi.MessagingService;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -66,19 +69,21 @@ public class TetheringHandler extends AbstractHttpHandler {
   // Prefix of program state TMS topic used on the tethering client.
   private final String programStateTopicPrefix;
   private final ProfileService profileService;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
   // Connection timeout in seconds.
   private int connectionTimeout;
 
   @Inject
   TetheringHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
-      ProfileService profileService) {
+      ProfileService profileService, ContextAccessEnforcer contextAccessEnforcer) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
     this.clientTopicPrefix = cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX);
     this.programStateTopicPrefix = cConf.get(Constants.Tethering.PROGRAM_STATE_TOPIC_PREFIX);
     this.profileService = profileService;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @Override
@@ -94,6 +99,7 @@ public class TetheringHandler extends AbstractHttpHandler {
   @GET
   @Path("/tethering/connections")
   public void getTethers(HttpRequest request, HttpResponder responder) throws IOException {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     List<PeerState> peerStateList = new ArrayList<>();
     for (PeerInfo peer : store.getPeers()) {
       peerStateList.add(createPeerState(peer));
@@ -109,6 +115,7 @@ public class TetheringHandler extends AbstractHttpHandler {
   public void getTether(HttpRequest request, HttpResponder responder,
       @PathParam("peer") String peer)
       throws PeerNotFoundException, IOException {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(createPeerState(store.getPeer(peer))));
   }
 
@@ -120,6 +127,7 @@ public class TetheringHandler extends AbstractHttpHandler {
   public void deleteTether(HttpRequest request, HttpResponder responder,
       @PathParam("peer") String peer)
       throws NotFoundException, IOException, BadRequestException {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     boolean tetheringServerEnabled = cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED);
     if (tetheringServerEnabled) {
       // Fail deletion if there are any profiles using this tethering

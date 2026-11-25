@@ -444,7 +444,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void createAppDetailsArchive(ZipOutputStream zipOut) {
     accessEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
-        authenticationContext.getPrincipal(), StandardPermission.GET);
+        authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     Set<NamespaceId> namespaces = new HashSet<>();
 

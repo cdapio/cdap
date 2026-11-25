@@ -22,11 +22,16 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.config.Config;
 import io.cdap.cdap.config.ConfigNotFoundException;
 import io.cdap.cdap.config.ConsoleSettingsStore;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -51,15 +56,22 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   private static final String ID = "id";
 
   private final ConsoleSettingsStore store;
+  private final ContextAccessEnforcer contextAccessEnforcer;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  public ConsoleSettingsHttpHandler(ConsoleSettingsStore store) {
+  public ConsoleSettingsHttpHandler(ConsoleSettingsStore store,
+      ContextAccessEnforcer contextAccessEnforcer,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.store = store;
+    this.contextAccessEnforcer = contextAccessEnforcer;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @Path("/")
   @GET
   public void get(HttpRequest request, HttpResponder responder) throws Exception {
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, contextAccessEnforcer);
     // The current behavior that only the creator should see the corresponding plugin template when RBAC is enabled is
     // correct. But the customers has been used to the old behavior that plugin template is exposed to all users in the
     // same namespace when RBAC is enabled. Revert the behavior to meet customers' requests.
@@ -84,6 +96,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @Path("/")
   @DELETE
   public void delete(HttpRequest request, HttpResponder responder) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     String userId = "";
     try {
       store.delete(userId);
@@ -97,6 +110,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void set(FullHttpRequest request, HttpResponder responder) throws Exception {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     String data = request.content().toString(StandardCharsets.UTF_8);
     if (!isValidJSON(data)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");

@@ -40,6 +40,7 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.proto.security.InstancePermission;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HandlerContext;
@@ -109,6 +110,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       @PathParam("peer") String peer)
       throws IOException, NotImplementedException, PeerNotFoundException, ForbiddenException, BadRequestException {
     checkTetheringServerEnabled();
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
     store.updatePeerTimestamp(peer);
     TetheringStatus tetheringStatus = store.getPeer(peer).getTetheringStatus();
     String messageId = processRequestContent(request, peer);
@@ -158,6 +160,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       @PathParam("peer") String peer)
       throws IOException, NotImplementedException, BadRequestException, TopicNotFoundException {
     checkTetheringServerEnabled();
+    contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
     PeerInfo peerInfo;
     try {
       peerInfo = store.getPeer(peer);
@@ -241,6 +244,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       @PathParam("peer") String peer)
       throws NotImplementedException, BadRequestException, IOException {
     checkTetheringServerEnabled();
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
 
     String content = request.content().toString(StandardCharsets.UTF_8);
     TetheringActionRequest tetheringActionRequest = GSON.fromJson(content,

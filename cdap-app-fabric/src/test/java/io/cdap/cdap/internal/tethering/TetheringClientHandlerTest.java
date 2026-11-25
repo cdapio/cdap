@@ -81,6 +81,7 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -231,7 +232,8 @@ public class TetheringClientHandlerTest {
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 5);
     cConf.set(Constants.INSTANCE_NAME, CLIENT_INSTANCE);
 
-    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER);
+    List<Permission> tetheringPermissions =
+        Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
                                    Collections.unmodifiableSet(new HashSet<>(tetheringPermissions)));
@@ -245,7 +247,8 @@ public class TetheringClientHandlerTest {
                                                       auditLogContexts -> {}, new NoOpAeadCipher())
       .setHttpHandlers(new TetheringClientHandler(cConf, tetheringStore, contextAccessEnforcer, namespaceAdmin,
                                                   injector.getInstance(RemoteAuthenticator.class), messagingService),
-                       new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
+                       new TetheringHandler(cConf, tetheringStore, messagingService, profileService,
+                                            contextAccessEnforcer))
       .build();
     clientService.start();
     clientConfig = ClientConfig.builder()

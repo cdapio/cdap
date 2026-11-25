@@ -149,8 +149,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @Path("/support/bundles")
   public void listSupportBundles(HttpRequest request, HttpResponder responder) {
     // Ensure the user is authorized to list support bundle statuses
-    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF,
-        StandardPermission.LIST);
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
 
     List<SupportBundleOperationStatus> bundleOperationStatusList = bundleGenerator.getAllBundleStatus();
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatusList));
@@ -167,8 +166,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   public void getSupportBundleStatus(HttpRequest request, HttpResponder responder,
       @PathParam("uuid") String uuid)
       throws IOException, NotFoundException {
-    SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
-    contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     SupportBundleOperationStatus bundleOperationStatus = bundleGenerator.getBundle(uuid);
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatus));
   }
@@ -201,8 +199,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   public void downloadSupportBundle(FullHttpRequest request, HttpResponder responder,
       @PathParam("uuid") String uuid)
       throws BadRequestException, IOException, NotFoundException, NoSuchAlgorithmException {
-    SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
-    contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
     String requestContent = request.content().toString(StandardCharsets.UTF_8);
     File tempDir = new File(
         cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();

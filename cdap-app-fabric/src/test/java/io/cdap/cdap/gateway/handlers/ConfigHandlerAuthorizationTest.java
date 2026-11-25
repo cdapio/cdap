@@ -30,9 +30,7 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -40,6 +38,8 @@ import org.junit.Test;
 
 public class ConfigHandlerAuthorizationTest {
   private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
+  private static final Principal ACCESSOR_PRINCIPAL = new Principal("accessor",
+                                                                    Principal.PrincipalType.USER);
   private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
                                                                         Principal.PrincipalType.USER);
 
@@ -51,11 +51,11 @@ public class ConfigHandlerAuthorizationTest {
 
   @BeforeClass
   public static void setup() {
-    StandardPermission[] requiredPermissions = new StandardPermission[] {StandardPermission.GET};
-
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
-                                   Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
+                                   Collections.singleton(StandardPermission.UPDATE));
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), ACCESSOR_PRINCIPAL,
+                                   Collections.singleton(StandardPermission.GET));
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
     DefaultContextAccessEnforcer contextAccessEnforcer = new DefaultContextAccessEnforcer(authenticationContext,
                                                                                           inMemoryAccessController);
@@ -75,6 +75,17 @@ public class ConfigHandlerAuthorizationTest {
   @Test
   public void testConfigCDAPUnauthorized() throws IOException {
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
+    try {
+      configHandler.configCDAP(request, responder, "json");
+    } catch (UnauthorizedException e) {
+      exceptionThrown = e;
+    }
+    Assert.assertNotNull(exceptionThrown);
+  }
+
+  @Test
+  public void testConfigCDAPAccessorDenied() throws IOException {
+    AuthenticationTestContext.actAsPrincipal(ACCESSOR_PRINCIPAL);
     try {
       configHandler.configCDAP(request, responder, "json");
     } catch (UnauthorizedException e) {
