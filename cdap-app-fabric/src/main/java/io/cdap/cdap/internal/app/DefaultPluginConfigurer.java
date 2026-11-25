@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.macro.InvalidMacroException;
@@ -90,7 +89,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
       return null;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -108,7 +107,7 @@ public class DefaultPluginConfigurer implements PluginConfigurer {
       return null;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
   }
 

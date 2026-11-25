@@ -66,7 +66,7 @@ public class TestFileLogging {
 
   @AfterClass
   public static void cleanUp() throws Exception {
-    txManager.stopAndWait();
+    txManager.stopAsync().awaitTerminated();
   }
 
   @Test

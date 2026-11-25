@@ -67,7 +67,7 @@ public class LogBufferProcessorPipelineTest {
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
     // start the pipeline
-    pipeline.startAndWait();
+    pipeline.startAsync().awaitRunning();
 
     // start thread to write to incomingEventQueue
     List<ILoggingEvent> events = getLoggingEvents();
@@ -95,8 +95,49 @@ public class LogBufferProcessorPipelineTest {
     // wait for pipeline to append all the logs to appender. The DEBUG message should get filtered out.
     Tasks.waitFor(200, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     executorService.shutdown();
-    pipeline.stopAndWait();
+    pipeline.stopAsync().awaitTerminated();
     loggerContext.stop();
+  }
+
+  @Test
+  public void testServiceNameThreadNameAndLifecycle() throws Exception {
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext(
+        "WARN", ImmutableMap.of("test.logger", "INFO"), MockAppender.class.getName());
+    final java.util.concurrent.atomic.AtomicReference<String> startupThreadName =
+        new java.util.concurrent.atomic.AtomicReference<>();
+    CheckpointManager<LogBufferFileOffset> checkpointManager =
+        new CheckpointManager<LogBufferFileOffset>() {
+          @Override
+          public void saveCheckpoints(
+              Map<Integer, ? extends Checkpoint<LogBufferFileOffset>> checkpoints) {
+          }
+
+          @Override
+          public Map<Integer, Checkpoint<LogBufferFileOffset>> getCheckpoint(
+              Set<Integer> partitions) {
+            return Collections.emptyMap();
+          }
+
+          @Override
+          public Checkpoint<LogBufferFileOffset> getCheckpoint(int partition) {
+            startupThreadName.set(Thread.currentThread().getName());
+            return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
+          }
+        };
+
+    LogBufferPipelineConfig config = new LogBufferPipelineConfig(1024L, 100L, 500L, 4);
+    LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
+        new LogProcessorPipelineContext(
+            CConfiguration.create(), "auditBuffer", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+        config, checkpointManager, 0);
+
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer [NEW]", pipeline.toString());
+    pipeline.startAsync().awaitRunning();
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer [RUNNING]", pipeline.toString());
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer", startupThreadName.get());
+
+    pipeline.stopAsync().awaitTerminated();
+    org.junit.Assert.assertEquals("LogPipeline-auditBuffer [TERMINATED]", pipeline.toString());
   }
 
   private ImmutableList<ILoggingEvent> getLoggingEvents() {

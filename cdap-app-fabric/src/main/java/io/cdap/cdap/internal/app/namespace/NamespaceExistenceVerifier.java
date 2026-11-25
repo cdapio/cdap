@@ -44,7 +44,8 @@ public class NamespaceExistenceVerifier implements EntityExistenceVerifier<Names
       try {
         exists = namespaceQueryAdmin.exists(namespaceId);
       } catch (Exception e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
       if (!exists) {
         throw new NamespaceNotFoundException(namespaceId);

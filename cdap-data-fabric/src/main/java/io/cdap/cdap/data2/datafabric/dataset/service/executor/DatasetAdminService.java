@@ -138,7 +138,7 @@ public class DatasetAdminService {
                 typeMeta.getName());
           }
         } finally {
-          Closeables.closeQuietly(admin);
+          Closeables.close(admin, true);
         }
         return spec1;
       });
@@ -223,7 +223,13 @@ public class DatasetAdminService {
         try {
           admin.drop();
         } finally {
-          Closeables.closeQuietly(admin);
+          if (admin != null) {
+            try {
+              admin.close();
+            } catch (Exception ignored) {
+              // Ignore close exception
+            }
+          }
         }
         return null;
       });
@@ -267,7 +273,13 @@ public class DatasetAdminService {
       try {
         return operation.perform(admin);
       } finally {
-        Closeables.closeQuietly(admin);
+        if (admin != null) {
+          try {
+            admin.close();
+          } catch (Exception ignored) {
+            // Ignore close exception
+          }
+        }
       }
     }
   }

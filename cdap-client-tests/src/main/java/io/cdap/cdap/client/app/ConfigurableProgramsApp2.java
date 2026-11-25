@@ -130,7 +130,8 @@ public class ConfigurableProgramsApp2 extends
           keyValueTable.write("Dwayne", "Johnson");
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }

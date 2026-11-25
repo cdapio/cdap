@@ -17,10 +17,8 @@
 package io.cdap.cdap.logging.logbuffer;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -55,7 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -102,7 +99,25 @@ public class LogBufferService extends AbstractIdleService {
     // load log pipelines
     List<LogBufferProcessorPipeline> bufferPipelines = loadLogPipelines();
     // start all the log pipelines
-    validateAllFutures(Iterables.transform(pipelines, Service::start));
+    List<Throwable> startFailures = new ArrayList<>();
+    for (Service pipeline : pipelines) {
+      pipeline.startAsync();
+    }
+    for (Service pipeline : pipelines) {
+      try {
+        pipeline.awaitRunning();
+      } catch (IllegalStateException e) {
+        startFailures.add(pipeline.state() == State.FAILED ? pipeline.failureCause() : e);
+      }
+    }
+    if (!startFailures.isEmpty()) {
+      try {
+        stopAllServices();
+      } catch (Exception stopEx) {
+        startFailures.get(0).addSuppressed(stopEx);
+      }
+      throwIfNeeded(startFailures);
+    }
 
     // recovery service and http handler will send log events to log pipelines. In order to avoid deleting file while
     // reading them in recovery service, we will pass in an atomic boolean will be set to true by recovery service
@@ -111,7 +126,14 @@ public class LogBufferService extends AbstractIdleService {
     // start log recovery service to recover all the pending logs.
     recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers,
         startCleanup);
-    recoveryService.startAndWait();
+    try {
+      recoveryService.startAsync().awaitRunning();
+    } catch (IllegalStateException e) {
+      if (recoveryService.state() != State.STOPPING
+          && recoveryService.state() != State.TERMINATED) {
+        throw e;
+      }
+    }
 
     // create concurrent writer
     ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf,
@@ -153,25 +175,21 @@ public class LogBufferService extends AbstractIdleService {
   }
 
   /**
-   * Blocks and validates all the given futures completed successfully.
+   * Throws the first failure with any subsequent failures attached as suppressed exceptions.
    */
-  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures)
-      throws Exception {
-    // The get call shouldn't throw exception. It just block until all futures completed.
-    Futures.successfulAsList(futures).get();
-
-    // Iterates all futures to make sure all of them completed successfully
-    Throwable exception = null;
-    for (ListenableFuture<?> future : futures) {
-      try {
-        future.get();
-      } catch (ExecutionException e) {
-        if (exception == null) {
-          exception = e.getCause();
-        } else {
-          exception.addSuppressed(e.getCause());
+  private void throwIfNeeded(List<Throwable> failures) throws Exception {
+    if (!failures.isEmpty()) {
+      Throwable first = failures.get(0);
+      for (int i = 1; i < failures.size(); i++) {
+        if (first != failures.get(i)) {
+          first.addSuppressed(failures.get(i));
         }
       }
+      Throwables.throwIfUnchecked(first);
+      if (first instanceof Exception) {
+        throw (Exception) first;
+      }
+      throw new RuntimeException(first);
     }
   }
 
@@ -227,13 +245,32 @@ public class LogBufferService extends AbstractIdleService {
   }
 
   private void stopAllServices() throws Exception {
+    List<Throwable> failures = new ArrayList<>();
     if (httpService != null) {
-      httpService.stop();
+      try {
+        httpService.stop();
+      } catch (Throwable t) {
+        failures.add(t);
+      }
     }
     if (recoveryService != null) {
-      recoveryService.stopAndWait();
+      try {
+        recoveryService.stopAsync().awaitTerminated();
+      } catch (Throwable t) {
+        failures.add(recoveryService.state() == State.FAILED ? recoveryService.failureCause() : t);
+      }
     }
     // Stops all pipeline
-    validateAllFutures(Iterables.transform(pipelines, Service::stop));
+    for (Service pipeline : pipelines) {
+      pipeline.stopAsync();
+    }
+    for (Service pipeline : pipelines) {
+      try {
+        pipeline.awaitTerminated();
+      } catch (IllegalStateException e) {
+        failures.add(pipeline.state() == State.FAILED ? pipeline.failureCause() : e);
+      }
+    }
+    throwIfNeeded(failures);
   }
 }

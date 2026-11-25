@@ -16,7 +16,6 @@
 
 package io.cdap.cdap;
 
-import com.google.common.base.Throwables;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.data.DatasetContext;
@@ -95,7 +94,7 @@ public class AppWithWorker extends AbstractApplication {
           }
         });
       } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
   }

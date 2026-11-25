@@ -47,7 +47,8 @@ public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> i
     try {
       programClient.setWorkerInstances(workerId, instances);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -56,7 +57,8 @@ public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> i
     try {
       return programClient.getWorkerInstances(workerId);
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 }

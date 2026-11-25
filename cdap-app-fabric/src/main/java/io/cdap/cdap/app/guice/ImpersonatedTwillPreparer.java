@@ -66,7 +66,8 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
             impersonator, programId);
       });
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

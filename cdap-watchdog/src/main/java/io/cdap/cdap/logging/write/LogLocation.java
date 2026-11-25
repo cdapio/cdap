@@ -418,7 +418,8 @@ public class LogLocation {
         throw e;
       } catch (Exception e) {
         // should not happen
-        throw Throwables.propagate(e);
+        Throwables.throwIfUnchecked(e);
+        throw new RuntimeException(e);
       }
 
       this.len = location.length();

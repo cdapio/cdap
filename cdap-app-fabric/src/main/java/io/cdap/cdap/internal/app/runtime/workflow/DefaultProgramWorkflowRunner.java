@@ -102,7 +102,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       return getProgramRunnable(name, programRunner, program);
     } catch (Exception e) {
       closeProgramRunner(programRunner);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -142,7 +143,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         try {
           runAndWait(programRunner, program, options);
         } catch (Exception e) {
-          throw Throwables.propagate(e);
+          Throwables.throwIfUnchecked(e);
+          throw new RuntimeException(e);
         }
       }
     };
@@ -166,7 +168,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
       programStateWriter.error(program.getId().run(runId), t);
-      Closeables.closeQuietly(closeable);
+      closeQuietly(closeable);
       throw t;
     }
     blockForCompletion(closeable, controller);
@@ -210,7 +212,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void completed() {
-        Closeables.closeQuietly(closeable);
+        closeQuietly(closeable);
         Set<Operation> fieldLineageOperations = new HashSet<>();
         if (controller instanceof WorkflowDataProvider) {
           fieldLineageOperations.addAll(
@@ -224,7 +226,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void killed() {
-        Closeables.closeQuietly(closeable);
+        closeQuietly(closeable);
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
@@ -232,7 +234,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
       @Override
       public void error(Throwable cause) {
-        Closeables.closeQuietly(closeable);
+        closeQuietly(closeable);
         nodeStates.put(nodeId,
             new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
@@ -247,7 +249,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       if (cause instanceof Exception) {
         throw (Exception) cause;
       }
-      throw Throwables.propagate(cause);
+      Throwables.throwIfUnchecked(cause);
+      throw new RuntimeException(cause);
     } catch (InterruptedException e) {
       try {
         Futures.getUnchecked(controller.stop());
@@ -268,12 +271,9 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    * Program}.
    */
   private Closeable createCloseable(final ProgramRunner programRunner, final Program program) {
-    return new Closeable() {
-      @Override
-      public void close() throws IOException {
-        Closeables.closeQuietly(program);
-        closeProgramRunner(programRunner);
-      }
+    return () -> {
+      closeQuietly(program);
+      closeProgramRunner(programRunner);
     };
   }
 
@@ -282,7 +282,15 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    */
   private void closeProgramRunner(ProgramRunner programRunner) {
     if (programRunner instanceof Closeable) {
-      Closeables.closeQuietly((Closeable) programRunner);
+      closeQuietly((Closeable) programRunner);
+    }
+  }
+
+  private static void closeQuietly(@Nullable Closeable closeable) {
+    try {
+      Closeables.close(closeable, true);
+    } catch (IOException ignored) {
+      // Cannot happen when swallowIOException is true
     }
   }
 }

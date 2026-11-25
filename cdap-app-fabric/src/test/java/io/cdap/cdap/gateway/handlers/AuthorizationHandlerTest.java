@@ -18,6 +18,7 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.client.AuthorizationClient;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -28,11 +29,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.internal.MockResponder;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.GrantedPermission;
 import io.cdap.cdap.proto.security.Permission;
@@ -44,13 +47,21 @@ import io.cdap.cdap.security.authorization.AuthorizationContextFactory;
 import io.cdap.cdap.security.authorization.InMemoryPermissionManager;
 import io.cdap.cdap.security.authorization.InMemoryRoleController;
 import io.cdap.cdap.security.authorization.NoOpAuthorizationContextFactory;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AlreadyExistsException;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Properties;
@@ -416,6 +427,64 @@ public class AuthorizationHandlerTest {
     grantedPermissions = client.listGrants(admin);
     Assert.assertFalse(grantedPermissions.contains(
       new GrantedPermission(Authorizable.fromString(wildcardEntityStar), StandardPermission.UPDATE)));
+  }
+
+  @Test
+  public void testGrantWithNullPermissionsLegacyActionsAndUserIp() throws Exception {
+    CConfiguration conf = CConfiguration.create();
+    conf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    conf.setBoolean(Constants.Security.ENABLED, true);
+    InMemoryPermissionManager permissionManager = new InMemoryPermissionManager();
+    InMemoryRoleController roleController = new InMemoryRoleController();
+    AuthorizationHandler handler = new AuthorizationHandler(
+        permissionManager, conf, new MasterAuthenticationContext(), roleController);
+
+    // 1. Omit "permissions" field so request.getPermissions() is null (Objects.firstNonNull -> emptySet)
+    // while "actions" is an empty array.
+    String authorizableJson = new Gson().toJson(Authorizable.fromEntityId(ns1));
+    String emptyPermissionsJson = "{"
+        + "\"authorizable\":" + authorizableJson + ","
+        + "\"principal\":{\"name\":\"alice\",\"type\":\"USER\"},"
+        + "\"actions\":[]"
+        + "}";
+    String grantReadJson = "{"
+        + "\"authorizable\":" + authorizableJson + ","
+        + "\"principal\":{\"name\":\"alice\",\"type\":\"USER\"},"
+        + "\"permissions\":[\"READ\"]"
+        + "}";
+
+    SecurityRequestContext.setUserIp(null);
+    try {
+      FullHttpRequest emptyGrantRequest = new DefaultFullHttpRequest(
+          HttpVersion.HTTP_1_1, HttpMethod.POST, "/v3/security/authorization/privileges/grant",
+          Unpooled.copiedBuffer(emptyPermissionsJson, StandardCharsets.UTF_8));
+      MockResponder emptyGrantResponder = new MockResponder();
+      handler.grant(emptyGrantRequest, emptyGrantResponder);
+      Assert.assertEquals(HttpResponseStatus.OK, emptyGrantResponder.getStatus());
+
+      FullHttpRequest grantRequest = new DefaultFullHttpRequest(
+          HttpVersion.HTTP_1_1, HttpMethod.POST, "/v3/security/authorization/privileges/grant",
+          Unpooled.copiedBuffer(grantReadJson, StandardCharsets.UTF_8));
+      MockResponder grantResponder = new MockResponder();
+      handler.grant(grantRequest, grantResponder);
+      Assert.assertEquals(HttpResponseStatus.OK, grantResponder.getStatus());
+
+      Principal alice = new Principal("alice", Principal.PrincipalType.USER);
+      Assert.assertEquals(
+          ImmutableSet.of(new GrantedPermission(ns1, Action.READ.getPermission())),
+          permissionManager.listGrants(alice));
+
+      SecurityRequestContext.setUserIp("127.0.0.1");
+      FullHttpRequest revokeRequest = new DefaultFullHttpRequest(
+          HttpVersion.HTTP_1_1, HttpMethod.POST, "/v3/security/authorization/privileges/revoke",
+          Unpooled.copiedBuffer(grantReadJson, StandardCharsets.UTF_8));
+      MockResponder revokeResponder = new MockResponder();
+      handler.revoke(revokeRequest, revokeResponder);
+      Assert.assertEquals(HttpResponseStatus.OK, revokeResponder.getStatus());
+      Assert.assertTrue(permissionManager.listGrants(alice).isEmpty());
+    } finally {
+      SecurityRequestContext.setUserIp(null);
+    }
   }
 
   /**

@@ -53,6 +53,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -68,6 +69,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -110,7 +112,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.start();
+      service.startAsync();
       return controller;
     };
 
@@ -123,7 +125,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                          null, launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       List<ProgramController> controllers = new ArrayList<>();
       for (int i = 0; i < 5; i++) {
@@ -151,7 +153,7 @@ public class AbstractProgramRuntimeServiceTest {
 
       Assert.assertEquals(2, threadNames.size());
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -166,7 +168,7 @@ public class AbstractProgramRuntimeServiceTest {
                                                                              program, null, null);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                          null, launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
@@ -178,7 +180,7 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(true, () ->  runtimeService.list(ProgramType.WORKER).isEmpty(),
                     5, TimeUnit.SECONDS, 100, TimeUnit.MICROSECONDS);
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -190,20 +192,20 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
     ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId.run(runId));
-    service.startAndWait();
+    service.startAsync().awaitRunning();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     TestProgramRunDispatcher launchDispatcher = new TestProgramRunDispatcher(cConf, runnerFactory,
                                                                              null, null, null);
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory,
                                                                              extraInfo, launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
 
     // The lookup will get deadlock for CDAP-3716
     Assert.assertNotNull(runtimeService.lookup(programId, runId));
-    service.stopAndWait();
+    service.stopAsync().awaitTerminated();
 
-    runtimeService.stopAndWait();
+    runtimeService.stopAsync().awaitTerminated();
   }
 
   @Test
@@ -229,7 +231,7 @@ public class AbstractProgramRuntimeServiceTest {
         }
       };
 
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       try {
         ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
@@ -268,11 +270,11 @@ public class AbstractProgramRuntimeServiceTest {
         }
 
       } finally {
-        runtimeService.stopAndWait();
+        runtimeService.stopAsync().awaitTerminated();
       }
 
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
     }
   }
 
@@ -289,7 +291,7 @@ public class AbstractProgramRuntimeServiceTest {
                                    remoteClientFactory, true);
     ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf, runnerFactory, null,
         launchDispatcher);
-    runtimeService.startAndWait();
+    runtimeService.startAsync().awaitRunning();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
@@ -301,7 +303,91 @@ public class AbstractProgramRuntimeServiceTest {
       Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
                     5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
-      runtimeService.stopAndWait();
+      runtimeService.stopAsync().awaitTerminated();
+    }
+  }
+
+  @Test
+  public void testCleanupCloseableRuntimeInfoQuietlyOnException() throws Exception {
+    Service service = new TestService();
+    ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
+    RunId runId = RunIds.generate();
+    ProgramRunId programRunId = programId.run(runId);
+
+    AtomicInteger closeCount = new AtomicInteger();
+    CloseableRuntimeInfo closeableInfo =
+        new CloseableRuntimeInfo(service, programRunId, closeCount, true);
+    service.startAsync().awaitRunning();
+
+    ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
+    TestProgramRunDispatcher launchDispatcher =
+        new TestProgramRunDispatcher(cConf, runnerFactory, null, null, null);
+    TestProgramRuntimeService runtimeService =
+        new TestProgramRuntimeService(cConf, runnerFactory, closeableInfo, launchDispatcher);
+    runtimeService.startAsync().awaitRunning();
+    try {
+      Assert.assertSame(closeableInfo, runtimeService.lookup(programId, runId));
+
+      // Duplicate updateRuntimeInfo should also close the duplicate Closeable RuntimeInfo quietly.
+      AtomicInteger duplicateCloseCount = new AtomicInteger();
+      CloseableRuntimeInfo duplicateInfo =
+          new CloseableRuntimeInfo(service, programRunId, duplicateCloseCount, true);
+      runtimeService.updateRuntimeInfo(duplicateInfo);
+      Assert.assertEquals(1, duplicateCloseCount.get());
+
+      // Stopping the underlying service triggers remove(info) -> cleanupRuntimeInfo(removedInfo).
+      service.stopAsync().awaitTerminated();
+      Tasks.waitFor(1, closeCount::get, 5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(true, () -> runtimeService.list(ProgramType.WORKER).isEmpty(),
+          5, TimeUnit.SECONDS, 20, TimeUnit.MILLISECONDS);
+    } finally {
+      runtimeService.stopAsync().awaitTerminated();
+    }
+  }
+
+  private static final class CloseableRuntimeInfo
+      implements ProgramRuntimeService.RuntimeInfo, Closeable {
+
+    private final ProgramController controller;
+    private final ProgramRunId programRunId;
+    private final AtomicInteger closeCount;
+    private final boolean throwOnClose;
+
+    private CloseableRuntimeInfo(Service service, ProgramRunId programRunId,
+        AtomicInteger closeCount, boolean throwOnClose) {
+      this.controller = new ProgramControllerServiceAdapter(service, programRunId);
+      this.programRunId = programRunId;
+      this.closeCount = closeCount;
+      this.throwOnClose = throwOnClose;
+    }
+
+    @Override
+    public ProgramController getController() {
+      return controller;
+    }
+
+    @Override
+    public ProgramType getType() {
+      return programRunId.getType();
+    }
+
+    @Override
+    public ProgramId getProgramId() {
+      return programRunId.getParent();
+    }
+
+    @Nullable
+    @Override
+    public RunId getTwillRunId() {
+      return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+      closeCount.incrementAndGet();
+      if (throwOnClose) {
+        throw new IOException("simulated close failure");
+      }
     }
   }
 
@@ -323,7 +409,7 @@ public class AbstractProgramRuntimeServiceTest {
       Service service = new FastService();
       ProgramController controller = new ProgramControllerServiceAdapter(service,
                                                                          programId.run(RunIds.generate()));
-      service.start();
+      service.startAsync();
       return controller;
     };
   }

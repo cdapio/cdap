@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.Admin;
@@ -64,6 +63,8 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.NoopAdmin;
 import io.cdap.cdap.internal.app.preview.NoopDataTracerFactory;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
+import io.cdap.cdap.internal.asm.ByteCodeClassLoader;
+import io.cdap.cdap.internal.asm.ClassDefinition;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import java.io.File;
@@ -94,6 +95,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -275,7 +277,13 @@ public class HttpHandlerGeneratorTest {
     @Override
     public void onError(HttpServiceResponder responder, Throwable failureCause) {
       validateTransaction();
-      Closeables.closeQuietly(channel);
+      if (channel != null) {
+        try {
+          channel.close();
+        } catch (Exception ignored) {
+          // Ignore close exception
+        }
+      }
       LOG.error("Failed when handling upload", failureCause);
     }
 
@@ -481,7 +489,9 @@ public class HttpHandlerGeneratorTest {
         String.format("http://%s:%d/content/download/test.txt",
                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       try {
-        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        try (FileOutputStream fos = new FileOutputStream(downloadFile)) {
+          ByteStreams.copy(urlConn.getInputStream(), fos);
+        }
       } finally {
         urlConn.disconnect();
       }
@@ -505,8 +515,10 @@ public class HttpHandlerGeneratorTest {
       try {
         urlConn.setDoOutput(true);
         urlConn.setRequestMethod("POST");
-        Files.copy(file, urlConn.getOutputStream());
-        ByteStreams.copy(urlConn.getInputStream(), Files.newOutputStreamSupplier(downloadFile));
+        java.nio.file.Files.copy(file.toPath(), urlConn.getOutputStream());
+        try (FileOutputStream fos = new FileOutputStream(downloadFile)) {
+          ByteStreams.copy(urlConn.getInputStream(), fos);
+        }
         Assert.assertEquals(200, urlConn.getResponseCode());
         Assert.assertTrue(Files.equal(file, downloadFile));
       } finally {
@@ -558,8 +570,9 @@ public class HttpHandlerGeneratorTest {
                                       bindAddress.getHostName(), bindAddress.getPort())).openConnection();
       urlConn.setReadTimeout(2000);
       urlConn.setDoOutput(true);
-      ByteStreams.copy(ByteStreams.newInputStreamSupplier("Hello".getBytes(Charsets.UTF_8)),
-                       urlConn.getOutputStream());
+      try (java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream("Hello".getBytes(Charsets.UTF_8))) {
+        ByteStreams.copy(bais, urlConn.getOutputStream());
+      }
 
       Assert.assertEquals("Hello test",
                           new String(ByteStreams.toByteArray(urlConn.getInputStream()), Charsets.UTF_8));
@@ -588,6 +601,31 @@ public class HttpHandlerGeneratorTest {
     } finally {
       service.stop();
     }
+  }
+
+  @Test
+  public void testGeneratedClassNameMd5AndLoadable() throws Exception {
+    HttpHandlerGenerator generator = new HttpHandlerGenerator(TransactionControl.IMPLICIT);
+    ClassDefinition def1 = generator.generate(TypeToken.of(MyHttpHandler.class), "/prefix");
+    ClassDefinition def2 = generator.generate(TypeToken.of(MyHttpHandler.class), "/prefix");
+    ClassDefinition otherDef = generator.generate(TypeToken.of(NoAnnotationHandler.class), "/prefix");
+
+    String binaryPrefix = Type.getInternalName(MyHttpHandler.class).replace('/', '.');
+    Assert.assertTrue(def1.getClassName().startsWith(binaryPrefix));
+    String md5Suffix = def1.getClassName().substring(binaryPrefix.length());
+    Assert.assertTrue("Expected 32-char hex MD5 suffix, got: " + md5Suffix,
+        md5Suffix.matches("[0-9a-f]{32}"));
+    Assert.assertEquals(def1.getClassName(), def2.getClassName());
+
+    String otherBinaryPrefix = Type.getInternalName(NoAnnotationHandler.class).replace('/', '.');
+    String otherMd5Suffix = otherDef.getClassName().substring(otherBinaryPrefix.length());
+    Assert.assertNotEquals(md5Suffix, otherMd5Suffix);
+
+    ByteCodeClassLoader classLoader = new ByteCodeClassLoader(HttpHandlerGeneratorTest.class.getClassLoader());
+    classLoader.addClass(def1);
+    Class<?> loaded = classLoader.loadClass(def1.getClassName());
+    Assert.assertTrue(HttpHandler.class.isAssignableFrom(loaded));
+    Assert.assertTrue(AbstractHttpHandlerDelegator.class.isAssignableFrom(loaded));
   }
 
   private abstract static class AbstractDelegatorContext<T extends HttpServiceHandler> implements DelegatorContext<T> {

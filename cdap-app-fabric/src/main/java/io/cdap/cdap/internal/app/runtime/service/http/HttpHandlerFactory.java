@@ -88,7 +88,8 @@ public final class HttpHandlerFactory {
       return constructor.newInstance(context, metricsContext);
     } catch (Exception e) {
       LOG.error("Failed to instantiate generated HttpHandler {}", handlerClass, e);
-      throw Throwables.propagate(e);
+      Throwables.throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
   }
 

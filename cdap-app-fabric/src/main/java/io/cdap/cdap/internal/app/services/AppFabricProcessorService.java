@@ -16,10 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
@@ -36,6 +33,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
@@ -146,29 +144,28 @@ public class AppFabricProcessorService extends AbstractIdleService {
             Constants.Logging.COMPONENT_NAME,
             Service.APP_FABRIC_PROCESSOR));
     LOG.info("Starting AppFabric processor service.");
-    List<ListenableFuture<State>> futuresList = new ArrayList<>();
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    List<com.google.common.util.concurrent.Service> services = new ArrayList<>();
     // Only for RBAC instances
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
-      futuresList.add(auditLogSubscriberService.start());
+      services.add(auditLogSubscriberService);
     }
+    services.add(provisioningService);
+    services.add(applicationLifecycleService);
+    services.add(bootstrapService);
+    services.add(programRuntimeService);
+    services.add(programNotificationSubscriberService);
+    services.add(programStopSubscriberService);
+    services.add(runRecordCorrectorService);
+    services.add(programRunStatusMonitorService);
+    services.add(coreSchedulerService);
+    services.add(runRecordCounterService);
+    services.add(runDataTimeToLiveService);
+    services.add(operationNotificationSubscriberService);
 
-    futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
-        runRecordCounterService.start(),
-        runDataTimeToLiveService.start(),
-        operationNotificationSubscriberService.start()
-    ));
-    Futures.allAsList(futuresList).get();
+    services.forEach(this::startIfNotRunning);
+    services.forEach(com.google.common.util.concurrent.Service::awaitRunning);
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
@@ -196,20 +193,21 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    coreSchedulerService.stopAndWait();
-    bootstrapService.stopAndWait();
-    systemAppManagementService.stopAndWait();
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    runRecordCorrectorService.stopAndWait();
-    programRunStatusMonitorService.stopAndWait();
-    provisioningService.stopAndWait();
-    runRecordCounterService.stopAndWait();
-    runDataTimeToLiveService.stopAndWait();
-    operationNotificationSubscriberService.stopAndWait();
-    auditLogSubscriberService.stopAndWait();
+    Services.stopAllQuietly(
+        coreSchedulerService,
+        bootstrapService,
+        systemAppManagementService,
+        programRuntimeService,
+        applicationLifecycleService,
+        programNotificationSubscriberService,
+        programStopSubscriberService,
+        runRecordCorrectorService,
+        programRunStatusMonitorService,
+        provisioningService,
+        runRecordCounterService,
+        runDataTimeToLiveService,
+        operationNotificationSubscriberService,
+        auditLogSubscriberService);
     LOG.info("AppFabric processor service stopped.");
   }
 
@@ -249,5 +247,9 @@ public class AppFabricProcessorService extends AbstractIdleService {
 
       LOG.info("AppFabric Processor HTTP service stopped.");
     };
+  }
+
+  private void startIfNotRunning(com.google.common.util.concurrent.Service service) {
+    Services.startIfNew(service);
   }
 }
