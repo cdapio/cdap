@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -43,11 +42,13 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -495,7 +496,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private void startCoreServices() {
     // Starts the core services
     for (Service service : coreServices) {
-      service.startAndWait();
+      Services.startAndWait(service);
     }
   }
 
@@ -504,7 +505,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
-        service.stopAndWait();
+        Services.stopAndWait(service);
       } catch (Exception e) {
         LOG.warn("Exception raised when stopping service {} during program termination.", service,
             e);

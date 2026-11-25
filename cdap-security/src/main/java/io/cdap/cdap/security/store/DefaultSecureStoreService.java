@@ -24,6 +24,7 @@ import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
@@ -158,12 +159,12 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
 
   @Override
   protected void startUp() throws Exception {
-    secureStoreService.startAndWait();
+    Services.startAndWait(secureStoreService);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    secureStoreService.stopAndWait();
+    Services.stopAndWait(secureStoreService);
   }
 
   @Override

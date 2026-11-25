@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
@@ -56,12 +57,12 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
 
   @Override
   protected void startUp() throws Exception {
-    delegate.startAndWait();
+    Services.startAndWait(delegate);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    Services.stopAndWait(delegate);
   }
 
   @Override

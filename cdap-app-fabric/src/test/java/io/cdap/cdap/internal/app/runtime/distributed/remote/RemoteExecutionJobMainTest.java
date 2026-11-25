@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import java.util.Map;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -48,11 +49,11 @@ public class RemoteExecutionJobMainTest {
 
       Map<String, String> properties = jobEnv.getProperties();
       ZKClientService zkClient = ZKClientService.Builder.of(properties.get(Constants.Zookeeper.QUORUM)).build();
-      zkClient.startAndWait();
+      Services.startAndWait(zkClient);
       try {
         Assert.assertNotNull(zkClient.exists("/").get());
       } finally {
-        zkClient.stopAndWait();
+        Services.stopAndWait(zkClient);
       }
     } finally {
       runner.destroy();

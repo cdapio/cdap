@@ -28,6 +28,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
@@ -77,12 +78,12 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     profileService = injector.getInstance(ProfileService.class);
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
+    Services.startAndWait(provisioningService);
   }
 
   @AfterClass
   public static void shutdown() {
-    provisioningService.stopAndWait();
+    Services.stopAndWait(provisioningService);
   }
 
   @Test

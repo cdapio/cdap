@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.operation.OperationRunStatus;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -93,7 +94,7 @@ public class OperationNotificationSubscriberService extends AbstractIdleService 
         .forEach(i -> children.add(createChildService("operation.status." + i, topicPrefix + i)));
     delegate = new CompositeService(children);
 
-    delegate.startAndWait();
+    Services.startAndWait(delegate);
   }
 
   // Sends STARTING notification for all STARTING operations
@@ -130,7 +131,7 @@ public class OperationNotificationSubscriberService extends AbstractIdleService 
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    Services.stopAndWait(delegate);
   }
 
   private OperationNotificationSingleTopicSubscriberService createChildService(

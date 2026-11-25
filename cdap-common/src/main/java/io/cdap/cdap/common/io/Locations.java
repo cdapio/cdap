@@ -19,10 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -32,7 +29,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -95,33 +91,6 @@ public final class Locations {
       return o1.toURI().compareTo(o2.toURI());
     }
   };
-
-  /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given
-   * path.
-   *
-   * @param fs The {@link org.apache.hadoop.fs.FileSystem} for the given path.
-   * @param path The path to create {@link io.cdap.cdap.common.io.SeekableInputStream} when
-   *     requested.
-   * @return A {@link InputSupplier}.
-   */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs,
-      final Path path) {
-    return new InputSupplier<SeekableInputStream>() {
-      @Override
-      public SeekableInputStream getInput() throws IOException {
-        FSDataInputStream input = fs.open(path);
-        try {
-          return new DFSSeekableInputStream(input,
-              createDFSStreamSizeProvider(fs, false, path, input));
-        } catch (Throwable t) {
-          Closeables.closeQuietly(input);
-          Throwables.propagateIfInstanceOf(t, IOException.class);
-          throw new IOException(t);
-        }
-      }
-    };
-  }
 
   /**
    * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the
@@ -343,7 +312,7 @@ public final class Locations {
         DirUtils.mkdirs(output);
       } else {
         DirUtils.mkdirs(output.getParentFile());
-        ByteStreams.copy(tis, com.google.common.io.Files.newOutputStreamSupplier(output));
+        com.google.common.io.Files.asByteSink(output).writeFrom(tis);
       }
       entry = tis.getNextTarEntry();
     }
@@ -409,17 +378,6 @@ public final class Locations {
         return transform.apply(itor.next());
       }
     };
-  }
-
-  /**
-   * Creates a new {@link OutputSupplier} that can provides {@link OutputStream} for the given
-   * location.
-   *
-   * @param location Location for the output.
-   * @return A {@link OutputSupplier}.
-   */
-  public static OutputSupplier<? extends OutputStream> newOutputSupplier(final Location location) {
-    return location::getOutputStream;
   }
 
   /**

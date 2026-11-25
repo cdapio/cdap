@@ -26,6 +26,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.appender.AbstractLogPublisher;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
@@ -66,8 +67,8 @@ public class TMSLogAppender extends LogAppender {
   public void start() {
     TMSLogPublisher publisher = new TMSLogPublisher(cConf, messagingService);
     Optional.ofNullable(tmsLogPublisher.getAndSet(publisher))
-        .ifPresent(TMSLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(Services::stopAndWait);
+    Services.startAndWait(publisher);
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
@@ -75,7 +76,7 @@ public class TMSLogAppender extends LogAppender {
   @Override
   public void stop() {
     super.stop();
-    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(TMSLogPublisher::stopAndWait);
+    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(Services::stopAndWait);
     addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
@@ -94,8 +95,9 @@ public class TMSLogAppender extends LogAppender {
   // Based off of StringPartitioner, but that class can not be used in Standalone, as kafka dependencies do not exist
   // in Standalone
   @VisibleForTesting
+  @SuppressWarnings("java:S4790")
   static int partition(Object key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % numPartitions;
+    return Math.abs(Hashing.md5().hashUnencodedChars(key.toString()).asInt()) % numPartitions;
   }
 
   /**

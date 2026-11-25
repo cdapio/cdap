@@ -40,6 +40,7 @@ import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
@@ -158,7 +159,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting task worker");
-    taskWorker.start();
+    Services.start(taskWorker);
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -171,9 +172,9 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
   @Override
   public void stop() {
     LOG.info("Stopping task worker");
-    Optional.ofNullable(metricsCollectionService).map(MetricsCollectionService::stop);
+    Optional.ofNullable(metricsCollectionService).ifPresent(MetricsCollectionService::stopAsync);
     if (taskWorker != null) {
-      taskWorker.stop();
+      taskWorker.stopAsync();
     }
   }
 
@@ -201,7 +202,7 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    Services.startAndWait(metricsCollectionService);
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,

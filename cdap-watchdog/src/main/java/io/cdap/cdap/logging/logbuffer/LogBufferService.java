@@ -37,6 +37,7 @@ import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import io.cdap.cdap.logging.framework.LogPipelineSpecification;
 import io.cdap.cdap.logging.logbuffer.cleaner.LogBufferCleaner;
@@ -102,7 +103,7 @@ public class LogBufferService extends AbstractIdleService {
     // load log pipelines
     List<LogBufferProcessorPipeline> bufferPipelines = loadLogPipelines();
     // start all the log pipelines
-    validateAllFutures(Iterables.transform(pipelines, Service::start));
+    validateAllFutures(Iterables.transform(pipelines, Services::start));
 
     // recovery service and http handler will send log events to log pipelines. In order to avoid deleting file while
     // reading them in recovery service, we will pass in an atomic boolean will be set to true by recovery service
@@ -111,7 +112,7 @@ public class LogBufferService extends AbstractIdleService {
     // start log recovery service to recover all the pending logs.
     recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers,
         startCleanup);
-    recoveryService.startAndWait();
+    Services.startAndWait(recoveryService);
 
     // create concurrent writer
     ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf,
@@ -231,9 +232,9 @@ public class LogBufferService extends AbstractIdleService {
       httpService.stop();
     }
     if (recoveryService != null) {
-      recoveryService.stopAndWait();
+      Services.stopAndWait(recoveryService);
     }
     // Stops all pipeline
-    validateAllFutures(Iterables.transform(pipelines, Service::stop));
+    validateAllFutures(Iterables.transform(pipelines, Services::stop));
   }
 }

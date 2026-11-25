@@ -23,6 +23,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -69,13 +70,13 @@ public class AuditLogSubscriberService extends AbstractIdleService {
       .forEach(i -> children.add(createChildService(topicPrefix + i)));
     delegate = new CompositeService(children);
 
-    delegate.startAndWait();
+    Services.startAndWait(delegate);
     LOG.debug("Started Audit Log subscriber service for {} partitions.", numPartitions);
   }
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    Services.stopAndWait(delegate);
   }
 
   private AuditLogSingleTopicSubscriberService createChildService(String topicName) {

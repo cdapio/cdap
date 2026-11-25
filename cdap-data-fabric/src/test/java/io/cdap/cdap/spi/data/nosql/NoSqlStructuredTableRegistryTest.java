@@ -20,6 +20,7 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.common.StructuredTableRegistryTest;
@@ -48,13 +49,13 @@ public class NoSqlStructuredTableRegistryTest extends StructuredTableRegistryTes
   public static void beforeClass() {
     Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
   }
 
   @AfterClass
   public static void afterClass() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 }

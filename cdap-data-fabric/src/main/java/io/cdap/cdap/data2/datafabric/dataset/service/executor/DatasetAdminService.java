@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -30,6 +29,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetType;

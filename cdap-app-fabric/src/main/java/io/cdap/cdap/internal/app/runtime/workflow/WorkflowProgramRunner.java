@@ -35,6 +35,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -153,7 +154,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       // service can be fully captured by the controller.
       ProgramController controller = new WorkflowProgramController(program.getId().run(runId),
           driver);
-      driver.start();
+      Services.start(driver);
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);

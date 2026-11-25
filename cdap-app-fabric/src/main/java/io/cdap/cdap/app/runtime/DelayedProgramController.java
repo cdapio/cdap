@@ -19,6 +19,7 @@ package io.cdap.cdap.app.runtime;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.app.RunIds;
@@ -189,7 +190,7 @@ public final class DelayedProgramController implements ProgramController,
             public void onFailure(Throwable t) {
               resultFuture.setException(t);
             }
-          });
+          }, MoreExecutors.directExecutor());
     });
     return resultFuture;
   }

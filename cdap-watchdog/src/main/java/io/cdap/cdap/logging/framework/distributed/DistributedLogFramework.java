@@ -31,6 +31,7 @@ import io.cdap.cdap.common.resource.ResourceBalancerService;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import io.cdap.cdap.logging.framework.LogPipelineSpecification;
 import io.cdap.cdap.logging.meta.KafkaCheckpointManager;
@@ -112,13 +113,13 @@ public class DistributedLogFramework extends ResourceBalancerService {
       @Override
       protected void startUp() throws Exception {
         // Starts all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::start));
+        validateAllFutures(Iterables.transform(pipelines, Services::start));
       }
 
       @Override
       protected void shutDown() throws Exception {
         // Stops all pipeline
-        validateAllFutures(Iterables.transform(pipelines, Service::stop));
+        validateAllFutures(Iterables.transform(pipelines, Services::stop));
       }
     };
   }

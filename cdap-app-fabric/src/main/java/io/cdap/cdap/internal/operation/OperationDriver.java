@@ -52,6 +52,12 @@ class OperationDriver extends AbstractExecutionThreadService {
   }
 
   @Override
+  protected String serviceName() {
+    // Guava renames the executor thread to serviceName(), so keep the same thread name
+    return "operation-runner" + context.getRunId() + "-0";
+  }
+
+  @Override
   protected Executor executor() {
     executor = Executors.newSingleThreadExecutor(
         Threads.createDaemonThreadFactory("operation-runner" + context.getRunId() + "-%d")

@@ -20,6 +20,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import java.io.IOException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
@@ -59,7 +60,7 @@ public class ZKExtOperationsTest {
   @BeforeClass
   public static void init() throws IOException {
     zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
-    zkServer.startAndWait();
+    Services.startAndWait(zkServer);
   }
 
   @Test
@@ -68,8 +69,8 @@ public class ZKExtOperationsTest {
     ZKClientService zkClient1 = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
     ZKClientService zkClient2 = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
 
-    zkClient1.startAndWait();
-    zkClient2.startAndWait();
+    Services.startAndWait(zkClient1);
+    Services.startAndWait(zkClient2);
 
     // First a node would get created since no node there.
     ZKExtOperations.updateOrCreate(zkClient1, path, new Function<Integer, Integer>() {
@@ -134,15 +135,15 @@ public class ZKExtOperationsTest {
 
     Assert.assertNull(result);
 
-    zkClient1.stopAndWait();
-    zkClient2.stopAndWait();
+    Services.stopAndWait(zkClient1);
+    Services.stopAndWait(zkClient2);
   }
 
   @Test
   public void testCreateOrSet() throws Exception {
     String path = "/parent/testCreateOrSet";
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient);
 
     // Create with "1"
     Assert.assertEquals(1, ZKExtOperations.createOrSet(zkClient, path,
@@ -156,14 +157,14 @@ public class ZKExtOperationsTest {
     // Should get "2" back
     Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
 
-    zkClient.stopAndWait();
+    Services.stopAndWait(zkClient);
   }
 
   @Test
   public void testSetOrCreate() throws Exception {
     String path = "/parent/testSetOrCreate";
     ZKClientService zkClient = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient);
 
     // Create with "1"
     Assert.assertEquals(1, ZKExtOperations.setOrCreate(zkClient, path,
@@ -177,11 +178,11 @@ public class ZKExtOperationsTest {
     // Should get "2" back
     Assert.assertEquals(2, INT_CODEC.decode(zkClient.getData(path).get().getData()).intValue());
 
-    zkClient.stopAndWait();
+    Services.stopAndWait(zkClient);
   }
 
   @AfterClass
   public static void finish() {
-    zkServer.stopAndWait();
+    Services.stopAndWait(zkServer);
   }
 }

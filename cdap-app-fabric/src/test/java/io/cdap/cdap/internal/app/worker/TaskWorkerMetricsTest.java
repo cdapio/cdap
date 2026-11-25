@@ -29,6 +29,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
@@ -82,7 +83,7 @@ public class TaskWorkerMetricsTest {
       }
     };
 
-    mockMetricsCollector.startAndWait();
+    Services.startAndWait(mockMetricsCollector);
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     taskWorkerService = new TaskWorkerService(cConf, sConf, discoveryService, discoveryService,
                                               mockMetricsCollector,
@@ -90,7 +91,7 @@ public class TaskWorkerMetricsTest {
                                                                                 auditLogContexts -> {}));
     taskWorkerStateFuture = TaskWorkerTestUtil.getServiceCompletionFuture(taskWorkerService);
     // start the service
-    taskWorkerService.startAndWait();
+    Services.startAndWait(taskWorkerService);
     InetSocketAddress addr = taskWorkerService.getBindAddress();
     this.uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
   }
@@ -98,7 +99,7 @@ public class TaskWorkerMetricsTest {
   @After
   public void afterTest() {
     if (taskWorkerService != null) {
-      taskWorkerService.stopAndWait();
+      Services.stopAndWait(taskWorkerService);
     }
   }
 

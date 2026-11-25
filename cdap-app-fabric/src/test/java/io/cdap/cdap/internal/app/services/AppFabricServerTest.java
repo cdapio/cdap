@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.security.server.LdapLoginModule;
@@ -49,14 +50,14 @@ public class AppFabricServerTest {
     try {
       AppFabricServer server = injector.getInstance(AppFabricServer.class);
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-      Service.State state = server.startAndWait();
+      Service.State state = Services.startAndWait(server);
       Assert.assertSame(state, Service.State.RUNNING);
 
       final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
         () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
       Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
 
-      state = server.stopAndWait();
+      state = Services.stopAndWait(server);
       Assert.assertSame(state, Service.State.TERMINATED);
 
       Tasks.waitFor(true, () -> endpointStrategy.pick() == null, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
@@ -74,7 +75,7 @@ public class AppFabricServerTest {
     try {
       final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AppFabricServer appFabricServer = injector.getInstance(AppFabricServer.class);
-      appFabricServer.startAndWait();
+      Services.startAndWait(appFabricServer);
       Assert.assertTrue(appFabricServer.isRunning());
 
       Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(
@@ -91,7 +92,7 @@ public class AppFabricServerTest {
       // Would throw exception if the server does not support ssl.
       // "javax.net.ssl.SSLException: Unrecognized SSL message, plaintext connection?"
       socket.startHandshake();
-      appFabricServer.stopAndWait();
+      Services.stopAndWait(appFabricServer);
     } finally {
       AppFabricTestHelper.shutdown();
     }

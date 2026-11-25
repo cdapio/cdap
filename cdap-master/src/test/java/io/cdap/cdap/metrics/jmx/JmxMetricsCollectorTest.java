@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.metrics.MetricsPublisher;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -98,7 +99,7 @@ public class JmxMetricsCollectorTest {
     cConf.setInt(Constants.JmxMetricsCollector.POLL_INTERVAL_SECS, 1);
     Map<String, String> metricTags = ImmutableMap.of("key1", "value1", "key2", "value2");
     JmxMetricsCollector jmxMetrics = new JmxMetricsCollector(cConf, publisher, metricTags);
-    jmxMetrics.startAndWait();
+    Services.startAndWait(jmxMetrics);
     verify(publisher, times(1)).initialize();
     // Poll should run at 0, 1. 2 secs buffer.
     Tasks.waitFor(true, () -> {
@@ -109,6 +110,6 @@ public class JmxMetricsCollectorTest {
       }
       return true;
     }, 3, TimeUnit.SECONDS);
-    jmxMetrics.stop();
+    jmxMetrics.stopAsync();
   }
 }

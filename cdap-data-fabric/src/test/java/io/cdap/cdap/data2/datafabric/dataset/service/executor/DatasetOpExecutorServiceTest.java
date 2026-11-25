@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -43,6 +43,7 @@ import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -147,15 +148,15 @@ public class DatasetOpExecutorServiceTest {
         });
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     dsOpExecService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpExecService.startAndWait();
+    Services.startAndWait(dsOpExecService);
 
     managerService = injector.getInstance(DatasetService.class);
-    managerService.startAndWait();
+    Services.startAndWait(managerService);
 
     dsFramework = injector.getInstance(DatasetFramework.class);
 
@@ -173,10 +174,10 @@ public class DatasetOpExecutorServiceTest {
   public void tearDown() throws Exception {
     dsFramework = null;
 
-    dsOpExecService.stopAndWait();
+    Services.stopAndWait(dsOpExecService);
     dsOpExecService = null;
 
-    managerService.stopAndWait();
+    Services.stopAndWait(managerService);
     managerService = null;
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);
@@ -269,7 +270,7 @@ public class DatasetOpExecutorServiceTest {
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {
-    return Objects.firstNonNull(GSON.fromJson(Bytes.toString(body), DatasetAdminOpResponse.class),
+    return MoreObjects.firstNonNull(GSON.fromJson(Bytes.toString(body), DatasetAdminOpResponse.class),
         new DatasetAdminOpResponse(null, null));
   }
 }
