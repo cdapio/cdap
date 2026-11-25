@@ -27,14 +27,21 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpHeaders;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -56,6 +63,7 @@ public class RemoteTaskExecutorTest {
   private static CConfiguration cConf;
   private static NettyHttpService httpService;
   private static InMemoryDiscoveryService discoveryService;
+  private static volatile HttpHeaders lastRequestHeaders;
   Map<Map<String, String>, Map<String, Long>> metricCollectors;
   private MetricsCollectionService mockMetricsCollector;
   private Cancellable registered;
@@ -70,7 +78,10 @@ public class RemoteTaskExecutorTest {
                                                     auditLogContexts -> {})
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
-        }, new NoOpMetricsCollectionService())
+        }, new NoOpMetricsCollectionService(), request -> {
+          lastRequestHeaders = request.headers().copy();
+          return true;
+        })
       )
       .setChannelPipelineModifier(new ChannelPipelineModifier() {
         @Override
@@ -85,6 +96,7 @@ public class RemoteTaskExecutorTest {
 
   @Before
   public void beforeTest() {
+    lastRequestHeaders = null;
     metricCollectors = new HashMap<>();
     mockMetricsCollector = createMockMetricsCollectionService();
     mockMetricsCollector.startAsync().awaitRunning();
@@ -254,6 +266,74 @@ public class RemoteTaskExecutorTest {
     Assert.assertEquals("failure", metricsKey.get(Constants.Metrics.Tag.STATUS));
     int retryCount = Integer.parseInt(metricsKey.get(Constants.Metrics.Tag.TRIES));
     Assert.assertTrue(retryCount > 1);
+  }
+
+  @Test
+  public void testCallerTokenIsSystemToken() throws Exception {
+    Credential userCredential = new Credential("user-token", Credential.CredentialType.EXTERNAL);
+    SecurityRequestContext.setUserId("user");
+    SecurityRequestContext.setUserCredential(userCredential);
+    SecurityRequestContext.setUserIp("127.0.0.1");
+    try {
+      runTaskWithCallerAuth(true);
+
+      Assert.assertEquals(Collections.singletonList("CDAP-Internal system-token"),
+          lastRequestHeaders.getAll(Constants.Security.Headers.WORKER_CALLER_TOKEN));
+      // The task still gets the user's credential and ID.
+      Assert.assertTrue(lastRequestHeaders.get(Constants.Security.Headers.RUNTIME_TOKEN)
+          .startsWith("CDAP-External "));
+      Assert.assertEquals("user", lastRequestHeaders.get(Constants.Security.Headers.USER_ID));
+      Assert.assertEquals("user", SecurityRequestContext.getUserId());
+      Assert.assertSame(userCredential, SecurityRequestContext.getUserCredential());
+      Assert.assertEquals("127.0.0.1", SecurityRequestContext.getUserIp());
+    } finally {
+      SecurityRequestContext.reset();
+    }
+  }
+
+  @Test
+  public void testNoCallerTokenWithoutInternalAuth() throws Exception {
+    runTaskWithCallerAuth(false);
+
+    Assert.assertNull(lastRequestHeaders.get(Constants.Security.Headers.WORKER_CALLER_TOKEN));
+  }
+
+  @Test
+  public void testSystemCredentialHeaderHasOnlyTheToken() {
+    RemoteClient remoteClient = new RemoteClientFactory(discoveryService, systemAuthenticator())
+        .createRemoteClient(Constants.Service.TASK_WORKER, new DefaultHttpRequestConfig(false), "/");
+    List<String> headers = new ArrayList<>();
+
+    remoteClient.setSystemCredentialHeader((name, value) -> headers.add(name + ": " + value),
+        Constants.Security.Headers.WORKER_CALLER_TOKEN);
+
+    Assert.assertEquals(Collections.singletonList(
+        Constants.Security.Headers.WORKER_CALLER_TOKEN + ": CDAP-Internal system-token"), headers);
+  }
+
+  private void runTaskWithCallerAuth(boolean internalAuthEnabled) throws Exception {
+    CConfiguration authConf = CConfiguration.copy(cConf);
+    authConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, internalAuthEnabled);
+    RemoteTaskExecutor remoteTaskExecutor = new RemoteTaskExecutor(authConf, mockMetricsCollector,
+        new RemoteClientFactory(discoveryService, systemAuthenticator()),
+        RemoteTaskExecutor.Type.TASK_WORKER);
+    remoteTaskExecutor.runTask(RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName())
+        .withNamespace("testNamespace").build());
+  }
+
+  /**
+   * Returns an authenticator that, like the one in CDAP system services, sends the user's
+   * credential, or a system token when no user is set.
+   */
+  private static InternalAuthenticator systemAuthenticator() {
+    return new DefaultInternalAuthenticator(() -> {
+      String userId = SecurityRequestContext.getUserId();
+      Credential credential = SecurityRequestContext.getUserCredential();
+      return userId != null && credential != null
+          ? new Principal(userId, Principal.PrincipalType.USER, credential)
+          : new Principal("cdap", Principal.PrincipalType.USER,
+              new Credential("system-token", Credential.CredentialType.INTERNAL));
+    });
   }
 
   private boolean hasMetric(Map<String, Long> metricValues, String metricName) {

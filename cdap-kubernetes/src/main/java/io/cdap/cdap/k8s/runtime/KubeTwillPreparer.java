@@ -1581,7 +1581,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
           .getSecretDisks()) {
         String secretName = secretDisk.getName();
         String mountPath = secretDisk.getPath();
-        updatedMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath).readOnly(true));
+        updatedMounts.add(new V1VolumeMount().name(secretName).mountPath(mountPath)
+            .subPath(secretDisk.getSubPath()).readOnly(true));
       }
     }
     return updatedMounts;
