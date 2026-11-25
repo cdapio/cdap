@@ -43,6 +43,8 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.SecureKeyId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.PatConfig;
@@ -54,6 +56,7 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.sourcecontrol.ApplicationManager;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
@@ -96,7 +99,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .setProvider(Provider.GITHUB)
       .setLink("example.com")
       .setDefaultBranch("develop")
-      .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("passwordName", "user")))
+      .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("password-name", "user")))
       .build();
   private static final SourceControlOperationRunner sourceControlOperationRunnerSpy =
       Mockito.spy(new MockSourceControlOperationRunner());
@@ -167,7 +170,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     RepositoryConfig newRepositoryConfig = new RepositoryConfig.Builder(REPOSITORY_CONFIG)
         .setLink("another.example.com")
         .setDefaultBranch("master")
-        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("another.password", "another.user")))
+        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("another-password", "another.user")))
         .build();
     sourceControlService.setRepository(namespaceId, newRepositoryConfig);
 
@@ -219,6 +222,101 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     //clean up
     namespaceAdmin.delete(namespaceId);
+  }
+
+  @Test
+  public void testSetRepositoryEnforcesSecureKeyAccess() throws Exception {
+    String namespace = "secureKeyAllowedNamespace";
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+    AccessEnforcer accessEnforcer = Mockito.mock(AccessEnforcer.class);
+
+    try {
+      createService(accessEnforcer).setRepository(namespaceId, REPOSITORY_CONFIG);
+
+      Mockito.verify(accessEnforcer).enforce(
+          Mockito.eq(new SecureKeyId(namespace, "password-name")),
+          Mockito.any(), Mockito.eq(StandardPermission.GET));
+    } finally {
+      namespaceAdmin.delete(namespaceId);
+    }
+  }
+
+  @Test
+  public void testSetRepositoryWithoutSecureKeyAccessFails() throws Exception {
+    String namespace = "secureKeyDeniedNamespace";
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    try {
+      SourceControlManagementService service = createService(denySecureKeyAccess());
+      Assert.assertThrows(UnauthorizedException.class,
+          () -> service.setRepository(namespaceId, REPOSITORY_CONFIG));
+      Assert.assertThrows(RepositoryNotFoundException.class,
+          () -> sourceControlService.getRepositoryMeta(namespaceId));
+    } finally {
+      namespaceAdmin.delete(namespaceId);
+    }
+  }
+
+  @Test
+  public void testSetRepositoryWithoutSecureKeyAccessRejectsBranchAndPathChange()
+      throws Exception {
+    assertRejectedWithoutSecureKeyAccess("secureKeyBranchNamespace",
+        new RepositoryConfig.Builder(REPOSITORY_CONFIG)
+            .setDefaultBranch("release")
+            .setPathPrefix("pipelines")
+            .build());
+  }
+
+  @Test
+  public void testSetRepositoryWithoutSecureKeyAccessRejectsUsernameChange() throws Exception {
+    assertRejectedWithoutSecureKeyAccess("secureKeyUsernameNamespace",
+        new RepositoryConfig.Builder(REPOSITORY_CONFIG)
+            .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("password-name", "other-user")))
+            .build());
+  }
+
+  @Test
+  public void testSetRepositoryWithoutSecureKeyAccessRejectsLinkChange() throws Exception {
+    assertRejectedWithoutSecureKeyAccess("secureKeyLinkNamespace",
+        new RepositoryConfig.Builder(REPOSITORY_CONFIG).setLink("attacker.example.com").build());
+  }
+
+  @Test
+  public void testSetRepositoryWithoutSecureKeyAccessRejectsSecureKeyChange() throws Exception {
+    assertRejectedWithoutSecureKeyAccess("secureKeySwapNamespace",
+        new RepositoryConfig.Builder(REPOSITORY_CONFIG)
+            .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("other-password", "user")))
+            .build());
+  }
+
+  @Test
+  public void testSetRepositoryWithoutSecureKeyAccessRejectsRelinkAfterUnlink()
+      throws Exception {
+    String namespace = "secureKeyRelinkNamespace";
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    try {
+      sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
+      SourceControlManagementService service = createService(denySecureKeyAccess());
+      service.deleteRepository(namespaceId);
+
+      Assert.assertThrows(UnauthorizedException.class,
+          () -> service.setRepository(namespaceId, REPOSITORY_CONFIG));
+      Assert.assertThrows(RepositoryNotFoundException.class,
+          () -> sourceControlService.getRepositoryMeta(namespaceId));
+    } finally {
+      namespaceAdmin.delete(namespaceId);
+    }
+  }
+
+  @Test
+  public void testValidateRepositoryWithoutSecureKeyAccessFails() {
+    SourceControlManagementService service = createService(denySecureKeyAccess());
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> service.validateRepository(NamespaceId.DEFAULT, REPOSITORY_CONFIG));
   }
 
   @Test
@@ -539,6 +637,50 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   @Test
   public void testOperationRunnerStarted() {
     Assert.assertTrue(sourceControlOperationRunnerSpy.isRunning());
+  }
+
+  /**
+   * Links {@link #REPOSITORY_CONFIG}, then asserts that a caller without secure key access cannot
+   * replace it with {@code updated} and that the stored config is unchanged.
+   */
+  private static void assertRejectedWithoutSecureKeyAccess(String namespace,
+      RepositoryConfig updated) throws Exception {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+
+    try {
+      sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
+
+      SourceControlManagementService service = createService(denySecureKeyAccess());
+      Assert.assertThrows(UnauthorizedException.class,
+          () -> service.setRepository(namespaceId, updated));
+
+      Assert.assertEquals(REPOSITORY_CONFIG,
+          sourceControlService.getRepositoryMeta(namespaceId).getConfig());
+    } finally {
+      namespaceAdmin.delete(namespaceId);
+    }
+  }
+
+  private static AccessEnforcer denySecureKeyAccess() {
+    AccessEnforcer accessEnforcer = Mockito.mock(AccessEnforcer.class);
+    Mockito.doThrow(new UnauthorizedException("denied")).when(accessEnforcer)
+        .enforce(Mockito.any(SecureKeyId.class), Mockito.any(), Mockito.eq(StandardPermission.GET));
+    return accessEnforcer;
+  }
+
+  private static SourceControlManagementService createService(AccessEnforcer accessEnforcer) {
+    return new SourceControlManagementService(cConf,
+        getInjector().getInstance(SecureStore.class),
+        getInjector().getInstance(TransactionRunner.class),
+        accessEnforcer,
+        getInjector().getInstance(AuthenticationContext.class),
+        sourceControlOperationRunnerSpy,
+        getInjector().getInstance(ApplicationLifecycleService.class),
+        getInjector().getInstance(Store.class),
+        getInjector().getInstance(OperationLifecycleManager.class),
+        getInjector().getInstance(MetricsCollectionService.class),
+        Clock.fixed(fixedInstant, ZoneId.systemDefault()));
   }
 
   /**
