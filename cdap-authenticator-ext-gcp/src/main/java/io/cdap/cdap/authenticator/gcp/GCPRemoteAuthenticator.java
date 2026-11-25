@@ -23,8 +23,8 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import java.io.IOException;
-import java.sql.Date;
 import java.time.Clock;
+import java.time.Duration;
 import javax.annotation.Nullable;
 
 /**
@@ -34,6 +34,13 @@ import javax.annotation.Nullable;
 public class GCPRemoteAuthenticator implements RemoteAuthenticator {
 
   public static final String GCP_REMOTE_AUTHENTICATOR_NAME = "gcp-remote-authenticator";
+
+  /**
+   * The cached access token is renewed once it is this close to expiry, so callers are never
+   * handed a token that expires before they can use it. Matches
+   * {@code GcpMetadataHttpHandlerInternal.TOKEN_REFRESH_BUFFER}.
+   */
+  private static final Duration REFRESH_BUFFER = Duration.ofMinutes(5);
 
   private final GoogleCredentials googleCredentials;
   private final Clock clock;
@@ -60,9 +67,10 @@ public class GCPRemoteAuthenticator implements RemoteAuthenticator {
 
   @Nullable
   @Override
-  public Credential getCredentials() throws IOException {
-    // If access token is expired, renew the access token.
-    if (accessToken == null || accessToken.getExpirationTime().before(Date.from(clock.instant()))) {
+  public synchronized Credential getCredentials() throws IOException {
+    // Renew the access token if it is missing or about to expire.
+    if (accessToken == null || !clock.instant()
+        .isBefore(accessToken.getExpirationTime().toInstant().minus(REFRESH_BUFFER))) {
       accessToken = googleCredentials.refreshAccessToken();
     }
     return new Credential(accessToken.getTokenValue(), Credential.CredentialType.EXTERNAL_BEARER,

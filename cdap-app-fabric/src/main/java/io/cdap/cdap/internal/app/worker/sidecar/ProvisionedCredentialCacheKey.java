@@ -57,14 +57,13 @@ public final class ProvisionedCredentialCacheKey {
       return false;
     }
 
+    // Key on (namespace, userId, scopes): rotating/null per-request user credentials for the same
+    // user still hit the warm cache, while a different user calls App Fabric so PROVISION_CREDENTIAL
+    // is enforced per user.
     return Objects.equals(gcpMetadataTaskContext.getNamespace(),
         that.gcpMetadataTaskContext.getNamespace())
-        && Objects.equals(gcpMetadataTaskContext.getUserCredential().toString(),
-        that.gcpMetadataTaskContext.getUserCredential().toString())
         && Objects.equals(gcpMetadataTaskContext.getUserId(),
         that.gcpMetadataTaskContext.getUserId())
-        && Objects.equals(gcpMetadataTaskContext.getUserIp(),
-        that.gcpMetadataTaskContext.getUserIp())
         && Objects.equals(scopes, that.scopes);
   }
 
@@ -72,13 +71,11 @@ public final class ProvisionedCredentialCacheKey {
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-
       if (gcpMetadataTaskContext == null) {
         this.hashCode = hashCode = Objects.hash(scopes);
       } else {
         this.hashCode = hashCode = Objects.hash(gcpMetadataTaskContext.getNamespace(),
-            gcpMetadataTaskContext.getUserCredential().toString(),
-            gcpMetadataTaskContext.getUserId(), gcpMetadataTaskContext.getUserIp(), scopes);
+            gcpMetadataTaskContext.getUserId(), scopes);
       }
     }
     return hashCode;

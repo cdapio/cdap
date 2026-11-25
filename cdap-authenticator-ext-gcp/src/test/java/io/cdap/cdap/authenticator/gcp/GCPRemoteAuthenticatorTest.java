@@ -93,4 +93,52 @@ public class GCPRemoteAuthenticatorTest {
     Assert.assertEquals(accessTokenValue, credential.getValue());
     verify(mockGoogleCredentials, times(0)).refreshAccessToken();
   }
+
+  @Test
+  public void testRemoteAuthenticatorRefreshesAccessTokenNearExpiry() throws Exception {
+    // This is just an arbitrary fixed point in time.
+    Instant fixedInstant = Instant.ofEpochSecond(1646358109);
+    Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.systemDefault());
+    GoogleCredentials mockGoogleCredentials = mock(GoogleCredentials.class);
+    AccessToken expiringAccessToken = new AccessToken("expiring-access-token",
+        Date.from(fixedInstant.plus(Duration.ofMinutes(4))));
+    Instant newExpiry = fixedInstant.plus(Duration.ofHours(1));
+    when(mockGoogleCredentials.refreshAccessToken())
+        .thenReturn(new AccessToken("access-token", Date.from(newExpiry)));
+    GCPRemoteAuthenticator gcpRemoteAuthenticator =
+        new GCPRemoteAuthenticator(mockGoogleCredentials, fixedClock, expiringAccessToken);
+
+    // A token with less than the refresh buffer left is renewed; expiry is in epoch seconds.
+    Credential credential = gcpRemoteAuthenticator.getCredentials();
+    Assert.assertEquals("access-token", credential.getValue());
+    Assert.assertEquals(Long.valueOf(newExpiry.getEpochSecond()),
+        credential.getExpirationTimeSecs());
+    verify(mockGoogleCredentials, times(1)).refreshAccessToken();
+  }
+
+  @Test
+  public void testRemoteAuthenticatorRefreshBufferBoundary() throws Exception {
+    Instant fixedInstant = Instant.ofEpochSecond(1646358109);
+    Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.systemDefault());
+    GoogleCredentials mockGoogleCredentials = mock(GoogleCredentials.class);
+    Instant newExpiry = fixedInstant.plus(Duration.ofHours(1));
+    when(mockGoogleCredentials.refreshAccessToken())
+        .thenReturn(new AccessToken("refreshed-token", Date.from(newExpiry)));
+
+    // 5m + 1s remaining is outside the 5m refresh buffer: keep cached token.
+    AccessToken justOutside = new AccessToken("cached-token",
+        Date.from(fixedInstant.plus(Duration.ofMinutes(5)).plusSeconds(1)));
+    GCPRemoteAuthenticator outsideAuth =
+        new GCPRemoteAuthenticator(mockGoogleCredentials, fixedClock, justOutside);
+    Assert.assertEquals("cached-token", outsideAuth.getCredentials().getValue());
+    verify(mockGoogleCredentials, times(0)).refreshAccessToken();
+
+    // Exactly 5m remaining is inside the buffer: renew.
+    AccessToken atBoundary = new AccessToken("boundary-token",
+        Date.from(fixedInstant.plus(Duration.ofMinutes(5))));
+    GCPRemoteAuthenticator boundaryAuth =
+        new GCPRemoteAuthenticator(mockGoogleCredentials, fixedClock, atBoundary);
+    Assert.assertEquals("refreshed-token", boundaryAuth.getCredentials().getValue());
+    verify(mockGoogleCredentials, times(1)).refreshAccessToken();
+  }
 }

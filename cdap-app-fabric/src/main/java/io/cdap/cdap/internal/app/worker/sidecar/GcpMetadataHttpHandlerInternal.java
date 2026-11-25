@@ -48,6 +48,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
@@ -72,14 +73,17 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   private static final Logger LOG = LoggerFactory.getLogger(GcpMetadataHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
       new BasicThrowableCodec()).create();
+  // Refetch cached tokens within 5m of expiry so early-refreshing GCP clients get a fresh token.
+  // Matches GCPRemoteAuthenticator.REFRESH_BUFFER.
+  private static final Duration TOKEN_REFRESH_BUFFER = Duration.ofMinutes(5);
   private final CConfiguration cConf;
+  private final Clock clock;
   private final NamespaceCredentialProvider credentialProvider;
   private final RemoteAuthenticator remoteAuthenticator;
   private final GcpWorkloadIdentityInternalAuthenticator gcpWorkloadIdentityInternalAuthenticator;
-  private GcpMetadataTaskContext gcpMetadataTaskContext;
-  private final LoadingCache<ProvisionedCredentialCacheKey,
-      GcpTokenResponse> credentialLoadingCache;
-  private boolean credentialIdentityPresent;
+  private volatile GcpMetadataTaskContext gcpMetadataTaskContext;
+  private final LoadingCache<ProvisionedCredentialCacheKey, CachedToken> credentialLoadingCache;
+  private volatile boolean credentialIdentityPresent;
 
   /**
    * Constructs the {@link GcpMetadataHttpHandlerInternal}.
@@ -88,7 +92,13 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
    */
   public GcpMetadataHttpHandlerInternal(CConfiguration cConf,
       RemoteClientFactory remoteClientFactory, RemoteAuthenticator remoteAuthenticator) {
+    this(cConf, remoteClientFactory, remoteAuthenticator, Clock.systemUTC());
+  }
+
+  GcpMetadataHttpHandlerInternal(CConfiguration cConf, RemoteClientFactory remoteClientFactory,
+      RemoteAuthenticator remoteAuthenticator, Clock clock) {
     this.cConf = cConf;
+    this.clock = clock;
     this.remoteAuthenticator = remoteAuthenticator;
     this.gcpWorkloadIdentityInternalAuthenticator =
         new GcpWorkloadIdentityInternalAuthenticator(gcpMetadataTaskContext);
@@ -96,11 +106,10 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
         this.gcpWorkloadIdentityInternalAuthenticator);
     this.credentialIdentityPresent = true;
     this.credentialLoadingCache = CacheBuilder.newBuilder()
-        // Provisioned credential expire after 60mins, assuming 20% buffer in cache exp (0.8*60).
         .expireAfterWrite(48, TimeUnit.MINUTES)
-        .build(new CacheLoader<ProvisionedCredentialCacheKey, GcpTokenResponse>() {
+        .build(new CacheLoader<ProvisionedCredentialCacheKey, CachedToken>() {
           @Override
-          public GcpTokenResponse load(ProvisionedCredentialCacheKey
+          public CachedToken load(ProvisionedCredentialCacheKey
               provisionedCredentialCacheKey) throws Exception {
             return fetchTokenFromCredentialProvider(
                 provisionedCredentialCacheKey.getGcpMetadataTaskContext(),
@@ -153,7 +162,8 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
               METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE));
     }
 
-    if (gcpMetadataTaskContext == null) {
+    GcpMetadataTaskContext taskContext = this.gcpMetadataTaskContext;
+    if (taskContext == null) {
       // needed when initializing
       // io.cdap.cdap.common.guice.DFSLocationModule$LocationFactoryProvider#get
       // in io.cdap.cdap.internal.app.worker.TaskWorkerTwillRunnable.
@@ -166,8 +176,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     if (credentialIdentityPresent) {
       try {
         GcpTokenResponse gcpTokenResponse =
-            credentialLoadingCache.get(
-                new ProvisionedCredentialCacheKey(gcpMetadataTaskContext, scopes));
+            getTokenResponse(new ProvisionedCredentialCacheKey(taskContext, scopes));
         responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
         return;
       } catch (ExecutionException e) {
@@ -184,10 +193,10 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     try {
       GcpTokenResponse gcpTokenResponse;
       if (Strings.isNullOrEmpty(scopes)) {
-        gcpTokenResponse = convert(remoteAuthenticator.getCredentials());
+        gcpTokenResponse =
+            convert(remoteAuthenticator.getCredentials()).toResponse(clock.instant());
       } else {
-        gcpTokenResponse = credentialLoadingCache.get(
-            new ProvisionedCredentialCacheKey(null, scopes));
+        gcpTokenResponse = getTokenResponse(new ProvisionedCredentialCacheKey(null, scopes));
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(gcpTokenResponse));
     } catch (ExecutionException ex) {
@@ -196,7 +205,23 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     }
   }
 
-  private GcpTokenResponse fetchTokenFromCredentialProvider(
+  /**
+   * Returns the token for the key, fetching a new one if the cached token is within
+   * {@link #TOKEN_REFRESH_BUFFER} of expiry. A newly fetched token is returned even if it is
+   * itself close to expiry, with its real {@code expires_in}, so the caller refreshes it on its
+   * own schedule instead of this method retrying in a loop.
+   */
+  private GcpTokenResponse getTokenResponse(ProvisionedCredentialCacheKey key)
+      throws ExecutionException {
+    CachedToken cached = credentialLoadingCache.getIfPresent(key);
+    if (cached != null && cached.isNearExpiry(clock.instant())) {
+      // Remove only this stale entry, so a fresh token loaded by a concurrent request is kept.
+      credentialLoadingCache.asMap().remove(key, cached);
+    }
+    return credentialLoadingCache.get(key).toResponse(clock.instant());
+  }
+
+  private CachedToken fetchTokenFromCredentialProvider(
       @Nullable GcpMetadataTaskContext gcpMetadataTaskContext, String scopes) throws Exception {
     if (gcpMetadataTaskContext == null) {
       return convert(remoteAuthenticator.getCredentials(scopes));
@@ -208,17 +233,21 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
     return convert(provisionedCredential);
   }
 
-  private GcpTokenResponse convert(ProvisionedCredential provisionedCredential) {
-    return new GcpTokenResponse("Bearer", provisionedCredential.get(),
-        Duration.between(Instant.now(), provisionedCredential.getExpiration()).getSeconds());
+  private CachedToken convert(ProvisionedCredential provisionedCredential) {
+    return new CachedToken("Bearer", provisionedCredential.get(),
+        provisionedCredential.getExpiration());
   }
 
-  private GcpTokenResponse convert(@Nullable Credential credential) throws IOException {
+  private CachedToken convert(@Nullable Credential credential) throws IOException {
     if (credential == null || Strings.isNullOrEmpty(credential.getValue())) {
       throw new IOException("Unable to fetch credential");
     }
-    return new GcpTokenResponse(credential.getType().getQualifiedName(), credential.getValue(),
-        credential.getExpirationTimeSecs());
+    if (credential.getExpirationTimeSecs() == null) {
+      throw new IOException("Fetched credential has no expiration time");
+    }
+    // The remote authenticator reports expiry as epoch seconds, not as a remaining lifetime.
+    return new CachedToken(credential.getType().getQualifiedName(), credential.getValue(),
+        Instant.ofEpochSecond(credential.getExpirationTimeSecs()));
   }
 
   /**
@@ -232,11 +261,12 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
   public void setContext(FullHttpRequest request, HttpResponder responder)
       throws BadRequestException, ForbiddenException {
     requireMetadataFlavorHeader(request);
-    this.gcpMetadataTaskContext = getGcpMetadataTaskContext(request);
-    this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
+    GcpMetadataTaskContext context = getGcpMetadataTaskContext(request);
+    this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(context);
+    this.gcpMetadataTaskContext = context;
     responder.sendJson(HttpResponseStatus.OK,
         String.format("Context was set successfully with namespace '%s'.",
-            gcpMetadataTaskContext.getNamespace()));
+            context.getNamespace()));
   }
 
   /**
@@ -251,7 +281,7 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       throws ForbiddenException {
     requireMetadataFlavorHeader(request);
     this.gcpMetadataTaskContext = null;
-    this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(gcpMetadataTaskContext);
+    this.gcpWorkloadIdentityInternalAuthenticator.setGcpMetadataTaskContext(null);
     this.credentialLoadingCache.invalidateAll();
     this.credentialIdentityPresent = true;
     LOG.trace("Context cleared.");
@@ -288,6 +318,31 @@ public class GcpMetadataHttpHandlerInternal extends AbstractAppFabricHttpHandler
       return parseBody(httpRequest, GcpMetadataTaskContext.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid json object provided in request body.");
+    }
+  }
+
+  /**
+   * A token together with the instant it expires, so that {@code expires_in} can be computed
+   * for each response instead of being fixed when the token is cached.
+   */
+  private static final class CachedToken {
+    private final String tokenType;
+    private final String accessToken;
+    private final Instant expiry;
+
+    CachedToken(String tokenType, String accessToken, Instant expiry) {
+      this.tokenType = tokenType;
+      this.accessToken = accessToken;
+      this.expiry = expiry;
+    }
+
+    boolean isNearExpiry(Instant now) {
+      return !now.isBefore(expiry.minus(TOKEN_REFRESH_BUFFER));
+    }
+
+    GcpTokenResponse toResponse(Instant now) {
+      long expiresInSecs = Math.max(0, Duration.between(now, expiry).getSeconds());
+      return new GcpTokenResponse(tokenType, accessToken, expiresInSecs);
     }
   }
 }
