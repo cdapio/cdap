@@ -125,6 +125,8 @@ public final class SparkRuntimeContextProvider {
   static final String PROGRAM_JAR_EXPANDED_NAME = "program.jar.expanded.zip";
   static final String PROGRAM_JAR_NAME = "program.jar";
   static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
+  static final String SPARK_EXECUTOR_CLASSLOADER_NAME =
+      "org.apache.spark.executor.ExecutorClassLoader";
   public static final String ARTIFACTS_DIRECTORY_NAME = "artifacts_archive.jar";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
@@ -150,7 +152,8 @@ public final class SparkRuntimeContextProvider {
 
     // For interactive Spark, it uses ExecutorClassLoader, which doesn't follow normal classloader hierarchy.
     // Since the presence of ExecutorClassLoader is optional in Spark, use reflection to gain access to the parentLoader
-    if (EXECUTOR_CLASSLOADER_NAME.equals(runtimeClassLoader.getClass().getName())) {
+    String clName = runtimeClassLoader.getClass().getName();
+    if (EXECUTOR_CLASSLOADER_NAME.equals(clName) || SPARK_EXECUTOR_CLASSLOADER_NAME.equals(clName)) {
       try {
         Method getParentLoader = runtimeClassLoader.getClass().getDeclaredMethod("parentLoader");
         if (!getParentLoader.isAccessible()) {
@@ -160,7 +163,7 @@ public final class SparkRuntimeContextProvider {
       } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
         LOG.warn("Unable to get the CDAP runtime classloader from {}. "
                    + "Spark program may not be running correctly if {} is being used.",
-                 EXECUTOR_CLASSLOADER_NAME, SparkInterpreter.class.getName(), e);
+                 clName, SparkInterpreter.class.getName(), e);
       }
     }
 

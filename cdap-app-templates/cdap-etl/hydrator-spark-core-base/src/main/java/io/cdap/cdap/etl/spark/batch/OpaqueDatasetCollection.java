@@ -146,14 +146,25 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
           return (ExpressionEncoder<Row>)applyMethod.invoke(null, agnosticEncoderObj);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
                  ClassNotFoundException e) {
-          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+          Throwable cause =
+              e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+          if (cause instanceof Error) {
+            throw (Error) cause;
+          }
+          errorStrBuilder.append(System.lineSeparator()).append(cause.getMessage());
         }
 
         // If code reaches here, meaning it should be spark 3.3.2 or lower.
         try {
-          return RowEncoder.apply(sparkSchema);
+          Method applyMethod = RowEncoder.class.getMethod("apply", StructType.class);
+          return (ExpressionEncoder<Row>) applyMethod.invoke(null, sparkSchema);
         } catch (Exception e) {
-          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+          Throwable cause =
+              e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+          if (cause instanceof Error) {
+            throw (Error) cause;
+          }
+          errorStrBuilder.append(System.lineSeparator()).append(cause.getMessage());
         }
         throw new RuntimeException(errorStrBuilder.toString());
       });
