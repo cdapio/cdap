@@ -19,22 +19,16 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.security.AuditDetail;
-import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
-import io.cdap.http.BodyConsumer;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +41,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
   private static final Gson GSON = new Gson();
-
-  private static final String HEADER_CLASS_NAME = "X-Class-Name";
 
   private final DatasetTypeService typeService;
 
@@ -81,17 +73,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespaceId) throws Exception {
     typeService.deleteAll(new NamespaceId(namespaceId));
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @PUT
-  @Path("/data/modules/{name}")
-  @AuditPolicy(AuditDetail.HEADERS)
-  public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
-      @QueryParam("force") final boolean forceUpdate,
-      @HeaderParam(HEADER_CLASS_NAME) final String className) throws Exception {
-    return typeService.addModule(new NamespaceId(namespaceId).datasetModule(name), className,
-        forceUpdate);
   }
 
   @DELETE

@@ -19,15 +19,12 @@ package io.cdap.cdap.test.app;
 import com.google.common.base.Charsets;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.app.AbstractApplication;
-import io.cdap.cdap.api.dataset.Dataset;
-import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.service.AbstractService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import java.io.IOException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -41,7 +38,7 @@ public class DummyApp extends AbstractApplication {
     setName("DummyApp");
     setDescription("DummyApp");
     createDataset("whom", KeyValueTable.class);
-    createDataset("customDataset", CustomDummyDataset.class);
+    createDataset("customDataset", KeyValueTable.class);
     addService(new Greeting());
   }
 
@@ -80,19 +77,6 @@ public class DummyApp extends AbstractApplication {
         metrics.count("greetings.count.jane_doe", 1);
       }
       responder.sendString(String.format("Hello %s!", toGreet));
-    }
-  }
-
-  /**
-   * A dummy custom dataset to test the creation
-   */
-  public static final class CustomDummyDataset implements Dataset {
-
-    public CustomDummyDataset(DatasetSpecification spec) {
-    }
-
-    @Override
-    public void close() throws IOException {
     }
   }
 }

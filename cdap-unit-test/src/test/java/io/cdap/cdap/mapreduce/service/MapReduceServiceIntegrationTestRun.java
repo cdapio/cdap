@@ -16,12 +16,13 @@
 
 package io.cdap.cdap.mapreduce.service;
 
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.MapReduceManager;
 import io.cdap.cdap.test.ServiceManager;
-import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -36,8 +37,7 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
       applicationManager.getServiceManager(TestMapReduceServiceIntegrationApp.SERVICE_NAME).start();
     serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
-    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet =
-      getDataset(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
+    DataSetManager<KeyValueTable> inDataSet = getDataset(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
     inDataSet.get().write("key1", "Two words");
     inDataSet.get().write("key2", "Plus three words");
     inDataSet.flush();
@@ -46,11 +46,10 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
       applicationManager.getMapReduceManager(TestMapReduceServiceIntegrationApp.MR_NAME).start();
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
 
-    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet =
-      getDataset(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);
-    MyKeyValueTableDefinition.KeyValueTable results = outDataSet.get();
+    DataSetManager<KeyValueTable> outDataSet = getDataset(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);
+    KeyValueTable results = outDataSet.get();
 
-    String total = results.get(TestMapReduceServiceIntegrationApp.SQUARED_TOTAL_WORDS_COUNT);
+    String total = Bytes.toString(results.read(TestMapReduceServiceIntegrationApp.SQUARED_TOTAL_WORDS_COUNT));
     Assert.assertEquals(25, Integer.parseInt(total));
   }
 }

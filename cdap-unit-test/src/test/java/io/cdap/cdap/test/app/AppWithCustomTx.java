@@ -152,7 +152,9 @@ public class AppWithCustomTx extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
-    createDataset(CAPTURE, TransactionCapturingTable.class);
+    // the dataset type is defined by the TransactionCapturingTable.Module, which the test registers in the
+    // dataset service
+    createDataset(CAPTURE, TransactionCapturingTable.Module.getTypeName());
     addWorker(new NoTxWorker());
     addWorker(new TxWorker());
     addMapReduce(new TxMR());

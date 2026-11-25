@@ -25,6 +25,7 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.DatasetAlreadyExistsException;
 import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.common.DatasetTypeNotFoundException;
@@ -46,6 +47,7 @@ import io.cdap.cdap.data2.metadata.system.SystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.audit.AuditPayload;
 import io.cdap.cdap.proto.audit.AuditType;
@@ -312,6 +314,7 @@ public class DatasetInstanceService {
       throw new DatasetTypeNotFoundException(
           ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
     }
+    ensureNotCustomType(typeMeta);
 
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
         namespaceId, name, props.getTypeName(), props.getProperties());
@@ -392,6 +395,7 @@ public class DatasetInstanceService {
       throw new DatasetTypeNotFoundException(
           ConversionHelpers.toDatasetTypeId(instance.getParent(), existing.getType()));
     }
+    ensureNotCustomType(typeMeta);
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetProperties datasetProperties = DatasetProperties.of(properties);
@@ -485,15 +489,18 @@ public class DatasetInstanceService {
         if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
           accessEnforcer.enforce(datasetId, principal, StandardPermission.GET);
         }
+        ensureNotCustomType(datasetId, instanceManager.get(datasetId));
         result = opExecutorClient.exists(datasetId);
         break;
       case "truncate":
         if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
           accessEnforcer.enforce(datasetId, principal, StandardPermission.DELETE);
         }
-        if (instanceManager.get(datasetId) == null) {
+        DatasetSpecification specToTruncate = instanceManager.get(datasetId);
+        if (specToTruncate == null) {
           throw new DatasetNotFoundException(datasetId);
         }
+        ensureNotCustomType(datasetId, specToTruncate);
         opExecutorClient.truncate(datasetId);
         publishAudit(datasetId, AuditType.TRUNCATE);
         break;
@@ -501,9 +508,11 @@ public class DatasetInstanceService {
         if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
           accessEnforcer.enforce(datasetId, principal, StandardPermission.UPDATE);
         }
-        if (instanceManager.get(datasetId) == null) {
+        DatasetSpecification specToUpgrade = instanceManager.get(datasetId);
+        if (specToUpgrade == null) {
           throw new DatasetNotFoundException(datasetId);
         }
+        ensureNotCustomType(datasetId, specToUpgrade);
         opExecutorClient.upgrade(datasetId);
         publishAudit(datasetId, AuditType.UPDATE);
         break;
@@ -553,7 +562,53 @@ public class DatasetInstanceService {
   }
 
   /**
-   * Drops a dataset.
+   * Returns {@code true} if the given dataset type is a custom type, that is, it is defined by a
+   * dataset module that is not available in the classpath.
+   */
+  private static boolean isCustomType(DatasetTypeMeta typeMeta) {
+    for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+      if (moduleMeta.getJarLocationPath() != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Throws a {@link BadRequestException} if the given dataset type is a custom type.
+   */
+  private static void ensureNotCustomType(DatasetTypeMeta typeMeta) throws BadRequestException {
+    if (isCustomType(typeMeta)) {
+      throw new BadRequestException(String.format(
+          "Dataset type '%s' is a custom type; custom dataset types are not supported",
+          typeMeta.getName()));
+    }
+  }
+
+  /**
+   * Throws a {@link BadRequestException} if the type of the given dataset is a custom type. Does
+   * nothing if the dataset or its type does not exist.
+   */
+  private void ensureNotCustomType(DatasetId datasetId, @Nullable DatasetSpecification spec)
+      throws Exception {
+    if (spec == null) {
+      return;
+    }
+    DatasetTypeMeta typeMeta;
+    try {
+      // by pass the auth check for dataset type when the operation is not creation
+      typeMeta = getTypeInfo(datasetId.getParent(), spec.getType(), true);
+    } catch (DatasetTypeNotFoundException e) {
+      return;
+    }
+    if (typeMeta != null) {
+      ensureNotCustomType(typeMeta);
+    }
+  }
+
+  /**
+   * Drops a dataset. If the type of the dataset is a custom type or does not exist, only the
+   * metadata of the dataset is removed.
    *
    * @param spec specification of dataset to be dropped.
    * @throws Exception on error.
@@ -567,11 +622,21 @@ public class DatasetInstanceService {
     metaCache.invalidate(instance);
 
     // by pass the auth check for dataset type when the operation is not creation
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType(), true);
-    if (typeMeta == null) {
-      throw new DatasetNotFoundException(instance);
+    DatasetTypeMeta typeMeta = null;
+    try {
+      typeMeta = getTypeInfo(instance.getParent(), spec.getType(), true);
+    } catch (DatasetTypeNotFoundException e) {
+      // the type no longer exists; only the metadata of the dataset can be removed
     }
-    opExecutorClient.drop(instance, typeMeta, spec);
+    if (typeMeta == null || isCustomType(typeMeta)) {
+      // Custom dataset types are not supported, hence the dataset admin cannot be instantiated to
+      // drop the underlying storage. Only the metadata of the dataset is removed.
+      LOG.warn("Dataset {} of type '{}' is removed without cleaning up its underlying storage, "
+              + "because the type {}.", instance, spec.getType(),
+          typeMeta == null ? "does not exist" : "is a custom type");
+    } else {
+      opExecutorClient.drop(instance, typeMeta, spec);
+    }
 
     // Remove metadata for the dataset
     LOG.trace("Removing metadata for dataset {}", instance);

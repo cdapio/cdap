@@ -38,7 +38,6 @@ import io.cdap.cdap.app.runtime.spark.SparkResourceFilter;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.ArtifactClient;
 import io.cdap.cdap.client.DatasetClient;
-import io.cdap.cdap.client.DatasetModuleClient;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ScheduleClient;
@@ -117,7 +116,6 @@ public class IntegrationTestManager extends AbstractTestManager {
   private final ApplicationClient applicationClient;
   private final ArtifactClient artifactClient;
   private final DatasetClient datasetClient;
-  private final DatasetModuleClient datasetModuleClient;
   private final NamespaceClient namespaceClient;
   private final ProgramClient programClient;
   private final ScheduleClient scheduleClient;
@@ -137,7 +135,6 @@ public class IntegrationTestManager extends AbstractTestManager {
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.artifactClient = new ArtifactClient(clientConfig, restClient);
     this.datasetClient = new DatasetClient(clientConfig, restClient);
-    this.datasetModuleClient = new DatasetModuleClient(clientConfig, restClient);
     this.namespaceClient = new NamespaceClient(clientConfig, restClient);
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.scheduleClient = new ScheduleClient(clientConfig, restClient);
@@ -339,21 +336,7 @@ public class IntegrationTestManager extends AbstractTestManager {
   @Override
   public void deployDatasetModule(DatasetModuleId datasetModuleId,
       Class<? extends DatasetModule> datasetModule) throws Exception {
-    datasetModuleClient.add(datasetModuleId,
-        datasetModule.getName(),
-        createModuleJarFile(datasetModule));
-  }
-
-  private File createModuleJarFile(Class<?> cls) throws IOException {
-    String version = String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis());
-    File moduleJarFile = new File(tmpFolder,
-        String.format("%s-%s.jar", cls.getSimpleName(), version));
-    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest(),
-        CLASS_ACCEPTOR);
-    try (InputStream input = deploymentJar.getInputStream()) {
-      Files.copy(input, moduleJarFile.toPath());
-    }
-    return moduleJarFile;
+    throw new UnsupportedOperationException("Custom dataset modules are not supported");
   }
 
   @Override

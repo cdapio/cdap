@@ -40,7 +40,6 @@ import io.cdap.cdap.client.DatasetTypeClient;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.app.FakeApp;
-import io.cdap.cdap.client.app.FakeDataset;
 import io.cdap.cdap.client.app.FakePlugin;
 import io.cdap.cdap.client.app.FakeSpark;
 import io.cdap.cdap.client.app.FakeWorkflow;
@@ -391,12 +390,13 @@ public abstract class CLITestBase {
     String ownedDatasetName = PREFIX + "owned";
 
     CLIConfig cliConfig = getCliConfig();
+    // use a dataset type that is defined by the system
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
-    DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
+    DatasetTypeMeta datasetType = datasetTypeClient.get(NamespaceId.SYSTEM.datasetType("keyValueTable"));
     testCommandOutputContains(
         "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
         "Successfully created dataset");
-    testCommandOutputContains("list dataset instances", FakeDataset.class.getSimpleName());
+    testCommandOutputContains("list dataset instances", datasetName);
     testCommandOutputContains("get dataset instance properties " + datasetName, "a,1");
 
     // test dataset creation with owner
@@ -416,11 +416,11 @@ public abstract class CLITestBase {
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
     cliConfig.setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
-    testCommandOutputNotContains("list dataset instances", FakeDataset.class.getSimpleName());
+    testCommandOutputNotContains("list dataset instances", datasetName);
 
-    // also can not create dataset instances if the type it depends on exists only in a different namespace.
-    DatasetTypeId datasetType1 = barspace.datasetType(datasetType.getName());
-    testCommandOutputContains("create dataset instance " + datasetType.getName() + " " + datasetName,
+    // also can not create dataset instances if the type does not exist in the namespace nor in the system namespace
+    DatasetTypeId datasetType1 = barspace.datasetType("nonExistingType");
+    testCommandOutputContains("create dataset instance " + datasetType1.getType() + " " + datasetName,
                               new DatasetTypeNotFoundException(datasetType1).getMessage());
 
     testCommandOutputContains("use namespace default", "Now using namespace 'default'");

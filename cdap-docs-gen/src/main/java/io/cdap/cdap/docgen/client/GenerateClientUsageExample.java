@@ -138,12 +138,8 @@ public class GenerateClientUsageExample {
     // Construct the client used to interact with CDAP
     DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
 
-    // Add a dataset module
-    File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
-    DatasetModuleId datasetModuleId = NamespaceId.DEFAULT.datasetModule("someDatasetModule");
-    datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
-
     // Fetch the dataset module information
+    DatasetModuleId datasetModuleId = NamespaceId.DEFAULT.datasetModule("someDatasetModule");
     DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
 
     // Delete all dataset modules
@@ -186,17 +182,6 @@ public class GenerateClientUsageExample {
 
     // Set the number of instances of the system transaction service
     monitorClient.setSystemServiceInstances("transaction", 1);
-  }
-
-  private File createAppJarFile(Class<?> cls) {
-    return null;
-  }
-
-  /**
-   *
-   */
-  private class SomeDatasetModule {
-
   }
 
   /**

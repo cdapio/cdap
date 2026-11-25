@@ -22,13 +22,12 @@ import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.Output;
-import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
-import io.cdap.cdap.test.app.MyKeyValueTableDefinition;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -65,9 +64,8 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
   @Override
   public void configure() {
     setName("MRServiceIntegration");
-    addDatasetModule("my-kv", MyKeyValueTableDefinition.Module.class);
-    createDataset(INPUT_DATASET, "myKeyValueTable", DatasetProperties.EMPTY);
-    createDataset(OUTPUT_DATASET, "myKeyValueTable", DatasetProperties.EMPTY);
+    createDataset(INPUT_DATASET, KeyValueTable.class);
+    createDataset(OUTPUT_DATASET, KeyValueTable.class);
     addMapReduce(new CountTotal());
     addService(SERVICE_NAME, new WordsCountHandler());
   }
@@ -104,7 +102,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
     /**
      * Mapper to count amount of words in sentence using service.
      */
-    public static class MyMapper extends Mapper<String, String, BytesWritable, LongWritable> {
+    public static class MyMapper extends Mapper<byte[], byte[], BytesWritable, LongWritable> {
 
       private URL serviceUrl;
 
@@ -114,9 +112,9 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
       }
 
       @Override
-      protected void map(String key, String value, Context context) throws IOException, InterruptedException {
+      protected void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
         URL url = new URL(serviceUrl.toString() + COUNT_METHOD_NAME + "?words="
-            + URLEncoder.encode(value, Charsets.UTF_8.name()));
+            + URLEncoder.encode(Bytes.toString(value), Charsets.UTF_8.name()));
         String wordCount = doRequest(url);
         context.write(new BytesWritable(Bytes.toBytes("total")),
             new LongWritable(Long.valueOf(wordCount)));
@@ -126,7 +124,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
     /**
      * Reducer to count squared amount of words using service.
      */
-    public static class MyReducer extends Reducer<BytesWritable, LongWritable, String, String> {
+    public static class MyReducer extends Reducer<BytesWritable, LongWritable, byte[], byte[]> {
 
       private URL serviceUrl;
 
@@ -145,7 +143,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
         }
         URL url = new URL(serviceUrl.toString() + SQUARE_METHOD_NAME + "?num=" + total);
         String squaredTotal = doRequest(url);
-        context.write(SQUARED_TOTAL_WORDS_COUNT, squaredTotal);
+        context.write(Bytes.toBytes(SQUARED_TOTAL_WORDS_COUNT), Bytes.toBytes(squaredTotal));
       }
     }
 

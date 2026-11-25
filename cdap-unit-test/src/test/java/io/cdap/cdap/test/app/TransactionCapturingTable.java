@@ -16,10 +16,16 @@
 
 package io.cdap.cdap.test.app;
 
+import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Table;
+import java.io.IOException;
+import java.util.Map;
 import org.apache.tephra.Transaction;
 
 /**
@@ -59,5 +65,32 @@ public class TransactionCapturingTable extends AbstractDataset {
 
   public Table getTable() {
     return table;
+  }
+
+  /**
+   * A dataset module that defines the {@link TransactionCapturingTable} dataset type. Tests register it as an extension
+   * module of the dataset service through {@code dataset.extensions.modules}.
+   */
+  public static final class Module implements DatasetModule {
+
+    /**
+     * Returns the name of the dataset type defined by this module.
+     */
+    public static String getTypeName() {
+      return TransactionCapturingTable.class.getName();
+    }
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      registry.add(new CompositeDatasetDefinition<TransactionCapturingTable>(getTypeName(), "t",
+                                                          registry.get("table")) {
+        @Override
+        public TransactionCapturingTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+          Table embedded = getDataset(datasetContext, "t", spec, arguments, classLoader);
+          return new TransactionCapturingTable(spec, embedded);
+        }
+      });
+    }
   }
 }

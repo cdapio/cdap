@@ -59,6 +59,9 @@ public class TestFrameworkTestSuite extends TestFrameworkTestBase {
   // Note that setting the following configuration in any of the above Test classes is ignored, since
   // they are run as part of this TestSuite.
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.CLUSTER_NAME, "testCluster");
+  public static final TestConfiguration CONFIG = new TestConfiguration(
+    Constants.CLUSTER_NAME, "testCluster",
+    // the types of some datasets of the test apps are defined by extension modules of the dataset service
+    Constants.Dataset.Extensions.MODULES, DATASET_EXTENSION_MODULES);
 
 }

@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.deploy;
 import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithCustomDatasetModule;
+import io.cdap.cdap.AppsWithCustomDatasetType;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
@@ -26,11 +27,13 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.app.program.ProgramDescriptor;
+import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -43,10 +46,10 @@ import io.cdap.cdap.proto.id.ProgramId;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -63,29 +66,16 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 /**
  * Tests the functionality of Deploy Manager.
  */
-@RunWith(Parameterized.class)
 public class LocalApplicationManagerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   public static final Gson GSON = new Gson();
 
-  @Parameterized.Parameters(name = "{index} : allowCustomDatasetModule = {0}")
-  public static Collection<Object[]> parameters() {
-    return Arrays.asList(new Object[][] {
-      {true},
-      {false},
-    });
-  }
-
   private static LocationFactory lf;
-
-  private final boolean allowCustomDatasetModule;
 
   @BeforeClass
   public static void before() throws Exception {
@@ -96,7 +86,6 @@ public class LocalApplicationManagerTest {
   public void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setBoolean(Constants.Dataset.CUSTOM_MODULE_ENABLED, allowCustomDatasetModule);
 
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector(cConf).getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -105,10 +94,6 @@ public class LocalApplicationManagerTest {
   @After
   public void cleanup() {
     AppFabricTestHelper.shutdown();
-  }
-
-  public LocalApplicationManagerTest(boolean allowCustomDatasetModule) {
-    this.allowCustomDatasetModule = allowCustomDatasetModule;
   }
 
   /**
@@ -203,33 +188,47 @@ public class LocalApplicationManagerTest {
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
+  /**
+   * Tests that an application that declares a dataset module or a dataset type that is not defined by the
+   * system cannot be deployed.
+   */
   @Test
-  public void testDeployCustomDatasetModule() throws Exception {
-    Location deployedJar = AppJarHelper.createDeploymentJar(lf, AppWithCustomDatasetModule.class);
-    ArtifactId artifactId = new ArtifactId("customDSModule", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
-    ApplicationClass applicationClass = new ApplicationClass(AppWithCustomDatasetModule.class.getName(), "", null);
-    AppDeploymentInfo info = AppDeploymentInfo.builder()
-      .setArtifactId(Artifacts.toProtoArtifactId(NamespaceId.DEFAULT, artifactId))
-      .setArtifactLocation(deployedJar)
-      .setNamespaceId(NamespaceId.DEFAULT)
-      .setApplicationClass(applicationClass)
-      .setAppName("CustomDSApp")
-      .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
-      .build();
+  public void testDeployCustomDatasetNotSupported() throws Exception {
+    List<Class<?>> appClasses = Arrays.asList(AppWithCustomDatasetModule.class,
+                                              AppsWithCustomDatasetType.AppWithDatasetType.class,
+                                              AppsWithCustomDatasetType.AppWithDatasetOfCustomClass.class,
+                                              AppsWithCustomDatasetType.AppWithLocalDatasetOfCustomClass.class);
+    for (Class<?> appClass : appClasses) {
+      Location deployedJar = AppJarHelper.createDeploymentJar(lf, appClass);
+      ArtifactId artifactId = new ArtifactId(appClass.getSimpleName(), new ArtifactVersion("1.0.0-SNAPSHOT"),
+                                             ArtifactScope.USER);
+      ApplicationClass applicationClass = new ApplicationClass(appClass.getName(), "", null);
+      AppDeploymentInfo info = AppDeploymentInfo.builder()
+        .setArtifactId(Artifacts.toProtoArtifactId(NamespaceId.DEFAULT, artifactId))
+        .setArtifactLocation(deployedJar)
+        .setNamespaceId(NamespaceId.DEFAULT)
+        .setApplicationClass(applicationClass)
+        .setAppName(appClass.getSimpleName())
+        .setChangeDetail(new ChangeDetail(null, null, null, System.currentTimeMillis()))
+        .build();
 
-    try {
-      AppFabricTestHelper.getLocalManager().deploy(info).get();
-      if (!allowCustomDatasetModule) {
-        Assert.fail("Expected to throw IllegalArgumentException when custom dataset module is not supported");
-      }
-    } catch (ExecutionException e) {
-      // There shouldn't be any exception if custom dataset module is allowed
-      if (allowCustomDatasetModule) {
-        throw e;
-      }
-      if (!(e.getCause() instanceof IllegalStateException)) {
-        throw e;
+      try {
+        AppFabricTestHelper.getLocalManager().deploy(info).get();
+        Assert.fail("Expected deployment of " + appClass.getName() + " to fail");
+      } catch (ExecutionException e) {
+        if (!(e.getCause() instanceof InvalidArtifactException)) {
+          throw e;
+        }
+        Assert.assertTrue(e.getCause().getMessage(),
+                          e.getCause().getMessage().contains("Custom dataset module is not supported"));
       }
     }
+
+    // no dataset module, type or instance was added by any of the deployments
+    DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
+    Assert.assertNull(datasetFramework.getTypeInfo(NamespaceId.DEFAULT.datasetType("testDataset")));
+    Assert.assertNull(datasetFramework.getTypeInfo(
+      NamespaceId.DEFAULT.datasetType(AppsWithCustomDatasetType.CustomDataset.class.getName())));
+    Assert.assertTrue(datasetFramework.getInstances(NamespaceId.DEFAULT).isEmpty());
   }
 }

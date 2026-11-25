@@ -52,7 +52,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -248,24 +247,8 @@ public class AuthorizationTest extends TestBase {
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    // alice will not be able to deploy the app since she does not have privilege on the implicit dataset module
-    try {
-      deployApplication(AUTH_NAMESPACE, DummyApp.class);
-      Assert.fail();
-    } catch (UnauthorizedException e) {
-      // expected
-    }
-
-    // grant alice the required implicit type and module
-    grantAndAssertSuccess(AUTH_NAMESPACE.datasetType(DummyApp.CustomDummyDataset.class.getName()), ALICE,
-                          EnumSet.of(StandardPermission.GET, StandardPermission.CREATE));
-    cleanUpEntities.add(AUTH_NAMESPACE.datasetType(DummyApp.CustomDummyDataset.class.getName()));
-    grantAndAssertSuccess(AUTH_NAMESPACE.datasetModule(DummyApp.CustomDummyDataset.class.getName()), ALICE,
-                          EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
-    cleanUpEntities.add(AUTH_NAMESPACE.datasetModule(DummyApp.CustomDummyDataset.class.getName()));
-
     RoleController accessController = getAccessController();
-    // this time it should be successful
+    // the deployment should be successful
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, DummyApp.class);
     // Bob should not have any privileges on Alice's app
     Assert.assertTrue("Bob should not have any privileges on alice's app",
@@ -466,10 +449,6 @@ public class AuthorizationTest extends TestBase {
       .put(serviceId, ImmutableSet.of(ApplicationPermission.EXECUTE,
                                       StandardPermission.GET, StandardPermission.UPDATE))
       .put(AUTH_NAMESPACE.dataset("customDataset"), EnumSet.of(StandardPermission.CREATE, StandardPermission.GET))
-      .put(AUTH_NAMESPACE.datasetType(DummyApp.CustomDummyDataset.class.getName()),
-           EnumSet.of(StandardPermission.GET, StandardPermission.CREATE))
-      .put(AUTH_NAMESPACE.datasetModule(DummyApp.CustomDummyDataset.class.getName()),
-           EnumSet.of(StandardPermission.CREATE, StandardPermission.GET))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
@@ -1312,8 +1291,6 @@ public class AuthorizationTest extends TestBase {
     String owner = appOwner != null ? appOwner : nsMeta.getConfig().getPrincipal();
     KerberosPrincipalId principalId = new KerberosPrincipalId(owner);
     DatasetId dummyDatasetId = namespaceId.dataset("customDataset");
-    DatasetTypeId dummyTypeId = namespaceId.datasetType(DummyApp.CustomDummyDataset.class.getName());
-    DatasetModuleId dummyModuleId = namespaceId.datasetModule((DummyApp.CustomDummyDataset.class.getName()));
     // these are the privileges that are needed to deploy the app if no impersonation is involved,
     // can check testApps() for more info
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
@@ -1324,8 +1301,6 @@ public class AuthorizationTest extends TestBase {
       .put(datasetTypeId, EnumSet.of(StandardPermission.UPDATE))
       .put(principalId, EnumSet.of(AccessPermission.SET_OWNER))
       .put(dummyDatasetId, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET))
-      .put(dummyTypeId, EnumSet.of(StandardPermission.UPDATE))
-      .put(dummyModuleId, EnumSet.of(StandardPermission.UPDATE))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
@@ -1346,8 +1321,6 @@ public class AuthorizationTest extends TestBase {
     revokeAndAssertSuccess(datasetId);
     revokeAndAssertSuccess(datasetTypeId);
     revokeAndAssertSuccess(dummyDatasetId);
-    revokeAndAssertSuccess(dummyTypeId);
-    revokeAndAssertSuccess(dummyModuleId);
 
     Principal principal = new Principal(owner, Principal.PrincipalType.USER);
     // grant privileges to owner
@@ -1355,8 +1328,6 @@ public class AuthorizationTest extends TestBase {
     grantAndAssertSuccess(datasetId, principal, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
     grantAndAssertSuccess(datasetTypeId, principal, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
     grantAndAssertSuccess(dummyDatasetId, principal, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
-    grantAndAssertSuccess(dummyTypeId, principal, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
-    grantAndAssertSuccess(dummyModuleId, principal, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET));
 
     // this time it should be successful
     deployApplication(dummyAppId, appRequest);

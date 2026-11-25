@@ -111,6 +111,8 @@ public class MapReduceRunnerTestBase {
     if (txCleanupInterval != null) {
       conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, txCleanupInterval);
     }
+    // the type of the dataset of the AppWithTxAware is defined by an extension module
+    conf.set(Constants.Dataset.Extensions.MODULES, AppWithTxAware.PedanticTxAwareModule.class.getName());
     injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);

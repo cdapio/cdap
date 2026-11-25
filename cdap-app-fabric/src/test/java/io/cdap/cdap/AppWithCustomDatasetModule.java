@@ -26,7 +26,7 @@ import io.cdap.cdap.api.worker.AbstractWorker;
 import io.cdap.cdap.data2.dataset2.cache.TestDatasetDefinition;
 
 /**
- * An app for testing the configuration for enabling/disabling custom dataset module deployment.
+ * An app that adds a custom dataset module, for testing that such an app cannot be deployed.
  */
 public class AppWithCustomDatasetModule extends AbstractApplication {
 

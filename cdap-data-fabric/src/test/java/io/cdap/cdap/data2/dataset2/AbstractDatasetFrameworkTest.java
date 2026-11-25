@@ -94,6 +94,7 @@ import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -109,11 +110,34 @@ public abstract class AbstractDatasetFrameworkTest {
 
   protected abstract DatasetFramework getFramework() throws DatasetManagementException;
 
+  /**
+   * Returns whether dataset modules can be added to the {@link DatasetFramework} under test. If not, the modules
+   * in {@link #TEST_MODULES} must be available as system modules in the framework.
+   */
+  protected boolean supportsAddModule() {
+    return true;
+  }
+
   protected static final Map<String, DatasetModule> DEFAULT_MODULES;
   static {
     DEFAULT_MODULES = Maps.newLinkedHashMap();
     DEFAULT_MODULES.put("orderedTable-memory", new InMemoryTableModule());
     DEFAULT_MODULES.put("core", new CoreDatasetsModule());
+  }
+
+  /**
+   * The dataset modules used by the tests in addition to the {@link #DEFAULT_MODULES}. If the framework under
+   * test does not support adding modules, these need to be registered as system modules.
+   */
+  protected static final Map<String, DatasetModule> TEST_MODULES;
+
+  static {
+    TEST_MODULES = Maps.newLinkedHashMap();
+    TEST_MODULES.put("file", new FileSetModule());
+    TEST_MODULES.put("pfs", new PartitionedFileSetModule());
+    TEST_MODULES.put("keyValue", new SimpleKVTableModule());
+    TEST_MODULES.put("doubleKeyValue", new DoubleWrappedKVTableModule());
+    TEST_MODULES.put("embedTwice", new EmbedsTableTwiceDatasetModule());
   }
 
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId("myspace");
@@ -220,11 +244,13 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertFalse(framework.hasType(IN_MEMORY_TYPE));
     Assert.assertFalse(framework.hasType(SIMPLE_KV_TYPE));
     // add module to namespace 'myspace'
-    framework.addModule(KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
-    // make sure it got added to 'myspace'
-    Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
-    // but not to 'system'
-    Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
+    addModule(framework, KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
+    if (supportsAddModule()) {
+      // make sure it got added to 'myspace'
+      Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
+      // but not to 'system'
+      Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
+    }
 
     Assert.assertFalse(framework.hasInstance(MY_TABLE));
     // Creating instance using a type from own namespace
@@ -263,7 +289,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance(MY_TABLE);
-    framework.deleteModule(KEY_VALUE);
+    deleteModule(framework, KEY_VALUE);
 
     // recreate instance without adding a module in 'myspace'. This should use types from default namespace
     framework.addInstance("table", MY_TABLE, DatasetProperties.EMPTY);
@@ -297,13 +323,14 @@ public abstract class AbstractDatasetFrameworkTest {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
 
-    framework.addModule(IN_MEMORY, new InMemoryTableModule());
-    framework.addModule(CORE, new CoreDatasetsModule());
-    Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
+    addModule(framework, IN_MEMORY, new InMemoryTableModule());
+    addModule(framework, CORE, new CoreDatasetsModule());
     Assert.assertFalse(framework.hasType(SIMPLE_KV_TYPE));
-    framework.addModule(KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
-    Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
-    Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
+    addModule(framework, KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
+    if (supportsAddModule()) {
+      Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
+      Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
+    }
 
     // Creating instance
     Assert.assertFalse(framework.hasInstance(MY_TABLE));
@@ -314,9 +341,9 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance(MY_TABLE);
-    framework.deleteModule(KEY_VALUE);
-    framework.deleteModule(CORE);
-    framework.deleteModule(IN_MEMORY);
+    deleteModule(framework, KEY_VALUE);
+    deleteModule(framework, CORE);
+    deleteModule(framework, IN_MEMORY);
   }
 
   @Test
@@ -324,14 +351,15 @@ public abstract class AbstractDatasetFrameworkTest {
     // Configuring Dataset types
     DatasetFramework framework = getFramework();
 
-    framework.addModule(IN_MEMORY, new InMemoryTableModule());
-    framework.addModule(CORE, new CoreDatasetsModule());
-    framework.addModule(KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
-    Assert.assertFalse(framework.hasSystemType(DoubleWrappedKVTable.class.getName()));
+    addModule(framework, IN_MEMORY, new InMemoryTableModule());
+    addModule(framework, CORE, new CoreDatasetsModule());
+    addModule(framework, KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
     Assert.assertFalse(framework.hasType(DOUBLE_KV_TYPE));
-    framework.addModule(DOUBLE_KV, new SingleTypeModule(DoubleWrappedKVTable.class));
-    Assert.assertTrue(framework.hasType(DOUBLE_KV_TYPE));
-    Assert.assertFalse(framework.hasSystemType(DoubleWrappedKVTable.class.getName()));
+    addModule(framework, DOUBLE_KV, new SingleTypeModule(DoubleWrappedKVTable.class));
+    if (supportsAddModule()) {
+      Assert.assertTrue(framework.hasType(DOUBLE_KV_TYPE));
+      Assert.assertFalse(framework.hasSystemType(DoubleWrappedKVTable.class.getName()));
+    }
 
     // Creating instance
     Assert.assertFalse(framework.hasInstance(MY_TABLE));
@@ -342,10 +370,10 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // cleanup
     framework.deleteInstance(MY_TABLE);
-    framework.deleteModule(DOUBLE_KV);
-    framework.deleteModule(KEY_VALUE);
-    framework.deleteModule(CORE);
-    framework.deleteModule(IN_MEMORY);
+    deleteModule(framework, DOUBLE_KV);
+    deleteModule(framework, KEY_VALUE);
+    deleteModule(framework, CORE);
+    deleteModule(framework, IN_MEMORY);
   }
 
   private void testCompositeDataset(DatasetFramework framework) throws Exception {
@@ -384,11 +412,11 @@ public abstract class AbstractDatasetFrameworkTest {
     // Adding modules
     DatasetFramework framework = getFramework();
     try {
-      framework.addModule(IN_MEMORY, new InMemoryTableModule());
-      framework.addModule(CORE, new CoreDatasetsModule());
-      framework.addModule(FILE, new FileSetModule());
-      framework.addModule(PFS, new PartitionedFileSetModule());
-      framework.addModule(TWICE, new SingleTypeModule(EmbedsTableTwiceDataset.class));
+      addModule(framework, IN_MEMORY, new InMemoryTableModule());
+      addModule(framework, CORE, new CoreDatasetsModule());
+      addModule(framework, FILE, new FileSetModule());
+      addModule(framework, PFS, new PartitionedFileSetModule());
+      addModule(framework, TWICE, new SingleTypeModule(EmbedsTableTwiceDataset.class));
 
       // Creating an instances
       framework.addInstance(EmbedsTableTwiceDataset.class.getName(), MY_DS,
@@ -410,15 +438,17 @@ public abstract class AbstractDatasetFrameworkTest {
     // Adding modules
     DatasetFramework framework = getFramework();
 
-    framework.addModule(IN_MEMORY, new InMemoryTableModule());
-    framework.addModule(CORE, new CoreDatasetsModule());
-    framework.addModule(FILE, new FileSetModule());
-    framework.addModule(KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
-    // keyvalue has been added in the system namespace
+    addModule(framework, IN_MEMORY, new InMemoryTableModule());
+    addModule(framework, CORE, new CoreDatasetsModule());
+    addModule(framework, FILE, new FileSetModule());
+    addModule(framework, KEY_VALUE, new SingleTypeModule(SimpleKVTable.class));
     Assert.assertTrue(framework.hasSystemType(Table.class.getName()));
-    Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
-    Assert.assertTrue(framework.hasType(tableType));
-    Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
+    if (supportsAddModule()) {
+      // keyvalue has not been added in the system namespace
+      Assert.assertFalse(framework.hasSystemType(SimpleKVTable.class.getName()));
+      Assert.assertTrue(framework.hasType(tableType));
+      Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
+    }
 
     // Creating instances
     framework.addInstance(Table.class.getName(), MY_TABLE, DatasetProperties.EMPTY);
@@ -454,15 +484,17 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertEquals(baseDir.getPath(), FileSetProperties.getBasePath(spec.getProperties()));
 
     // cleanup
-    try {
-      framework.deleteAllModules(NAMESPACE_ID);
-      Assert.fail("should not delete modules: there are datasets using their types");
-    } catch (DatasetManagementException e) {
-      // expected
+    if (supportsAddModule()) {
+      try {
+        framework.deleteAllModules(NAMESPACE_ID);
+        Assert.fail("should not delete modules: there are datasets using their types");
+      } catch (DatasetManagementException e) {
+        // expected
+      }
+      // types are still there
+      Assert.assertTrue(framework.hasType(tableType));
+      Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
     }
-    // types are still there
-    Assert.assertTrue(framework.hasType(tableType));
-    Assert.assertTrue(framework.hasType(SIMPLE_KV_TYPE));
 
     framework.deleteAllInstances(NAMESPACE_ID);
     Assert.assertEquals(0, framework.getInstances(NAMESPACE_ID).size());
@@ -545,6 +577,8 @@ public abstract class AbstractDatasetFrameworkTest {
 
   @Test
   public void testNamespaceModuleIsolation() throws Exception {
+    // modules can only be isolated between namespaces if they can be added to a namespace
+    Assume.assumeTrue(supportsAddModule());
     DatasetFramework framework = getFramework();
 
     // create 2 namespaces
@@ -561,9 +595,9 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetModuleId doubleModuleNs2 = namespace2.datasetModule(DoubleWrappedKVTable.class.getName());
     DatasetModule module1 = new SingleTypeModule(SimpleKVTable.class);
     DatasetModule module2 = new SingleTypeModule(DoubleWrappedKVTable.class);
-    framework.addModule(simpleModuleNs1, module1);
-    framework.addModule(simpleModuleNs2, module1);
-    framework.addModule(doubleModuleNs2, module2);
+    addModule(framework, simpleModuleNs1, module1);
+    addModule(framework, simpleModuleNs2, module1);
+    addModule(framework, doubleModuleNs2, module2);
 
     // check that we can add instances of datasets in those modules
     framework.addInstance(SimpleKVTable.class.getName(),
@@ -598,11 +632,11 @@ public abstract class AbstractDatasetFrameworkTest {
     }
 
     // add back modules to namespace2
-    framework.addModule(simpleModuleNs2, module1);
-    framework.addModule(doubleModuleNs2, module2);
+    addModule(framework, simpleModuleNs2, module1);
+    addModule(framework, doubleModuleNs2, module2);
     // check that deleting a single module from namespace1 does not affect namespace2
     framework.deleteAllInstances(namespace1);
-    framework.deleteModule(simpleModuleNs1);
+    deleteModule(framework, simpleModuleNs1);
     // should still be able to add an instance in namespace2
     framework.addInstance(DoubleWrappedKVTable.class.getName(),
                           namespace2.dataset("kv1"), DatasetProperties.EMPTY);
@@ -624,7 +658,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // Adding modules
     DatasetFramework framework = getFramework();
-    framework.addModule(IN_MEMORY, new InMemoryTableModule());
+    addModule(framework, IN_MEMORY, new InMemoryTableModule());
 
     // Creating instances
     framework.addInstance(Table.class.getName(), MY_TABLE, DatasetProperties.EMPTY);
@@ -663,7 +697,54 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertEquals(expectedMessages, inMemoryAuditPublisher.popMessages());
 
     // cleanup
-    framework.deleteModule(IN_MEMORY);
+    deleteModule(framework, IN_MEMORY);
+  }
+
+  private void addModule(DatasetFramework framework, DatasetModuleId moduleId, DatasetModule module)
+    throws DatasetManagementException, UnauthorizedException {
+    if (supportsAddModule()) {
+      framework.addModule(moduleId, module);
+    }
+  }
+
+  private void deleteModule(DatasetFramework framework, DatasetModuleId moduleId)
+    throws DatasetManagementException, UnauthorizedException {
+    if (supportsAddModule()) {
+      framework.deleteModule(moduleId);
+    }
+  }
+
+  /**
+   * A {@link DatasetModule} for the {@link SimpleKVTable} dataset.
+   */
+  public static final class SimpleKVTableModule implements DatasetModule {
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      new SingleTypeModule(SimpleKVTable.class).register(registry);
+    }
+  }
+
+  /**
+   * A {@link DatasetModule} for the {@link DoubleWrappedKVTable} dataset.
+   */
+  public static final class DoubleWrappedKVTableModule implements DatasetModule {
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      new SingleTypeModule(DoubleWrappedKVTable.class).register(registry);
+    }
+  }
+
+  /**
+   * A {@link DatasetModule} for the {@link EmbedsTableTwiceDataset} dataset.
+   */
+  public static final class EmbedsTableTwiceDatasetModule implements DatasetModule {
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      new SingleTypeModule(EmbedsTableTwiceDataset.class).register(registry);
+    }
   }
 
   /**

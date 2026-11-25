@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -75,8 +76,7 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
   @Override
   public void configure() {
     setName(NAME);
-    addDatasetModule(FakeDatasetModule.NAME, FakeDatasetModule.class);
-    createDataset(DS_NAME, FakeDataset.class.getName());
+    createDataset(DS_NAME, KeyValueTable.class);
     addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());
     AppConfig config = getConfig();

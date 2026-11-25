@@ -19,15 +19,11 @@ package io.cdap.cdap.data2.datafabric.dataset.service;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.module.DatasetType;
-import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.DatasetTypeId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.http.BodyConsumer;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -51,23 +47,6 @@ public interface DatasetTypeService extends Service {
    * @return the dataset module meta for the id
    */
   DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception;
-
-  /**
-   * Adds a new {@link DatasetModule}.
-   *
-   * @param datasetModuleId the {@link DatasetModuleId} for the module to be added
-   * @param className the module class name specified in the HTTP header
-   * @param forceUpdate if true, an update will be allowed even if there are conflicts with
-   *     other modules, or if removal of a type would break other modules' dependencies
-   * @return a {@link BodyConsumer} to upload the module jar in chunks
-   * @throws NotFoundException if the namespace in which the module is being added is not found
-   * @throws IOException if there are issues while performing I/O like creating temporary
-   *     directories, moving/unpacking module jar files
-   * @throws DatasetModuleConflictException if #forceUpdate is {@code false}, and there are
-   *     conflicts with other modules
-   */
-  BodyConsumer addModule(DatasetModuleId datasetModuleId, String className, boolean forceUpdate)
-      throws Exception;
 
   /**
    * Deletes the specified {@link DatasetModuleId}

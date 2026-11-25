@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 
+import com.google.common.base.Splitter;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
@@ -25,30 +26,36 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.api.dataset.Updatable;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetType;
 import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import io.cdap.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
 import io.cdap.cdap.data2.metadata.system.SystemMetadata;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.ImpersonationUtils;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,20 +67,30 @@ public class DatasetAdminService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminService.class);
 
   private final RemoteDatasetFramework dsFramework;
-  private final CConfiguration cConf;
-  private final LocationFactory locationFactory;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final Impersonator impersonator;
+  // class names of the dataset modules that are available in the classpath
+  private final Set<String> systemModuleClassNames;
 
   @Inject
   public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf,
-      LocationFactory locationFactory,
-      SystemDatasetInstantiatorFactory datasetInstantiatorFactory, Impersonator impersonator) {
+      SystemDatasetInstantiatorFactory datasetInstantiatorFactory, Impersonator impersonator,
+      @Constants.Dataset.Manager.DefaultDatasetModules Map<String, DatasetModule> defaultModules) {
     this.dsFramework = dsFramework;
-    this.cConf = cConf;
-    this.locationFactory = locationFactory;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.impersonator = impersonator;
+
+    Set<String> moduleClassNames = new HashSet<>();
+    for (DatasetModule module : defaultModules.values()) {
+      moduleClassNames.add(module.getClass().getName());
+    }
+    String extensionModules = cConf.get(Constants.Dataset.Extensions.MODULES);
+    if (extensionModules != null) {
+      for (String moduleClassName : Splitter.on(',').omitEmptyStrings().split(extensionModules)) {
+        moduleClassNames.add(moduleClassName);
+      }
+    }
+    this.systemModuleClassNames = Collections.unmodifiableSet(moduleClassNames);
   }
 
   /**
@@ -84,20 +101,21 @@ public class DatasetAdminService {
    * @param props dataset instance properties
    * @param existing if dataset already exists (in case of update), the existing properties
    * @return dataset specification
+   * @throws BadRequestException if the type meta contains a module that is not a system module
    */
   public DatasetCreationResponse createOrUpdate(final DatasetId datasetInstanceId,
       final DatasetTypeMeta typeMeta,
       final DatasetProperties props,
       @Nullable final DatasetSpecification existing) throws Exception {
 
+    validateSystemType(typeMeta);
     if (existing == null) {
       LOG.info("Creating dataset instance {}, type meta: {}", datasetInstanceId, typeMeta);
     } else {
       LOG.info("Updating dataset instance {}, type meta: {}, existing: {}",
           datasetInstanceId, typeMeta, existing);
     }
-    try (DatasetClassLoaderProvider classLoaderProvider =
-        new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+    try (DatasetClassLoaderProvider classLoaderProvider = new ConstantClassLoaderProvider()) {
       final DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespace());
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
@@ -203,11 +221,19 @@ public class DatasetAdminService {
     return SystemMetadata.EMPTY;
   }
 
+  /**
+   * Drops a dataset.
+   *
+   * @param datasetInstanceId dataset instance to be dropped
+   * @param typeMeta type meta for the dataset
+   * @param spec specification of the dataset
+   * @throws BadRequestException if the type meta contains a module that is not a system module
+   */
   public void drop(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
       final DatasetSpecification spec) throws Exception {
+    validateSystemType(typeMeta);
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
-    try (DatasetClassLoaderProvider classLoaderProvider =
-        new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+    try (DatasetClassLoaderProvider classLoaderProvider = new ConstantClassLoaderProvider()) {
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
       ImpersonationUtils.doAs(ugi, (Callable<Void>) () -> {
@@ -268,6 +294,24 @@ public class DatasetAdminService {
         return operation.perform(admin);
       } finally {
         Closeables.closeQuietly(admin);
+      }
+    }
+  }
+
+  /**
+   * Validates that the given dataset type is defined only by dataset modules that are available
+   * in the classpath.
+   *
+   * @throws BadRequestException if any module of the type has a jar location, or its class is not
+   *     one of the system dataset modules
+   */
+  private void validateSystemType(DatasetTypeMeta typeMeta) throws BadRequestException {
+    for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+      if (moduleMeta.getJarLocationPath() != null
+          || !systemModuleClassNames.contains(moduleMeta.getClassName())) {
+        throw new BadRequestException(String.format(
+            "Dataset type '%s' is a custom type; custom dataset types are not supported",
+            typeMeta.getName()));
       }
     }
   }

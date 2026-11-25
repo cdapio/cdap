@@ -144,12 +144,8 @@ DatasetModuleClient
   // Construct the client used to interact with CDAP
   DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
 
-  // Add a dataset module
-  File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
-  DatasetModuleId datasetModuleId = NamespaceId.DEFAULT.datasetModule("someDatasetModule");
-  datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
-
   // Fetch the dataset module information
+  DatasetModuleId datasetModuleId = NamespaceId.DEFAULT.datasetModule("someDatasetModule");
   DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
 
   // Delete all dataset modules

@@ -247,6 +247,7 @@ public interface TestManager {
    *
    * @param datasetModuleId the dataset module id
    * @param datasetModule module class
+   * @throws UnsupportedOperationException always, as custom dataset modules are not supported
    */
   @Beta
   void deployDatasetModule(DatasetModuleId datasetModuleId,

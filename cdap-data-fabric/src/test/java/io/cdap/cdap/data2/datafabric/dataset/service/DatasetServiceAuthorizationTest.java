@@ -17,6 +17,7 @@
 package io.cdap.cdap.data2.datafabric.dataset.service;
 
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -29,6 +30,7 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -49,6 +51,7 @@ import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -233,55 +236,45 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
   @Test
   public void testDatasetTypes() throws Exception {
-    final DatasetModuleId module1 = NamespaceId.DEFAULT.datasetModule("module1");
-    final DatasetModuleId module2 = NamespaceId.DEFAULT.datasetModule("module2");
-    final DatasetTypeId type1 = NamespaceId.DEFAULT.datasetType("datasetType1");
-    final DatasetTypeId type1x = NamespaceId.DEFAULT.datasetType("datasetType1x");
-    final DatasetTypeId type2 = NamespaceId.DEFAULT.datasetType("datasetType2");
-    final DatasetId datasetId = NamespaceId.DEFAULT.dataset("succeed");
+    final DatasetModuleId module1 = NamespaceId.DEFAULT.datasetModule("existing1");
+    final DatasetModuleId module2 = NamespaceId.DEFAULT.datasetModule("existing2");
+    final DatasetTypeId type1 = NamespaceId.DEFAULT.datasetType("existingType1");
+    final DatasetTypeId type2 = NamespaceId.DEFAULT.datasetType("existingType2");
+    final DatasetId datasetId = NamespaceId.DEFAULT.dataset("fail");
+    // write two modules to the store, as modules can only be listed and deleted through the dataset service
+    writeModule(NamespaceId.DEFAULT,
+                new DatasetModuleMeta(module1.getModule(), TestModule1x.class.getName(),
+                                      createModuleJar(module1.getModule()).toURI(),
+                                      ImmutableList.of(type1.getType()), Collections.emptyList()));
+    writeModule(NamespaceId.DEFAULT,
+                new DatasetModuleMeta(module2.getModule(), TestModule2.class.getName(),
+                                      createModuleJar(module2.getModule()).toURI(),
+                                      ImmutableList.of(type2.getType()), Collections.emptyList()));
+
     SecurityRequestContext.setUserId(ALICE.getName());
-    final Location moduleJar = createModuleJar(TestModule1x.class);
     assertAuthorizationFailure(
-      () -> dsFramework.addModule(module1, new TestModule1x(), moduleJar),
-      String.format("Expected module add operation to fail for %s because she does not have %s on %s",
-                    ALICE, StandardPermission.UPDATE, module1));
-    // grant alice ADMIN on module1
-    grantAndAssertSuccess(module1, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.DELETE,
-                                                     StandardPermission.CREATE));
-    // grant all privileges needed to create a dataset
-    grantAndAssertSuccess(type1, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET,
-                                                   StandardPermission.DELETE));
-    grantAndAssertSuccess(type1x, ALICE, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET,
-                                                    StandardPermission.DELETE));
-    grantAndAssertSuccess(datasetId, ALICE, EnumSet.allOf(StandardPermission.class));
-    dsFramework.addModule(module1, new TestModule1x(), moduleJar);
-    // all operations on module1 should succeed as alice
+      () -> dsFramework.getTypeInfo(type1),
+      String.format("Expected get type operation to fail for %s because she does not have %s on %s",
+                    ALICE, StandardPermission.GET, type1));
+    // grant alice GET on type1
+    grantAndAssertSuccess(type1, ALICE, EnumSet.of(StandardPermission.GET));
     Assert.assertNotNull(dsFramework.getTypeInfo(type1));
-    Assert.assertNotNull(dsFramework.getTypeInfo(type1x));
-    // should be able to use the type from the module to add an instance as well
-    dsFramework.addInstance(type1x.getType(), datasetId, DatasetProperties.EMPTY);
-    // but should fail as Bob
-    SecurityRequestContext.setUserId(BOB.getName());
+    // but she still has no access to type2
     assertAuthorizationFailure(
-      () -> dsFramework.addInstance(type1.getType(), NamespaceId.DEFAULT.dataset("fail"), DatasetProperties.EMPTY),
+      () -> dsFramework.getTypeInfo(type2),
+      String.format("Expected get type operation to fail for %s because she does not have %s on %s",
+                    ALICE, StandardPermission.GET, type2));
+
+    // creating an instance of a type should fail as Bob, even if he can create the dataset
+    SecurityRequestContext.setUserId(BOB.getName());
+    grantAndAssertSuccess(datasetId, BOB, EnumSet.allOf(StandardPermission.class));
+    assertAuthorizationFailure(
+      () -> dsFramework.addInstance(type1.getType(), datasetId, DatasetProperties.EMPTY),
       String.format("Creating an instance of a type from %s should fail as %s does not have any privileges on it.",
                     module1, BOB));
 
-    // granting CREATE on the module, BOB should now be able to create the dataset type
-    grantAndAssertSuccess(module2, BOB, EnumSet.of(StandardPermission.CREATE, StandardPermission.DELETE));
-    grantAndAssertSuccess(type2, BOB, EnumSet.of(StandardPermission.UPDATE, StandardPermission.GET));
-
-    // adding a module should now succeed as bob though, because bob has admin privilege on the module
-    dsFramework.addModule(module2, new TestModule2(), createModuleJar(TestModule2.class));
-    // get operation on module2 should succeed as Bob
-    Assert.assertNotNull(dsFramework.getTypeInfo(type2));
-
-    // but should fail as Alice since Alice does not have ADMIN on module2 or type2
+    // deleting modules requires privileges on the modules
     SecurityRequestContext.setUserId(ALICE.getName());
-    assertAuthorizationFailure(
-      () -> dsFramework.addInstance(type2.getType(), NamespaceId.DEFAULT.dataset("fail"), DatasetProperties.EMPTY),
-      String.format("Creating an instance of a type from %s should fail as %s does not have any privileges on it.",
-                    module2, ALICE));
     assertAuthorizationFailure(
       () -> dsFramework.deleteModule(module2),
       String.format("Deleting module %s should fail as %s does not have any privileges on it.", module2, ALICE));
@@ -289,18 +282,38 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     assertAuthorizationFailure(
       () -> dsFramework.deleteModule(module1),
       String.format("Deleting module %s should fail as %s does not have any privileges on it.", module1, BOB));
+    grantAndAssertSuccess(module1, BOB, EnumSet.of(StandardPermission.DELETE));
     assertAuthorizationFailure(
       () -> dsFramework.deleteAllModules(NamespaceId.DEFAULT),
-      String.format("Deleting all modules in %s should fail as %s does not have ADMIN privileges on it.",
-                    NamespaceId.DEFAULT, BOB));
+      String.format("Deleting all modules in %s should fail as %s does not have DELETE privileges on %s.",
+                    NamespaceId.DEFAULT, BOB, module2));
 
-    // delete all instances so modules can be deleted
-    SecurityRequestContext.setUserId(ALICE.getName());
-    dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
-    SecurityRequestContext.setUserId(BOB.getName());
-    // After granting admin on the modules, deleting all modules should succeed
-    grantAndAssertSuccess(module1, BOB, EnumSet.of(StandardPermission.UPDATE, StandardPermission.DELETE));
+    // After granting DELETE on all the modules, deleting all modules should succeed
+    grantAndAssertSuccess(module2, BOB, EnumSet.of(StandardPermission.DELETE));
     dsFramework.deleteAllModules(NamespaceId.DEFAULT);
+    SecurityRequestContext.setUserId(ALICE.getName());
+    Assert.assertNull(dsFramework.getTypeInfo(type1));
+  }
+
+  @Test
+  public void testAddModuleNotSupported() throws Exception {
+    final DatasetModuleId module = NamespaceId.DEFAULT.datasetModule("module3");
+    SecurityRequestContext.setUserId(ALICE.getName());
+    // adding a module is not supported, regardless of the privileges
+    grantAndAssertSuccess(module, ALICE, EnumSet.allOf(StandardPermission.class));
+    try {
+      dsFramework.addModule(module, new TestModule1x());
+      Assert.fail("Should not be able to add a dataset module");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
+    try {
+      dsFramework.addModule(module, new TestModule1x(), createModuleJar(module.getModule()));
+      Assert.fail("Should not be able to add a dataset module");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
+    assertNotFound(() -> dsFramework.deleteModule(module), String.format("Expected %s to not exist", module));
   }
 
   @After

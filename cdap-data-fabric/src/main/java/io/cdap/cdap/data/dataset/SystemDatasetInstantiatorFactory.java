@@ -17,31 +17,22 @@
 package io.cdap.cdap.data.dataset;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
+import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import javax.annotation.Nullable;
-import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Creates {@link SystemDatasetInstantiator} instances for use in system contexts. This is used
- * instead of directly creating a {@link SystemDatasetInstantiator} to ensure that the same
- * temporary base directory is used, and so that the factory can be injected directly instead of
- * injecting a LocationFactory, DatasetFramework, and CConfiguration object everywhere it is used.
+ * instead of directly creating a {@link SystemDatasetInstantiator} so that the factory can be
+ * injected directly wherever it is used.
  */
 public class SystemDatasetInstantiatorFactory {
 
-  private final LocationFactory locationFactory;
   private final DatasetFramework datasetFramework;
-  private final CConfiguration cConf;
 
   @Inject
-  public SystemDatasetInstantiatorFactory(LocationFactory locationFactory,
-      DatasetFramework datasetFramework,
-      CConfiguration cConf) {
-    this.locationFactory = locationFactory;
+  public SystemDatasetInstantiatorFactory(DatasetFramework datasetFramework) {
     this.datasetFramework = datasetFramework;
-    this.cConf = cConf;
   }
 
   /**
@@ -66,8 +57,7 @@ public class SystemDatasetInstantiatorFactory {
    */
   public SystemDatasetInstantiator create(@Nullable ClassLoader parentClassLoader) {
     return new SystemDatasetInstantiator(datasetFramework, parentClassLoader,
-        new DirectoryClassLoaderProvider(cConf, locationFactory),
-        null);
+        new ConstantClassLoaderProvider(parentClassLoader), null);
   }
 
 }

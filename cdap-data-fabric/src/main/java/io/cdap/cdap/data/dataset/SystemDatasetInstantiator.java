@@ -26,7 +26,6 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
-import io.cdap.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -40,9 +39,7 @@ import javax.annotation.Nullable;
 /**
  * The data set instantiator creates instances of data sets at runtime. It is mostly a wrapper
  * around {@link DatasetFramework}, except it is closeable so that any resources created by dataset
- * classloaders can be properly cleaned up. For example, a {@link DirectoryClassLoaderProvider} will
- * fetch dataset jars and unpack them in a local directory, which must be cleaned up after the
- * dataset is no longer needed.
+ * classloaders can be properly cleaned up after the dataset is no longer needed.
  */
 public class SystemDatasetInstantiator implements Closeable {
 

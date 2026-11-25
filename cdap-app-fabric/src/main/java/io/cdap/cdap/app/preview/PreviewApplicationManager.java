@@ -29,15 +29,13 @@ import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import io.cdap.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.deploy.pipeline.ValidateDatasetTypesStage;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -57,8 +55,6 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
   private final UsageRegistry usageRegistry;
-  private final ArtifactRepository artifactRepository;
-  private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer accessEnforcer;
   private final CapabilityReader capabilityReader;
@@ -68,8 +64,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   PreviewApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
       Store store, OwnerAdmin ownerAdmin, DatasetFramework datasetFramework,
       @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-      UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-      AuthenticationContext authenticationContext, Impersonator impersonator,
+      UsageRegistry usageRegistry, AuthenticationContext authenticationContext,
       AccessEnforcer accessEnforcer,
       CapabilityReader capabilityReader,
       ConfiguratorFactory configuratorFactory) {
@@ -79,8 +74,6 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.usageRegistry = usageRegistry;
-    this.artifactRepository = artifactRepository;
-    this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.ownerAdmin = ownerAdmin;
     this.accessEnforcer = accessEnforcer;
@@ -96,9 +89,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
             capabilityReader, configuratorFactory));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin,
         authenticationContext));
-    pipeline.addLast(
-        new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
-            authenticationContext, artifactRepository, impersonator));
+    pipeline.addLast(new ValidateDatasetTypesStage(inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
         authenticationContext));
     pipeline.addLast(new ProgramGenerationStage());

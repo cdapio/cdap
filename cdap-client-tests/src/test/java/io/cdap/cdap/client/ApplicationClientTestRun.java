@@ -26,10 +26,8 @@ import io.cdap.cdap.client.app.AppReturnsArgs;
 import io.cdap.cdap.client.app.ConfigurableProgramsApp;
 import io.cdap.cdap.client.app.ConfigurableProgramsApp2;
 import io.cdap.cdap.client.app.FakeApp;
-import io.cdap.cdap.client.app.FakeDatasetModule;
 import io.cdap.cdap.client.common.ClientTestBase;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.DatasetModuleNotFoundException;
 import io.cdap.cdap.common.DatasetNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
@@ -65,7 +63,6 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   private ApplicationClient appClient;
   private DatasetClient datasetClient;
-  private DatasetModuleClient datasetModuleClient;
   private ArtifactClient artifactClient;
 
   @Before
@@ -73,24 +70,17 @@ public class ApplicationClientTestRun extends ClientTestBase {
     super.setUp();
     appClient = new ApplicationClient(clientConfig);
     datasetClient = new DatasetClient(clientConfig);
-    datasetModuleClient = new DatasetModuleClient(clientConfig);
     artifactClient = new ArtifactClient(clientConfig);
   }
 
   @After
   public void cleanup() throws Throwable {
-    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
+    // Delete FakeApp's dataset so that DatasetClientTestRun works when running both inside a test suite
     // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
 
     try {
       datasetClient.delete(NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME));
     } catch (DatasetNotFoundException e) {
-      // NO-OP
-    }
-
-    try {
-      datasetModuleClient.delete(NamespaceId.DEFAULT.datasetModule(FakeDatasetModule.NAME));
-    } catch (DatasetModuleNotFoundException e) {
       // NO-OP
     }
   }

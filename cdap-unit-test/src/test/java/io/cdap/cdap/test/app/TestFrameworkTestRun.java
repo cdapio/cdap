@@ -29,12 +29,10 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.cdap.AppUsingNamespace;
 import io.cdap.cdap.ConfigTestApp;
-import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.common.Scope;
-import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetArguments;
@@ -135,7 +133,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     new TypeToken<Map<MetadataScope, Metadata>>() { }.getType();
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.CLUSTER_NAME, "testCluster");
+  public static final TestConfiguration CONFIG = new TestConfiguration(
+    Constants.CLUSTER_NAME, "testCluster",
+    // the type of a dataset of the AppWithCustomTx is defined by an extension module of the dataset service
+    Constants.Dataset.Extensions.MODULES, DATASET_EXTENSION_MODULES);
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -165,18 +166,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try {
       AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
         new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-        new AppWithDuplicateData.ConfigClass(true, false, false));
-      deployApplication(appId, createRequest);
-      Assert.fail();
-    } catch (Exception e) {
-      // expected
-    }
-
-    // test with duplicate module should fail as we don't allow multiple deployment of modules
-    try {
-      AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
-        new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-        new AppWithDuplicateData.ConfigClass(false, false, true));
+        new AppWithDuplicateData.ConfigClass(true, false));
       deployApplication(appId, createRequest);
       Assert.fail();
     } catch (Exception e) {
@@ -186,12 +176,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // test with duplicate plugin should pass as we allow multiple deployment of same plugin
     AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-      new AppWithDuplicateData.ConfigClass(false, true, false));
+      new AppWithDuplicateData.ConfigClass(false, true));
     deployApplication(appId, createRequest);
 
     // test with no duplicates should pass
     createRequest = new AppRequest<>(new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-                                     new AppWithDuplicateData.ConfigClass(false, false, false));
+                                     new AppWithDuplicateData.ConfigClass(false, false));
     deployApplication(appId, createRequest);
   }
 
@@ -1725,60 +1715,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
   }
 
-  @Test(timeout = 60000L)
-  public void testAppWithAutoDeployDatasetModule() throws Exception {
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
-  }
-
-  @Test(timeout = 60000L)
-  public void testAppWithAutoDeployDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    // we should be fine if module is already there. Deploy of module should not happen
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyService");
-  }
-
-  @Test(timeout = 60000L)
-  public void testAppWithAutoCreateDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    testAppWithDataset(AppsWithDataset.AppWithAutoCreate.class, "MyService");
-  }
-
-  @Test(timeout = 60000L)
-  public void testAppWithExistingDataset() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
-    testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyService");
-  }
-
-  @Test(timeout = 60000L)
-  public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
-    deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
-    testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyServiceWithUseDataSetAnnotation");
-  }
-
-  @Test(timeout = 60000L)
-  public void testDatasetWithoutApp() throws Exception {
-    // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
-    deployApplication(testSpace, DummyApp.class);
-    deployDatasetModule(testSpace.datasetModule("my-kv"), AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", testSpace.dataset("myTable"), DatasetProperties.EMPTY);
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager =
-      getDataset(testSpace.dataset("myTable"));
-    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
-    kvTable.put("test", "hello");
-    dataSetManager.flush();
-    Assert.assertEquals("hello", dataSetManager.get().get("test"));
-  }
-
-  @Test(timeout = 60000L)
-  public void testAppWithAutoDeployDatasetType() throws Exception {
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeployType.class, "MyService");
-  }
-
-  @Test(timeout = 60000L)
-  public void testAppWithAutoDeployDatasetTypeShortcut() throws Exception {
-    testAppWithDataset(AppsWithDataset.AppWithAutoDeployTypeShortcut.class, "MyService");
+  @Test
+  public void testDeployDatasetModuleNotSupported() throws Exception {
+    try {
+      deployDatasetModule("capture", TransactionCapturingTable.Module.class);
+      Assert.fail("Should not be able to deploy a dataset module");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
   }
 
   @Test
@@ -1873,18 +1817,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
-  }
-
-  private void testAppWithDataset(Class<? extends Application> app, String serviceName) throws Exception {
-    ApplicationManager applicationManager = deployApplication(app);
-    // Query the result
-    ServiceManager serviceManager = applicationManager.getServiceManager(serviceName).start();
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
-    callServicePut(serviceManager.getServiceURL(), "key1", "value1");
-    String response = callServiceGet(serviceManager.getServiceURL(), "key1");
-    Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
-    serviceManager.stop();
-    serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
   @Category(XSlowTests.class)
