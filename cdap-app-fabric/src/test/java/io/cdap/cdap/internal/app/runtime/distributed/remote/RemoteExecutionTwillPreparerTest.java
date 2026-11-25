@@ -25,7 +25,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -53,7 +55,7 @@ public class RemoteExecutionTwillPreparerTest {
   @Test
   public void testReadScriptBodyDropsLeadingComments() {
     Assert.assertFalse(javaVersionCheck.isEmpty());
-    Assert.assertTrue(javaVersionCheck.get(0).startsWith("if [ -n \"${JAVA_HOME}\" ]"));
+    Assert.assertTrue(javaVersionCheck.get(0).startsWith("if [ -n \"${JAVA_HOME:-}\" ]"));
     for (String line : javaVersionCheck) {
       Assert.assertFalse("Unexpected comment line: " + line, line.startsWith("#"));
     }
@@ -89,11 +91,71 @@ public class RemoteExecutionTwillPreparerTest {
     Assert.assertEquals(1, runCheck("Error: could not find libjava.so"));
   }
 
+  @Test
+  public void testFallsBackToPathWhenJavaHomeIsUnset() throws Exception {
+    // The script runs with "set -u", so an unset JAVA_HOME must not abort it.
+    File pathJava = createFakeJavaHome("openjdk version \"11.0.21\" 2023-10-17");
+    Assert.assertEquals(0, runCheck(null, pathJava));
+
+    pathJava = createFakeJavaHome("openjdk version \"1.8.0_392\"");
+    Assert.assertEquals(1, runCheck(null, pathJava));
+  }
+
+  @Test
+  public void testJavaHomeTakesPrecedenceOverPath() throws Exception {
+    File javaHome = createFakeJavaHome("openjdk version \"11.0.21\" 2023-10-17");
+    File pathJava = createFakeJavaHome("openjdk version \"1.8.0_392\"");
+    Assert.assertEquals(0, runCheck(javaHome, pathJava));
+  }
+
   /**
    * Runs the inlined Java version check against a fake {@code JAVA_HOME/bin/java} that prints the
    * given lines to stderr, and returns the exit code of the script.
    */
   private int runCheck(String... javaVersionOutput) throws Exception {
+    return runCheck(createFakeJavaHome(javaVersionOutput), null);
+  }
+
+  /**
+   * Runs the inlined Java version check under {@code set -u} and returns the exit code of the
+   * script.
+   *
+   * @param javaHome the {@code JAVA_HOME} to set, or {@code null} to leave it unset
+   * @param pathJavaHome a fake Java home whose {@code bin} directory is put first on the
+   *     {@code PATH}, or {@code null} to keep the {@code PATH} as is
+   */
+  private int runCheck(@Nullable File javaHome, @Nullable File pathJavaHome) throws Exception {
+    List<String> script = new ArrayList<>();
+    script.add("#!/bin/bash");
+    script.add("set -u");
+    script.addAll(javaVersionCheck);
+    File scriptFile = TEMP_FOLDER.newFile();
+    Files.write(scriptFile.toPath(), script, StandardCharsets.UTF_8);
+
+    ProcessBuilder builder = new ProcessBuilder(Arrays.asList("bash", scriptFile.getAbsolutePath()))
+        .redirectErrorStream(true);
+    Map<String, String> env = builder.environment();
+    if (javaHome == null) {
+      env.remove("JAVA_HOME");
+    } else {
+      env.put("JAVA_HOME", javaHome.getAbsolutePath());
+    }
+    if (pathJavaHome != null) {
+      env.put("PATH", new File(pathJavaHome, "bin").getAbsolutePath() + File.pathSeparator
+          + env.getOrDefault("PATH", ""));
+    }
+    Process process = builder.start();
+    try (InputStream is = process.getInputStream()) {
+      ByteStreams.toByteArray(is);
+    }
+    Assert.assertTrue(process.waitFor(30, TimeUnit.SECONDS));
+    return process.exitValue();
+  }
+
+  /**
+   * Creates a fake Java home with a {@code bin/java} script that prints the given lines to stderr.
+   */
+  private File createFakeJavaHome(String... javaVersionOutput) throws IOException {
     Assume.assumeFalse(System.getProperty("os.name").toLowerCase().startsWith("windows"));
 
     File javaHome = TEMP_FOLDER.newFolder();
@@ -107,21 +169,6 @@ public class RemoteExecutionTwillPreparerTest {
     File java = new File(bin, "java");
     Files.write(java.toPath(), fakeJava, StandardCharsets.UTF_8);
     Assert.assertTrue(java.setExecutable(true));
-
-    List<String> script = new ArrayList<>();
-    script.add("#!/bin/bash");
-    script.addAll(javaVersionCheck);
-    File scriptFile = TEMP_FOLDER.newFile();
-    Files.write(scriptFile.toPath(), script, StandardCharsets.UTF_8);
-
-    ProcessBuilder builder = new ProcessBuilder(Arrays.asList("bash", scriptFile.getAbsolutePath()))
-        .redirectErrorStream(true);
-    builder.environment().put("JAVA_HOME", javaHome.getAbsolutePath());
-    Process process = builder.start();
-    try (InputStream is = process.getInputStream()) {
-      ByteStreams.toByteArray(is);
-    }
-    Assert.assertTrue(process.waitFor(30, TimeUnit.SECONDS));
-    return process.exitValue();
+    return javaHome;
   }
 }
