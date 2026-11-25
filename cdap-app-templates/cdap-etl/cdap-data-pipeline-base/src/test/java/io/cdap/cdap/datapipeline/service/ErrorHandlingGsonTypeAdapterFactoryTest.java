@@ -18,6 +18,7 @@ package io.cdap.cdap.datapipeline.service;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
 
 import org.junit.Assert;
@@ -43,5 +44,10 @@ public class ErrorHandlingGsonTypeAdapterFactoryTest {
 
     Assert.assertEquals(refreshTokenResponse.getAccessToken(), "asdf1234");
     Assert.assertNull(refreshTokenResponse.getScope());
+  }
+
+  @Test(expected = JsonSyntaxException.class)
+  public void refreshTokenRejectsRootNonObjectJson() {
+    GSON.fromJson("<html>502 Bad Gateway</html>", RefreshTokenResponse.class);
   }
 }

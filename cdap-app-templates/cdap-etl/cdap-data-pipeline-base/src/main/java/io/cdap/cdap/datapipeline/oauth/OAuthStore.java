@@ -16,11 +16,14 @@ package io.cdap.cdap.datapipeline.oauth;
 
 import static io.cdap.cdap.datapipeline.service.OAuthHandler.PREF_PKCE_CODE_VERIFIER_TTL;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -30,6 +33,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.table.field.Field;
 import io.cdap.cdap.spi.data.table.field.Fields;
+import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 
@@ -40,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Schema for OAuth store.
@@ -56,6 +61,10 @@ public class OAuthStore {
   private static final String ACCESS_TOKEN_KEY_PREFIX = "oauthaccesstoken";
   private static final String REFRESH_TOKEN_KEY_PREFIX = "oauthrefreshtoken";
   private static final String PKCE_KEY_PREFIX = "oauth-pkce";
+  private static final String ORIGIN_CHANGE_ERROR =
+      "Cannot change OAuth provider URL scheme, host, or port when reusing client credentials";
+  private static final String INVALID_URL_ORIGIN_ERROR =
+      "OAuth provider loginURL and tokenRefreshURL must specify a valid scheme, host, and port without userinfo";
   private static final Gson GSON = new Gson();
   private final TransactionRunner transactionRunner;
   private final SecureStore secureStore;
@@ -128,50 +137,25 @@ public class OAuthStore {
    * Create/update an OAuth provider.
    *
    * @param oauthProvider {@link OAuthProvider} to write
+   * @param reuseClientCredentials whether to reuse existing client credentials from secure store
+   * @throws IllegalArgumentException if the provider URLs lack a valid origin, or if
+   *     {@code reuseClientCredentials} is {@code true} and either URL changes origin
    * @throws OAuthStoreException if the write fails
    */
   public void writeProvider(OAuthProvider oauthProvider, boolean reuseClientCredentials) throws OAuthStoreException {
-    try {
-      TransactionRunners.run(transactionRunner, context -> {
-        StructuredTable table = context.getTable(TABLE_ID);
-        table.upsert(getRow(oauthProvider));
-
-      }, TableNotFoundException.class, InvalidFieldException.class);
-    } catch (TableNotFoundException e) {
-      throw new OAuthStoreException("OAuth provider table not found", e);
-    } catch (InvalidFieldException e) {
-      throw new OAuthStoreException("OAuth provider object fields do not match table", e);
-    }
-
     String namespace = NamespaceId.SYSTEM.getNamespace();
-    String name = getClientCredsKey(oauthProvider.getName());
+    String key = getClientCredsKey(oauthProvider.getName());
 
-    // Check for existence of client credential when reusing them.
-    try {
-      if (reuseClientCredentials) {
-        if (secureStore.getMetadata(namespace, name) == null) {
-          throw new OAuthStoreException("Client credential should be present in the secure store", null);
-        }
-        return;
-      }
-    } catch (IOException e) {
-      throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
-    } catch (Exception e) {
-      throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + name + "\" does not exist", e);
+    boolean validateTableOrigin = false;
+    if (reuseClientCredentials) {
+      SecureStoreMetadata existingMetadata = getRequiredClientCredentialsMetadata(namespace, key);
+      validateTableOrigin = !validateMetadataOrigin(existingMetadata, oauthProvider);
+    } else {
+      validateProviderOrigins(oauthProvider);
+      writeClientCredentials(namespace, key, oauthProvider);
     }
 
-    try {
-      secureStoreManager.put(
-          namespace,
-          name,
-          GSON.toJson(oauthProvider.getClientCredentials()),
-          "OAuth client creds",
-          Collections.emptyMap());
-    } catch (IOException e) {
-      throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
-    } catch (Exception e) {
-      throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
-    }
+    upsertProviderRow(oauthProvider, key, validateTableOrigin);
   }
 
   /**
@@ -343,6 +327,102 @@ public class OAuthStore {
 
   public static String getRefreshTokenKey(String oauthProvider, String credentialId) {
     return String.format("%s-%s-%s", REFRESH_TOKEN_KEY_PREFIX, oauthProvider.toLowerCase(), credentialId.toLowerCase());
+  }
+
+  private SecureStoreMetadata getRequiredClientCredentialsMetadata(String namespace, String key)
+      throws OAuthStoreException {
+    SecureStoreMetadata metadata;
+    try {
+      metadata = secureStore.getMetadata(namespace, key);
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + key + "\" does not exist", e);
+    }
+    if (metadata == null) {
+      throw new OAuthStoreException("Client credential should be present in the secure store", null);
+    }
+    return metadata;
+  }
+
+  private void writeClientCredentials(String namespace, String key, OAuthProvider oauthProvider)
+      throws OAuthStoreException {
+    Map<String, String> properties = ImmutableMap.of(
+        LOGIN_URL_COL, oauthProvider.getLoginURL(),
+        TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL());
+    try {
+      secureStoreManager.put(
+          namespace,
+          key,
+          GSON.toJson(oauthProvider.getClientCredentials()),
+          "OAuth client creds",
+          properties);
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
+    }
+  }
+
+  private void upsertProviderRow(OAuthProvider oauthProvider, String credsKey, boolean validateExistingRowOrigin)
+      throws OAuthStoreException {
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = context.getTable(TABLE_ID);
+        if (validateExistingRowOrigin) {
+          boolean matchedExistingRow = false;
+          try (CloseableIterator<StructuredRow> rows = table.scan(Range.all(), Integer.MAX_VALUE)) {
+            while (rows.hasNext()) {
+              StructuredRow row = rows.next();
+              String existingName = row.getString(OAUTH_PROVIDER_COL);
+              if (existingName != null && getClientCredsKey(existingName).equals(credsKey)) {
+                matchedExistingRow = true;
+                validateSameOrigin(
+                    row.getString(LOGIN_URL_COL),
+                    row.getString(TOKEN_REFRESH_URL_COL),
+                    oauthProvider);
+              }
+            }
+          }
+          if (!matchedExistingRow) {
+            validateProviderOrigins(oauthProvider);
+          }
+        }
+        table.upsert(getRow(oauthProvider));
+      }, TableNotFoundException.class, InvalidFieldException.class, IOException.class);
+    } catch (TableNotFoundException e) {
+      throw new OAuthStoreException("OAuth provider table not found", e);
+    } catch (InvalidFieldException e) {
+      throw new OAuthStoreException("OAuth provider object fields do not match table", e);
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to write OAuth provider to table", e);
+    }
+  }
+
+  private static boolean validateMetadataOrigin(SecureStoreMetadata metadata, OAuthProvider oauthProvider) {
+    Map<String, String> properties = metadata.getProperties();
+    if (properties != null
+        && (properties.containsKey(LOGIN_URL_COL) || properties.containsKey(TOKEN_REFRESH_URL_COL))) {
+      validateSameOrigin(properties.get(LOGIN_URL_COL), properties.get(TOKEN_REFRESH_URL_COL), oauthProvider);
+      return true;
+    }
+    return false;
+  }
+
+  private static void validateProviderOrigins(OAuthProvider oauthProvider) {
+    if (!UrlOrigin.isValid(oauthProvider.getLoginURL())
+        || !UrlOrigin.isValid(oauthProvider.getTokenRefreshURL())) {
+      throw new IllegalArgumentException(INVALID_URL_ORIGIN_ERROR);
+    }
+  }
+
+  private static void validateSameOrigin(@Nullable String expectedLoginUrl,
+                                         @Nullable String expectedTokenRefreshUrl,
+                                         OAuthProvider oauthProvider) {
+    if (!UrlOrigin.hasSameOrigin(expectedLoginUrl, oauthProvider.getLoginURL())
+        || !UrlOrigin.hasSameOrigin(expectedTokenRefreshUrl, oauthProvider.getTokenRefreshURL())) {
+      throw new IllegalArgumentException(ORIGIN_CHANGE_ERROR);
+    }
   }
 
   private static String getAccessTokenKey(String oauthProvider, String credentialId) {

@@ -22,6 +22,7 @@ import com.google.gson.TypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
 
 import java.io.IOException;
 
@@ -29,7 +30,11 @@ import java.io.IOException;
  * TypeAdapter factory for GSON which will skip any fields which have a parsing error
  */
 public class ErrorHandlingGsonTypeAdapterFactory implements TypeAdapterFactory {
+  @Override
   public final <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+    if (type.getRawType() == RefreshTokenResponse.class) {
+      return null;
+    }
     TypeAdapter<T> delegate = gson.getDelegateAdapter(this, type);
 
     return new TypeAdapter<T>() {
