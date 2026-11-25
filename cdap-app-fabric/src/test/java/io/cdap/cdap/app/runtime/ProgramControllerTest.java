@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -63,7 +64,7 @@ public class ProgramControllerTest {
       // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
       Service service = new TestService(0, 0);
       ProgramController controller = new ProgramControllerServiceAdapter(service, programId.run(RunIds.generate()));
-      ListenableFuture<Service.State> startCompletion = service.start();
+      ListenableFuture<Service.State> startCompletion = Services.start(service);
 
       controller.addListener(new AbstractListener() {
         private volatile boolean initCalled;
@@ -87,7 +88,7 @@ public class ProgramControllerTest {
       }, executor);
 
       startCompletion.get();
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
 
     Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));

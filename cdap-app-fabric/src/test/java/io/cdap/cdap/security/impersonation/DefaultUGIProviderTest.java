@@ -22,7 +22,6 @@ import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -32,6 +31,7 @@ import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.minikdc.MiniKdc;
@@ -236,7 +236,9 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   private Location copyFileToHDFS(Location hdfsKeytabDir, File localFile) throws IOException {
     Location remoteFile = hdfsKeytabDir.append(localFile.getName());
     Assert.assertTrue(remoteFile.createNew());
-    Files.copy(localFile, Locations.newOutputSupplier(remoteFile));
+    try (OutputStream output = remoteFile.getOutputStream()) {
+      Files.asByteSource(localFile).copyTo(output);
+    }
     return remoteFile;
   }
 

@@ -34,7 +34,7 @@ public class TimeBoundIteratorTest {
   @Test
   public void testTimeBoundNotHit() {
     SettableTicker ticker = new SettableTicker(0);
-    Stopwatch stopwatch = new Stopwatch(ticker);
+    Stopwatch stopwatch = Stopwatch.createUnstarted(ticker);
 
     List<Integer> list = new ArrayList<>();
     list.add(0);
@@ -54,7 +54,7 @@ public class TimeBoundIteratorTest {
   @Test
   public void testTimeBoundImmediatelyHit() {
     SettableTicker ticker = new SettableTicker(0);
-    Stopwatch stopwatch = new Stopwatch(ticker);
+    Stopwatch stopwatch = Stopwatch.createUnstarted(ticker);
 
     List<Integer> list = new ArrayList<>();
     list.add(0);
@@ -70,7 +70,7 @@ public class TimeBoundIteratorTest {
   @Test
   public void testEarlyStop() {
     SettableTicker ticker = new SettableTicker(0);
-    Stopwatch stopwatch = new Stopwatch(ticker);
+    Stopwatch stopwatch = Stopwatch.createUnstarted(ticker);
 
     List<Integer> list = new ArrayList<>();
     list.add(0);

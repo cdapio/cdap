@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,11 +208,12 @@ public class DataprocJobMain {
     return urls;
   }
 
-  private static void addJarUrls(File dir, List<URL> result) throws MalformedURLException {
+  static void addJarUrls(File dir, List<URL> result) throws MalformedURLException {
     File[] files = dir.listFiles(f -> f.getName().endsWith(".jar"));
     if (files == null) {
       return;
     }
+    Arrays.sort(files, Comparator.comparing(File::getName));
     for (File file : files) {
       result.add(file.toURI().toURL());
     }

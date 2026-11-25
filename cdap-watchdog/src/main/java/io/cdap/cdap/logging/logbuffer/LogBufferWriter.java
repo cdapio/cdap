@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.logging.logbuffer;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;

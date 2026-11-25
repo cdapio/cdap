@@ -116,7 +116,7 @@ public class RouterMain extends DaemonMain {
                 + "ZooKeeper quorum settings are correct in "
                 + "cdap-site.xml. Currently configured as: %s",
             zkClientService.getConnectString()));
-    router.startAndWait();
+    router.startAsync().awaitRunning();
     LOG.info("Router started.");
   }
 

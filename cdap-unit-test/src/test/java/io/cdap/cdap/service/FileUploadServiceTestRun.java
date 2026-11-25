@@ -27,7 +27,6 @@ import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.lib.PartitionDetail;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -35,6 +34,7 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -94,7 +94,9 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
       // There should be one file under the partition directory
       List<Location> locations = partition.getLocation().list();
       Assert.assertEquals(1, locations.size());
-      Assert.assertArrayEquals(content, ByteStreams.toByteArray(Locations.newInputSupplier(locations.get(0))));
+      try (InputStream input = locations.get(0).getInputStream()) {
+        Assert.assertArrayEquals(content, ByteStreams.toByteArray(input));
+      }
 
       // Verify the tracking table of chunks sizes
       KeyValueTable trackingTable = (KeyValueTable) getDataset(FileUploadApp.KV_TABLE_NAME).get();

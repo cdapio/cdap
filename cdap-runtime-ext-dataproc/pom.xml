@@ -63,10 +63,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <!-- newer version required by google libs,
-           but set to 0.13.0 by parent pom, so put explicit version
-           needed by google libs -->
-      <version>33.0.0-jre</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -157,6 +153,13 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava-bom</artifactId>
+        <version>${guava.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>libraries-bom</artifactId>

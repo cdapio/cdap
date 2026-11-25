@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.provision;
 
 import com.google.inject.Singleton;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
@@ -36,6 +37,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
@@ -57,12 +61,23 @@ public class MockProvisioner implements Provisioner {
   public static final String EXPECTED_APP_CDAP_VERSION = "expected.app.cdap.version";
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     NAME, "Native", "Runs programs on the CDAP master cluster. Does not provision any resources.");
+  private static final ConcurrentMap<String, CountDownLatch> WAIT_LATCHES = new ConcurrentHashMap<>();
   private final AtomicInteger callCount;
   private final Set<ProgramRunInfo> seenRuns;
 
   public MockProvisioner() {
     this.callCount = new AtomicInteger(0);
     this.seenRuns = new HashSet<>();
+  }
+
+  static CountDownLatch registerWaitLatch(ProgramRunId programRunId, String key) {
+    CountDownLatch latch = new CountDownLatch(1);
+    WAIT_LATCHES.put(waitLatchKey(programRunId.getRun(), key), latch);
+    return latch;
+  }
+
+  private static String waitLatchKey(String runId, String key) {
+    return runId + ":" + key;
   }
 
   @Override
@@ -165,6 +180,12 @@ public class MockProvisioner implements Provisioner {
 
   private void waitIfConfigured(ProvisionerContext context, String key) throws InterruptedException {
     long dur = context.getProperties().containsKey(key) ? Long.parseLong(context.getProperties().get(key)) : -1L;
+    if (dur > 0) {
+      CountDownLatch latch = WAIT_LATCHES.remove(waitLatchKey(context.getProgramRunInfo().getRun(), key));
+      if (latch != null) {
+        latch.countDown();
+      }
+    }
     TimeUnit.MILLISECONDS.sleep(dur);
   }
 

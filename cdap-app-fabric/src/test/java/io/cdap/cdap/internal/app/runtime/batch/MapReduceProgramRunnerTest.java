@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.batch;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.common.Bytes;
@@ -40,7 +39,6 @@ import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.DefaultId;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -49,14 +47,17 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -324,9 +325,10 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertFalse(resultLocation.isDirectory());
 
     // read output and verify result
-    String line = CharStreams.readFirstLine(
-      CharStreams.newReaderSupplier(
-        Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
+    String line;
+    try (Reader reader = new InputStreamReader(resultLocation.getInputStream(), Charsets.UTF_8)) {
+      line = new BufferedReader(reader).readLine();
+    }
     Assert.assertNotNull(line);
     String[] fields = line.split(outputSeparator == null ? ":" : outputSeparator);
     Assert.assertEquals(2, fields.length);

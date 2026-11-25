@@ -673,8 +673,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
     // Min sleep time is 10ms, max sleep time is 1 seconds
     long sleepMillis = TimeUnit.SECONDS.toMillis(1);
-    Stopwatch stopwatch = new Stopwatch().start();
-    while (value < expected && stopwatch.elapsedTime(TimeUnit.SECONDS) < 20) {
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    while (value < expected && stopwatch.elapsed(TimeUnit.SECONDS) < 20) {
       TimeUnit.MILLISECONDS.sleep(sleepMillis);
       value = getTotalMetric(tags, metricName, previewManager);
     }

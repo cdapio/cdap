@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.messaging.server;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -90,7 +90,7 @@ public class MessagingHttpService extends AbstractIdleService {
           private void logWithTrace(HttpRequest request, Throwable t) {
             LOG.trace("Error in handling request={} {} for user={}:", request.method().name(),
                 request.uri(),
-                Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
+                MoreObjects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
           }
         })
         .setHttpHandlers(handlers);

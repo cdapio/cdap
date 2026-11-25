@@ -52,7 +52,7 @@ public class InMemoryOperationController implements
   @Override
   public ListenableFuture<OperationController> stop() {
     LOG.trace("Stopping operation {}", runId);
-    driver.stop();
+    driver.stopAsync();
     return completionFuture;
   }
 

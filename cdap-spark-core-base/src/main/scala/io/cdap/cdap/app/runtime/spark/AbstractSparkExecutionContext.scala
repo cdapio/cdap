@@ -51,6 +51,7 @@ import io.cdap.cdap.data.LineageDatasetContext
 import io.cdap.cdap.data2.metadata.lineage.AccessType
 import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import io.cdap.cdap.common.lang.jar.BundleJarUtil
+import io.cdap.cdap.common.service.Services
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.MRJobConfig
 import org.apache.spark.SparkContext
@@ -113,7 +114,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private var sparkHttpServiceServer: Option[SparkHttpServiceServer] = None
 
   // Start the Spark driver http service
-  sparkDriveHttpService.startAndWait()
+  Services.startAndWait(sparkDriveHttpService)
 
   // Set the spark.repl.class.uri that points to the http service if spark-repl is present
   try {
@@ -132,13 +133,13 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       if (!handlers.isEmpty) {
         val httpServer = new SparkHttpServiceServer(
           runtimeContext, new DefaultSparkHttpServiceContext(AbstractSparkExecutionContext.this))
-        httpServer.startAndWait()
+        Services.startAndWait(httpServer)
         sparkHttpServiceServer = Some(httpServer)
       }
     }
 
     override def onApplicationEnd(applicationEnd: SparkListenerApplicationEnd): Unit = {
-      sparkHttpServiceServer.foreach(_.stopAndWait())
+      sparkHttpServiceServer.foreach(Services.stopAndWait(_))
       applicationEndLatch.countDown
     }
 
@@ -183,7 +184,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       SparkRuntimeEnv.stop().foreach(sc => applicationEndLatch.await())
     } finally {
       try {
-        sparkDriveHttpService.stopAndWait()
+        Services.stopAndWait(sparkDriveHttpService)
       } finally {
         eventLoggerCloseable.close()
       }

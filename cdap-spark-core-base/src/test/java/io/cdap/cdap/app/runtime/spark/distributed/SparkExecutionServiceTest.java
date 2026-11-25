@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.workflow.Value;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.proto.ProgramType;
@@ -86,7 +87,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    Services.startAndWait(service);
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -99,7 +100,7 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
     } finally {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
   }
 
@@ -111,7 +112,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    Services.startAndWait(service);
     try {
       final SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -122,7 +123,7 @@ public class SparkExecutionServiceTest {
       }
 
       // Stop the program from the service side
-      ListenableFuture<Service.State> stopFuture = service.stop();
+      ListenableFuture<Service.State> stopFuture = Services.stop(service);
 
       // Expect some future heartbeats will receive the STOP command
       Tasks.waitFor(true, new Callable<Boolean>() {
@@ -139,7 +140,7 @@ public class SparkExecutionServiceTest {
       // The stop future of the service should be completed after the client.completed call.
       stopFuture.get(5, TimeUnit.SECONDS);
     } finally {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
   }
 
@@ -153,7 +154,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, token);
-    service.startAndWait();
+    Services.startAndWait(service);
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -172,7 +173,7 @@ public class SparkExecutionServiceTest {
       clientToken.put("completed", "true");
       client.completed(clientToken);
     } finally {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
 
     // The token on the service side should get updated after the completed call.
@@ -199,7 +200,7 @@ public class SparkExecutionServiceTest {
     SparkExecutionService service = new SparkExecutionService(locationFactory,
                                                               InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                                               programRunId, null);
-    service.startAndWait();
+    Services.startAndWait(service);
     try {
       SparkExecutionClient client = new SparkExecutionClient(service.getBaseURI(), programRunId);
 
@@ -227,7 +228,7 @@ public class SparkExecutionServiceTest {
       // Call complete to notify the service it has been stopped
       client.completed(null);
     } finally {
-      service.stopAndWait();
+      Services.stopAndWait(service);
     }
   }
 }

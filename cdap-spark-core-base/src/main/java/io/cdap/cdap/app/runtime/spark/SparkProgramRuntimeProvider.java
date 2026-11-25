@@ -18,7 +18,6 @@ package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Binding;
@@ -36,6 +35,7 @@ import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import io.cdap.cdap.app.runtime.spark.distributed.DistributedSparkProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;

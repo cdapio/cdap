@@ -33,6 +33,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
@@ -64,6 +65,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -98,32 +100,32 @@ public class ProvisioningServiceTest {
 
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
     messagingService = injector.getInstance(MessagingService.class);
     provisionerStore = injector.getInstance(ProvisionerStore.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
 
     provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
+    Services.startAndWait(provisioningService);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
   }
 
   @AfterClass
   public static void cleanupClass() {
-    provisioningService.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
+    Services.stopAndWait(provisioningService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(txManager);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 
@@ -273,11 +275,14 @@ public class ProvisioningServiceTest {
     ProvisionRequest provisionRequest = new ProvisionRequest(taskFields.programRunId, taskFields.programOptions,
                                                              taskFields.programDescriptor, "Bob");
 
+    CountDownLatch createStarted =
+      MockProvisioner.registerWaitLatch(taskFields.programRunId, MockProvisioner.WAIT_CREATE_MS);
     Runnable task = TransactionRunners.run(transactionRunner, context -> {
       return provisioningService.provision(provisionRequest, context);
     });
     task.run();
 
+    Assert.assertTrue(createStarted.await(30, TimeUnit.SECONDS));
     Assert.assertTrue(provisioningService.cancelProvisionTask(taskFields.programRunId).isPresent());
 
     // check that the state of the task is cancelled
@@ -290,10 +295,14 @@ public class ProvisioningServiceTest {
     ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().waitDelete(1, TimeUnit.MINUTES).build();
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
 
+    CountDownLatch deleteStarted =
+      MockProvisioner.registerWaitLatch(taskFields.programRunId, MockProvisioner.WAIT_DELETE_MS);
     Runnable task = TransactionRunners.run(transactionRunner, context -> {
       return provisioningService.deprovision(taskFields.programRunId, context, t -> { });
     });
     task.run();
+
+    Assert.assertTrue(deleteStarted.await(30, TimeUnit.SECONDS));
     Assert.assertTrue(provisioningService.cancelDeprovisionTask(taskFields.programRunId).isPresent());
 
     // check that the state of the task is cancelled

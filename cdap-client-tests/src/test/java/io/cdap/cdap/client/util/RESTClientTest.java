@@ -20,12 +20,13 @@ package io.cdap.cdap.client.util;
 import static com.google.inject.matcher.Matchers.any;
 import static com.google.inject.matcher.Matchers.only;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.matcher.Matcher;
 import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
@@ -72,13 +73,13 @@ public class RESTClientTest {
   @Before
   public void setUp() throws IOException {
     httpService = new TestHttpService();
-    httpService.startAndWait();
+    Services.startAndWait(httpService);
     restClient = new RESTClient(ClientConfig.builder().setUnavailableRetryLimit(3).build());
   }
 
   @After
   public void tearDown() {
-    httpService.stopAndWait();
+    Services.stopAndWait(httpService);
   }
 
   @Test
@@ -245,7 +246,7 @@ public class RESTClientTest {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("bindAddress", httpService.getBindAddress())
         .toString();
     }

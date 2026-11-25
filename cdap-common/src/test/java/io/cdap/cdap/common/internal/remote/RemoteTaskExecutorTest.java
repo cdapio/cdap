@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
@@ -90,7 +91,7 @@ public class RemoteTaskExecutorTest {
   public void beforeTest() {
     metricCollectors = new HashMap<>();
     mockMetricsCollector = createMockMetricsCollectionService();
-    mockMetricsCollector.startAndWait();
+    mockMetricsCollector.startAsync().awaitRunning();
     registered = discoveryService.register(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService));
   }
 
@@ -112,13 +113,16 @@ public class RemoteTaskExecutorTest {
     return new MetricsCollectionService() {
 
       @Override
-      public ListenableFuture<State> start() {
-        return null;
+      public Service startAsync() {
+        return this;
       }
 
       @Override
-      public State startAndWait() {
-        return null;
+      public void awaitRunning() {
+      }
+
+      @Override
+      public void awaitRunning(long timeout, TimeUnit unit) {
       }
 
       @Override
@@ -132,12 +136,20 @@ public class RemoteTaskExecutorTest {
       }
 
       @Override
-      public ListenableFuture<State> stop() {
-        return null;
+      public Service stopAsync() {
+        return this;
       }
 
       @Override
-      public State stopAndWait() {
+      public void awaitTerminated() {
+      }
+
+      @Override
+      public void awaitTerminated(long timeout, TimeUnit unit) {
+      }
+
+      @Override
+      public Throwable failureCause() {
         return null;
       }
 
@@ -205,7 +217,7 @@ public class RemoteTaskExecutorTest {
       // Exception thrown in the task executor should be in the exception message in the caller
       Assert.assertEquals("Invalid", e.getMessage());
     }
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
@@ -224,7 +236,7 @@ public class RemoteTaskExecutorTest {
     RunnableTaskRequest runnableTaskRequest = RunnableTaskRequest.getBuilder(ValidRunnableClass.class.getName()).
       withParam("param").withNamespace("testNamespace").build();
     remoteTaskExecutor.runTask(runnableTaskRequest);
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present
@@ -249,7 +261,7 @@ public class RemoteTaskExecutorTest {
     } catch (Exception e) {
       // expected
     }
-    mockMetricsCollector.stopAndWait();
+    mockMetricsCollector.stopAsync().awaitTerminated();
     Assert.assertSame(1, metricCollectors.size());
 
     //check the metrics are present

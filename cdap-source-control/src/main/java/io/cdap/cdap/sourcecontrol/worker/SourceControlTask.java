@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RunnableTaskModule;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.sourcecontrol.operationrunner.InMemorySourceControlOperationRunner;
@@ -56,7 +57,7 @@ abstract class SourceControlTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context) throws Exception {
-    inMemoryOperationRunner.startAndWait();
+    Services.startAndWait(inMemoryOperationRunner);
     doRun(context);
   }
 

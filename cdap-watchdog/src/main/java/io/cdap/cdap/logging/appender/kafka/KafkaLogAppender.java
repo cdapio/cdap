@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.appender.AbstractLogPublisher;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
@@ -50,8 +51,8 @@ public final class KafkaLogAppender extends LogAppender {
   public void start() {
     KafkaLogPublisher publisher = new KafkaLogPublisher(cConf);
     Optional.ofNullable(kafkaLogPublisher.getAndSet(publisher))
-        .ifPresent(KafkaLogPublisher::stopAndWait);
-    publisher.startAndWait();
+        .ifPresent(Services::stopAndWait);
+    Services.startAndWait(publisher);
     addInfo("Successfully started KafkaLogAppender.");
     super.start();
   }
@@ -60,7 +61,7 @@ public final class KafkaLogAppender extends LogAppender {
   public void stop() {
     super.stop();
     Optional.ofNullable(kafkaLogPublisher.getAndSet(null))
-        .ifPresent(KafkaLogPublisher::stopAndWait);
+        .ifPresent(Services::stopAndWait);
   }
 
   @Override

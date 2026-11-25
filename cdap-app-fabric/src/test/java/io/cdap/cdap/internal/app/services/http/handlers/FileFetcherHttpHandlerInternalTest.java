@@ -29,6 +29,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.handlers.FileFetcherHttpHandlerInternal;
 import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.security.Principal;
@@ -123,7 +124,7 @@ public class FileFetcherHttpHandlerInternalTest {
         new CoreSecurityRuntimeModule().getInMemoryModules(),
         authModule(InternalAccessEnforcer.class));
     tokenManager = internalAuthInjector.getInstance(TokenManager.class);
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
     accessTokenCodec = internalAuthInjector.getInstance(AccessTokenCodec.class);
 
     internalAuthHttpService = NettyHttpService.builder("FileFetcherHttpHandlerInternalAuthTest")
@@ -141,7 +142,7 @@ public class FileFetcherHttpHandlerInternalTest {
   public static void stop() throws Exception {
     httpService.stop();
     internalAuthHttpService.stop();
-    tokenManager.stopAndWait();
+    Services.stopAndWait(tokenManager);
   }
 
   @Before

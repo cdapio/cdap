@@ -20,7 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -52,9 +51,11 @@ import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
@@ -216,7 +217,7 @@ public class AppFabricTestHelper {
     Closeables.closeQuietly(metadataStorage);
 
     if (services != null) {
-      Lists.reverse(services).forEach(Service::stopAndWait);
+      Lists.reverse(services).forEach(Services::stopAndWait);
     }
 
     InMemoryTableService.reset();
@@ -276,7 +277,7 @@ public class AppFabricTestHelper {
     T instance = injector.getInstance(cls);
     if (instance instanceof Service) {
       services.add((Service) instance);
-      ((Service) instance).startAndWait();
+      Services.startAndWait((Service) instance);
     }
     return instance;
   }

@@ -25,6 +25,7 @@ import io.cdap.cdap.api.logging.AppenderContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.framework.LocalAppenderContext;
@@ -96,12 +97,12 @@ public class LocalLogAppender extends LogAppender {
               spec.getContext().getMetricsContext(), spec.getContext().getInstanceId());
       LocalLogProcessorPipeline pipeline = new LocalLogProcessorPipeline(context,
           syncIntervalMillis);
-      pipeline.startAndWait();
+      Services.startAndWait(pipeline);
       pipelineThreads.add(pipeline.getAppenderThread());
       pipelines.add(pipeline);
     }
 
-    this.pipelines.getAndSet(pipelines).forEach(LocalLogProcessorPipeline::stopAndWait);
+    this.pipelines.getAndSet(pipelines).forEach(Services::stopAndWait);
     this.pipelineThreads.set(pipelineThreads);
 
     super.start();
@@ -113,7 +114,7 @@ public class LocalLogAppender extends LogAppender {
     super.stop();
     for (LocalLogProcessorPipeline pipeline : pipelines.getAndSet(Collections.emptyList())) {
       try {
-        pipeline.stopAndWait();
+        Services.stopAndWait(pipeline);
       } catch (Throwable t) {
         addError("Exception raised when stopping log processing pipeline " + pipeline.getName(), t);
       }
@@ -169,6 +170,12 @@ public class LocalLogAppender extends LogAppender {
 
     Thread getAppenderThread() {
       return appenderThread;
+    }
+
+    @Override
+    protected String serviceName() {
+      // Guava renames the executor thread to serviceName(), so keep the same thread name
+      return "LocalLogProcessor-" + getName();
     }
 
     @Override

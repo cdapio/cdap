@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark;
 
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.common.service.Services;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionFailureException;
@@ -67,22 +68,22 @@ public class SparkTransactionHandlerTest {
   @BeforeClass
   public static void init() throws UnknownHostException {
     txManager = new TransactionManager(new Configuration());
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     txClient = new InMemoryTxSystemClient(txManager);
 
     sparkTxHandler = new SparkTransactionHandler(txClient);
     httpService = new SparkDriverHttpService("test", InetAddress.getLoopbackAddress().getCanonicalHostName(),
                                              sparkTxHandler);
-    httpService.startAndWait();
+    Services.startAndWait(httpService);
 
     sparkTxClient = new SparkTransactionClient(httpService.getBaseURI());
   }
 
   @AfterClass
   public static void finish() {
-    httpService.stopAndWait();
-    txManager.stopAndWait();
+    Services.stopAndWait(httpService);
+    Services.stopAndWait(txManager);
   }
 
   /**
@@ -176,12 +177,12 @@ public class SparkTransactionHandlerTest {
         throw new IllegalStateException("Cannot start long transaction");
       }
     };
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     try {
       SparkTransactionHandler txHandler = new SparkTransactionHandler(new InMemoryTxSystemClient(txManager));
       SparkDriverHttpService httpService = new SparkDriverHttpService(
         "test", InetAddress.getLoopbackAddress().getCanonicalHostName(), txHandler);
-      httpService.startAndWait();
+      Services.startAndWait(httpService);
       try {
         // Start a job
         txHandler.jobStarted(1, ImmutableSet.of(2));
@@ -197,10 +198,10 @@ public class SparkTransactionHandlerTest {
         // End the job
         txHandler.jobEnded(1, false);
       } finally {
-        httpService.stopAndWait();
+        Services.stopAndWait(httpService);
       }
     } finally {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 

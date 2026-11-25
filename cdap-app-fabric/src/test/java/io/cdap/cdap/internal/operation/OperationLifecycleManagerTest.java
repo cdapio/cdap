@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.operation;
 
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -28,6 +27,7 @@ import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.id.Id.Namespace;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;

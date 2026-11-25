@@ -44,6 +44,7 @@ import io.cdap.cdap.common.guice.ZkDiscoveryModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -180,7 +181,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     LOG.debug("Starting artifact localizer");
-    artifactLocalizerService.start();
+    Services.start(artifactLocalizerService);
 
     try {
       Uninterruptibles.getUninterruptibly(future);
@@ -191,13 +192,13 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void stop() {
-    artifactLocalizerService.stop();
+    artifactLocalizerService.stopAsync();
   }
 
   @Override
   public void destroy() {
     try {
-      tokenManager.stopAndWait();
+      Services.stopAndWait(tokenManager);
     } finally {
       logAppenderInitializer.close();
     }
@@ -225,7 +226,7 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     tokenManager = injector.getInstance(TokenManager.class);
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
 
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
   }

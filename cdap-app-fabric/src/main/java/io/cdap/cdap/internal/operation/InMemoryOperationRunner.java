@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.operation;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.sourcecontrol.PullAppsOperationFactory;
 import io.cdap.cdap.internal.app.sourcecontrol.PushAppsOperationFactory;
 
@@ -45,7 +46,7 @@ public class InMemoryOperationRunner extends AbstractOperationRunner {
     OperationDriver driver = new OperationDriver(createOperation(detail), context);
     OperationController controller = new InMemoryOperationController(context.getRunId(),
         statePublisher, driver);
-    driver.start();
+    Services.start(driver);
     return controller;
   }
 }

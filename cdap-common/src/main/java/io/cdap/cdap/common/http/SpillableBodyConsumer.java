@@ -17,7 +17,7 @@
 package io.cdap.cdap.common.http;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;

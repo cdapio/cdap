@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
@@ -81,7 +82,7 @@ public class ServiceSocksProxyTest {
     discoveryService.register(ResolvingDiscoverable.of((new Discoverable("test-service",
                                                                          httpService.getBindAddress()))));
     proxyServer = new ServiceSocksProxy(discoveryService, (user, pass) -> USER.equals(user) && PASS.equals(pass));
-    proxyServer.startAndWait();
+    Services.startAndWait(proxyServer);
 
     defaultProxySelector = ProxySelector.getDefault();
 
@@ -113,7 +114,7 @@ public class ServiceSocksProxyTest {
   public static void finish() throws Exception {
     Authenticator.setDefault(null);
     ProxySelector.setDefault(defaultProxySelector);
-    proxyServer.stopAndWait();
+    Services.stopAndWait(proxyServer);
     httpService.stop();
   }
 

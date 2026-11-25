@@ -46,6 +46,7 @@ import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.guice.ZkDiscoveryModule;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -74,6 +75,7 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -125,12 +127,12 @@ public class JobQueueDebugger extends AbstractIdleService {
 
   @Override
   protected void startUp() {
-    zkClientService.startAndWait();
+    Services.startAndWait(zkClientService);
   }
 
   @Override
   protected void shutDown() {
-    zkClientService.stopAndWait();
+    Services.stopAndWait(zkClientService);
   }
 
   private JobQueueScanner getJobQueueScanner() {
@@ -221,8 +223,8 @@ public class JobQueueDebugger extends AbstractIdleService {
     private boolean scanJobQueue(JobQueue jobQueue, int partition, JobStatistics jobStatistics)
         throws IOException {
       try (CloseableIterator<Job> jobs = jobQueue.getJobs(partition, lastJobConsumed)) {
-        Stopwatch stopwatch = new Stopwatch().start();
-        while (stopwatch.elapsedMillis() < 1000) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        while (stopwatch.elapsed(TimeUnit.MILLISECONDS) < 1000) {
           if (!jobs.hasNext()) {
             lastJobConsumed = null;
             return false;
@@ -422,7 +424,7 @@ public class JobQueueDebugger extends AbstractIdleService {
     }
 
     JobQueueDebugger debugger = createDebugger();
-    debugger.startAndWait();
+    Services.startAndWait(debugger);
 
     debugger.printTopicMessageIds();
 
@@ -431,6 +433,6 @@ public class JobQueueDebugger extends AbstractIdleService {
     } else {
       debugger.scanPartition(partition, trace);
     }
-    debugger.stopAndWait();
+    Services.stopAndWait(debugger);
   }
 }

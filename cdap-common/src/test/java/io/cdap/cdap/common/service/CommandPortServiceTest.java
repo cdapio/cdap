@@ -18,6 +18,7 @@ package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -62,7 +63,7 @@ public class CommandPortServiceTest {
                                                   .build();
 
     final CountDownLatch stopLatch = new CountDownLatch(1);
-    Futures.addCallback(server.start(), new FutureCallback<Service.State>() {
+    Futures.addCallback(Services.start(server), new FutureCallback<Service.State>() {
       @Override
       public void onSuccess(Service.State result) {
         stopLatch.countDown();
@@ -72,7 +73,7 @@ public class CommandPortServiceTest {
       public void onFailure(Throwable t) {
         stopLatch.countDown();
       }
-    });
+    }, MoreExecutors.directExecutor());
     // wait a bit for service to start
     TimeUnit.SECONDS.sleep(1);
 
@@ -95,7 +96,7 @@ public class CommandPortServiceTest {
       }
 
     } finally {
-      server.stopAndWait();
+      Services.stopAndWait(server);
     }
 
     Assert.assertEquals(10, handler.getCounter());

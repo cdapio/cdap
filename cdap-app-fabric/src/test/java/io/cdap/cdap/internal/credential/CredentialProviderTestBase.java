@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.encryption.NoOpAeadCipher;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.proto.credential.CredentialProfile;
@@ -94,7 +95,7 @@ public class CredentialProviderTestBase {
           }
         });
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     contextAccessEnforcer = injector.getInstance(ContextAccessEnforcer.class);
     CredentialProviderStore.create(injector
         .getInstance(StructuredTableAdmin.class));
@@ -131,7 +132,7 @@ public class CredentialProviderTestBase {
   @AfterClass
   public static void teardown() throws Exception {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 
