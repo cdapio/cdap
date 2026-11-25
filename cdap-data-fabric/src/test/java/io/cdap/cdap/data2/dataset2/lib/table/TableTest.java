@@ -39,6 +39,7 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.dataset.table.TableProperties;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.dataset2.TableAssert;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -127,7 +128,7 @@ public abstract class TableTest<T extends Table> {
   public void before() {
     Configuration txConf = new Configuration();
     TransactionManager txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     txClient = new InMemoryTxSystemClient(txManager);
   }
 

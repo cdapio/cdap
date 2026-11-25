@@ -28,6 +28,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -61,7 +62,7 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
     txManager = new TransactionManager(new Configuration());
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -90,7 +91,7 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
 
   @AfterClass
   public static void afterClass() {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 
   @Override

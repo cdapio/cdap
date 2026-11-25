@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.datapipeline;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
@@ -64,7 +64,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
       return;
     }
 
-    setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
+    setDescription(MoreObjects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
     addWorkflow(new SmartWorkflow(config, supportedPluginTypes, getConfigurer()));
 
     String timeSchedule = config.getSchedule();

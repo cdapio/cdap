@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.encryption.guice.UserCredentialAeadEncryptionModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.io.BinaryDecoder;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.io.ReflectionDatumReader;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.spi.RawMessage;
@@ -62,14 +63,14 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
     MetricsCollectionService collectionService = new MessagingMetricsCollectionService(CConfiguration.create(),
                                                                                        messagingService,
                                                                                        recordWriter);
-    collectionService.startAndWait();
+    Services.startAndWait(collectionService);
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
       collectionService.getContext(ImmutableMap.of("tag", "" + i)).increment("processed", i);
     }
 
-    collectionService.stopAndWait();
+    Services.stopAndWait(collectionService);
 
     // <Context, metricName, value>
     Table<String, String, Long> expected = HashBasedTable.create();

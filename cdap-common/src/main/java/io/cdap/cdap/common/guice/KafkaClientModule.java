@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.guice;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -32,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.client.ZKBrokerService;
@@ -131,19 +130,37 @@ public class KafkaClientModule extends PrivateModule {
       // made to the start/stop methods.
       return new ForwardingZKClientService(zkClientService) {
         @Override
-        public ListenableFuture<State> start() {
+        public Service startAsync() {
           if (startedCount.getAndIncrement() == 0) {
-            return super.start();
+            super.startAsync();
           }
-          return Futures.immediateFuture(State.RUNNING);
+          return this;
         }
 
         @Override
-        public ListenableFuture<State> stop() {
+        public Service stopAsync() {
           if (startedCount.decrementAndGet() == 0) {
-            return super.stop();
+            super.stopAsync();
           }
-          return Futures.immediateFuture(State.TERMINATED);
+          return this;
+        }
+
+        @Override
+        public void awaitTerminated() {
+          // Still referenced by another user, so it is not stopped
+          if (startedCount.get() > 0) {
+            return;
+          }
+          super.awaitTerminated();
+        }
+
+        @Override
+        public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+          // Still referenced by another user, so it is not stopped
+          if (startedCount.get() > 0) {
+            return;
+          }
+          super.awaitTerminated(timeout, unit);
         }
       };
     }
@@ -166,12 +183,12 @@ public class KafkaClientModule extends PrivateModule {
 
     @Override
     protected final void startUp() throws Exception {
-      zkClientService.startAndWait();
+      zkClientService.startAsync().awaitRunning();
       try {
-        delegate.startAndWait();
+        delegate.startAsync().awaitRunning();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
@@ -182,16 +199,16 @@ public class KafkaClientModule extends PrivateModule {
     @Override
     protected final void shutDown() throws Exception {
       try {
-        delegate.stopAndWait();
+        delegate.stopAsync().awaitTerminated();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
         throw e;
       }
-      zkClientService.stopAndWait();
+      zkClientService.stopAsync().awaitTerminated();
     }
 
     protected T getDelegate() {

@@ -88,7 +88,7 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
         LOG.debug("Program {} is not running", programRunId);
         programStateWriter.error(programRunId,
             new IllegalStateException("Program terminated " + programRunId));
-        stop();
+        stopAsync();
         return 0;
       }
       nextCheckRunningMillis = now + pollTimeMillis * 10;

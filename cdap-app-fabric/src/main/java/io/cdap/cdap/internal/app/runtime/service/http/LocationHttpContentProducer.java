@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.service.http;
 
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.Transactional;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.service.http.HttpContentProducer;
+import io.cdap.cdap.common.io.Closeables;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;

@@ -18,10 +18,10 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;

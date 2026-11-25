@@ -17,12 +17,12 @@
 package io.cdap.cdap.messaging.store.leveldb;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.messaging.store.MessageTable;

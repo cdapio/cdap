@@ -23,6 +23,7 @@ import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorManagerService;
 import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
@@ -88,11 +89,11 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
           IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM)).boxed()
               .collect(Collectors.toSet()),
           getContext(METRICS_PROCESSOR_CONTEXT), 0);
-      messagingMetricsProcessor.startAndWait();
+      Services.startAndWait(messagingMetricsProcessor);
     }
 
     // The local metrics store do not have ttl, so start the clean up service
-    metricsCleanUpService.startAndWait();
+    Services.startAndWait(metricsCleanUpService);
   }
 
   @Override
@@ -101,7 +102,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     Exception failure = null;
     try {
       if (messagingMetricsProcessor != null) {
-        messagingMetricsProcessor.stopAndWait();
+        Services.stopAndWait(messagingMetricsProcessor);
       }
     } catch (Exception e) {
       failure = e;
@@ -120,7 +121,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
     // Shutdown the clean up service
     try {
-      metricsCleanUpService.stopAndWait();
+      Services.stopAndWait(metricsCleanUpService);
     } catch (Exception e) {
       if (failure != null) {
         failure.addSuppressed(e);

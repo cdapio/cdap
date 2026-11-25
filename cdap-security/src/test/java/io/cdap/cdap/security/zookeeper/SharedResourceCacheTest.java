@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -84,7 +85,7 @@ public class SharedResourceCacheTest {
 
     // create 2 cache instances
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
-    zkClient1.startAndWait();
+    Services.startAndWait(zkClient1);
     SharedResourceCache<String> cache1 =
         new SharedResourceCache<>(zkClient1, new StringCodec(), parentNode, acls);
     cache1.init();
@@ -95,7 +96,7 @@ public class SharedResourceCacheTest {
     cache1.put(key1, value1);
 
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
-    zkClient2.startAndWait();
+    Services.startAndWait(zkClient2);
     SharedResourceCache<String> cache2 =
         new SharedResourceCache<>(zkClient2, new StringCodec(), parentNode, acls);
     cache2.init();
@@ -194,8 +195,8 @@ public class SharedResourceCacheTest {
     String value = cache.get(key);
     boolean isPresent = expectedValue.equals(value);
 
-    Stopwatch watch = new Stopwatch().start();
-    while (!isPresent && watch.elapsedTime(TimeUnit.MILLISECONDS) < timeToWaitMillis) {
+    Stopwatch watch = Stopwatch.createStarted();
+    while (!isPresent && watch.elapsed(TimeUnit.MILLISECONDS) < timeToWaitMillis) {
       TimeUnit.MILLISECONDS.sleep(200);
       value = cache.get(key);
       isPresent = expectedValue.equals(value);

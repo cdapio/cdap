@@ -19,7 +19,6 @@ package io.cdap.cdap.app.runtime.spark;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.inject.Inject;
@@ -45,9 +44,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.ProgramContextAware;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -246,7 +247,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (isLocal || UserGroupInformation.isSecurityEnabled()) {
-        sparkRuntimeService.start();
+        Services.start(sparkRuntimeService);
       } else {
         ProgramRunners.startAsUser(cConf.get(Constants.CFG_HDFS_USER), sparkRuntimeService);
       }

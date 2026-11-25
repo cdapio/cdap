@@ -16,6 +16,7 @@
 package io.cdap.cdap.internal.app.runtime.workflow;
 
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.AbstractProgramController;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -54,7 +55,7 @@ final class WorkflowProgramController extends AbstractProgramController {
 
   @Override
   protected void doStop() throws Exception {
-    driver.stopAndWait();
+    Services.stopAndWait(driver);
   }
 
   @Override

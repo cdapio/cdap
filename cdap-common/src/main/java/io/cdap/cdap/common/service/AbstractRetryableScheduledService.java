@@ -119,6 +119,15 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
     return getClass().getSimpleName();
   }
 
+  /**
+   * Guava names the executor thread after {@code serviceName()} while a task runs, so return
+   * {@link #getServiceName()} to keep the existing thread names.
+   */
+  @Override
+  protected String serviceName() {
+    return getServiceName();
+  }
+
   @Override
   protected ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(

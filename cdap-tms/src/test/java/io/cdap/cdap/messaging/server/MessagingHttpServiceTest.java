@@ -36,6 +36,7 @@ import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
@@ -130,13 +131,13 @@ public class MessagingHttpServiceTest {
     );
 
     httpService = injector.getInstance(MessagingHttpService.class);
-    httpService.startAndWait();
+    Services.startAndWait(httpService);
     client = new DefaultClientMessagingService(injector.getInstance(RemoteClientFactory.class), compressPayload);
   }
 
   @After
   public void afterTest() {
-    httpService.stopAndWait();
+    Services.stopAndWait(httpService);
   }
 
   @Test

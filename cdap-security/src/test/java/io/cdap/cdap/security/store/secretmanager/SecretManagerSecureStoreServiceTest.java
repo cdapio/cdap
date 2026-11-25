@@ -21,6 +21,7 @@ import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.SecureKeyNotFoundException;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.security.store.SecureStoreService;
 import java.nio.charset.StandardCharsets;
@@ -49,12 +50,12 @@ public class SecretManagerSecureStoreServiceTest {
     namespaceClient.create(namespaceMeta);
     secureStoreService = new SecretManagerSecureStoreService(namespaceClient, new MockSecretManagerContext(),
                                                              "mock", new MockSecretManager());
-    secureStoreService.startAndWait();
+    Services.startAndWait(secureStoreService);
   }
 
   @AfterClass
   public static void cleanUp() {
-    secureStoreService.stopAndWait();
+    Services.stopAndWait(secureStoreService);
   }
 
   @Test

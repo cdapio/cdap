@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -76,7 +77,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   public static void beforeClass() throws IOException {
     Configuration txConf = new Configuration();
     txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     CConfiguration cConf = dsFrameworkUtil.getConfiguration();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
@@ -87,7 +88,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   @AfterClass
   public static void afterClass() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 

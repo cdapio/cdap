@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
-import com.google.common.io.Closeables;
+import io.cdap.cdap.common.io.Closeables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

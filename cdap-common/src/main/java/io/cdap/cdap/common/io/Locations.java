@@ -19,10 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -343,7 +340,7 @@ public final class Locations {
         DirUtils.mkdirs(output);
       } else {
         DirUtils.mkdirs(output.getParentFile());
-        ByteStreams.copy(tis, com.google.common.io.Files.newOutputStreamSupplier(output));
+        com.google.common.io.Files.asByteSink(output).writeFrom(tis);
       }
       entry = tis.getNextTarEntry();
     }

@@ -42,7 +42,7 @@ public class RetryOnStartFailureServiceTest {
     Service service = new RetryOnStartFailureService(
       createServiceSupplier(3, startLatch, new CountDownLatch(1), false),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    Services.startAndWait(service);
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
   }
 
@@ -61,7 +61,7 @@ public class RetryOnStartFailureServiceTest {
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    service.start();
+    Services.start(service);
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
     Assert.assertFalse(startLatch.await(100, TimeUnit.MILLISECONDS));
   }
@@ -73,9 +73,9 @@ public class RetryOnStartFailureServiceTest {
     Service service = new RetryOnStartFailureService(
       createServiceSupplier(1000, new CountDownLatch(1), failureLatch, false),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    Services.startAndWait(service);
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
-    service.stopAndWait();
+    Services.stopAndWait(service);
   }
 
   @Test
@@ -85,7 +85,7 @@ public class RetryOnStartFailureServiceTest {
     final RetryOnStartFailureService service = new RetryOnStartFailureService(
       createServiceSupplier(0, startLatch, new CountDownLatch(1), true),
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
-    service.startAndWait();
+    Services.startAndWait(service);
     // block until the underlying service started successfully
     Assert.assertTrue(startLatch.await(1, TimeUnit.SECONDS));
     // As documented in the RetryOnStartFailureService, there is a small race after the
@@ -99,7 +99,7 @@ public class RetryOnStartFailureServiceTest {
       }
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     try {
-      service.stopAndWait();
+      Services.stopAndWait(service);
       Assert.fail("Expected failure in stopping");
     } catch (Exception e) {
       Assert.assertEquals("Intentional failure to shutdown", Throwables.getRootCause(e).getMessage());

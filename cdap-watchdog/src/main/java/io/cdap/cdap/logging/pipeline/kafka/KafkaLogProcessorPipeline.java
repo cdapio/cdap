@@ -223,7 +223,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   }
 
   @Override
-  protected String getServiceName() {
+  protected String serviceName() {
     return "LogPipeline-" + name;
   }
 

@@ -84,7 +84,7 @@ public final class LocalizationUtils {
     URL url = uri.toURL();
     String name = new File(uri.getPath()).getName();
     File tempFile = new File(tempDir, name);
-    Files.copy(Resources.newInputStreamSupplier(url), tempFile);
+    Resources.asByteSource(url).copyTo(Files.asByteSink(tempFile));
     return tempFile;
   }
 

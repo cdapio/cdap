@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import io.cdap.cdap.logging.KafkaTestBase;
 import io.cdap.cdap.logging.LoggingConfiguration;
@@ -97,7 +98,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
         stringPartitioner.partition(LOGGING_CONTEXT_KAFKA.getLogPartition(), -1));
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
@@ -152,7 +153,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
   @AfterClass
   public static void cleanUp() throws Exception {
     InMemoryTableService.reset();
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 
   @Test

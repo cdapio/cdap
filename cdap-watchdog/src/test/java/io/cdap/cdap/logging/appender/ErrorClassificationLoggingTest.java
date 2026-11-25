@@ -26,6 +26,7 @@ import io.cdap.cdap.api.exception.WrappedStageException;
 import io.cdap.cdap.common.conf.Constants.Logging;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.logging.context.WorkerLoggingContext;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.filter.FilterParser;
@@ -147,6 +148,6 @@ public class ErrorClassificationLoggingTest {
 
   @AfterClass
   public static void cleanUp() {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
   }
 }

@@ -37,6 +37,7 @@ import io.cdap.cdap.common.http.AbstractBodyConsumer;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
@@ -55,6 +56,7 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -108,7 +110,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Override
   protected void startUp() throws Exception {
-    txClientService.startAndWait();
+    Services.startAndWait(txClientService);
     deleteSystemModules();
     deployDefaultModules();
     if (!extensionModules.isEmpty()) {
@@ -118,7 +120,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Override
   protected void shutDown() throws Exception {
-    txClientService.stopAndWait();
+    Services.stopAndWait(txClientService);
   }
 
   /**
@@ -322,7 +324,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
           Locations.mkdirsIfNotExists(archiveDir);
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
-          Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+          try (OutputStream output = tmpLocation.getOutputStream()) {
+            Files.copy(uploadedFile, output);
+          }
 
           // Finally, move archive to final location
           LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);
