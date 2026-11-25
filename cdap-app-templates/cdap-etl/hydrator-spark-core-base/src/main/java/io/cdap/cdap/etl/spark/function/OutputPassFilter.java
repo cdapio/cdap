@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.spark.function;
 import com.google.common.collect.Iterators;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.RecordType;
+import java.util.Collections;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.Iterator;
@@ -44,6 +45,6 @@ public class OutputPassFilter<T> implements FlatMapFunction<RecordInfo<Object>, 
   public Iterator<T> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
     return input.getType() == RecordType.OUTPUT && Objects.equals(port, input.getFromPort())
-      ? Iterators.singletonIterator((T) input.getValue()) : Iterators.emptyIterator();
+      ? Iterators.singletonIterator((T) input.getValue()) : Collections.emptyIterator();
   }
 }

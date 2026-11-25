@@ -18,7 +18,7 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
@@ -592,13 +592,13 @@ public class ProgramScheduleHttpHandler extends AbstractAppFabricHttpHandler {
     // Schedules are versionless
     lifecycleService.ensureLatestProgramExists(programId.getProgramReference());
 
-    String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
-    Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(),
+    String description = MoreObjects.firstNonNull(scheduleFromRequest.getDescription(), "");
+    Map<String, String> properties = MoreObjects.firstNonNull(scheduleFromRequest.getProperties(),
         Collections.emptyMap());
-    List<? extends Constraint> constraints = Objects.firstNonNull(
+    List<? extends Constraint> constraints = MoreObjects.firstNonNull(
         scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
     long timeoutMillis =
-        Objects.firstNonNull(scheduleFromRequest.getTimeoutMillis(),
+        MoreObjects.firstNonNull(scheduleFromRequest.getTimeoutMillis(),
             Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
     ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
         scheduleFromRequest.getTrigger(), constraints, timeoutMillis);

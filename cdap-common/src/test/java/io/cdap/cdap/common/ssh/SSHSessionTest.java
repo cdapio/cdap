@@ -18,11 +18,12 @@ package io.cdap.cdap.common.ssh;
 
 
 import com.google.common.base.Splitter;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
+import io.cdap.cdap.common.io.Closeables;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
@@ -131,7 +132,7 @@ public class SSHSessionTest {
     // Starts an echo server for testing the port forwarding
     EchoServer echoServer = new EchoServer();
 
-    echoServer.startAndWait();
+    Services.startAndWait(echoServer);
     try {
       // Creates the DataConsumer for receiving data and validating the lifecycle
       StringBuilder received = new StringBuilder();
@@ -185,7 +186,7 @@ public class SSHSessionTest {
       }
 
     } finally {
-      echoServer.stopAndWait();
+      Services.stopAndWait(echoServer);
     }
   }
 
@@ -193,7 +194,7 @@ public class SSHSessionTest {
   public void testForwardingOnSessionClose() throws Exception {
     EchoServer echoServer = new EchoServer();
 
-    echoServer.startAndWait();
+    Services.startAndWait(echoServer);
     try {
       SSHConfig sshConfig = getSSHConfig();
       AtomicBoolean finished = new AtomicBoolean(false);
@@ -236,7 +237,7 @@ public class SSHSessionTest {
       }
 
     } finally {
-      echoServer.stopAndWait();
+      Services.stopAndWait(echoServer);
     }
   }
 
@@ -244,7 +245,7 @@ public class SSHSessionTest {
   public void testRemotePortForwarding() throws Exception {
     EchoServer echoServer = new EchoServer();
 
-    echoServer.startAndWait();
+    Services.startAndWait(echoServer);
     try {
       SSHConfig sshConfig = getSSHConfig();
 
@@ -264,7 +265,7 @@ public class SSHSessionTest {
         }
       }
     } finally {
-      echoServer.stopAndWait();
+      Services.stopAndWait(echoServer);
     }
   }
 

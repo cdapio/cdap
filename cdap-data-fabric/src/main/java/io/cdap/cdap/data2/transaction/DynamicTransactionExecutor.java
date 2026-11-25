@@ -48,7 +48,7 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
 
   public DynamicTransactionExecutor(TransactionContextFactory txContextFactory,
       RetryStrategy retryStrategy) {
-    super(MoreExecutors.sameThreadExecutor());
+    super(MoreExecutors.newDirectExecutorService());
     this.txContextFactory = txContextFactory;
     this.retryStrategy = retryStrategy;
   }

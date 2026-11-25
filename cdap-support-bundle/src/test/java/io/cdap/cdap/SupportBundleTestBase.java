@@ -17,7 +17,6 @@
 package io.cdap.cdap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -42,7 +41,9 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -186,40 +187,40 @@ public abstract class SupportBundleTestBase {
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataStorage.createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
-    dsOpService.startAndWait();
+    Services.startAndWait(dsOpService);
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     appFabricProcessor = injector.getInstance(AppFabricProcessorService.class);
-    appFabricProcessor.startAndWait();
+    Services.startAndWait(appFabricProcessor);
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricEndpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    Services.startAndWait(metricsCollectionService);
     serviceStore = injector.getInstance(ServiceStore.class);
-    serviceStore.startAndWait();
+    Services.startAndWait(serviceStore);
     metadataService = injector.getInstance(MetadataService.class);
-    metadataService.startAndWait();
+    Services.startAndWait(metadataService);
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubscriberService.startAndWait();
+    Services.startAndWait(metadataSubscriberService);
     logQueryService = injector.getInstance(LogQueryService.class);
-    logQueryService.startAndWait();
+    Services.startAndWait(logQueryService);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     supportBundleInternalService = injector.getInstance(SupportBundleInternalService.class);
-    supportBundleInternalService.startAndWait();
+    Services.startAndWait(supportBundleInternalService);
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.
@@ -234,21 +235,21 @@ public abstract class SupportBundleTestBase {
 
   @AfterClass
   public static void afterClass() throws IOException {
-    appFabricServer.stopAndWait();
-    appFabricProcessor.stopAndWait();
-    metricsCollectionService.stopAndWait();
-    datasetService.stopAndWait();
-    dsOpService.stopAndWait();
-    txManager.stopAndWait();
-    serviceStore.stopAndWait();
-    metadataSubscriberService.stopAndWait();
-    metadataService.stopAndWait();
-    logQueryService.stopAndWait();
+    Services.stopAndWait(appFabricServer);
+    Services.stopAndWait(appFabricProcessor);
+    Services.stopAndWait(metricsCollectionService);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(dsOpService);
+    Services.stopAndWait(txManager);
+    Services.stopAndWait(serviceStore);
+    Services.stopAndWait(metadataSubscriberService);
+    Services.stopAndWait(metadataService);
+    Services.stopAndWait(logQueryService);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
     Closeables.closeQuietly(metadataStorage);
-    supportBundleInternalService.stopAndWait();
+    Services.stopAndWait(supportBundleInternalService);
   }
 
   protected static CConfiguration createBasicCconf() throws IOException {

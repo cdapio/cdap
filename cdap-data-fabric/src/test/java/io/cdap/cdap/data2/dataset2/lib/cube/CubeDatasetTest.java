@@ -28,6 +28,7 @@ import io.cdap.cdap.api.dataset.lib.cube.CubeFact;
 import io.cdap.cdap.api.dataset.lib.cube.CubeQuery;
 import io.cdap.cdap.api.dataset.lib.cube.DimensionValue;
 import io.cdap.cdap.api.dataset.lib.cube.TimeSeries;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import io.cdap.cdap.proto.id.DatasetId;
 import java.io.IOException;
@@ -102,7 +103,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
 
     Configuration txConf = new Configuration();
     TransactionManager txManager = new TransactionManager(txConf);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     try {
       TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
 
@@ -141,7 +142,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
       txClient.commitOrThrow(tx);
       ((TransactionAware) cube2).postTxCommit();
     } finally {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 

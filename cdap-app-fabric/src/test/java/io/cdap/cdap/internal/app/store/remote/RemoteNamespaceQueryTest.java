@@ -25,6 +25,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.RemoteNamespaceQueryClient;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
@@ -63,11 +64,11 @@ public class RemoteNamespaceQueryTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    Services.startAndWait(datasetService);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     waitForService(discoveryServiceClient, Constants.Service.DATASET_MANAGER);
     waitForService(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP);
@@ -78,9 +79,9 @@ public class RemoteNamespaceQueryTest {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
+    Services.stopAndWait(appFabricServer);
+    Services.stopAndWait(datasetService);
+    Services.stopAndWait(txManager);
     AppFabricTestHelper.shutdown();
   }
 

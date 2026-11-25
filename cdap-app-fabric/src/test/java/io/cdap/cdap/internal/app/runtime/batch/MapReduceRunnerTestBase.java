@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiator;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
@@ -120,7 +121,7 @@ public class MapReduceRunnerTestBase {
       NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
 
     metricStore = injector.getInstance(MetricStore.class);
-    txService.startAndWait();
+    Services.startAndWait(txService);
 
     // Always create the default namespace
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
@@ -128,7 +129,7 @@ public class MapReduceRunnerTestBase {
 
   @AfterClass
   public static void afterClass() {
-    txService.stopAndWait();
+    Services.stopAndWait(txService);
     AppFabricTestHelper.shutdown();
   }
 

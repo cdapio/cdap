@@ -31,6 +31,7 @@ import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
@@ -99,7 +100,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     Injector injector = ArtifactLocalizerTwillRunnable.createInjector(cConf, new Configuration());
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
-    artifactLocalizerService.startAndWait();
+    Services.startAndWait(artifactLocalizerService);
     // Start the preview service main, which will use its own local datadir and fetch artifacts from app-fabric via
     // the artifact localizer service.
     startService(PreviewServiceMain.class);
@@ -108,7 +109,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
   @AfterClass
   public static void afterPreviewService() throws Exception {
     stopService(PreviewServiceMain.class);
-    artifactLocalizerService.stopAndWait();
+    Services.stopAndWait(artifactLocalizerService);
   }
 
   @Test

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.io;
 
-import com.google.common.io.Closeables;
 import java.io.Closeable;
 import java.io.IOException;
 import org.apache.hadoop.fs.FSDataInputStream;

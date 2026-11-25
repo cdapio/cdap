@@ -40,6 +40,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
@@ -135,11 +136,11 @@ public class TetheringRuntimeJobManagerTest {
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     tetheringStore = injector.getInstance(TetheringStore.class);
     PeerMetadata metadata = new PeerMetadata(Collections.singletonList(new NamespaceAllocation(TETHERED_NAMESPACE_NAME,
                                                                                                null,
@@ -161,11 +162,11 @@ public class TetheringRuntimeJobManagerTest {
   @AfterClass
   public static void tearDown() throws TopicNotFoundException, IOException {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
     messagingService.deleteTopic(topicId);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 

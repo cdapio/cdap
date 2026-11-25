@@ -25,6 +25,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.ProgramType;
@@ -87,7 +88,7 @@ public abstract class RemotePermissionsTestBase {
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     discoveryService = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
+    Services.startAndWait(appFabricServer);
     waitForService(Constants.Service.APP_FABRIC_HTTP);
     accessEnforcer = injector.getInstance(RemoteAccessEnforcer.class);
     permissionManager = injector.getInstance(PermissionManager.class);
@@ -226,7 +227,7 @@ public abstract class RemotePermissionsTestBase {
 
   @AfterClass
   public static void tearDown() {
-    appFabricServer.stopAndWait();
+    Services.stopAndWait(appFabricServer);
     AppFabricTestHelper.shutdown();
   }
 }

@@ -25,6 +25,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -80,7 +81,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
     artifactCacheService = new ArtifactCacheService(
       cConf, artifactCache, tetheringStore, null, discoveryService,
       new CommonNettyHttpServiceFactory(cConf, new NoOpMetricsCollectionService(), auditLogContexts -> {}));
-    artifactCacheService.startAndWait();
+    Services.startAndWait(artifactCacheService);
     getInjector().getInstance(ArtifactRepository.class).clear(NamespaceId.DEFAULT);
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     appJar = AppJarHelper.createDeploymentJar(locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
@@ -95,7 +96,7 @@ public class ArtifactCacheServiceTest extends AppFabricTestBase {
 
   @After
   public void tearDown() throws Exception {
-    artifactCacheService.stopAndWait();
+    Services.stopAndWait(artifactCacheService);
     artifactRepository.deleteArtifact(artifactId);
     appJar.delete();
     deletePeer();

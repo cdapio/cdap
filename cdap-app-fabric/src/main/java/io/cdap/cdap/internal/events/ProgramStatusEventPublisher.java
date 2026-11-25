@@ -24,6 +24,7 @@ import io.cdap.cdap.common.MetricRetrievalException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfos;
@@ -108,12 +109,12 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
 
   @Override
   public void startPublish() {
-    super.startAndWait();
+    Services.startAndWait(this);
   }
 
   @Override
   public void stopPublish() {
-    this.stop();
+    this.stopAsync();
   }
 
   @Override

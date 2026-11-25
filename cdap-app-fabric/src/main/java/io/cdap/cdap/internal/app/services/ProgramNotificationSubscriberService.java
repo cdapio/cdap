@@ -42,6 +42,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -162,7 +163,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
           .forEach(i -> children.add(createChildService("program.status." + i, topicPrefix + i)));
     }
     delegate = new CompositeService(children);
-    delegate.startAndWait();
+    Services.startAndWait(delegate);
     // Explicitly emit both launching and running counts on startup.
     emitFlowControlMetrics();
   }
@@ -218,7 +219,7 @@ public class ProgramNotificationSubscriberService extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
-    delegate.stopAndWait();
+    Services.stopAndWait(delegate);
   }
 
   @Inject(optional = true)

@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.guice;
 
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -32,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.KafkaConstants;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.client.ZKBrokerService;
@@ -129,21 +128,56 @@ public class KafkaClientModule extends PrivateModule {
       // The logic doesn't need to be sophisticated since it is a private binding and only used by the
       // wrapping KafkaClientService and BrokerService, which they will make sure no duplicate calls will be
       // made to the start/stop methods.
+      final boolean shared = kafkaZkQuorum == null;
       return new ForwardingZKClientService(zkClientService) {
         @Override
-        public ListenableFuture<State> start() {
-          if (startedCount.getAndIncrement() == 0) {
-            return super.start();
+        public Service startAsync() {
+          if (startedCount.getAndIncrement() == 0 && state() == State.NEW) {
+            super.startAsync();
           }
-          return Futures.immediateFuture(State.RUNNING);
+          return this;
         }
 
         @Override
-        public ListenableFuture<State> stop() {
-          if (startedCount.decrementAndGet() == 0) {
-            return super.stop();
+        public void awaitRunning() {
+          if (shared || state() == State.TERMINATED) {
+            return;
           }
-          return Futures.immediateFuture(State.TERMINATED);
+          super.awaitRunning();
+        }
+
+        @Override
+        public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+          if (shared || state() == State.TERMINATED) {
+            return;
+          }
+          super.awaitRunning(timeout, unit);
+        }
+
+        @Override
+        public Service stopAsync() {
+          if (startedCount.getAndUpdate(c -> c > 0 ? c - 1 : 0) == 1) {
+            super.stopAsync();
+          }
+          return this;
+        }
+
+        @Override
+        public void awaitTerminated() {
+          // Still referenced by another user or never started, so it is not stopped
+          if (startedCount.get() > 0 || state() == State.NEW) {
+            return;
+          }
+          super.awaitTerminated();
+        }
+
+        @Override
+        public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+          // Still referenced by another user or never started, so it is not stopped
+          if (startedCount.get() > 0 || state() == State.NEW) {
+            return;
+          }
+          super.awaitTerminated(timeout, unit);
         }
       };
     }
@@ -166,12 +200,12 @@ public class KafkaClientModule extends PrivateModule {
 
     @Override
     protected final void startUp() throws Exception {
-      zkClientService.startAndWait();
+      zkClientService.startAsync().awaitRunning();
       try {
-        delegate.startAndWait();
+        delegate.startAsync().awaitRunning();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
@@ -182,16 +216,16 @@ public class KafkaClientModule extends PrivateModule {
     @Override
     protected final void shutDown() throws Exception {
       try {
-        delegate.stopAndWait();
+        delegate.stopAsync().awaitTerminated();
       } catch (Exception e) {
         try {
-          zkClientService.stopAndWait();
+          zkClientService.stopAsync().awaitTerminated();
         } catch (Exception se) {
           e.addSuppressed(se);
         }
         throw e;
       }
-      zkClientService.stopAndWait();
+      zkClientService.stopAsync().awaitTerminated();
     }
 
     protected T getDelegate() {

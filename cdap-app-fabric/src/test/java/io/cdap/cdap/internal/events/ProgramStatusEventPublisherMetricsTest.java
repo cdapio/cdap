@@ -23,6 +23,7 @@ import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
 import io.cdap.cdap.metrics.collect.AggregatedMetricsCollectionService;
@@ -51,13 +52,13 @@ public class ProgramStatusEventPublisherMetricsTest {
     MetricsProvider mockMetricsProvider = getMockMetricsProvider();
     List<MetricValues> metricValuesList = new ArrayList<>();
     MetricsCollectionService mockMetricsCollectionService = getMockCollectionService(metricValuesList);
-    mockMetricsCollectionService.startAndWait();
+    Services.startAndWait(mockMetricsCollectionService);
     ProgramStatusEventPublisher programStatusEventPublisher = new ProgramStatusEventPublisher(
       CConfiguration.create(), null, mockMetricsCollectionService, null, mockMetricsProvider
     );
     programStatusEventPublisher.initialize(Collections.singleton(new DummyEventWriter()));
     programStatusEventPublisher.processMessages(null, getMockNotification());
-    mockMetricsCollectionService.stopAndWait();
+    Services.stopAndWait(mockMetricsCollectionService);
     Assert.assertSame(1, metricValuesList.size());
     Assert.assertTrue(containsMetric(metricValuesList.get(0), Constants.Metrics.ProgramEvent.PUBLISHED_COUNT));
   }
