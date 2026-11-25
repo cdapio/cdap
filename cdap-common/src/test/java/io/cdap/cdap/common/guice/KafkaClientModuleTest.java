@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.guice;
 
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -194,6 +196,66 @@ public class KafkaClientModuleTest {
     Assert.assertTrue(zkClientService.isRunning());
 
     Services.stopAndWait(zkClientService);
+  }
+
+  @Test
+  public void testWithUnstartedSharedZkClientDoesNotDeadlock() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+
+    Injector injector = Guice.createInjector(
+        new ConfigModule(cConf),
+        new ZkClientModule(),
+        new KafkaClientModule()
+    );
+
+    // Intentionally leave the shared ZKClientService in NEW state.
+    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
+    BrokerService brokerService = injector.getInstance(BrokerService.class);
+
+    Services.startAndWait(brokerService, 5, TimeUnit.SECONDS);
+    Assert.assertTrue(brokerService.isRunning());
+    Assert.assertFalse(zkClientService.isRunning());
+    Services.stopAndWait(brokerService);
+  }
+
+  @Test
+  public void testRefCountedZkClientStopOnNewAndDuplicateStopDoesNotUnderflowOrHang()
+      throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+    cConf.set(KafkaConstants.ConfigKeys.ZOOKEEPER_QUORUM, kafkaZkConnect);
+
+    Injector injector = Guice.createInjector(
+        new ConfigModule(cConf),
+        new ZkClientModule(),
+        new KafkaClientModule()
+    );
+
+    BrokerService brokerService = injector.getInstance(BrokerService.class);
+    Field zkField = brokerService.getClass().getSuperclass().getDeclaredField("zkClientService");
+    zkField.setAccessible(true);
+    ZKClientService refCountedZk = (ZKClientService) zkField.get(brokerService);
+
+    Assert.assertEquals(Service.State.NEW, refCountedZk.state());
+
+    // Calling stopAsync + awaitTerminated on an unstarted State.NEW ref-counted client
+    // must neither underflow startedCount below 0 nor hang waiting for TERMINATED.
+    refCountedZk.stopAsync();
+    refCountedZk.awaitTerminated(1, TimeUnit.SECONDS);
+    refCountedZk.awaitTerminated();
+    Assert.assertEquals(Service.State.NEW, refCountedZk.state());
+
+    // Proves startedCount remained clamped at 0: subsequent startAsync still starts the client.
+    refCountedZk.startAsync().awaitRunning(5, TimeUnit.SECONDS);
+    Assert.assertEquals(Service.State.RUNNING, refCountedZk.state());
+
+    // Duplicate stopAsync after 1 start stops cleanly on the first call and clamps on the second.
+    refCountedZk.stopAsync();
+    refCountedZk.stopAsync();
+    refCountedZk.awaitTerminated(5, TimeUnit.SECONDS);
+    refCountedZk.awaitTerminated();
+    Assert.assertEquals(Service.State.TERMINATED, refCountedZk.state());
   }
 
   /**
