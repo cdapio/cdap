@@ -204,7 +204,7 @@ REM Note the trailing semi-colon so that the last directory entry is interpreted
 SET "CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
-IF %ERRORLEVEL% NEQ 0 GOTO FINALLY
+IF %ERRORLEVEL% NEQ 0 GOTO JAVA_CHECK_FAILED
 CALL :CREATE_LOG_DIR
 CALL :SET_ACCESS_TOKEN
 
@@ -235,7 +235,7 @@ REM See TX_DEBUGGER for notes on setting CLASSPATH
 SET "CLASSPATH=%CDAP_HOME%\libexec\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
-IF %ERRORLEVEL% NEQ 0 GOTO FINALLY
+IF %ERRORLEVEL% NEQ 0 GOTO JAVA_CHECK_FAILED
 
 set class=io.cdap.cdap.cli.CLIMain
 
@@ -304,7 +304,7 @@ REM See TX_DEBUGGER for notes on setting CLASSPATH
 SET "CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
-IF %ERRORLEVEL% NEQ 0 GOTO FINALLY
+IF %ERRORLEVEL% NEQ 0 GOTO JAVA_CHECK_FAILED
 CALL :CHECK_NODE
 CALL :CREATE_LOG_DIR
 
@@ -483,6 +483,13 @@ for /F "TOKENS=*" %%b in ('dir  /a-d "%CDAP_HOME%\logs" 2^>NUL ^| find /c "%exte
 )
 endlocal
 GOTO :EOF
+
+REM FINALLY ends with commands that reset ERRORLEVEL to 0, so a failed Java check
+REM restores the environment here and exits with 1.
+:JAVA_CHECK_FAILED
+cd %ORIG_DIR%
+SET "PATH=%ORIG_PATH%"
+EXIT /B 1
 
 :FINALLY
 cd %ORIG_DIR%
