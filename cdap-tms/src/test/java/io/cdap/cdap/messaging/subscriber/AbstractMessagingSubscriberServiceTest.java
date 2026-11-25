@@ -25,6 +25,7 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -120,14 +121,14 @@ public class AbstractMessagingSubscriberServiceTest {
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 100, 1,
       RetryStrategies.noRetry(), metricsContext, 100);
-    service.startAndWait();
+    Services.startAndWait(service);
     //First one
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
     //Retry
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
-    service.stopAndWait();
+    Services.stopAndWait(service);
   }
 
   @Test
@@ -158,7 +159,7 @@ public class AbstractMessagingSubscriberServiceTest {
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 100, 1,
       RetryStrategies.noRetry(), metricsContext, 3);
-    service.startAndWait();
+    Services.startAndWait(service);
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1), ImmutablePair.of(null, 2)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 3)),
@@ -167,7 +168,7 @@ public class AbstractMessagingSubscriberServiceTest {
                         processedMessages.poll(10, TimeUnit.SECONDS));
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 5), ImmutablePair.of(null, 6)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
-    service.stopAndWait();
+    Services.stopAndWait(service);
   }
 
   /**
@@ -202,10 +203,10 @@ public class AbstractMessagingSubscriberServiceTest {
     TestMessagingSubscriberService service = new TestMessagingSubscriberService(
       NamespaceId.DEFAULT.topic("test"), 100, 2, 1,
       RetryStrategies.noRetry(), metricsContext, 2);
-    service.startAndWait();
+    Services.startAndWait(service);
     Assert.assertEquals(Arrays.asList(ImmutablePair.of(null, 0), ImmutablePair.of(null, 1)),
                         processedMessages.poll(10, TimeUnit.SECONDS));
-    service.stopAndWait();
+    Services.stopAndWait(service);
   }
 
   class TestMessagingSubscriberService extends AbstractMessagingSubscriberService<Integer> {

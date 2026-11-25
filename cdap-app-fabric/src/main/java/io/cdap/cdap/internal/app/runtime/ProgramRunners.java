@@ -38,6 +38,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.metrics.ProgramTypeMetricTag;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -78,7 +79,7 @@ public final class ProgramRunners {
     runAsUser(user, new Callable<ListenableFuture<Service.State>>() {
       @Override
       public ListenableFuture<Service.State> call() throws Exception {
-        return service.start();
+        return Services.start(service);
       }
     });
   }

@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.store.state;
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
@@ -66,7 +67,7 @@ public class AppStateTableTest extends AppFabricTestBase {
     Injector injector = getInjector();
 
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
 
     transactionRunner = getInjector().getInstance(TransactionRunner.class);
 
@@ -79,7 +80,7 @@ public class AppStateTableTest extends AppFabricTestBase {
   @AfterClass
   public static void teardown() throws Exception {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
   }
 

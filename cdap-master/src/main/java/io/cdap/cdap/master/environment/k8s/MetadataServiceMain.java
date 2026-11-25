@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -30,6 +29,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;

@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.runtime.spark.service;
 
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -37,6 +36,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.DefaultPluginConfigurer;

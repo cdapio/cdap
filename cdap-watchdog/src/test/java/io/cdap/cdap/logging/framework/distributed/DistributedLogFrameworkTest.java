@@ -36,6 +36,7 @@ import io.cdap.cdap.common.guice.ZkClientModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.test.MockTwillContext;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -112,19 +113,19 @@ public class DistributedLogFrameworkTest {
   @Before
   public void beforeTest() throws Exception {
     injector = createInjector();
-    injector.getInstance(ZKClientService.class).startAndWait();
-    injector.getInstance(KafkaClientService.class).startAndWait();
-    injector.getInstance(BrokerService.class).startAndWait();
-    injector.getInstance(TransactionManager.class).startAndWait();
+    Services.startAndWait(injector.getInstance(ZKClientService.class));
+    Services.startAndWait(injector.getInstance(KafkaClientService.class));
+    Services.startAndWait(injector.getInstance(BrokerService.class));
+    Services.startAndWait(injector.getInstance(TransactionManager.class));
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @After
   public void afterTest() {
-    injector.getInstance(TransactionManager.class).stopAndWait();
-    injector.getInstance(BrokerService.class).stopAndWait();
-    injector.getInstance(KafkaClientService.class).stopAndWait();
-    injector.getInstance(ZKClientService.class).stopAndWait();
+    Services.stopAndWait(injector.getInstance(TransactionManager.class));
+    Services.stopAndWait(injector.getInstance(BrokerService.class));
+    Services.stopAndWait(injector.getInstance(KafkaClientService.class));
+    Services.stopAndWait(injector.getInstance(ZKClientService.class));
     injector = null;
   }
 
@@ -133,7 +134,7 @@ public class DistributedLogFrameworkTest {
     DistributedLogFramework framework = injector.getInstance(DistributedLogFramework.class);
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
-    framework.startAndWait();
+    Services.startAndWait(framework);
 
     // Send some logs to Kafka.
     LoggingContext context = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
@@ -186,7 +187,7 @@ public class DistributedLogFrameworkTest {
       }
     }, 10, TimeUnit.SECONDS, msgCount, TimeUnit.MILLISECONDS);
 
-    framework.stopAndWait();
+    Services.stopAndWait(framework);
 
     String kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     // Check the checkpoint is persisted correctly. Since all messages are processed,

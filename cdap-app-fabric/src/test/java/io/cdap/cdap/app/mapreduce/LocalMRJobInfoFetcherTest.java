@@ -26,6 +26,7 @@ import io.cdap.cdap.app.metrics.MapReduceMetrics;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
@@ -57,10 +58,10 @@ public class LocalMRJobInfoFetcherTest {
 
   public static Injector startMetricsService(CConfiguration conf) throws Exception {
     Injector injector = Guice.createInjector(new AppFabricTestModule(conf));
-    injector.getInstance(TransactionManager.class).startAndWait();
+    Services.startAndWait(injector.getInstance(TransactionManager.class));
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
-    injector.getInstance(DatasetOpExecutorService.class).startAndWait();
-    injector.getInstance(DatasetService.class).startAndWait();
+    Services.startAndWait(injector.getInstance(DatasetOpExecutorService.class));
+    Services.startAndWait(injector.getInstance(DatasetService.class));
     return injector;
   }
 

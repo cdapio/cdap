@@ -19,6 +19,7 @@ package io.cdap.cdap.security.auth;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.service.Services;
 import java.io.IOException;
 import java.util.Base64;
 import org.slf4j.Logger;
@@ -42,13 +43,13 @@ public class AccessTokenValidator extends AbstractIdleService implements TokenVa
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting up AccessTokenValidator service");
-    tokenManager.startAndWait();
+    Services.startAndWait(tokenManager);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Shutting down AccessTokenValidator service");
-    tokenManager.stopAndWait();
+    Services.stopAndWait(tokenManager);
   }
 
   @Override

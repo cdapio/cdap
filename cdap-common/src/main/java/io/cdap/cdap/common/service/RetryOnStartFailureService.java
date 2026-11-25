@@ -68,7 +68,7 @@ public class RetryOnStartFailureService extends AbstractService {
 
         while (!stopped) {
           try {
-            currentDelegate.start().get();
+            Services.start(currentDelegate).get();
             // Only assigned the delegate if and only if the delegate service started successfully
             startedService = currentDelegate;
             break;
@@ -112,7 +112,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // the setting of the startedService field. When that happens, the stop failure state is not propagated.
     // Nevertheless, there won't be any service left behind without stopping.
     if (startedService != null) {
-      Futures.addCallback(startedService.stop(), new FutureCallback<State>() {
+      Futures.addCallback(Services.stop(startedService), new FutureCallback<State>() {
         @Override
         public void onSuccess(State result) {
           notifyStopped();
@@ -130,7 +130,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // because if the underlying service is not yet started due to failure, it shouldn't affect the stop state
     // of this retrying service.
     if (currentDelegate != null) {
-      currentDelegate.stop().addListener(this::notifyStopped, Threads.SAME_THREAD_EXECUTOR);
+      Services.stop(currentDelegate).addListener(this::notifyStopped, Threads.SAME_THREAD_EXECUTOR);
       return;
     }
 

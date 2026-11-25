@@ -16,13 +16,13 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;

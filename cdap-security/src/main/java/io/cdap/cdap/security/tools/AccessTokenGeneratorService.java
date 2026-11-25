@@ -34,6 +34,7 @@ import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.runtime.DaemonMain;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.cdap.cdap.security.auth.UserIdentity;
@@ -109,7 +110,7 @@ public class AccessTokenGeneratorService extends DaemonMain {
     } catch (Exception e) {
       LOG.warn("Exception when stopping AccessTokenGeneratorService", e);
     }
-    handler.tokenManager.stopAndWait();
+    Services.stopAndWait(handler.tokenManager);
   }
 
   @Override

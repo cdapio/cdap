@@ -26,6 +26,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.audit.AuditTestModule;
 import io.cdap.cdap.data2.audit.InMemoryAuditPublisher;
@@ -70,14 +71,14 @@ public class SystemMetadataAuditPublishTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
+      Services.startAndWait((Service) scheduler);
     }
   }
 
   @AfterClass
   public static void tearDown() {
     if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
+      Services.stopAndWait((Service) scheduler);
     }
     AppFabricTestHelper.shutdown();
   }

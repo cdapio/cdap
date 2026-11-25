@@ -36,6 +36,7 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
@@ -127,7 +128,7 @@ public class RemoteExecutionJobMain {
   @VisibleForTesting
   RemoteExecutionRuntimeJobEnvironment initialize(CConfiguration cConf) throws Exception {
     zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
+    Services.startAndWait(zkServer);
 
     InetSocketAddress zkAddr = ResolvingDiscoverable.resolve(zkServer.getLocalAddress());
     String zkConnectStr = String.format("%s:%d", zkAddr.getHostString(), zkAddr.getPort());
@@ -214,7 +215,7 @@ public class RemoteExecutionJobMain {
 
     if (zkServer != null) {
       try {
-        zkServer.stopAndWait();
+        Services.stopAndWait(zkServer);
       } catch (Exception e) {
         LOG.warn("Failed to stop ZK server", e);
       }

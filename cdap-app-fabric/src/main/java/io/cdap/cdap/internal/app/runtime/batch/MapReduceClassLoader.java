@@ -34,6 +34,7 @@ import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
@@ -153,7 +154,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       taskContextProvider = Optional.fromNullable(taskContextProvider)
           .or(taskContextProviderSupplier);
     }
-    taskContextProvider.startAndWait();
+    Services.startAndWait(taskContextProvider);
     return taskContextProvider;
   }
 
@@ -196,7 +197,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       if (provider != null) {
         Service.State state = provider.state();
         if (state == Service.State.STARTING || state == Service.State.RUNNING) {
-          provider.stopAndWait();
+          Services.stopAndWait(provider);
         }
       }
     } catch (Exception e) {

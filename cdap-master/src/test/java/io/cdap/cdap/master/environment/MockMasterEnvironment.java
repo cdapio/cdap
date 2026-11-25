@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.environment;
 
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -42,7 +43,7 @@ public class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public void initialize(MasterEnvironmentContext context) {
     zkClient = ZKClientService.Builder.of(context.getConfigurations().get(Constants.Zookeeper.QUORUM)).build();
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient);
 
     discoveryService = new ZKDiscoveryService(zkClient);
     twillRunnerService = new NoopTwillRunnerService();
@@ -56,7 +57,7 @@ public class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public void destroy() {
     discoveryService.close();
-    zkClient.stopAndWait();
+    Services.stopAndWait(zkClient);
   }
 
   @Override

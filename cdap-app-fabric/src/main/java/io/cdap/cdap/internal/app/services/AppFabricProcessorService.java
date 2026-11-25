@@ -36,6 +36,7 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.operation.OperationNotificationSubscriberService;
@@ -151,22 +152,22 @@ public class AppFabricProcessorService extends AbstractIdleService {
     // Only for RBAC instances
     if (Feature.DATAPLANE_AUDIT_LOGGING.isEnabled(featureFlagsProvider)
         && cConf.getBoolean(Constants.Security.ENABLED)) {
-      futuresList.add(auditLogSubscriberService.start());
+      futuresList.add(Services.start(auditLogSubscriberService));
     }
 
     futuresList.addAll(ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
-        runRecordCounterService.start(),
-        runDataTimeToLiveService.start(),
-        operationNotificationSubscriberService.start()
+        Services.start(provisioningService),
+        Services.start(applicationLifecycleService),
+        Services.start(bootstrapService),
+        Services.start(programRuntimeService),
+        Services.start(programNotificationSubscriberService),
+        Services.start(programStopSubscriberService),
+        Services.start(runRecordCorrectorService),
+        Services.start(programRunStatusMonitorService),
+        Services.start(coreSchedulerService),
+        Services.start(runRecordCounterService),
+        Services.start(runDataTimeToLiveService),
+        Services.start(operationNotificationSubscriberService)
     ));
     Futures.allAsList(futuresList).get();
 
@@ -196,20 +197,20 @@ public class AppFabricProcessorService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping AppFabric processor service.");
     cancelHttpService.cancel();
-    coreSchedulerService.stopAndWait();
-    bootstrapService.stopAndWait();
-    systemAppManagementService.stopAndWait();
-    programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
-    programStopSubscriberService.stopAndWait();
-    runRecordCorrectorService.stopAndWait();
-    programRunStatusMonitorService.stopAndWait();
-    provisioningService.stopAndWait();
-    runRecordCounterService.stopAndWait();
-    runDataTimeToLiveService.stopAndWait();
-    operationNotificationSubscriberService.stopAndWait();
-    auditLogSubscriberService.stopAndWait();
+    Services.stopAndWait(coreSchedulerService);
+    Services.stopAndWait(bootstrapService);
+    Services.stopAndWait(systemAppManagementService);
+    Services.stopAndWait(programRuntimeService);
+    Services.stopAndWait(applicationLifecycleService);
+    Services.stopAndWait(programNotificationSubscriberService);
+    Services.stopAndWait(programStopSubscriberService);
+    Services.stopAndWait(runRecordCorrectorService);
+    Services.stopAndWait(programRunStatusMonitorService);
+    Services.stopAndWait(provisioningService);
+    Services.stopAndWait(runRecordCounterService);
+    Services.stopAndWait(runDataTimeToLiveService);
+    Services.stopAndWait(operationNotificationSubscriberService);
+    Services.stopAndWait(auditLogSubscriberService);
     LOG.info("AppFabric processor service stopped.");
   }
 

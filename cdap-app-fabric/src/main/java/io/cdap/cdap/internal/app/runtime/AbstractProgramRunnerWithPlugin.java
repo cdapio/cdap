@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import java.io.Closeable;
 import java.io.File;

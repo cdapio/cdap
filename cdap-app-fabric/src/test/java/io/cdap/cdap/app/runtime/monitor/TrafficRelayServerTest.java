@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.monitor;
 
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.TestHandler;
 import io.cdap.common.http.HttpRequest;
@@ -45,7 +46,7 @@ public class TrafficRelayServerTest {
     try {
       TrafficRelayServer relayServer = new TrafficRelayServer(InetAddress.getLoopbackAddress(),
                                                               httpServer::getBindAddress);
-      relayServer.startAndWait();
+      Services.startAndWait(relayServer);
       try {
         InetSocketAddress relayAddr = relayServer.getBindAddress();
 
@@ -63,7 +64,7 @@ public class TrafficRelayServerTest {
         Assert.assertEquals("Testing", response.getResponseBodyAsString());
 
       } finally {
-        relayServer.stopAndWait();
+        Services.stopAndWait(relayServer);
       }
     } finally {
       httpServer.stop();

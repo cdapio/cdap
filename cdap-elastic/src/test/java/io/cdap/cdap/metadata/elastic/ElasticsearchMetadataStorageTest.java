@@ -18,11 +18,11 @@ package io.cdap.cdap.metadata.elastic;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;

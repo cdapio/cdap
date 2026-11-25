@@ -17,7 +17,6 @@
 package io.cdap.cdap.security.auth;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -27,6 +26,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data.runtime.StorageModule;

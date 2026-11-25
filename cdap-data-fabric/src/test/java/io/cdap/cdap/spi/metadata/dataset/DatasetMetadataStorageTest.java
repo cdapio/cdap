@@ -25,7 +25,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,8 +35,10 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.NamespaceAdminTestModule;
+import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -107,7 +108,7 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
 
     Injector injector = Guice.createInjector(modules);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
     storage = injector.getInstance(DatasetMetadataStorage.class);
     storage.createIndex();
 
@@ -116,7 +117,7 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
 
   @AfterClass
   public static void teardown() throws IOException {
-    txManager.stopAndWait();
+    Services.stopAndWait(txManager);
     storage.dropIndex();
     Closeables.closeQuietly(storage);
   }

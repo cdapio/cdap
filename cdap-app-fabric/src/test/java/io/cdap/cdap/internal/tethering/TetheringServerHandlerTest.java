@@ -46,6 +46,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
@@ -173,21 +174,21 @@ public class TetheringServerHandlerTest {
     tetheringStore = new TetheringStore(injector.getInstance(TransactionRunner.class));
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
+      Services.startAndWait((Service) messagingService);
     }
     messagingProgramStatePublisher = injector.getInstance(MessagingProgramStatePublisher.class);
     profileService = injector.getInstance(ProfileService.class);
     txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
+    Services.startAndWait(txManager);
   }
 
   @AfterClass
   public static void teardown() {
     if (txManager != null) {
-      txManager.stopAndWait();
+      Services.stopAndWait(txManager);
     }
     if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
+      Services.stopAndWait((Service) messagingService);
     }
   }
 
