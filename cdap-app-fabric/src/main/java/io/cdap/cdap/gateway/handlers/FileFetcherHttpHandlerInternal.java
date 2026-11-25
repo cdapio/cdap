@@ -18,10 +18,21 @@ package io.cdap.cdap.gateway.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.LocationBodyProducer;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.AccessTokenCodec;
+import io.cdap.cdap.security.authorization.DefaultAccessEnforcer;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
@@ -29,6 +40,9 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
+import java.util.Base64;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.HttpHeaders;
@@ -44,10 +58,19 @@ import org.apache.twill.filesystem.LocationFactory;
 public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
 
   private final LocationFactory locationFactory;
+  private final AuthenticationContext authenticationContext;
+  private final AccessEnforcer internalAccessEnforcer;
+  private final AccessTokenCodec accessTokenCodec;
 
   @Inject
-  FileFetcherHttpHandlerInternal(LocationFactory locationFactory) {
+  FileFetcherHttpHandlerInternal(LocationFactory locationFactory,
+      AuthenticationContext authenticationContext,
+      @Named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer,
+      AccessTokenCodec accessTokenCodec) {
     this.locationFactory = locationFactory;
+    this.authenticationContext = authenticationContext;
+    this.internalAccessEnforcer = internalAccessEnforcer;
+    this.accessTokenCodec = accessTokenCodec;
   }
 
   /**
@@ -59,6 +82,10 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("/location/**")
   public void download(HttpRequest request, HttpResponder responder) throws Exception {
+    if (!isSystemService(authenticationContext.getPrincipal())) {
+      throw new UnauthorizedException(
+          "Only CDAP system services can download files from this endpoint");
+    }
     String prefix = String.format("%s/location/", Constants.Gateway.INTERNAL_API_VERSION_3);
     String path = request.uri().substring(prefix.length());
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
@@ -68,5 +95,23 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
     }
     responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location),
         new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+  }
+
+  private boolean isSystemService(Principal caller) {
+    try {
+      internalAccessEnforcer.enforce(InstanceId.SELF, caller, StandardPermission.GET);
+      return !isProgramRunToken(caller.getFullCredential());
+    } catch (IOException | RuntimeException e) {
+      return false;
+    }
+  }
+
+  private boolean isProgramRunToken(@Nullable Credential credential) throws IOException {
+    if (credential == null) {
+      return false;
+    }
+    AccessToken token = accessTokenCodec.decode(Base64.getDecoder().decode(credential.getValue()));
+    return Constants.Security.Authentication.RUNTIME_IDENTITY.equals(
+        token.getIdentifier().getUsername());
   }
 }

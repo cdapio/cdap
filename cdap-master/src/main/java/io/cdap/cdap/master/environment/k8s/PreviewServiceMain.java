@@ -24,6 +24,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule.ServiceType;
 import io.cdap.cdap.app.guice.AuthorizationModule;
@@ -49,7 +50,10 @@ import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.authorization.DefaultAccessEnforcer;
+import io.cdap.cdap.security.authorization.InternalAccessEnforcer;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -118,6 +122,9 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                     new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
                 .in(Scopes.SINGLETON);
             bind(TwillRunner.class).to(TwillRunnerService.class);
+            bind(AccessEnforcer.class)
+                .annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+                .to(InternalAccessEnforcer.class).in(Scopes.SINGLETON);
           }
         }
     ));
