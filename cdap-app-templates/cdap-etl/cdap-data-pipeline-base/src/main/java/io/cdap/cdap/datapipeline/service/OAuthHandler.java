@@ -32,6 +32,7 @@ import io.cdap.cdap.datapipeline.oauth.CredentialIsValidResponse;
 import io.cdap.cdap.datapipeline.oauth.GetAccessTokenResponse;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthClientCredentials;
+import io.cdap.cdap.datapipeline.oauth.OAuthHttpClient;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.RefreshType;
@@ -39,14 +40,13 @@ import io.cdap.cdap.datapipeline.oauth.OAuthProvider.CredentialEncodingStrategy;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
 import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
+import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -98,6 +99,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private static final String RTR_REFRESH_POLL_INTERVAL_MS = "rtr.refresh.poll.interval.ms";
   // The duration to hold the distributed refresh lease before it auto-expires
   private static final String RTR_LEASE_TTL_MS = "rtr.lease.ttl.ms";
+  // Optional comma-separated allowlist of hostnames / wildcard subdomains for OAuth provider URLs
+  private static final String ALLOWED_HOSTS = "allowed.hosts";
 
   private long accessTokenRefreshBufferMs;
   private long leaseTakeoverTimeoutMs;
@@ -105,17 +108,40 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   private long leaseExpirationTimeoutMs;
 
   private OAuthStore oauthStore;
+  private OAuthUrlValidator urlValidator;
+  private OAuthHttpClient oauthHttpClient;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
     Map<String, String> oauthConf = context.getConfiguration(OAUTH_CONF_PREFIX);
     this.oauthStore = new OAuthStore(context, context, context.getAdmin(), oauthConf);
+    this.urlValidator = createUrlValidator();
+    this.oauthHttpClient = createHttpClient(urlValidator);
 
     accessTokenRefreshBufferMs = Long.parseLong(oauthConf.get(RTR_ACCESS_TOKEN_REFRESH_BUFFER_MS));
     leaseTakeoverTimeoutMs = Long.parseLong(oauthConf.get(RTR_REFRESH_WAIT_TIMEOUT_MS));
     accessTokenPollIntervalMs = Long.parseLong(oauthConf.get(RTR_REFRESH_POLL_INTERVAL_MS));
     leaseExpirationTimeoutMs = Long.parseLong(oauthConf.get(RTR_LEASE_TTL_MS));
+  }
+
+  protected OAuthUrlValidator createUrlValidator() {
+    return OAuthUrlValidator.strict();
+  }
+
+  protected OAuthHttpClient createHttpClient(OAuthUrlValidator validator) {
+    return new OAuthHttpClient(validator);
+  }
+
+  private OAuthUrlValidator.AllowedHosts getAllowedHosts() throws OAuthServiceException {
+    String configured = getContext().getConfiguration(OAUTH_CONF_PREFIX).get(ALLOWED_HOSTS);
+    try {
+      return OAuthUrlValidator.AllowedHosts.parse(configured);
+    } catch (IllegalArgumentException e) {
+      LOG.error("Invalid configuration for {}{}: {}", OAUTH_CONF_PREFIX, ALLOWED_HOSTS, e.getMessage());
+      throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
+          "Invalid OAuth allowed hosts configuration", e);
+    }
   }
 
   @GET
@@ -130,6 +156,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       String formatURL = "%s";
       String loginUrl = oauthProvider.getLoginURL();
+      urlValidator.validate(loginUrl, OAuthUrlValidator.HostResolution.ALLOW_UNRESOLVED, getAllowedHosts());
       if (!loginUrl.contains("?")) {
         formatURL += "?";
       } else if (!loginUrl.endsWith("&")) {
@@ -171,8 +198,13 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       String userAgent = putOAuthProviderRequest.getUserAgent();
       
       // Validate URLs
-      URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
-      URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
+      OAuthUrlValidator.AllowedHosts allowedHosts = getAllowedHosts();
+      URL loginURL = urlValidator.validate(
+          putOAuthProviderRequest.getLoginURL(),
+          OAuthUrlValidator.HostResolution.ALLOW_UNRESOLVED, allowedHosts).getUrl();
+      URL tokenRefreshURL = urlValidator.validate(
+          putOAuthProviderRequest.getTokenRefreshURL(),
+          OAuthUrlValidator.HostResolution.ALLOW_UNRESOLVED, allowedHosts).getUrl();
 
       LOG.info("Received putOAuthProvider request with write_client_credentials = {}", reuseClientCredentials);
       OAuthClientCredentials clientCredentials = null;
@@ -249,13 +281,13 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         oauthStore.deletePKCECodeVerifier(provider, state);
       }
 
-      HttpResponse response;
+      OAuthHttpClient.Response response;
       try {
-        response = HttpRequests.execute(createGetRefreshTokenRequest(
+        response = oauthHttpClient.execute(createGetRefreshTokenRequest(
             oauthProvider,
             putOAuthCredentialRequest.getOneTimeCode(),
             putOAuthCredentialRequest.getRedirectURI(),
-            codeVerifier));
+            codeVerifier), getAllowedHosts(), true);
       } catch (IOException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
       }
@@ -286,7 +318,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       // For standard flow, if there no refresh token, store access token (generally long lived)
       // For RTR, also store the initial Access Token in OAuthStore
       if (RefreshType.RTR.equals(oauthProvider.getRefreshType()) || !hasRefreshToken) {
-        writeAccessToken(provider, credentialId, refreshTokenResponse);
+        writeAccessToken(oauthProvider, provider, credentialId, refreshTokenResponse);
       }
 
       responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -328,9 +360,11 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       throws Exception {
     OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
 
-    HttpResponse response;
+    OAuthHttpClient.Response response;
     try {
-      response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
+      response = oauthHttpClient.execute(
+          createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()),
+          getAllowedHosts(), true);
     } catch (IOException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
           "Failed to fetch access token from provider", e);
@@ -400,7 +434,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       // 4. Winner (either initial or fallback after timeout) executes token refresh and persistence
       RefreshTokenResponse tokenResponse = executeTokenRefresh(oauthProvider, provider, credentialId);
-      writeAccessToken(provider, credentialId, tokenResponse);
+      writeAccessToken(oauthProvider, provider, credentialId, tokenResponse);
 
       return new GetAccessTokenResponse(tokenResponse.getAccessToken(), tokenResponse.getInstanceURL());
     } finally {
@@ -442,7 +476,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     oauthStore.writeRefreshToken(provider, credentialId, token);
   }
 
-  private void writeAccessToken(String provider, String credentialId,
+  private void writeAccessToken(OAuthProvider oauthProvider, String provider, String credentialId,
                                 RefreshTokenResponse tokenResponse) throws OAuthStoreException {
     if (Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
       return;
@@ -454,13 +488,40 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       expiresAt = System.currentTimeMillis() + (expiresInSeconds * 1000L);
     }
 
+    String sanitizedIdentityUrl = sanitizeIdentityUrl(oauthProvider, tokenResponse.getId());
+
     OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
         .withAccessToken(tokenResponse.getAccessToken())
         .withExpiresAt(expiresAt)
-        .withIdentityUrl(tokenResponse.getId())
+        .withIdentityUrl(sanitizedIdentityUrl)
         .build();
 
     oauthStore.writeAccessToken(provider, credentialId, accessToken);
+  }
+
+  @Nullable
+  private String sanitizeIdentityUrl(OAuthProvider oauthProvider, @Nullable String identityUrl) {
+    if (Strings.isNullOrEmpty(identityUrl)) {
+      return null;
+    }
+    if (!matchesProviderOrigin(oauthProvider, identityUrl)) {
+      LOG.warn("Ignoring OAuth identity URL {} because its origin does not match provider {}",
+               identityUrl, oauthProvider.getName());
+      return null;
+    }
+    try {
+      urlValidator.validate(identityUrl, OAuthUrlValidator.HostResolution.ALLOW_UNRESOLVED, getAllowedHosts());
+      return identityUrl;
+    } catch (MalformedURLException | IllegalArgumentException | OAuthServiceException e) {
+      LOG.warn("Ignoring invalid OAuth identity URL {} for provider {}: {}",
+               identityUrl, oauthProvider.getName(), e.getMessage());
+      return null;
+    }
+  }
+
+  private static boolean matchesProviderOrigin(OAuthProvider oauthProvider, String url) {
+    return OAuthUrlValidator.hasSameOrigin(url, oauthProvider.getTokenRefreshURL())
+        || OAuthUrlValidator.hasSameOrigin(url, oauthProvider.getLoginURL());
   }
 
   private Optional<GetAccessTokenResponse> getCachedAccessTokenIfValid(OAuthProvider oauthProvider,
@@ -473,7 +534,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     }
 
     if (RefreshType.RTR.equals(oauthProvider.getRefreshType())) {
-      if (isAccessTokenValid(oAuthAccessToken.get())) {
+      if (isAccessTokenValid(oauthProvider, oAuthAccessToken.get())) {
         LOG.debug("Returning valid cached access token for provider {} credential {}", provider, credentialId);
         return Optional.of(new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), ""));
       }
@@ -484,28 +545,33 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     return Optional.of(new GetAccessTokenResponse(oAuthAccessToken.get().getAccessToken(), ""));
   }
 
-  private boolean isAccessTokenValid(OAuthAccessToken token) {
+  private boolean isAccessTokenValid(OAuthProvider oauthProvider, OAuthAccessToken token) {
     // Rule 1: If expiresAt is present (> 0), use it with configured safety buffer
     if (token.getExpiresAt() > 0) {
       return !token.isExpired(accessTokenRefreshBufferMs);
     }
 
     // Rule 2: Else if identityUrl is present, validate against identity URL
-    if (!Strings.isNullOrEmpty(token.getIdentityUrl())) {
-      try {
-        HttpRequest request = HttpRequest.get(new URL(token.getIdentityUrl()))
-            .addHeader("Authorization", "Bearer " + token.getAccessToken())
-            .build();
-        HttpResponse response = HttpRequests.execute(request);
-        return response.getResponseCode() == HttpURLConnection.HTTP_OK;
-      } catch (Exception e) {
-        LOG.warn("Failed to validate access token via identity URL {}: {}",
-            token.getIdentityUrl(), e.getMessage());
-        return false;
-      }
+    String identityUrl = token.getIdentityUrl();
+    if (Strings.isNullOrEmpty(identityUrl)) {
+      return false;
     }
-
-    return false;
+    if (!matchesProviderOrigin(oauthProvider, identityUrl)) {
+      LOG.warn("Rejecting OAuth identity URL {} because its origin does not match provider {}",
+               identityUrl, oauthProvider.getName());
+      return false;
+    }
+    try {
+      HttpRequest request = HttpRequest.get(new URL(identityUrl))
+          .addHeader("Authorization", "Bearer " + token.getAccessToken())
+          .build();
+      OAuthHttpClient.Response response = oauthHttpClient.execute(request, getAllowedHosts(), false);
+      return response.getResponseCode() == HttpURLConnection.HTTP_OK;
+    } catch (Exception e) {
+      LOG.warn("Failed to validate access token via identity URL {}: {}",
+          identityUrl, e.getMessage());
+      return false;
+    }
   }
 
   @GET

@@ -5289,6 +5289,17 @@
       the lease automatically expires after this duration to prevent deadlocks and allow other workers to recover.
     </description>
   </property>
+  <property>
+    <name>security.auth.oauth.allowed.hosts</name>
+    <value></value>
+    <description>
+      Optional comma-separated allowlist of exact hostnames or wildcard subdomains (for example,
+      oauth2.googleapis.com,*.salesforce.com) permitted for Pipeline Studio OAuth provider URLs
+      (loginURL, tokenRefreshURL, and identityUrl). When empty, any public HTTPS host is allowed.
+      Non-HTTPS URLs, URLs containing userinfo, HTTP redirects, and loopback, link-local, private,
+      or reserved IP addresses are always blocked regardless of this setting.
+    </description>
+  </property>
 
   <!-- UI Configuration -->
 
