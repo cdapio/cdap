@@ -14,52 +14,56 @@
 #
 # Cask is a trademark of Cask Data, Inc. All rights reserved.
 
-FROM ubuntu:16.04
-MAINTAINER Cask Data <ops@cask.co>
+FROM eclipse-temurin:11-jdk-jammy
+LABEL maintainer="Cask Data <ops@cask.co>"
 
-# update system
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Install OS packages, gosu, and Node.js 22.x
 RUN apt-get update && \
   apt-get dist-upgrade -y && \
-  apt-get install -y curl dpkg-sig
+  apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    gosu \
+    jq \
+    libxml2-utils \
+    procps \
+    unzip && \
+  mkdir -p /etc/apt/keyrings && \
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends nodejs && \
+  gosu nobody true && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
-# grab gosu for easy step-down from root
-ENV GOSU_VERSION 1.7
-RUN apt-get install -y --no-install-recommends git && \
-  curl -vL \
-    "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" > \
-    /usr/local/bin/gosu && \
-  curl -vL \
-    "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" > \
-    /usr/local/bin/gosu.asc && \
-  export GNUPGHOME="$(mktemp -d)" && \
-  for server in $(shuf -e ha.pool.sks-keyservers.net \
-                          hkp://p80.pool.sks-keyservers.net:80 \
-                          keyserver.ubuntu.com \
-                          hkp://keyserver.ubuntu.com:80 \
-                          pgp.mit.edu) ; do \
-      gpg --keyserver "$server" --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && break || : ; \
-  done && \
-  gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu && \
-  rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc && \
-  chmod +x /usr/local/bin/gosu && \
-  gosu nobody true
-
-# Copy scripts and files before using them below
-COPY packer/scripts /tmp/scripts
+# Copy rendered cdap-sdk.json produced by docker-deploy.yml
 COPY packer/files /tmp/files
 
-# Install Chef, setup APT, run Chef cdap::sdk recipe, then clean up
-RUN curl -O https://packages.chef.io/files/stable/chef/13.8.5/ubuntu/16.04/chef_13.8.5-1_amd64.deb && \
-    dpkg-sig --verify chef_13.8.5-1_amd64.deb && \
-    dpkg -i chef_13.8.5-1_amd64.deb && \
-    for i in apt-setup.sh cookbook-dir.sh cookbook-setup.sh ; do /tmp/scripts/$i ; done && \
-    chef-solo -o cdap::sdk -j /tmp/files/cdap-sdk.json && \
-    for i in remove-chef.sh sdk-cleanup.sh apt-cleanup.sh ; do /tmp/scripts/$i ; done && \
-    rm -rf /root/.m2 /var/cache/debconf/*-old /usr/share/{doc,man} /tmp/scripts /tmp/files \
-      /var/lib/apt/lists/* \
-      /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
+# Create cdap user and install CDAP Sandbox directly without Chef
+ARG SANDBOX_URL=""
+RUN groupadd -r cdap && \
+  useradd -r -g cdap -d /opt/cdap -s /bin/bash cdap && \
+  SANDBOX_URL="${SANDBOX_URL:-$(jq -r '.cdap.sdk.url // empty' /tmp/files/cdap-sdk.json)}" && \
+  if [ -z "${SANDBOX_URL}" ]; then \
+    echo "Error: SANDBOX_URL build-arg not set and '.cdap.sdk.url' is missing or empty in /tmp/files/cdap-sdk.json." >&2; \
+    exit 1; \
+  fi && \
+  curl -fsSL -o /tmp/cdap-sandbox.zip "${SANDBOX_URL}" && \
+  mkdir -p /opt/cdap && \
+  unzip -q /tmp/cdap-sandbox.zip -d /opt/cdap && \
+  mv /opt/cdap/cdap-sandbox-* /opt/cdap/sandbox && \
+  chown -R cdap:cdap /opt/cdap && \
+  rm -rf /tmp/cdap-sandbox.zip /tmp/files && \
+  gosu cdap /opt/cdap/sandbox/bin/cdap version
 
-ENV PATH /opt/cdap/sandbox/bin:${PATH}
+ENV PATH="/opt/cdap/sandbox/bin:${PATH}"
 
 # Copy entrypoint
 COPY docker-entrypoint.sh /
