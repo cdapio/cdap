@@ -23,6 +23,7 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
@@ -31,9 +32,11 @@ import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1Volume;
+import io.kubernetes.client.openapi.models.V1VolumeMount;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -384,6 +387,33 @@ public class KubeTwillPreparerTest {
     Assert.assertTrue(configmapsNames.contains("cdap-config-abc-123"));
     Assert.assertTrue(podSpec.getContainers().get(0).getVolumeMounts().stream()
         .anyMatch(v -> v.getName().equals("cdap-config-abc-123") && v.getMountPath().equals("/config")));
+  }
+
+  @Test
+  public void testSecretDiskWithSubPath() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(),
+        null, "default",
+        createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null,
+        null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+    preparer.withSecretDisk(MainRunnable.class.getSimpleName(), new SecretDisk("cdap-security",
+        "/etc/cdap/security/tokenManagerKey.json", "tokenManagerKey.json"),
+        new SecretDisk("other-secret", "/etc/other"));
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null, createResourceSpecification(),
+        Collections.emptyList());
+
+    V1PodSpec podSpec = preparer.createPodSpec(new LocalLocationFactory().create("yes"),
+        Collections.singletonMap(MainRunnable.class.getSimpleName(), runtimeSpec));
+
+    List<V1VolumeMount> mounts = podSpec.getContainers().get(0).getVolumeMounts();
+    Assert.assertTrue(mounts.contains(new V1VolumeMount().name("cdap-security")
+        .mountPath("/etc/cdap/security/tokenManagerKey.json")
+        .subPath("tokenManagerKey.json").readOnly(true)));
+    Assert.assertTrue(mounts.contains(
+        new V1VolumeMount().name("other-secret").mountPath("/etc/other").readOnly(true)));
   }
 
   @Test

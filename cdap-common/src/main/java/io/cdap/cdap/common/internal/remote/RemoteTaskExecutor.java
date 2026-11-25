@@ -81,6 +81,7 @@ public class RemoteTaskExecutor {
   private final AeadCipher userEncryptionAeadCipher;
   private final String workerUrl;
   private final boolean isWorkerEncryptionRequired;
+  private final boolean sendCallerToken;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -105,12 +106,14 @@ public class RemoteTaskExecutor {
           Constants.Service.TASK_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
       this.isWorkerEncryptionRequired = true;
+      this.sendCallerToken = cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.SYSTEM_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_SYSTEM_WORKER;
       this.isWorkerEncryptionRequired = false;
+      this.sendCallerToken = false;
     }
   }
 
@@ -130,13 +133,7 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
-          HttpRequest.Builder requestBuilder = remoteClient
-              .requestBuilder(HttpMethod.POST, workerUrl)
-              .withBody(requestBody.duplicate());
-          if (compression) {
-            requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
-            requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
-          }
+          HttpRequest httpRequest = buildHttpRequest(requestBody);
 
           // Encrypting user credentials for task worker calls
           Credential currentCredential = SecurityRequestContext.getUserCredential();
@@ -147,7 +144,6 @@ public class RemoteTaskExecutor {
             SecurityRequestContext.setUserCredential(encryptedCredential);
           }
 
-          HttpRequest httpRequest = requestBuilder.build();
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
           // Resetting user credentials for further execution of current request
@@ -185,6 +181,21 @@ public class RemoteTaskExecutor {
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
       throw e;
     }
+  }
+
+  private HttpRequest buildHttpRequest(ByteBuffer requestBody) {
+    HttpRequest.Builder requestBuilder = remoteClient
+        .requestBuilder(HttpMethod.POST, workerUrl)
+        .withBody(requestBody.duplicate());
+    if (compression) {
+      requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+      requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
+    }
+    if (sendCallerToken) {
+      remoteClient.setSystemCredentialHeader(requestBuilder::addHeader,
+          Constants.Security.Headers.WORKER_CALLER_TOKEN);
+    }
+    return requestBuilder.build();
   }
 
   private Exception getTaskException(ServiceException e) {

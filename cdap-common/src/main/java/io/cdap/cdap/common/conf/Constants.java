@@ -1880,6 +1880,10 @@ public final class Constants {
        * token to authorize runtime service calls.
        */
       public static final String RUNTIME_TOKEN = "X-CDAP-Runtime-Token";
+      /**
+       * Internal token of the CDAP system service that sends a task to a task worker.
+       */
+      public static final String WORKER_CALLER_TOKEN = "X-CDAP-Worker-Caller-Token";
     }
 
     /**
