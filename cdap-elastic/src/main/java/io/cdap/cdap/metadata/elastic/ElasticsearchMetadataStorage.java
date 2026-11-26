@@ -129,6 +129,7 @@ import org.opensearch.client.opensearch.indices.CreateIndexResponse;
 import org.opensearch.client.opensearch.indices.DeleteIndexResponse;
 import org.opensearch.client.opensearch.indices.IndexSettings;
 import org.opensearch.client.opensearch.indices.IndexState;
+import org.opensearch.client.opensearch.indices.PutMappingResponse;
 import org.opensearch.client.opensearch.indices.get_mapping.IndexMappingRecord;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
@@ -159,7 +160,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final Gson GSON = new GsonBuilder()
       .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter()).create();
 
-  private static final JsonpMapper MAPPER = new JsonbJsonpMapper();
+  static final JsonpMapper MAPPER = new JsonbJsonpMapper();
 
   // When TLS verification is disabled, getClients() replaces the connection manager of the
   // transport. The replacement keeps the default timeouts of the transport.
@@ -327,18 +328,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * store the version of CDAP that creates the index.
    */
   VersionInfo getVersionInfo() throws IOException {
-    IndexMappingRecord record;
-    try {
-      record = getClients().client.indices().getMapping(g -> g.index(indexName)).get(indexName);
-    } catch (OpenSearchException e) {
-      throw new IOException("Unable to obtain mappings for index " + indexName, e);
-    }
-    if (record == null) {
-      throw new IOException("Unable to obtain mappings for index " + indexName);
-    }
-    TypeMapping mapping = record.mappings();
     // In our index.mapping.json, _meta is a map from String to String
-    Map<String, JsonData> meta = mapping.meta();
+    Map<String, JsonData> meta = getIndexMeta(getClients().client, indexName);
     LOG.trace("Index mapping for _meta: {}", meta);
     try {
       return new VersionInfo(new ProjectInfo.Version(getMetaValue(meta, Config.MAPPING_CDAP_VERSION)),
@@ -347,6 +338,44 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
           "Unable to extract version info from index mappings: " + meta, e);
+    }
+  }
+
+  static Map<String, JsonData> getIndexMeta(OpenSearchClient client, String indexName)
+      throws IOException {
+    IndexMappingRecord record;
+    try {
+      record = client.indices().getMapping(g -> g.index(indexName)).get(indexName);
+    } catch (OpenSearchException e) {
+      throw new IOException("Unable to obtain mappings for index " + indexName, e);
+    }
+    if (record == null) {
+      throw new IOException("Unable to obtain mappings for index " + indexName);
+    }
+    return record.mappings().meta();
+  }
+
+  /**
+   * Records in the "_meta" object of the index whether the index misses metadata that must be
+   * written again.
+   */
+  static void setRebuildRequired(OpenSearchClient client, String indexName, boolean required)
+      throws IOException {
+    Map<String, JsonData> meta = new LinkedHashMap<>(getIndexMeta(client, indexName));
+    if (required) {
+      meta.put(Config.MAPPING_REBUILD_REQUIRED, JsonData.of("true"));
+    } else {
+      meta.remove(Config.MAPPING_REBUILD_REQUIRED);
+    }
+    // A mapping update replaces the complete "_meta" object.
+    PutMappingResponse response;
+    try {
+      response = client.indices().putMapping(p -> p.index(indexName).meta(meta));
+    } catch (OpenSearchException e) {
+      throw new IOException("Unable to update mappings for index " + indexName, e);
+    }
+    if (!response.acknowledged()) {
+      throw new IOException("Mapping update was not acknowledged: " + response.toJsonString());
     }
   }
 
@@ -465,8 +494,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
-  private TypeMapping createMappings() throws IOException {
-    URL url = getClass().getClassLoader().getResource(MAPPING_RESOURCE);
+  static TypeMapping createMappings() throws IOException {
+    URL url = ElasticsearchMetadataStorage.class.getClassLoader().getResource(MAPPING_RESOURCE);
     if (url == null) {
       throw new IllegalStateException(
           "Index mapping file '" + MAPPING_RESOURCE + "'not found in classpath");
@@ -489,9 +518,13 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   // Index settings, used when creating the index
   private IndexSettings createSettings() {
-    String numShards = cConf.get(Config.CONF_ELASTIC_NUM_SHARDS);
-    String numReplicas = cConf.get(Config.CONF_ELASTIC_NUM_REPLICAS);
-    String maxResultWindow = cConf.get(Config.CONF_ELASTIC_WINDOW_SIZE);
+    return createSettings(cConf.get(Config.CONF_ELASTIC_NUM_SHARDS),
+        cConf.get(Config.CONF_ELASTIC_NUM_REPLICAS),
+        cConf.get(Config.CONF_ELASTIC_WINDOW_SIZE));
+  }
+
+  static IndexSettings createSettings(@Nullable String numShards,
+      @Nullable String numReplicas, @Nullable String maxResultWindow) {
     return IndexSettings.of(s -> s
         .numberOfShards(numShards == null ? null : Integer.parseInt(numShards))
         .numberOfReplicas(numReplicas == null ? null : Integer.parseInt(numReplicas))
