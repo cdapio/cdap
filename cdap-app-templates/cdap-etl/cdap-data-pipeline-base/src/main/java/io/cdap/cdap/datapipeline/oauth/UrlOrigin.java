@@ -24,8 +24,8 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 /**
- * Package-private utility to validate OAuth provider URL origins (scheme, normalized host, and
- * effective port, with no userinfo).
+ * Package-private utility to validate OAuth provider URL origins (http or https scheme, normalized
+ * host, and effective port, with no userinfo).
  */
 final class UrlOrigin {
   private static final int HTTP_DEFAULT_PORT = 80;
@@ -58,8 +58,7 @@ final class UrlOrigin {
 
   @Nullable
   private static URL parseValidUrl(@Nullable String url) {
-    if (url == null || url.isEmpty()
-        || url.charAt(0) <= ' ' || url.charAt(url.length() - 1) <= ' ') {
+    if (url == null || url.isEmpty() || hasUnsafeCharacters(url)) {
       return null;
     }
     URL parsed;
@@ -72,15 +71,41 @@ final class UrlOrigin {
     String authority = parsed.getAuthority();
     int port = parsed.getPort();
     if (scheme == null || authority == null || authority.isEmpty()
+        || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))
         || !url.regionMatches(true, scheme.length(), "://", 0, 3)
         || parsed.getUserInfo() != null
         || authority.indexOf('@') != -1
         || authority.indexOf('\\') != -1
         || authority.contains(":+")
+        || (port == -1 && hasPortSeparator(authority))
         || (port != -1 && (port < 1 || port > 65535))) {
       return null;
     }
     return parsed;
+  }
+
+  /**
+   * Returns true for leading or trailing spaces and for control characters anywhere in the URL.
+   */
+  private static boolean hasUnsafeCharacters(String url) {
+    if (url.charAt(0) == ' ' || url.charAt(url.length() - 1) == ' ') {
+      return true;
+    }
+    for (int i = 0; i < url.length(); i++) {
+      char c = url.charAt(i);
+      if (c < ' ' || c == 0x7f) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if the authority has a port separator, such as {@code host:} or {@code host:-1}. Called
+   * only when no valid port was parsed, so a separator means the port is empty or invalid.
+   */
+  private static boolean hasPortSeparator(String authority) {
+    return authority.lastIndexOf(':') > authority.lastIndexOf(']');
   }
 
   @Nullable
@@ -101,24 +126,26 @@ final class UrlOrigin {
       return null;
     }
     for (int i = 0; i < normalized.length(); i++) {
-      char c = normalized.charAt(i);
-      if (c <= ' ' || "/\\?#@:%[]".indexOf(c) != -1) {
+      if (!isHostCharacter(normalized.charAt(i))) {
         return null;
       }
     }
     return normalized.toLowerCase(Locale.ROOT);
   }
 
+  /**
+   * Allows ASCII letters, digits, '-', '.', and '_' (used by internal gateway hostnames). Non-ASCII
+   * hostnames must use their punycode form.
+   */
+  private static boolean isHostCharacter(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+        || c == '-' || c == '.' || c == '_';
+  }
+
   private static int getEffectivePort(String normalizedScheme, int port) {
     if (port != -1) {
       return port;
     }
-    if (normalizedScheme.equals("http")) {
-      return HTTP_DEFAULT_PORT;
-    }
-    if (normalizedScheme.equals("https")) {
-      return HTTPS_DEFAULT_PORT;
-    }
-    return -1;
+    return normalizedScheme.equals("https") ? HTTPS_DEFAULT_PORT : HTTP_DEFAULT_PORT;
   }
 }

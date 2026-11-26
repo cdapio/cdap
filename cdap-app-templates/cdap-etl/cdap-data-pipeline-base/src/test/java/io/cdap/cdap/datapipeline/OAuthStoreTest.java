@@ -372,6 +372,8 @@ public class OAuthStoreTest {
     wireInMemoryTable(rows);
     when(mockSecureStore.getMetadata(eq("system"), eq("oauthclientcreds-legacy")))
         .thenReturn(new SecureStoreMetadata("oauthclientcreds-legacy", "Legacy", 0L, Collections.emptyMap()));
+    when(mockSecureStore.getData("system", "oauthclientcreds-legacy"))
+        .thenReturn("{\"clientId\":\"cid\",\"clientSecret\":\"csecret\"}".getBytes(StandardCharsets.UTF_8));
 
     // First bind with empty metadata rejects invalid URLs, then allows valid initial bind.
     try {
@@ -396,6 +398,62 @@ public class OAuthStoreTest {
     oauthStore.writeProvider(createProviderWithoutCreds(
         "legacy", "https://127.0.0.1:8443/login2", "https://127.0.0.1:8443/token2"), true);
     assertEquals("https://127.0.0.1:8443/token2", rows.get("legacy").get("tokenrefreshurl"));
+  }
+
+  @Test
+  public void testWriteProviderReuseBackfillsOriginIntoLegacySecretMetadata() throws Exception {
+    Map<String, Map<String, String>> rows = new LinkedHashMap<>();
+    Map<String, SecureStoreMetadata> secrets = new LinkedHashMap<>();
+    wireInMemoryTable(rows);
+    wireInMemorySecureStore(secrets);
+
+    String key = "oauthclientcreds-legacydel";
+    String credsJson = "{\"clientId\":\"preid\",\"clientSecret\":\"presecret\"}";
+    secrets.put(key, new SecureStoreMetadata(key, "Pre-provisioned", 0L, Collections.emptyMap()));
+    when(mockSecureStore.getData("system", key)).thenReturn(credsJson.getBytes(StandardCharsets.UTF_8));
+
+    String loginUrl = "https://127.0.0.1:8443/login";
+    String tokenUrl = "https://127.0.0.1:8443/token";
+    oauthStore.writeProvider(createProviderWithoutCreds("legacydel", loginUrl, tokenUrl), true);
+
+    // The first reuse bind copies the origin into the secret, keeping the stored credentials unchanged.
+    verify(mockSecureStoreManager, times(1)).put("system", key, credsJson, "Pre-provisioned",
+        ImmutableMap.of("loginurl", loginUrl, "tokenrefreshurl", tokenUrl));
+    assertEquals(loginUrl, secrets.get(key).getProperties().get("loginurl"));
+    assertEquals(tokenUrl, secrets.get(key).getProperties().get("tokenrefreshurl"));
+
+    // The origin survives deleting the table row with preserve_client_credentials=true.
+    oauthStore.deleteProvider("legacydel", true);
+    assertFalse(rows.containsKey("legacydel"));
+    assertReuseOriginRejected("legacydel", loginUrl, "https://127.0.0.2:8443/steal");
+    assertFalse(rows.containsKey("legacydel"));
+
+    // Same-origin reuse succeeds and does not rewrite the secret again.
+    oauthStore.writeProvider(
+        createProviderWithoutCreds("legacydel", "https://127.0.0.1:8443/login2", "https://127.0.0.1:8443/token2"),
+        true);
+    assertEquals("https://127.0.0.1:8443/token2", rows.get("legacydel").get("tokenrefreshurl"));
+    verify(mockSecureStoreManager, times(1)).put(eq("system"), eq(key), anyString(), anyString(), any());
+  }
+
+  @Test
+  public void testWriteProviderReuseDoesNotBackfillWhenTableOriginRejected() throws Exception {
+    Map<String, Map<String, String>> rows = new LinkedHashMap<>();
+    Map<String, SecureStoreMetadata> secrets = new LinkedHashMap<>();
+    wireInMemoryTable(rows);
+    wireInMemorySecureStore(secrets);
+
+    String key = "oauthclientcreds-legacyrow";
+    secrets.put(key, new SecureStoreMetadata(key, "Legacy", 0L, Collections.emptyMap()));
+    Map<String, String> legacyRow = new LinkedHashMap<>();
+    legacyRow.put("oauthprovider", "legacyrow");
+    legacyRow.put("loginurl", "https://127.0.0.1:8443/login");
+    legacyRow.put("tokenrefreshurl", "https://127.0.0.1:8443/token");
+    rows.put("legacyrow", legacyRow);
+
+    assertReuseOriginRejected("legacyrow", "https://127.0.0.1:8443/login", "https://127.0.0.2:8443/steal");
+    verify(mockSecureStoreManager, never()).put(anyString(), anyString(), anyString(), anyString(), any());
+    assertTrue(secrets.get(key).getProperties().isEmpty());
   }
 
   @Test

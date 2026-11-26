@@ -705,6 +705,23 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         createPutRequest(base + "/login", base + "/token", null, null)).getResponseCode());
     assertReusePutRejected(preProv, base + "/login", "http://127.0.0.2:" + mockTokenPort + "/steal");
     assertReusePutRejected(preProv.toUpperCase(), base + "/login", "http://127.0.0.2:" + mockTokenPort + "/steal");
+
+    // The first reuse bind stores the origin on the secret, so it survives a preserve-credentials delete.
+    Assert.assertEquals(HttpURLConnection.HTTP_OK,
+        makeDeleteCall("provider/" + preProv + "?preserve_client_credentials=true").getResponseCode());
+    assertReusePutRejected(preProv, base + "/login", "http://127.0.0.2:" + mockTokenPort + "/steal");
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(
+        "provider/" + preProv + "?reuse_client_credentials=true",
+        createPutRequest(base + "/login2", base + "/token2", null, null)).getResponseCode());
+  }
+
+  @Test
+  public void testCreateProviderRejectsNonHttpScheme() throws IOException {
+    HttpResponse response = makePutCall("provider/ftpprovider",
+        createPutRequest("https://www.example.com/login", "ftp://www.example.com/token", "clientid", "clientsecret"));
+    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND,
+        makeGetCall("provider/ftpprovider/authurl").getResponseCode());
   }
 
   @Test

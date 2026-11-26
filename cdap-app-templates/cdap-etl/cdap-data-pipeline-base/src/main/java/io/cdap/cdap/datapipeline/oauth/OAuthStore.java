@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,10 +62,11 @@ public class OAuthStore {
   private static final String ACCESS_TOKEN_KEY_PREFIX = "oauthaccesstoken";
   private static final String REFRESH_TOKEN_KEY_PREFIX = "oauthrefreshtoken";
   private static final String PKCE_KEY_PREFIX = "oauth-pkce";
+  private static final String CLIENT_CREDS_DESCRIPTION = "OAuth client creds";
   private static final String ORIGIN_CHANGE_ERROR =
       "Cannot change OAuth provider URL scheme, host, or port when reusing client credentials";
   private static final String INVALID_URL_ORIGIN_ERROR =
-      "OAuth provider loginURL and tokenRefreshURL must specify a valid scheme, host, and port without userinfo";
+      "OAuth provider loginURL and tokenRefreshURL must use http or https with a valid host and port without userinfo";
   private static final Gson GSON = new Gson();
   private final TransactionRunner transactionRunner;
   private final SecureStore secureStore;
@@ -147,8 +149,9 @@ public class OAuthStore {
     String key = getClientCredsKey(oauthProvider.getName());
 
     boolean validateTableOrigin = false;
+    SecureStoreMetadata existingMetadata = null;
     if (reuseClientCredentials) {
-      SecureStoreMetadata existingMetadata = getRequiredClientCredentialsMetadata(namespace, key);
+      existingMetadata = getRequiredClientCredentialsMetadata(namespace, key);
       validateTableOrigin = !validateMetadataOrigin(existingMetadata, oauthProvider);
     } else {
       validateProviderOrigins(oauthProvider);
@@ -156,6 +159,9 @@ public class OAuthStore {
     }
 
     upsertProviderRow(oauthProvider, key, validateTableOrigin);
+    if (validateTableOrigin) {
+      bindOriginToClientCredentials(namespace, key, existingMetadata, oauthProvider);
+    }
   }
 
   /**
@@ -347,21 +353,50 @@ public class OAuthStore {
 
   private void writeClientCredentials(String namespace, String key, OAuthProvider oauthProvider)
       throws OAuthStoreException {
-    Map<String, String> properties = ImmutableMap.of(
-        LOGIN_URL_COL, oauthProvider.getLoginURL(),
-        TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL());
+    putClientCredentials(namespace, key, GSON.toJson(oauthProvider.getClientCredentials()),
+        CLIENT_CREDS_DESCRIPTION, getOriginProperties(oauthProvider));
+  }
+
+  /**
+   * Stores the validated provider origin on an existing client credential secret that has none, such
+   * as a secret written before origin binding existed or provisioned outside CDAP. Without this, deleting
+   * the provider row with {@code preserve_client_credentials=true} would drop the only record of the origin.
+   */
+  private void bindOriginToClientCredentials(String namespace, String key, SecureStoreMetadata metadata,
+                                             OAuthProvider oauthProvider) throws OAuthStoreException {
+    byte[] clientCredsJson;
     try {
-      secureStoreManager.put(
-          namespace,
-          key,
-          GSON.toJson(oauthProvider.getClientCredentials()),
-          "OAuth client creds",
-          properties);
+      clientCredsJson = secureStore.getData(namespace, key);
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to read client credential from secure storage", e);
+    } catch (Exception e) {
+      throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + key + "\" does not exist", e);
+    }
+    Map<String, String> properties = new HashMap<>();
+    if (metadata.getProperties() != null) {
+      properties.putAll(metadata.getProperties());
+    }
+    properties.putAll(getOriginProperties(oauthProvider));
+    String description = metadata.getDescription() == null ? CLIENT_CREDS_DESCRIPTION : metadata.getDescription();
+    putClientCredentials(namespace, key, new String(clientCredsJson, StandardCharsets.UTF_8), description,
+        properties);
+  }
+
+  private void putClientCredentials(String namespace, String key, String clientCredsJson, String description,
+                                    Map<String, String> properties) throws OAuthStoreException {
+    try {
+      secureStoreManager.put(namespace, key, clientCredsJson, description, properties);
     } catch (IOException e) {
       throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
     } catch (Exception e) {
       throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
     }
+  }
+
+  private static Map<String, String> getOriginProperties(OAuthProvider oauthProvider) {
+    return ImmutableMap.of(
+        LOGIN_URL_COL, oauthProvider.getLoginURL(),
+        TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL());
   }
 
   private void upsertProviderRow(OAuthProvider oauthProvider, String credsKey, boolean validateExistingRowOrigin)

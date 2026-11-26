@@ -74,4 +74,21 @@ public class UrlOriginTest {
     assertFalse(UrlOrigin.isValid(null));
     assertFalse(UrlOrigin.hasSameOrigin("https://127.0.0.1/token", "https://127.0.0.1@127.0.0.2/token"));
   }
+
+  @Test
+  public void testRejectsNonHttpSchemesEmptyPortsAndUnsafeCharacters() {
+    assertFalse(UrlOrigin.isValid("ftp://auth.internal/token"));
+    assertFalse(UrlOrigin.isValid("file://localhost/etc/hosts"));
+    assertFalse(UrlOrigin.isValid("jar:https://auth.internal/a.jar!/token"));
+    assertFalse(UrlOrigin.hasSameOrigin("ftp://auth.internal/a", "ftp://auth.internal/b"));
+    assertFalse(UrlOrigin.isValid("https://auth.internal:-1/token"));
+    assertFalse(UrlOrigin.isValid("https://auth.internal:/token"));
+    assertFalse(UrlOrigin.isValid("http://[::1]:/token"));
+    assertFalse(UrlOrigin.isValid("https://auth.internal;param=1/token"));
+    assertFalse(UrlOrigin.isValid("https://auth.internal/to\r\nken"));
+    assertFalse(UrlOrigin.isValid("https://auth.internal/token\u0000"));
+    assertFalse(UrlOrigin.isValid("https://auth.internal/token\u007f"));
+    assertTrue(UrlOrigin.isValid("HTTP://auth.internal/token?scope=openid email"));
+    assertTrue(UrlOrigin.isValid("https://oauth-gw_1.internal:8443/token"));
+  }
 }
