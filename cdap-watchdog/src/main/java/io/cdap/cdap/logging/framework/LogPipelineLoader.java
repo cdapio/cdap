@@ -204,7 +204,11 @@ public class LogPipelineLoader {
     LogPipelineConfigurator configurator = new LogPipelineConfigurator(pipelineCConf);
     configurator.setContext(context);
 
-    configurator.doConfigure(configURL);
+    try {
+      configurator.doConfigure(configURL);
+    } catch (RuntimeException e) {
+      throw new JoranException("Configuration failed for " + configURL, e);
+    }
 
     // Check if the configuration has any error in it.
     if (!new StatusUtil(context).isErrorFree(Status.ERROR)) {
@@ -263,7 +267,7 @@ public class LogPipelineLoader {
     // defined in the logback xml.
     for (String key : keys) {
       context.putProperty(key, cConf.get(key));
-      cConf.set(key, configurator.getInterpretationContext().subst("${" + key + "}"));
+      cConf.set(key, configurator.getModelInterpretationContext().subst("${" + key + "}"));
     }
 
     return cConf;

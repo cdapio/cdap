@@ -69,4 +69,9 @@ final class TwillLogThrowableAdapter implements IThrowableProxy {
   public IThrowableProxy[] getSuppressed() {
     return new IThrowableProxy[0];
   }
+
+  @Override
+  public boolean isCyclic() {
+    return false;
+  }
 }
