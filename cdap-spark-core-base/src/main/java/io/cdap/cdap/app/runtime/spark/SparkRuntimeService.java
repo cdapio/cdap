@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -68,7 +67,6 @@ import io.cdap.cdap.internal.lang.Fields;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import java.util.NavigableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -135,17 +133,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private static final String CDAP_METRICS_PROPERTIES = "metrics.properties";
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
-
-  /**
-   * This simple map allows to select proper pyspark resource.
-   * The idea is that the key represents spark version given resource should be used starting from.
-   * E.g. if we have 3.0 and 3.3 versions, 3.0 will be used for Spark 3.1.
-   */
-  private static final NavigableMap<String, String> PYSPARK_BY_VERSION =
-      ImmutableSortedMap.of(
-          "", "pyspark/pyspark.zip",
-          "3.3", "pyspark/pyspark33.zip"
-      );
 
   private final CConfiguration cConf;
   private final Spark spark;
@@ -779,9 +766,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
     result.add(file);
 
-    String sparkVersion = SparkRuntimeEnv.getVersion();
-    URL pysparkURL = getClass().getClassLoader().getResource(
-        PYSPARK_BY_VERSION.floorEntry(sparkVersion).getValue());
+    URL pysparkURL = getClass().getClassLoader().getResource("pyspark/pyspark.zip");
     if (pysparkURL == null) {
       // This shouldn't happen
       throw new IOException("Failed to locate pyspark.zip, which is required to run PySpark");

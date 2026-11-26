@@ -127,10 +127,9 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
   }
 
   /**
-   * This is required to handle breaking changes between spark 3.3.2 (Dataproc 2.1) to 3.5.1 (Dataproc 2.2).
-   * And we need to support both.
-   * Here we are trying to check if the new method introduced in 3.5.1 exists or not, and based on that we
-   * invoke the new method or the old one.
+   * Resolves a {@link Row} encoder across Spark 3.5+ (Dataproc 2.2/2.3) and Spark 3.3 (Dataproc 2.1).
+   * Both paths must stay reflective: {@code RowEncoder.encoderFor} and {@code AgnosticEncoder} do not
+   * exist on Spark 3.3, while {@code RowEncoder.apply(StructType)} was removed in Spark 3.5.
    */
   public static ExpressionEncoder<Row> getRowEncoder(StructType sparkSchema) {
 
@@ -146,14 +145,25 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
           return (ExpressionEncoder<Row>)applyMethod.invoke(null, agnosticEncoderObj);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
                  ClassNotFoundException e) {
-          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+          Throwable cause =
+              e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+          if (cause instanceof Error) {
+            throw (Error) cause;
+          }
+          errorStrBuilder.append(System.lineSeparator()).append(cause.getMessage());
         }
 
         // If code reaches here, meaning it should be spark 3.3.2 or lower.
         try {
-          return RowEncoder.apply(sparkSchema);
+          Method applyMethod = RowEncoder.class.getMethod("apply", StructType.class);
+          return (ExpressionEncoder<Row>) applyMethod.invoke(null, sparkSchema);
         } catch (Exception e) {
-          errorStrBuilder.append(System.lineSeparator()).append(e.getMessage());
+          Throwable cause =
+              e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+          if (cause instanceof Error) {
+            throw (Error) cause;
+          }
+          errorStrBuilder.append(System.lineSeparator()).append(cause.getMessage());
         }
         throw new RuntimeException(errorStrBuilder.toString());
       });
