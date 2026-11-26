@@ -159,6 +159,14 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
       identityHits.incrementAndGet();
       responder.sendString(HttpResponseStatus.OK, "{\"active\":true}");
     }
+
+    @GET
+    @Path("/identity-redirect")
+    public void identityRedirect(FullHttpRequest request, HttpResponder responder) {
+      DefaultHttpHeaders headers = new DefaultHttpHeaders();
+      headers.set(HttpHeaderNames.LOCATION, "/secret");
+      responder.sendStatus(HttpResponseStatus.FOUND, headers);
+    }
   }
 
   @BeforeClass
@@ -641,6 +649,90 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     Assert.assertEquals(200, validResp.getResponseCode());
     Assert.assertTrue(validResp.getResponseBodyAsString().replaceAll("\\s+", "").contains("\"isValid\":true"));
     Assert.assertEquals(1, mockTokenHandler.identityHits.get());
+  }
+
+  @Test
+  public void testCachedIdentityUrlIsCheckedAgainWhenRead() throws Exception {
+    // Covers RTR access tokens without expiry that were cached before this check existed, or before
+    // the provider URLs or the allowed hosts changed.
+    String provider = "testCachedIdentity";
+    String cred = "cred1";
+    String accessTokenKey = "oauthaccesstoken-" + provider.toLowerCase() + "-" + cred;
+    PutOAuthProviderRequest providerReq = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
+        mockTokenUrl, "clientid", "clientsecret",
+        OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
+    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, providerReq).getResponseCode());
+    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-" + cred,
+        GSON.toJson(new OAuthRefreshToken("valid_refresh_token", "http://redirect")), "Test",
+        Collections.emptyMap());
+
+    // 1. A cached identityUrl on another origin is not called. The handler refreshes the token instead.
+    putCachedAccessToken(accessTokenKey, "stale_cross_origin_token",
+        "http://localhost:" + mockTokenPort + "/secret");
+    HttpResponse crossOriginResp = makeGetCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred);
+    Assert.assertEquals(200, crossOriginResp.getResponseCode());
+    Assert.assertTrue(crossOriginResp.getResponseBodyAsString().contains("mock_access_token"));
+    Assert.assertFalse(crossOriginResp.getResponseBodyAsString().contains("stale_cross_origin_token"));
+    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
+
+    // 2. A same-origin identityUrl that answers 302 is not followed. The handler refreshes the token instead.
+    putCachedAccessToken(accessTokenKey, "stale_redirect_token",
+        "http://127.0.0.1:" + mockTokenPort + "/identity-redirect");
+    HttpResponse redirectResp = makeGetCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred);
+    Assert.assertEquals(200, redirectResp.getResponseCode());
+    Assert.assertTrue(redirectResp.getResponseBodyAsString().contains("mock_access_token"));
+    Assert.assertFalse(redirectResp.getResponseBodyAsString().contains("stale_redirect_token"));
+    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
+
+    // 3. After the allowed hosts are narrowed, neither the cached identityUrl nor the token endpoint is called.
+    putCachedAccessToken(accessTokenKey, "cached_token", "http://127.0.0.1:" + mockTokenPort + "/identity");
+    getConfiguration().set(ALLOWED_HOSTS_CONF, "oauth2.googleapis.invalid");
+    try {
+      HttpResponse blockedResp = makeGetCall(loopbackServiceURI,
+          "provider/" + provider + "/credential/" + cred + "/valid");
+      Assert.assertEquals(400, blockedResp.getResponseCode());
+      Assert.assertTrue(blockedResp.getResponseBodyAsString().contains("allowlist"));
+      Assert.assertEquals(0, mockTokenHandler.identityHits.get());
+    } finally {
+      getConfiguration().set(ALLOWED_HOSTS_CONF, "");
+    }
+  }
+
+  @Test
+  public void testIdentityUrlFailingUrlValidationIsNotStored() throws Exception {
+    // The identityUrl matches the loginURL origin but its host is outside the allowed hosts.
+    // sanitizeIdentityUrl must drop it instead of storing it or failing the token exchange.
+    String provider = "testSplitOriginIdentity";
+    String cred = "cred1";
+    PutOAuthProviderRequest providerReq = createPutRequest("http://localhost:" + mockTokenPort + "/login",
+        "http://127.0.0.1:" + mockTokenPort + "/token-good-identity", "clientid", "clientsecret",
+        OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
+    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, providerReq).getResponseCode());
+    mockTokenHandler.goodIdentityUrl = "http://localhost:" + mockTokenPort + "/identity";
+
+    getConfiguration().set(ALLOWED_HOSTS_CONF, "127.0.0.1");
+    try {
+      Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred,
+          new PutOAuthCredentialRequest("code3", "https://redirect.example.invalid", null)).getResponseCode());
+    } finally {
+      getConfiguration().set(ALLOWED_HOSTS_CONF, "");
+    }
+
+    String storedJson = new String(
+        getSecureStore().getData("system", "oauthaccesstoken-" + provider.toLowerCase() + "-" + cred),
+        StandardCharsets.UTF_8);
+    OAuthAccessToken stored = GSON.fromJson(storedJson, OAuthAccessToken.class);
+    Assert.assertEquals("tok_good_id", stored.getAccessToken());
+    Assert.assertNull(stored.getIdentityUrl());
+  }
+
+  private void putCachedAccessToken(String key, String accessToken, String identityUrl) throws Exception {
+    OAuthAccessToken token = OAuthAccessToken.newBuilder()
+        .withAccessToken(accessToken)
+        .withExpiresAt(0L)
+        .withIdentityUrl(identityUrl)
+        .build();
+    getSecureStoreManager().put("system", key, GSON.toJson(token), "Cached token", Collections.emptyMap());
   }
 
   @Test

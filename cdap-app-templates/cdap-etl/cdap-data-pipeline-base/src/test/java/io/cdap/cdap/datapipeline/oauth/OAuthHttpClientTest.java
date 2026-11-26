@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -61,6 +63,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 /**
@@ -256,6 +259,100 @@ public class OAuthHttpClientTest {
     }
   }
 
+  @Test
+  public void testPinnedHttpsRejectsCertificateThatDoesNotMatchRequestHost() throws Exception {
+    // The server certificate is trusted, but its SAN names the pinned IP or another host instead of
+    // the request host. The client must fail the TLS identity check before sending the HTTP request.
+    GeneralName[] mismatchedSans = {
+        new GeneralName(GeneralName.dNSName, "wrong-host.invalid"),
+        new GeneralName(GeneralName.iPAddress, "127.0.0.1")
+    };
+    for (GeneralName mismatchedSan : mismatchedSans) {
+      SSLContext sslContext = createTestSslContext("mismatch", mismatchedSan);
+      AtomicInteger serverHits = new AtomicInteger();
+      try (MiniTlsServer server = new MiniTlsServer(sslContext, InetAddress.getByName("127.0.0.1"),
+                                                    (sni, path, headers, body, out) -> {
+                                                      serverHits.incrementAndGet();
+                                                      writeHttpResponse(out, 200, "OK",
+                                                                        "{\"access_token\":\"leaked\"}", null);
+                                                    })) {
+        OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host ->
+            new InetAddress[] {InetAddress.getByName("127.0.0.1")});
+        OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, 1024);
+        HttpRequest req = HttpRequest.post(new URL("https://" + TEST_HOST + ":" + server.getPort() + "/token"))
+            .addHeader("Authorization", "Basic dXNlcjpwYXNz")
+            .withBody("grant_type=refresh_token&refresh_token=secret")
+            .build();
+        try {
+          client.execute(req, AllowedHosts.allowAll(), true);
+          Assert.fail("Expected TLS hostname verification failure for SAN " + mismatchedSan);
+        } catch (IOException expected) {
+          // SSLHandshakeException (endpoint identification) or IOException("HTTPS hostname wrong")
+        }
+        Assert.assertEquals("HTTP request must not be sent for SAN " + mismatchedSan, 0, serverHits.get());
+      }
+    }
+  }
+
+  @Test
+  public void testNoRetryAfterConnectAndFailureWhenAllAddressesRefuse() throws Exception {
+    SSLContext sslContext = createTestSslContext(TEST_HOST);
+    InetAddress primary = InetAddress.getByName("127.0.0.1");
+    AtomicInteger primaryHits = new AtomicInteger();
+    AtomicInteger secondaryHits = new AtomicInteger();
+
+    // 1. The first address accepts the TCP/TLS connection and the request, then drops the connection
+    // without a response. The single-use code must not be sent again, either to the same address by
+    // the JDK's silent POST retry or to the next resolved address.
+    try (MiniTlsServer primaryServer = new MiniTlsServer(sslContext, primary,
+                                                         (sni, path, headers, body, out) -> {
+                                                           primaryHits.incrementAndGet();
+                                                           out.close();
+                                                         })) {
+      int port = primaryServer.getPort();
+      InetAddress secondary = secondaryLoopbackOrSkip(port);
+      try (MiniTlsServer secondaryServer = new MiniTlsServer(sslContext, secondary, port,
+                                                             (sni, path, headers, body, out) -> {
+                                                               secondaryHits.incrementAndGet();
+                                                               writeHttpResponse(out, 200, "OK",
+                                                                                 "{\"access_token\":\"replayed\"}",
+                                                                                 null);
+                                                             })) {
+        OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host ->
+            new InetAddress[] {primary, secondary});
+        OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, 1024);
+        HttpRequest req = HttpRequest.post(new URL("https://" + TEST_HOST + ":" + port + "/token"))
+            .withBody("code=one_time_code&grant_type=authorization_code")
+            .build();
+        try {
+          client.execute(req, AllowedHosts.allowAll(), true);
+          Assert.fail("Expected IOException when the server drops the connection after the request");
+        } catch (IOException expected) {
+          // expected
+        }
+        Assert.assertEquals("Request must be sent exactly once", 1, primaryHits.get());
+        Assert.assertEquals("Request must not fall back to another address after connect", 0, secondaryHits.get());
+      }
+    }
+
+    // 2. When every resolved address refuses the TCP connection, the last connect failure is thrown.
+    int unusedPort;
+    try (ServerSocket probe = new ServerSocket(0, 1, primary)) {
+      unusedPort = probe.getLocalPort();
+    }
+    InetAddress secondary = secondaryLoopbackOrSkip(unusedPort);
+    OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host ->
+        new InetAddress[] {primary, secondary});
+    OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 2000, 2000, 1024);
+    try {
+      client.execute(HttpRequest.get(new URL("https://" + TEST_HOST + ":" + unusedPort + "/token")).build(),
+                     AllowedHosts.allowAll(), true);
+      Assert.fail("Expected ConnectException when all resolved addresses refuse the connection");
+    } catch (ConnectException expected) {
+      // expected
+    }
+  }
+
   private static void writeHttpResponse(OutputStream out, int code, String reason,
                                         String body, String contentEncoding) throws IOException {
     byte[] payload = body.getBytes(StandardCharsets.UTF_8);
@@ -278,13 +375,35 @@ public class OAuthHttpClientTest {
     out.flush();
   }
 
+  /**
+   * Returns a loopback address other than 127.0.0.1 that can bind {@code port}, or skips the test when
+   * the host has no second loopback address (for example macOS without a 127.0.0.2 alias and no IPv6).
+   */
+  private static InetAddress secondaryLoopbackOrSkip(int port) throws IOException {
+    for (String candidate : new String[] {"127.0.0.2", "::1"}) {
+      InetAddress address = InetAddress.getByName(candidate);
+      try (ServerSocket probe = new ServerSocket(port, 1, address)) {
+        return address;
+      } catch (IOException e) {
+        // Try the next candidate
+      }
+    }
+    Assume.assumeTrue("No secondary loopback address can bind port " + port, false);
+    throw new AssertionError("unreachable");
+  }
+
   private static SSLContext createTestSslContext(String dnsSan) throws Exception {
+    return createTestSslContext(dnsSan, new GeneralName(GeneralName.dNSName, dnsSan));
+  }
+
+  private static SSLContext createTestSslContext(String commonName, GeneralName subjectAltName)
+      throws Exception {
     KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
     keyGen.initialize(2048, new SecureRandom());
     KeyPair keyPair = keyGen.generateKeyPair();
 
     long now = System.currentTimeMillis();
-    X500Name dn = new X500Name("CN=" + dnsSan);
+    X500Name dn = new X500Name("CN=" + commonName);
     JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
         dn,
         BigInteger.valueOf(now),
@@ -292,7 +411,7 @@ public class OAuthHttpClientTest {
         new Date(now + TimeUnit.DAYS.toMillis(7)),
         dn,
         keyPair.getPublic());
-    GeneralNames subjectAltNames = new GeneralNames(new GeneralName(GeneralName.dNSName, dnsSan));
+    GeneralNames subjectAltNames = new GeneralNames(subjectAltName);
     certBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames);
 
     ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA")
@@ -333,11 +452,17 @@ public class OAuthHttpClientTest {
     private final Thread acceptThread;
 
     private MiniTlsServer(SSLContext sslContext, InetAddress bindAddress, RequestHandler handler) throws IOException {
+      this(sslContext, bindAddress, 0, handler);
+    }
+
+    private MiniTlsServer(SSLContext sslContext, InetAddress bindAddress, int port,
+                          RequestHandler handler) throws IOException {
       this.serverSocket = (SSLServerSocket) sslContext.getServerSocketFactory()
-          .createServerSocket(0, 16, bindAddress);
+          .createServerSocket(port, 16, bindAddress);
       this.acceptThread = new Thread(() -> {
         while (!serverSocket.isClosed()) {
           try (SSLSocket socket = (SSLSocket) serverSocket.accept()) {
+            socket.setSoTimeout(5000);
             socket.startHandshake();
             String sniHost = null;
             if (socket.getSession() instanceof ExtendedSSLSession) {

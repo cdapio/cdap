@@ -169,17 +169,23 @@ public final class OAuthHttpClient {
       }
 
       ContentProvider<? extends InputStream> body = request.getBody();
+      byte[] bodyBytes = null;
       if (body != null) {
+        try (InputStream input = body.getInput()) {
+          bodyBytes = ByteStreams.toByteArray(input);
+        }
         connection.setDoOutput(true);
+        // Fixed-length streaming mode stops HttpURLConnection from silently resending the request
+        // (sun.net.http.retryPost) when the connection drops, which would replay single-use codes and tokens.
+        connection.setFixedLengthStreamingMode(bodyBytes.length);
       }
       if (!isHttps) {
         connection.connect();
         connected.set(true);
       }
-      if (body != null) {
-        try (InputStream input = body.getInput();
-             OutputStream output = connection.getOutputStream()) {
-          ByteStreams.copy(input, output);
+      if (bodyBytes != null) {
+        try (OutputStream output = connection.getOutputStream()) {
+          output.write(bodyBytes);
         }
       }
 
