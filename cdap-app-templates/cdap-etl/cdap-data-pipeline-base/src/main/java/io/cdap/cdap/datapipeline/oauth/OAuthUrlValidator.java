@@ -21,6 +21,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.net.InetAddresses;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -44,6 +45,7 @@ public final class OAuthUrlValidator {
   private static final int HTTP_DEFAULT_PORT = 80;
   private static final int HTTPS_DEFAULT_PORT = 443;
   private static final Pattern HOST_LABEL_PATTERN = Pattern.compile("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$");
+  private static final Pattern NUMERIC_LABEL_PATTERN = Pattern.compile("^(?:\\d+|0x[0-9a-f]+)$");
   private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
 
   private final boolean requireHttps;
@@ -64,8 +66,8 @@ public final class OAuthUrlValidator {
   }
 
   /**
-   * Creates a validator for unit and integration tests with configurable scheme, loopback handling,
-   * and DNS resolution. All non-loopback private, link-local, and reserved IP ranges remain blocked.
+   * Creates a validator for tests with configurable scheme, loopback handling, and DNS resolution.
+   * Non-loopback private, link-local, and reserved IP ranges always remain blocked.
    */
   @VisibleForTesting
   public static OAuthUrlValidator forTesting(boolean requireHttps, boolean allowLoopback, DnsResolver dnsResolver) {
@@ -76,9 +78,9 @@ public final class OAuthUrlValidator {
    * Controls whether an unresolvable DNS hostname is permitted during validation.
    */
   public enum HostResolution {
-    /** Allow unresolvable DNS hostnames (used during provider registration); IP literals are still validated. */
+    /** Allow unresolvable DNS hostnames (provider registration); IP literals are still validated. */
     ALLOW_UNRESOLVED,
-    /** Require DNS resolution to succeed with at least one valid IP address (used before outbound calls). */
+    /** Require DNS resolution to succeed with at least one valid IP address (before outbound calls). */
     REQUIRE_RESOLVABLE
   }
 
@@ -111,7 +113,7 @@ public final class OAuthUrlValidator {
     }
 
     /**
-     * Returns the lowercase host without a trailing dot. IP literals are returned in canonical form.
+     * Returns the lowercase host without a trailing dot, or canonical IP string for IP literals.
      */
     public String getNormalizedHost() {
       return normalizedHost;
@@ -134,8 +136,8 @@ public final class OAuthUrlValidator {
    * When empty, all public HTTPS hosts are permitted (subject to IP and redirect checks).
    */
   public static final class AllowedHosts {
-    private static final AllowedHosts ALLOW_ALL = new AllowedHosts(ImmutableSet.<String>of(),
-                                                                   ImmutableSet.<String>of(), false);
+    private static final AllowedHosts ALLOW_ALL =
+        new AllowedHosts(ImmutableSet.<String>of(), ImmutableSet.<String>of(), false);
 
     private final ImmutableSet<String> exactHosts;
     private final ImmutableSet<String> wildcardSuffixes;
@@ -148,16 +150,13 @@ public final class OAuthUrlValidator {
       this.restricted = restricted;
     }
 
-    /**
-     * Returns an unrestricted allowlist that permits any public host passing IP checks.
-     */
     public static AllowedHosts allowAll() {
       return ALLOW_ALL;
     }
 
     /**
-     * Parses a comma-separated list of exact hostnames, IPv4 addresses, bracketed IPv6 addresses, or
-     * wildcard subdomains (for example {@code *.salesforce.com}). Ports are not allowed.
+     * Parses a comma-separated list of exact hostnames or wildcard subdomains (for example
+     * {@code *.salesforce.com}). Ports, URLs, and raw IP addresses are rejected.
      *
      * @throws IllegalArgumentException if any configured pattern is malformed or overly broad
      */
@@ -182,11 +181,6 @@ public final class OAuthUrlValidator {
       return restricted;
     }
 
-    /**
-     * Returns whether {@code normalizedHost} is permitted by this allowlist.
-     *
-     * @param normalizedHost host as returned by {@link ValidatedUrl#getNormalizedHost()}
-     */
     public boolean isAllowed(String normalizedHost) {
       if (!restricted || exactHosts.contains(normalizedHost)) {
         return true;
@@ -202,60 +196,31 @@ public final class OAuthUrlValidator {
     private static void addHostPattern(String token, ImmutableSet.Builder<String> exact,
                                        ImmutableSet.Builder<String> wildcards) {
       String lower = token.toLowerCase(Locale.ROOT);
-      if (lower.contains("/") || lower.contains("@") || lower.contains("?") || lower.contains("#")
-          || lower.contains("%") || containsWhitespace(lower)) {
-        throw invalidPattern(token, "must be a bare hostname, not a URL");
-      }
-      if (lower.startsWith("[")) {
-        if (!lower.endsWith("]") || lower.length() <= 2) {
-          throw invalidPattern(token, "malformed IPv6 address");
-        }
-        exact.add(parseIpv6Literal(lower.substring(1, lower.length() - 1)).getHostAddress());
-        return;
-      }
-      if (lower.contains("]") || lower.contains(":")) {
-        throw invalidPattern(token, "ports are not allowed and IPv6 addresses must use [brackets]");
-      }
       String host = lower.endsWith(".") ? lower.substring(0, lower.length() - 1) : lower;
       if (host.startsWith("*.")) {
         String suffix = host.substring(2);
-        if (!suffix.contains(".") || !isValidDnsHostname(suffix) || looksLikeIpv4(suffix)) {
-          throw invalidPattern(token, "expected '*.domain.tld' with at least two domain labels");
+        if (!suffix.contains(".") || !isValidDnsHostname(suffix) || isNumericLastLabel(suffix)) {
+          throw new IllegalArgumentException(
+              "Invalid host pattern in OAuth allowlist: '" + token + "' (expected '*.domain.tld')");
         }
         wildcards.add("." + suffix);
         return;
       }
-      if (host.contains("*")) {
-        throw invalidPattern(token, "wildcards are only supported as a leading '*.' prefix");
-      }
-      if (looksLikeIpv4(host)) {
-        byte[] ipv4 = tryParseStrictIpv4(host);
-        if (ipv4 == null) {
-          throw invalidPattern(token, "IPv4 addresses must use four decimal parts without leading zeros");
-        }
-        exact.add(host);
-        return;
-      }
-      if (!isValidDnsHostname(host)) {
-        throw invalidPattern(token, "not a valid hostname");
+      if (!isValidDnsHostname(host) || isNumericLastLabel(host)) {
+        throw new IllegalArgumentException(
+            "Invalid host pattern in OAuth allowlist: '" + token + "' (expected a hostname or '*.domain.tld')");
       }
       exact.add(host);
-    }
-
-    private static IllegalArgumentException invalidPattern(String token, String reason) {
-      return new IllegalArgumentException("Invalid host pattern in OAuth allowlist: '" + token + "' (" + reason + ")");
     }
   }
 
   /**
    * Validates the given URL against scheme, syntax, optional host allowlist, and resolved-IP rules.
-   *
-   * <p>IP literals are always validated without DNS. Hostnames are resolved, and every resolved address
-   * must pass the IP rules.
+   * IP literals are validated without DNS; hostnames are resolved and every returned IP must pass.
    *
    * @throws MalformedURLException if the URL cannot be parsed
-   * @throws UnknownHostException if {@code resolution} is {@link HostResolution#REQUIRE_RESOLVABLE} and the
-   *     hostname does not resolve. This is a transient infrastructure error, not invalid input.
+   * @throws UnknownHostException if {@code resolution} is {@link HostResolution#REQUIRE_RESOLVABLE} and
+   *     DNS fails (transient infrastructure error, not invalid input)
    * @throws IllegalArgumentException if the URL violates security or allowlist policy
    */
   public ValidatedUrl validate(String rawUrl, HostResolution resolution, AllowedHosts allowedHosts)
@@ -317,35 +282,24 @@ public final class OAuthUrlValidator {
   }
 
   /**
-   * Validates that the given {@link InetAddress} is a public, routable address (or loopback when explicitly
-   * enabled for tests), including unwrapping IPv4 addresses embedded inside IPv6 transition prefixes.
+   * Validates that {@code address} is a public, routable IP (or loopback when enabled for tests),
+   * including unwrapping IPv4 addresses embedded inside IPv6 transition prefixes.
    */
   @VisibleForTesting
   public static void validateInetAddress(InetAddress address, boolean allowLoopback) {
     byte[] bytes = address.getAddress();
-    boolean isZeroNet = bytes.length == 4 && (bytes[0] & 0xFF) == 0;
-    boolean isReservedOrBroadcast = bytes.length == 4 && (bytes[0] & 0xF0) == 0xF0;
-    boolean isCgnat = bytes.length == 4 && (bytes[0] & 0xFF) == 100 && (bytes[1] & 0xC0) == 64;
-    boolean isBenchmark = bytes.length == 4 && (bytes[0] & 0xFF) == 198 && (bytes[1] & 0xFE) == 18;
-    boolean isUla = bytes.length == 16 && (bytes[0] & 0xFE) == 0xFC;
-    boolean isLocalNat64 = bytes.length == 16
-        && bytes[0] == 0 && bytes[1] == 0x64 && bytes[2] == (byte) 0xFF && bytes[3] == (byte) 0x9B
-        && bytes[4] == 0 && bytes[5] == 1;
-    boolean isIpv6Discard = bytes.length == 16
-        && bytes[0] == 0x01 && bytes[1] == 0 && isZeroRange(bytes, 2, 8);
+    boolean blockedIpv4 = bytes.length == 4 && isBlockedIpv4(bytes);
+    boolean blockedIpv6 = bytes.length == 16 && isBlockedIpv6Prefix(bytes);
 
     if (address.isAnyLocalAddress() || address.isLinkLocalAddress() || address.isMulticastAddress()
-        || address.isSiteLocalAddress() || isZeroNet || isReservedOrBroadcast
-        || isCgnat || isBenchmark || isUla || isLocalNat64 || isIpv6Discard) {
+        || address.isSiteLocalAddress() || blockedIpv4 || blockedIpv6) {
       throw new IllegalArgumentException("Disallowed OAuth URL IP address: " + address.getHostAddress());
     }
-
     if (!allowLoopback && address.isLoopbackAddress()) {
       throw new IllegalArgumentException("Loopback OAuth URL IP address is not allowed: " + address.getHostAddress());
     }
-
     if (address instanceof Inet6Address && bytes.length == 16) {
-      validateEmbeddedIpv4Addresses(address, bytes, allowLoopback);
+      validateEmbeddedIpv4((Inet6Address) address, bytes, allowLoopback);
     }
   }
 
@@ -380,95 +334,63 @@ public final class OAuthUrlValidator {
     }
   }
 
-  /**
-   * Returns the address for an IP literal host, or {@code null} for a DNS hostname.
-   *
-   * <p>A host whose last label is numeric is treated as IPv4, the same way browsers do. It must then be
-   * four decimal parts without leading zeros. Otherwise the JDK (decimal) and browsers (octal or hex) read
-   * forms such as {@code 0177.0.0.1} or {@code 2130706433} as different addresses.
-   */
   @Nullable
   private static InetAddress parseIpLiteral(String host) {
+    if (InetAddresses.isInetAddress(host)) {
+      return InetAddresses.forString(host);
+    }
     if (host.indexOf(':') >= 0) {
-      return parseIpv6Literal(host);
+      throw new IllegalArgumentException("Invalid IPv6 address: " + host);
     }
-    if (!looksLikeIpv4(host)) {
-      return null;
-    }
-    byte[] ipv4 = tryParseStrictIpv4(host);
-    if (ipv4 == null) {
+    // Reject octal/hex/short/integer IPv4 forms (e.g. 0177.0.0.1, 127.1, 2130706433) without DNS.
+    if (isNumericLastLabel(host)) {
       throw new IllegalArgumentException(
           "OAuth URL IPv4 host must use four decimal parts without leading zeros: " + host);
     }
-    try {
-      return InetAddress.getByAddress(ipv4);
-    } catch (UnknownHostException e) {
-      throw new IllegalArgumentException("Invalid OAuth URL IPv4 host: " + host, e);
-    }
+    return null;
   }
 
-  /**
-   * Parses an unbracketed IPv6 literal without DNS. An embedded dotted IPv4 suffix must be strict decimal.
-   */
-  private static InetAddress parseIpv6Literal(String host) {
-    int lastColon = host.lastIndexOf(':');
-    if (host.indexOf('.', lastColon + 1) >= 0 && tryParseStrictIpv4(host.substring(lastColon + 1)) == null) {
-      throw new IllegalArgumentException("Invalid IPv6 address: " + host);
-    }
-    try {
-      // Brackets make the JDK parse the text as an IPv6 literal and never fall back to DNS.
-      return InetAddress.getByName("[" + host + "]");
-    } catch (UnknownHostException e) {
-      throw new IllegalArgumentException("Invalid IPv6 address: " + host, e);
-    }
+  private static boolean isBlockedIpv4(byte[] bytes) {
+    int b0 = bytes[0] & 0xFF;
+    int b1 = bytes[1] & 0xFF;
+    return b0 == 0                                      // 0.0.0.0/8 ("this network")
+        || (b0 == 100 && (b1 & 0xC0) == 64)             // 100.64.0.0/10 (CGNAT)
+        || (b0 == 198 && (b1 & 0xFE) == 18)             // 198.18.0.0/15 (benchmarking)
+        || (b0 & 0xF0) == 0xF0;                         // 240.0.0.0/4 (reserved / broadcast)
   }
 
-  /**
-   * Returns whether the last label of {@code host} is a number (decimal digits or 0x hex), which makes
-   * browsers parse the whole host as an IPv4 address.
-   */
-  private static boolean looksLikeIpv4(String host) {
-    String last = host.substring(host.lastIndexOf('.') + 1);
-    if (last.isEmpty()) {
-      return false;
-    }
-    if (last.startsWith("0x")) {
-      return true;
-    }
-    for (int i = 0; i < last.length(); i++) {
-      if (last.charAt(i) < '0' || last.charAt(i) > '9') {
-        return false;
-      }
-    }
-    return true;
+  private static boolean isBlockedIpv6Prefix(byte[] bytes) {
+    boolean isUla = (bytes[0] & 0xFE) == 0xFC;
+    boolean isLocalNat64 = bytes[0] == 0 && bytes[1] == 0x64 && bytes[2] == (byte) 0xFF
+        && bytes[3] == (byte) 0x9B && bytes[4] == 0 && bytes[5] == 1;
+    boolean isDiscard = bytes[0] == 0x01 && bytes[1] == 0 && isZeroRange(bytes, 2, 8);
+    return isUla || isLocalNat64 || isDiscard;
   }
 
-  @Nullable
-  private static byte[] tryParseStrictIpv4(String host) {
-    String[] parts = host.split("\\.", -1);
-    if (parts.length != 4) {
-      return null;
+  private static void validateEmbeddedIpv4(Inet6Address address, byte[] bytes, boolean allowLoopback) {
+    // Guava extracts IPv4-compatible (::x.x.x.x), 6to4 (2002::/16), Teredo (2001:0::/32), and ISATAP.
+    if (InetAddresses.hasEmbeddedIPv4ClientAddress(address)) {
+      validateInetAddress(InetAddresses.getEmbeddedIPv4ClientAddress(address), allowLoopback);
     }
-    byte[] bytes = new byte[4];
-    for (int i = 0; i < 4; i++) {
-      String part = parts[i];
-      if (part.isEmpty() || part.length() > 3 || (part.length() > 1 && part.charAt(0) == '0')) {
-        return null;
-      }
-      int value = 0;
-      for (int j = 0; j < part.length(); j++) {
-        char c = part.charAt(j);
-        if (c < '0' || c > '9') {
-          return null;
-        }
-        value = value * 10 + (c - '0');
-      }
-      if (value > 255) {
-        return null;
-      }
-      bytes[i] = (byte) value;
+    if (InetAddresses.isTeredoAddress(address)) {
+      validateInetAddress(InetAddresses.getTeredoInfo(address).getServer(), allowLoopback);
     }
-    return bytes;
+    if (InetAddresses.isIsatapAddress(address)) {
+      validateInetAddress(InetAddresses.getIsatapIPv4Address(address), allowLoopback);
+    }
+    // Also unwrap 16-byte IPv4-mapped (::ffff:0:0/96), SIIT (::ffff:0:0:0/96), and well-known NAT64 (64:ff9b::/96).
+    boolean isMapped = isZeroRange(bytes, 0, 10) && bytes[10] == (byte) 0xFF && bytes[11] == (byte) 0xFF;
+    boolean isSiit = isZeroRange(bytes, 0, 8) && bytes[8] == (byte) 0xFF && bytes[9] == (byte) 0xFF
+        && bytes[10] == 0 && bytes[11] == 0;
+    boolean isNat64 = bytes[0] == 0 && bytes[1] == 0x64 && bytes[2] == (byte) 0xFF && bytes[3] == (byte) 0x9B
+        && isZeroRange(bytes, 4, 12);
+    if (isMapped || isSiit || isNat64) {
+      try {
+        validateInetAddress(InetAddress.getByAddress(Arrays.copyOfRange(bytes, 12, 16)), allowLoopback);
+      } catch (UnknownHostException e) {
+        throw new IllegalArgumentException("Invalid embedded IPv4 address", e);
+      }
+    }
   }
 
   private static boolean isValidDnsHostname(String host) {
@@ -483,55 +405,8 @@ public final class OAuthUrlValidator {
     return true;
   }
 
-  private static boolean containsWhitespace(String value) {
-    for (int i = 0; i < value.length(); i++) {
-      if (Character.isWhitespace(value.charAt(i))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static void validateEmbeddedIpv4Addresses(InetAddress address, byte[] bytes, boolean allowLoopback) {
-    // IPv4-mapped (::ffff:0:0/96), IPv4-translated / SIIT (::ffff:0:0:0/96),
-    // well-known NAT64 (64:ff9b::/96), or IPv4-compatible (::x.x.x.x/96, excluding :: and ::1)
-    boolean isMapped = isZeroRange(bytes, 0, 10) && bytes[10] == (byte) 0xFF && bytes[11] == (byte) 0xFF;
-    boolean isTranslated = isZeroRange(bytes, 0, 8) && bytes[8] == (byte) 0xFF && bytes[9] == (byte) 0xFF
-        && bytes[10] == 0 && bytes[11] == 0;
-    boolean isWellKnownNat64 = bytes[0] == 0 && bytes[1] == 0x64 && bytes[2] == (byte) 0xFF
-        && bytes[3] == (byte) 0x9B && isZeroRange(bytes, 4, 12);
-    boolean isIpv4Compatible = isZeroRange(bytes, 0, 12)
-        && !address.isLoopbackAddress() && !address.isAnyLocalAddress();
-    if (isMapped || isTranslated || isWellKnownNat64 || isIpv4Compatible) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 12, 16), allowLoopback);
-    }
-
-    // 6to4 (2002::/16): embedded IPv4 in bytes 2..5
-    if (bytes[0] == 0x20 && bytes[1] == 0x02) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 2, 6), allowLoopback);
-    }
-
-    // Teredo (2001:0000::/32): server IPv4 in bytes 4..7 and bitwise-inverted client IPv4 in bytes 12..15
-    if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0 && bytes[3] == 0) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 4, 8), allowLoopback);
-      byte[] clientIpv4 = new byte[] {
-          (byte) ~bytes[12], (byte) ~bytes[13], (byte) ~bytes[14], (byte) ~bytes[15]
-      };
-      validateEmbeddedIpv4Bytes(clientIpv4, allowLoopback);
-    }
-
-    // ISATAP (RFC 5214): interface identifier 0000:5efe:w.x.y.z or 0200:5efe:w.x.y.z
-    if ((bytes[8] & 0xFC) == 0 && bytes[9] == 0 && bytes[10] == 0x5E && bytes[11] == (byte) 0xFE) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 12, 16), allowLoopback);
-    }
-  }
-
-  private static void validateEmbeddedIpv4Bytes(byte[] ipv4Bytes, boolean allowLoopback) {
-    try {
-      validateInetAddress(InetAddress.getByAddress(ipv4Bytes), allowLoopback);
-    } catch (UnknownHostException e) {
-      throw new IllegalArgumentException("Invalid embedded IPv4 address", e);
-    }
+  private static boolean isNumericLastLabel(String host) {
+    return NUMERIC_LABEL_PATTERN.matcher(host.substring(host.lastIndexOf('.') + 1)).matches();
   }
 
   private static boolean isZeroRange(byte[] bytes, int startInclusive, int endExclusive) {
@@ -544,10 +419,8 @@ public final class OAuthUrlValidator {
   }
 
   private static String stripIpv6Brackets(String host) {
-    if (host.startsWith("[") && host.endsWith("]") && host.length() > 2) {
-      return host.substring(1, host.length() - 1);
-    }
-    return host;
+    return host.startsWith("[") && host.endsWith("]") && host.length() > 2
+        ? host.substring(1, host.length() - 1) : host;
   }
 
   @Nullable
@@ -556,9 +429,6 @@ public final class OAuthUrlValidator {
       return null;
     }
     String normalized = host.endsWith(".") ? host.substring(0, host.length() - 1) : host;
-    if (normalized.isEmpty() || normalized.endsWith(".")) {
-      return null;
-    }
-    return normalized.toLowerCase(Locale.ROOT);
+    return normalized.isEmpty() || normalized.endsWith(".") ? null : normalized.toLowerCase(Locale.ROOT);
   }
 }

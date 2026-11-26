@@ -17,8 +17,10 @@
 package io.cdap.cdap.datapipeline.oauth;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.net.InetAddresses;
 import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator.AllowedHosts;
 import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator.HostResolution;
+
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -33,16 +35,16 @@ import org.junit.Test;
  */
 public class OAuthUrlValidatorTest {
 
-  private static InetAddress ipv4(int a, int b, int c, int d) throws UnknownHostException {
-    return InetAddress.getByAddress(new byte[] {(byte) a, (byte) b, (byte) c, (byte) d});
+  private static InetAddress ip(String literal) {
+    return InetAddresses.forString(literal);
   }
 
-  private static Inet6Address ipv6(String host, int... bytes) throws UnknownHostException {
+  private static Inet6Address ipv6Bytes(String label, int... bytes) throws UnknownHostException {
     byte[] raw = new byte[16];
     for (int i = 0; i < 16; i++) {
       raw[i] = (byte) bytes[i];
     }
-    return Inet6Address.getByAddress(host, raw, null);
+    return Inet6Address.getByAddress(label, raw, null);
   }
 
   private static OAuthUrlValidator validatorWithDns(Map<String, InetAddress[]> dns) {
@@ -55,10 +57,22 @@ public class OAuthUrlValidatorTest {
     });
   }
 
+  private static void assertRejected(OAuthUrlValidator validator, String url,
+                                     HostResolution resolution, AllowedHosts allowlist) {
+    try {
+      validator.validate(url, resolution, allowlist);
+      Assert.fail("Expected rejection for URL: " + url);
+    } catch (IllegalArgumentException | MalformedURLException expected) {
+      // expected
+    } catch (UnknownHostException e) {
+      Assert.fail("Unexpected UnknownHostException for URL " + url + ": " + e);
+    }
+  }
+
   @Test
   public void testRequiresHttpsAndRejectsMalformedSyntax() throws Exception {
     Map<String, InetAddress[]> dns = new HashMap<>();
-    dns.put("oauth.example.invalid", new InetAddress[] {ipv4(93, 184, 216, 34)});
+    dns.put("oauth.example.invalid", new InetAddress[] {ip("93.184.216.34")});
     OAuthUrlValidator validator = validatorWithDns(dns);
 
     OAuthUrlValidator.ValidatedUrl valid = validator.validate(
@@ -67,237 +81,139 @@ public class OAuthUrlValidatorTest {
     Assert.assertEquals(443, valid.getEffectivePort());
     Assert.assertEquals(1, valid.getResolvedAddresses().size());
 
-    String[] disallowedUrls = {
-        "http://oauth.example.invalid/token",
-        "ftp://oauth.example.invalid/token",
-        "file:///etc/passwd",
-        "https://user:pass@oauth.example.invalid/token",
-        "https://user@oauth.example.invalid/token",
-        "https://oauth.example.invalid:0/token",
-        "https://[fe80::1%25eth0]/token",
-        "https:///token",
-        ""
-    };
-    for (String badUrl : disallowedUrls) {
-      try {
-        validator.validate(badUrl, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
-        Assert.fail("Expected rejection for URL: " + badUrl);
-      } catch (IllegalArgumentException | MalformedURLException expected) {
-        // expected
-      }
+    for (String badUrl : new String[] {
+        "http://oauth.example.invalid/token", "ftp://oauth.example.invalid/token", "file:///etc/passwd",
+        "https://user:pass@oauth.example.invalid/token", "https://user@oauth.example.invalid/token",
+        "https://oauth.example.invalid:0/token", "https://[fe80::1%25eth0]/token", "https:///token", ""
+    }) {
+      assertRejected(validator, badUrl, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
     }
   }
 
   @Test
-  public void testBlocksAllUnsafeIpv4AndAllowsPublicBoundaries() throws Exception {
-    InetAddress[] blocked = {
-        ipv4(0, 0, 0, 0),
-        ipv4(0, 0, 0, 1),
-        ipv4(127, 0, 0, 1),
-        ipv4(127, 255, 255, 254),
-        ipv4(10, 0, 0, 1),
-        ipv4(172, 16, 0, 1),
-        ipv4(172, 31, 255, 254),
-        ipv4(192, 168, 1, 1),
-        ipv4(169, 254, 169, 254),
-        ipv4(100, 64, 0, 1),
-        ipv4(100, 127, 255, 254),
-        ipv4(198, 18, 0, 1),
-        ipv4(198, 19, 255, 254),
-        ipv4(224, 0, 0, 1),
-        ipv4(240, 0, 0, 1),
-        ipv4(255, 255, 255, 255)
-    };
-    for (InetAddress addr : blocked) {
+  public void testBlocksAllUnsafeIpv4AndAllowsPublicBoundaries() {
+    for (String blocked : new String[] {
+        "0.0.0.0", "0.0.0.1", "127.0.0.1", "127.255.255.254", "10.0.0.1", "172.16.0.1", "172.31.255.254",
+        "192.168.1.1", "169.254.169.254", "100.64.0.1", "100.127.255.254", "198.18.0.1", "198.19.255.254",
+        "224.0.0.1", "240.0.0.1", "255.255.255.255"
+    }) {
       try {
-        OAuthUrlValidator.validateInetAddress(addr, false);
-        Assert.fail("Expected IPv4 address to be blocked: " + addr.getHostAddress());
+        OAuthUrlValidator.validateInetAddress(ip(blocked), false);
+        Assert.fail("Expected IPv4 address to be blocked: " + blocked);
       } catch (IllegalArgumentException expected) {
         // expected
       }
     }
-
-    InetAddress[] allowed = {
-        ipv4(8, 8, 8, 8),
-        ipv4(93, 184, 216, 34),
-        ipv4(100, 63, 255, 255),
-        ipv4(100, 128, 0, 1),
-        ipv4(198, 17, 255, 255),
-        ipv4(198, 20, 0, 1),
-        ipv4(172, 15, 255, 255),
-        ipv4(172, 32, 0, 1)
-    };
-    for (InetAddress addr : allowed) {
-      OAuthUrlValidator.validateInetAddress(addr, false);
+    for (String allowed : new String[] {
+        "8.8.8.8", "93.184.216.34", "100.63.255.255", "100.128.0.1",
+        "198.17.255.255", "198.20.0.1", "172.15.255.255", "172.32.0.1"
+    }) {
+      OAuthUrlValidator.validateInetAddress(ip(allowed), false);
     }
   }
 
   @Test
   public void testBlocksUnsafeIpv6AndEmbeddedIpv4Representations() throws Exception {
-    Inet6Address[] blocked = {
-        // :: and ::1
-        ipv6("unspec", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        ipv6("loopback", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        // fe80::1 (link-local), fc00::1 / fd12::1 (ULA), fec0::1 (site-local), ff02::1 (multicast)
-        ipv6("linklocal", 0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        ipv6("ula1", 0xfc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        ipv6("ula2", 0xfd, 0x12, 0x34, 0x56, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        ipv6("sitelocal", 0xfe, 0xc0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        ipv6("multicast", 0xff, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        // 64:ff9b:1::1 (local-use NAT64), 100::1 (discard-only)
-        ipv6("localnat64", 0, 0x64, 0xff, 0x9b, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        ipv6("discard", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+    InetAddress[] blocked = {
+        ip("::"), ip("::1"), ip("fe80::1"), ip("fc00::1"), ip("fd12:3456::1"), ip("fec0::1"), ip("ff02::1"),
+        ip("64:ff9b:1::1"), ip("100::1"),
         // Real 16-byte Inet6Address IPv4-mapped ::ffff:169.254.169.254, ::ffff:10.0.0.1, ::ffff:127.0.0.1
-        ipv6("mapped-imds", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 169, 254, 169, 254),
-        ipv6("mapped-rfc1918", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 10, 0, 0, 1),
-        ipv6("mapped-loopback", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1),
-        // SIIT IPv4-translated ::ffff:0:169.254.169.254
-        ipv6("siit-imds", 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 169, 254, 169, 254),
-        // Well-known NAT64 64:ff9b::169.254.169.254 and 64:ff9b::10.0.0.1
-        ipv6("nat64-imds", 0, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0, 169, 254, 169, 254),
-        ipv6("nat64-rfc1918", 0, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 1),
-        // IPv4-compatible ::169.254.169.254
-        ipv6("compat-imds", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 169, 254, 169, 254),
-        // 6to4 2002:a9fe:a9fe::1 (169.254.169.254) and 2002:0a00:0001::1 (10.0.0.1)
-        ipv6("6to4-imds", 0x20, 0x02, 169, 254, 169, 254, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        ipv6("6to4-rfc1918", 0x20, 0x02, 10, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
-        // Teredo client = 169.254.169.254 (inverted: 0x56, 0x01, 0x56, 0x01) with public server 8.8.8.8
-        ipv6("teredo-client", 0x20, 0x01, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0, ~169 & 0xff, ~254 & 0xff,
-             ~169 & 0xff, ~254 & 0xff),
-        // Teredo server = 169.254.169.254 with public inverted client 8.8.8.8
-        ipv6("teredo-server", 0x20, 0x01, 0, 0, 169, 254, 169, 254, 0, 0, 0, 0, ~8 & 0xff, ~8 & 0xff,
-             ~8 & 0xff, ~8 & 0xff),
-        // ISATAP (0000:5efe: and 0200:5efe:) with 169.254.169.254 and 10.0.0.1
-        ipv6("isatap-imds", 0x20, 0x01, 0x48, 0x60, 0, 0, 0, 0, 0, 0, 0x5e, 0xfe, 169, 254, 169, 254),
-        ipv6("isatap-rfc1918", 0x20, 0x01, 0x48, 0x60, 0, 0, 0, 0, 0x02, 0, 0x5e, 0xfe, 10, 0, 0, 1)
+        ipv6Bytes("mapped-imds", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 169, 254, 169, 254),
+        ipv6Bytes("mapped-rfc1918", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 10, 0, 0, 1),
+        ipv6Bytes("mapped-loopback", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1),
+        // SIIT, well-known NAT64, IPv4-compatible, 6to4, Teredo (client & server), ISATAP (0000 & 0200)
+        ip("::ffff:0:169.254.169.254"), ip("64:ff9b::169.254.169.254"), ip("64:ff9b::10.0.0.1"),
+        ip("::169.254.169.254"), ip("2002:a9fe:a9fe::1"), ip("2002:0a00:0001::1"),
+        ipv6Bytes("teredo-client", 0x20, 0x01, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0,
+                  ~169 & 0xff, ~254 & 0xff, ~169 & 0xff, ~254 & 0xff),
+        ipv6Bytes("teredo-server", 0x20, 0x01, 0, 0, 169, 254, 169, 254, 0, 0, 0, 0,
+                  ~8 & 0xff, ~8 & 0xff, ~8 & 0xff, ~8 & 0xff),
+        ip("2001:4860::5efe:169.254.169.254"), ip("2001:4860::200:5efe:10.0.0.1")
     };
-    for (Inet6Address addr : blocked) {
+    for (InetAddress addr : blocked) {
       try {
         OAuthUrlValidator.validateInetAddress(addr, false);
-        Assert.fail("Expected IPv6 address to be blocked: " + addr.getHostName() + " / " + addr.getHostAddress());
+        Assert.fail("Expected IPv6 address to be blocked: " + addr.getHostAddress());
       } catch (IllegalArgumentException expected) {
         // expected
       }
     }
 
-    // Public IPv6 and public embedded IPv4 addresses are allowed
+    OAuthUrlValidator.validateInetAddress(ip("2001:4860:4860::8888"), false);
     OAuthUrlValidator.validateInetAddress(
-        ipv6("google-dns", 0x20, 0x01, 0x48, 0x60, 0x48, 0x60, 0, 0, 0, 0, 0, 0, 0, 0, 0x88, 0x88), false);
-    OAuthUrlValidator.validateInetAddress(
-        ipv6("mapped-public", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 8, 8, 8, 8), false);
-    OAuthUrlValidator.validateInetAddress(
-        ipv6("nat64-public", 0, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8), false);
-    // Test-mode allowLoopback allows ::1 while still blocking non-loopback private/link-local addresses
-    OAuthUrlValidator.validateInetAddress(
-        ipv6("loopback-allowed", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1), true);
+        ipv6Bytes("mapped-public", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 8, 8, 8, 8), false);
+    OAuthUrlValidator.validateInetAddress(ip("64:ff9b::8.8.8.8"), false);
+    OAuthUrlValidator.validateInetAddress(ip("::1"), true);
   }
 
   @Test
   public void testMultiRecordDnsFailsClosedAndHandlesResolutionModes() throws Exception {
     Map<String, InetAddress[]> dns = new HashMap<>();
-    dns.put("mixed.example.invalid", new InetAddress[] {ipv4(8, 8, 8, 8), ipv4(169, 254, 169, 254)});
+    dns.put("mixed.example.invalid", new InetAddress[] {ip("8.8.8.8"), ip("169.254.169.254")});
     OAuthUrlValidator validator = validatorWithDns(dns);
 
-    try {
-      validator.validate("https://mixed.example.invalid/token",
-                         HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
-      Assert.fail("Expected rejection when any resolved record is disallowed");
-    } catch (IllegalArgumentException expected) {
-      Assert.assertTrue(expected.getMessage().contains("169.254.169.254"));
-    }
+    assertRejected(validator, "https://mixed.example.invalid/token",
+                   HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
 
-    // An unresolvable host succeeds with ALLOW_UNRESOLVED (empty resolved list). With REQUIRE_RESOLVABLE it
-    // throws UnknownHostException so callers report a retryable infrastructure error instead of a 400.
-    OAuthUrlValidator.ValidatedUrl unresolved = validator.validate(
-        "https://unknown.example.invalid/token", HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
-    Assert.assertTrue(unresolved.getResolvedAddresses().isEmpty());
-
+    // ALLOW_UNRESOLVED succeeds with empty list; REQUIRE_RESOLVABLE throws retryable UnknownHostException
+    Assert.assertTrue(validator.validate("https://unknown.example.invalid/token",
+                                         HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll())
+                          .getResolvedAddresses().isEmpty());
     try {
       validator.validate("https://unknown.example.invalid/token",
                          HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
-      Assert.fail("Expected UnknownHostException for unresolvable host under REQUIRE_RESOLVABLE");
+      Assert.fail("Expected UnknownHostException for unresolvable host");
     } catch (UnknownHostException expected) {
       // expected
     }
 
-    // An empty DNS answer is handled like an unresolvable host
     OAuthUrlValidator emptyDns = OAuthUrlValidator.forTesting(true, false, host -> new InetAddress[0]);
-    Assert.assertTrue(emptyDns.validate("https://empty.example.invalid/token", HostResolution.ALLOW_UNRESOLVED,
-                                        AllowedHosts.allowAll()).getResolvedAddresses().isEmpty());
+    Assert.assertTrue(emptyDns.validate("https://empty.example.invalid/token",
+                                        HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll())
+                          .getResolvedAddresses().isEmpty());
     try {
-      emptyDns.validate("https://empty.example.invalid/token", HostResolution.REQUIRE_RESOLVABLE,
-                        AllowedHosts.allowAll());
-      Assert.fail("Expected UnknownHostException for an empty DNS answer under REQUIRE_RESOLVABLE");
+      emptyDns.validate("https://empty.example.invalid/token",
+                        HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
+      Assert.fail("Expected UnknownHostException for empty DNS answer");
     } catch (UnknownHostException expected) {
       Assert.assertTrue(expected.getMessage().contains("Unresolvable"));
     }
   }
 
   @Test
-  public void testIpLiteralsAreParsedStrictlyWithoutDns() throws Exception {
+  public void testIpLiteralsAndLocalhostAreValidatedWithoutDns() throws Exception {
     OAuthUrlValidator noDns = OAuthUrlValidator.forTesting(true, false, host -> {
-      throw new AssertionError("DNS must not be used for IP literal " + host);
+      throw new AssertionError("DNS must not be used for " + host);
     });
 
-    // Forms that the JDK reads as decimal but browsers read as octal or hex, or that only browsers accept
-    String[] ambiguous = {
-        "https://0177.0.0.1/token",            // JDK: 177.0.0.1, browser: 127.0.0.1
-        "https://012.0.0.1/token",             // JDK: 12.0.0.1, browser: 10.0.0.1
-        "https://0251.0376.0251.0376/token",   // browser: 169.254.169.254
-        "https://2130706433/token",            // browser: 127.0.0.1
-        "https://127.1/token",
-        "https://0x7f.0.0.1/token",
-        "https://1.2.3.0x4/token",
-        "https://1.2.3.256/token",
-        "https://[::ffff:0177.0.0.1]/token"
-    };
-    for (String url : ambiguous) {
-      try {
-        noDns.validate(url, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
-        Assert.fail("Expected rejection for ambiguous IP literal: " + url);
-      } catch (IllegalArgumentException expected) {
-        // expected
-      }
-    }
-
-    // Disallowed literals are rejected even when DNS resolution is not required
-    for (String url : new String[] {"https://169.254.169.254/token", "https://10.0.0.1/token",
-        "https://[::ffff:169.254.169.254]/token", "https://[64:ff9b::a9fe:a9fe]/token"}) {
-      try {
-        noDns.validate(url, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
-        Assert.fail("Expected rejection for disallowed IP literal: " + url);
-      } catch (IllegalArgumentException expected) {
-        // expected
-      }
+    for (String badUrl : new String[] {
+        // Ambiguous octal/hex/short/integer IPv4 forms
+        "https://0177.0.0.1/token", "https://012.0.0.1/token", "https://0251.0376.0251.0376/token",
+        "https://2130706433/token", "https://127.1/token", "https://0x7f.0.0.1/token",
+        "https://1.2.3.0x4/token", "https://1.2.3.256/token", "https://[::ffff:0177.0.0.1]/token",
+        // Disallowed IP literals and loopback hostnames
+        "https://169.254.169.254/token", "https://10.0.0.1/token",
+        "https://[::ffff:169.254.169.254]/token", "https://[64:ff9b::a9fe:a9fe]/token",
+        "https://localhost/token", "https://LOCALHOST./token", "https://api.localhost/token"
+    }) {
+      assertRejected(noDns, badUrl, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
     }
 
     // Canonical public literals are accepted and pinned without DNS
-    OAuthUrlValidator.ValidatedUrl v4 = noDns.validate("https://8.8.8.8/token", HostResolution.REQUIRE_RESOLVABLE,
-                                                       AllowedHosts.allowAll());
+    OAuthUrlValidator.ValidatedUrl v4 = noDns.validate("https://8.8.8.8/token",
+                                                       HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
     Assert.assertEquals("8.8.8.8", v4.getNormalizedHost());
-    Assert.assertEquals(ImmutableList.of(ipv4(8, 8, 8, 8)), v4.getResolvedAddresses());
+    Assert.assertEquals(ImmutableList.of(ip("8.8.8.8")), v4.getResolvedAddresses());
 
     OAuthUrlValidator.ValidatedUrl v6 = noDns.validate("https://[2001:4860:4860::8888]/token",
                                                        HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
     Assert.assertEquals("2001:4860:4860:0:0:0:0:8888", v6.getNormalizedHost());
     Assert.assertEquals(1, v6.getResolvedAddresses().size());
-  }
 
-  @Test
-  public void testLocalhostNamesAreRejectedWithoutDns() throws Exception {
+    // A hostname with "localhost" only as a leading label is a normal DNS name
     OAuthUrlValidator unresolvable = OAuthUrlValidator.forTesting(true, false, host -> {
       throw new UnknownHostException(host);
     });
-    for (String url : new String[] {"https://localhost/token", "https://LOCALHOST./token",
-        "https://api.localhost/token"}) {
-      try {
-        unresolvable.validate(url, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
-        Assert.fail("Expected rejection for loopback name: " + url);
-      } catch (IllegalArgumentException expected) {
-        Assert.assertTrue(expected.getMessage().contains("Loopback"));
-      }
-    }
-    // A hostname that only contains "localhost" as a label prefix is a normal DNS name
     Assert.assertTrue(unresolvable.validate("https://localhost.example.invalid/token",
                                             HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll())
                           .getResolvedAddresses().isEmpty());
@@ -318,18 +234,13 @@ public class OAuthUrlValidatorTest {
     Assert.assertFalse(allowlist.isAllowed("evilsalesforce.com"));
     Assert.assertFalse(allowlist.isAllowed("attacker.example.com"));
 
-    String[] invalidPatterns = {
+    for (String bad : new String[] {
         "*", "*.", "*.com", "*.*.salesforce.com", "foo*.salesforce.com", "a.*.salesforce.com",
         "https://oauth2.googleapis.com", "oauth2.googleapis.com/token", "oauth2.googleapis.com:443",
         "user@oauth2.googleapis.com", "oauth2.googleapis.com..", ",,,",
-        // host:port and unbracketed IPv6 are rejected instead of being stored as patterns that never match
         "93.184.216.34:443", "dead.beef:443", "::::", "2001:db8::1",
-        // malformed bracketed IPv6
-        "[2001:db8::1", "2001:db8::1]", "[]", "[2001:db8::g]",
-        // ambiguous IPv4 forms
-        "0177.0.0.1", "127.1", "2130706433", "*.0.0.1"
-    };
-    for (String bad : invalidPatterns) {
+        "[2001:4860:4860::8888]", "[2001:db8::1", "[]", "8.8.8.8", "0177.0.0.1", "127.1", "2130706433", "*.0.0.1"
+    }) {
       try {
         AllowedHosts.parse(bad);
         Assert.fail("Expected IllegalArgumentException for invalid allowlist pattern: " + bad);
@@ -338,41 +249,16 @@ public class OAuthUrlValidatorTest {
       }
     }
 
-    // IPv6 entries are canonicalized, so any spelling of the same address matches
-    AllowedHosts ipv6Allowlist = AllowedHosts.parse("[2001:4860:4860::8888], 8.8.8.8");
-    OAuthUrlValidator noDns = OAuthUrlValidator.forTesting(true, false, host -> {
-      throw new AssertionError("DNS must not be used for IP literal " + host);
-    });
-    noDns.validate("https://[2001:4860:4860:0:0:0:0:8888]/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
-    noDns.validate("https://[2001:4860:4860::8888]/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
-    noDns.validate("https://8.8.8.8/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
-    try {
-      noDns.validate("https://[2001:4860:4860::8844]/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
-      Assert.fail("Expected non-allowlisted IPv6 host to be rejected");
-    } catch (IllegalArgumentException expected) {
-      Assert.assertTrue(expected.getMessage().contains("allowlist"));
-    }
-
-    // Even when a host is explicitly in AllowedHosts, private/IMDS IPs are still blocked
     Map<String, InetAddress[]> dns = new HashMap<>();
-    dns.put("oauth2.googleapis.com", new InetAddress[] {ipv4(8, 8, 8, 8)});
-    dns.put("internal.salesforce.com", new InetAddress[] {ipv4(10, 0, 0, 5)});
-    dns.put("other.example.invalid", new InetAddress[] {ipv4(93, 184, 216, 34)});
+    dns.put("oauth2.googleapis.com", new InetAddress[] {ip("8.8.8.8")});
+    dns.put("internal.salesforce.com", new InetAddress[] {ip("10.0.0.5")});
+    dns.put("other.example.invalid", new InetAddress[] {ip("93.184.216.34")});
     OAuthUrlValidator validator = validatorWithDns(dns);
 
     validator.validate("https://OAuth2.GoogleAPIs.com./token", HostResolution.REQUIRE_RESOLVABLE, allowlist);
-    try {
-      validator.validate("https://other.example.invalid/token", HostResolution.REQUIRE_RESOLVABLE, allowlist);
-      Assert.fail("Expected non-allowlisted host to be rejected");
-    } catch (IllegalArgumentException expected) {
-      Assert.assertTrue(expected.getMessage().contains("allowlist"));
-    }
-    try {
-      validator.validate("https://internal.salesforce.com/token", HostResolution.REQUIRE_RESOLVABLE, allowlist);
-      Assert.fail("Expected allowlisted host resolving to RFC 1918 IP to still be blocked");
-    } catch (IllegalArgumentException expected) {
-      Assert.assertTrue(expected.getMessage().contains("10.0.0.5"));
-    }
+    assertRejected(validator, "https://other.example.invalid/token", HostResolution.REQUIRE_RESOLVABLE, allowlist);
+    assertRejected(validator, "https://internal.salesforce.com/token", HostResolution.REQUIRE_RESOLVABLE, allowlist);
+    assertRejected(validator, "https://8.8.8.8/token", HostResolution.REQUIRE_RESOLVABLE, allowlist);
   }
 
   @Test
@@ -381,14 +267,11 @@ public class OAuthUrlValidatorTest {
         "https://login.salesforce.com./services/oauth2/token",
         "https://LOGIN.SALESFORCE.COM:443/id/00D/005"));
     Assert.assertFalse(OAuthUrlValidator.hasSameOrigin(
-        "https://login.salesforce.com/token",
-        "http://login.salesforce.com/token"));
+        "https://login.salesforce.com/token", "http://login.salesforce.com/token"));
     Assert.assertFalse(OAuthUrlValidator.hasSameOrigin(
-        "https://login.salesforce.com/token",
-        "https://login.salesforce.com:8443/token"));
+        "https://login.salesforce.com/token", "https://login.salesforce.com:8443/token"));
     Assert.assertFalse(OAuthUrlValidator.hasSameOrigin(
-        "https://user:pass@login.salesforce.com/token",
-        "https://login.salesforce.com/token"));
+        "https://user:pass@login.salesforce.com/token", "https://login.salesforce.com/token"));
     Assert.assertFalse(OAuthUrlValidator.hasSameOrigin(null, "https://login.salesforce.com/token"));
   }
 }

@@ -723,13 +723,13 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     // sanitizeIdentityUrl must drop it instead of storing it or failing the token exchange.
     String provider = "testSplitOriginIdentity";
     String cred = "cred1";
-    PutOAuthProviderRequest providerReq = createPutRequest("http://localhost:" + mockTokenPort + "/login",
-        "http://127.0.0.1:" + mockTokenPort + "/token-good-identity", "clientid", "clientsecret",
+    PutOAuthProviderRequest providerReq = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
+        "http://localhost:" + mockTokenPort + "/token-good-identity", "clientid", "clientsecret",
         OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
     Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, providerReq).getResponseCode());
-    mockTokenHandler.goodIdentityUrl = "http://localhost:" + mockTokenPort + "/identity";
+    mockTokenHandler.goodIdentityUrl = "http://127.0.0.1:" + mockTokenPort + "/identity";
 
-    getConfiguration().set(ALLOWED_HOSTS_CONF, "127.0.0.1");
+    getConfiguration().set(ALLOWED_HOSTS_CONF, "localhost");
     try {
       Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred,
           new PutOAuthCredentialRequest("code3", "https://redirect.example.invalid", null)).getResponseCode());
