@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  */
 public class GcpWorkloadIdentityInternalAuthenticator implements InternalAuthenticator {
 
-  private GcpMetadataTaskContext gcpMetadataTaskContext;
+  private volatile GcpMetadataTaskContext gcpMetadataTaskContext;
 
   /**
    * Constructs the {@link GcpWorkloadIdentityInternalAuthenticator}.
@@ -53,20 +53,21 @@ public class GcpWorkloadIdentityInternalAuthenticator implements InternalAuthent
    */
   @Override
   public void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter) {
-    if (gcpMetadataTaskContext == null) {
+    GcpMetadataTaskContext context = this.gcpMetadataTaskContext;
+    if (context == null) {
       return;
     }
 
-    if (gcpMetadataTaskContext.getUserId() != null) {
-      headerSetter.accept(Constants.Security.Headers.USER_ID, gcpMetadataTaskContext.getUserId());
+    if (context.getUserId() != null) {
+      headerSetter.accept(Constants.Security.Headers.USER_ID, context.getUserId());
     }
 
-    if (gcpMetadataTaskContext.getUserIp() != null) {
-      headerSetter.accept(Constants.Security.Headers.USER_IP, gcpMetadataTaskContext.getUserIp());
+    if (context.getUserIp() != null) {
+      headerSetter.accept(Constants.Security.Headers.USER_IP, context.getUserIp());
     }
 
-    if (gcpMetadataTaskContext.getUserCredential() != null) {
-      Credential userCredential = gcpMetadataTaskContext.getUserCredential();
+    if (context.getUserCredential() != null) {
+      Credential userCredential = context.getUserCredential();
       headerSetter.accept(Constants.Security.Headers.RUNTIME_TOKEN,
           String.format("%s %s", userCredential.getType().getQualifiedName(),
               userCredential.getValue()));
