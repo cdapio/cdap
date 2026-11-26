@@ -261,9 +261,21 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
       }
 
-      RefreshTokenResponse refreshTokenResponse =
-          parseTokenResponse(response, provider, TokenGrant.REFRESH_TOKEN);
-      boolean hasRefreshToken = !Strings.isNullOrEmpty(refreshTokenResponse.getRefreshToken());
+      if (response.getResponseCode() != 200) {
+        throw new OAuthServiceException(response.getResponseCode(),
+            "Request for refresh token did not return 200. Response code: " + response.getResponseCode());
+      }
+
+      RefreshTokenResponse refreshTokenResponse = parseTokenResponse(response);
+      boolean hasRefreshToken = refreshTokenResponse != null
+          && !Strings.isNullOrEmpty(refreshTokenResponse.getRefreshToken());
+      boolean hasAccessToken = refreshTokenResponse != null
+          && !Strings.isNullOrEmpty(refreshTokenResponse.getAccessToken());
+
+      if (!hasAccessToken && !hasRefreshToken) {
+        throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
+            "Refresh token response is missing the required access token or refresh token");
+      }
 
       if (hasRefreshToken) {
         writeRefreshToken(provider, credentialId, refreshTokenResponse.getRefreshToken(),
@@ -322,7 +334,18 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
           "Failed to fetch access token from provider", e);
     }
 
-    RefreshTokenResponse tokenResponse = parseTokenResponse(response, provider, TokenGrant.ACCESS_TOKEN);
+    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
+      throw new OAuthServiceException(response.getResponseCode(),
+          "Request for access token did not return 200. Response code: " + response.getResponseCode(),
+          null, true);
+    }
+
+    RefreshTokenResponse tokenResponse = parseTokenResponse(response);
+
+    if (tokenResponse == null || Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
+      throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
+          "Access token response body does not have access token", null, true);
+    }
     // If provider returned a rotated refresh token, persist the updated refresh token
     String newRefreshToken = tokenResponse.getRefreshToken();
     if (!Strings.isNullOrEmpty(newRefreshToken) && !newRefreshToken.equals(refreshToken.getRefreshToken())) {
@@ -642,42 +665,12 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     }
   }
 
-  private enum TokenGrant {
-    REFRESH_TOKEN,
-    ACCESS_TOKEN
-  }
-
-  private RefreshTokenResponse parseTokenResponse(HttpResponse response, String provider, TokenGrant grant)
-      throws OAuthServiceException {
-    boolean providerError = grant == TokenGrant.ACCESS_TOKEN;
-    String tokenType = providerError ? "access token" : "refresh token";
-    if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      LOG.warn("Request for {} for provider {} failed with response code {}",
-          tokenType, provider, response.getResponseCode());
-      throw new OAuthServiceException(response.getResponseCode(),
-          "Request for " + tokenType + " did not return 200. Response code: " + response.getResponseCode(),
-          null, providerError);
-    }
-
-    RefreshTokenResponse tokenResponse;
+  private RefreshTokenResponse parseTokenResponse(HttpResponse response) {
     try {
-      tokenResponse = GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
+      return GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
     } catch (JsonParseException e) {
-      LOG.warn("Request for {} for provider {} returned invalid JSON", tokenType, provider);
-      throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
-          "Request for " + tokenType + " did not return valid JSON", e, providerError);
+      return null;
     }
-
-    boolean hasAccessToken = tokenResponse != null && !Strings.isNullOrEmpty(tokenResponse.getAccessToken());
-    if (grant == TokenGrant.ACCESS_TOKEN && !hasAccessToken) {
-      throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
-          "Access token response body does not have access token", null, true);
-    }
-    if (!hasAccessToken && (tokenResponse == null || Strings.isNullOrEmpty(tokenResponse.getRefreshToken()))) {
-      throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
-          "Refresh token response is missing the required access token or refresh token");
-    }
-    return tokenResponse;
   }
 
   private String getBasicAuthHeader(OAuthClientCredentials clientCreds) {
