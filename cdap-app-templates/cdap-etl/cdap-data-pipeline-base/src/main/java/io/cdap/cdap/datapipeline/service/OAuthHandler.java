@@ -323,7 +323,6 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     }
 
     RefreshTokenResponse tokenResponse = parseTokenResponse(response, provider, TokenGrant.ACCESS_TOKEN);
-
     // If provider returned a rotated refresh token, persist the updated refresh token
     String newRefreshToken = tokenResponse.getRefreshToken();
     if (!Strings.isNullOrEmpty(newRefreshToken) && !newRefreshToken.equals(refreshToken.getRefreshToken())) {

@@ -672,108 +672,65 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   @Test
-  public void testReuseClientCredentialsOriginHttpContract() throws Exception {
-    String provider = "originReuseProvider";
+  public void testReuseMissingCredentialDoesNotMutateProviderTable() throws IOException {
+    String provider = "missingCredsReuseProvider";
     String base = "http://127.0.0.1:" + mockTokenPort;
-
-    // Query spaces accepted by URL must round-trip cleanly across reuse_client_credentials=true.
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall("provider/" + provider,
-        createPutRequest(base + "/login?scope=openid email", base + "/token", "clientid", "clientsecret"))
-        .getResponseCode());
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(
-        "provider/" + provider + "?reuse_client_credentials=true",
-        createPutRequest(base + "/login-v2?scope=openid email", base + "/token-v2", null, null))
-        .getResponseCode());
-
-    assertReusePutRejected(provider, base + "/login-v2", "http://127.0.0.2:" + mockTokenPort + "/steal");
-
-    // Preserving credentials on DELETE keeps origin bound; fresh credentials allow changing origin.
-    Assert.assertEquals(HttpURLConnection.HTTP_OK,
-        makeDeleteCall("provider/" + provider + "?preserve_client_credentials=true").getResponseCode());
-    assertReusePutRejected(provider, base + "/login-v2", "http://127.0.0.2:" + mockTokenPort + "/steal");
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(
-        "provider/" + provider + "?reuse_client_credentials=false",
-        createPutRequest("http://127.0.0.2:" + mockTokenPort + "/login",
-            "http://127.0.0.2:" + mockTokenPort + "/token", "newid", "newsecret")).getResponseCode());
-
-    // Pre-provisioned secret (empty metadata) blocks both exact-case and case-variant origin swaps.
-    String preProv = "preProvProvider";
-    getSecureStoreManager().put("system", "oauthclientcreds-" + preProv.toLowerCase(),
-        "{\"clientId\":\"preid\",\"clientSecret\":\"presecret\"}", "Pre-provisioned", Collections.emptyMap());
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(
-        "provider/" + preProv + "?reuse_client_credentials=true",
-        createPutRequest(base + "/login", base + "/token", null, null)).getResponseCode());
-    assertReusePutRejected(preProv, base + "/login", "http://127.0.0.2:" + mockTokenPort + "/steal");
-    assertReusePutRejected(preProv.toUpperCase(), base + "/login", "http://127.0.0.2:" + mockTokenPort + "/steal");
-
-    // The first reuse bind stores the origin on the secret, so it survives a preserve-credentials delete.
-    Assert.assertEquals(HttpURLConnection.HTTP_OK,
-        makeDeleteCall("provider/" + preProv + "?preserve_client_credentials=true").getResponseCode());
-    assertReusePutRejected(preProv, base + "/login", "http://127.0.0.2:" + mockTokenPort + "/steal");
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(
-        "provider/" + preProv + "?reuse_client_credentials=true",
-        createPutRequest(base + "/login2", base + "/token2", null, null)).getResponseCode());
-  }
-
-  @Test
-  public void testCreateProviderRejectsNonHttpScheme() throws IOException {
-    HttpResponse response = makePutCall("provider/ftpprovider",
-        createPutRequest("https://www.example.com/login", "ftp://www.example.com/token", "clientid", "clientsecret"));
-    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+    HttpResponse response = makePutCall("provider/" + provider + "?reuse_client_credentials=true",
+        createPutRequest(base + "/login", base + "/token", null, null));
+    Assert.assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
     Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND,
-        makeGetCall("provider/ftpprovider/authurl").getResponseCode());
+        makeGetCall("provider/" + provider + "/authurl").getResponseCode());
   }
 
   @Test
   public void testTokenExchangeAndUpstreamResponseSanitization() throws Exception {
-    String base = "http://127.0.0.1:" + mockTokenPort;
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall("provider/validExchangeProvider",
-        createPutRequest(base + "/login", base + "/token", "cid", "csecret")).getResponseCode());
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall("provider/validExchangeProvider/credential/c1",
-        new PutOAuthCredentialRequest("code1", "http://127.0.0.1/redirect", null)).getResponseCode());
-
-    assertUpstreamFailureSanitized("sanitizeErrProvider", "/token-invalid",
+    assertUpstreamFailureSanitized("sanitizeHttpErr", "/token-invalid",
+        HttpURLConnection.HTTP_BAD_REQUEST,
         "Request for refresh token did not return 200. Response code: 400",
         "Request for access token did not return 200. Response code: 400");
-    assertUpstreamFailureSanitized("sanitizeMalformedProvider", "/token-malformed",
-        "Request for refresh token did not return valid JSON",
-        "Request for access token did not return valid JSON");
-    assertUpstreamFailureSanitized("sanitizeMissingProvider", "/token-missing-fields",
+    assertUpstreamFailureSanitized("sanitizeMalformed", "/token-malformed",
+        HttpURLConnection.HTTP_BAD_REQUEST,
         "Refresh token response is missing the required access token or refresh token",
         "Access token response body does not have access token");
-    assertUpstreamFailureSanitized("sanitizeNullProvider", "/token-null",
+    assertUpstreamFailureSanitized("sanitizeMissingFields", "/token-missing-fields",
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        "Refresh token response is missing the required access token or refresh token",
+        "Access token response body does not have access token");
+    assertUpstreamFailureSanitized("sanitizeNull", "/token-null",
+        HttpURLConnection.HTTP_BAD_REQUEST,
         "Refresh token response is missing the required access token or refresh token",
         "Access token response body does not have access token");
   }
 
-  private void assertReusePutRejected(String provider, String loginUrl, String tokenUrl) throws IOException {
-    HttpResponse response = makePutCall("provider/" + provider + "?reuse_client_credentials=true",
-        createPutRequest(loginUrl, tokenUrl, null, null));
-    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
-    Assert.assertEquals(
-        "Invalid request: Cannot change OAuth provider URL scheme, host, or port when reusing client credentials",
-        response.getResponseBodyAsString());
-  }
-
-  private void assertUpstreamFailureSanitized(String provider, String tokenPath,
+  private void assertUpstreamFailureSanitized(String provider, String tokenPath, int expectedStatus,
                                               String expectedPutError, String expectedGetError) throws Exception {
     String base = "http://127.0.0.1:" + mockTokenPort;
     Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall("provider/" + provider,
-        createPutRequest(base + "/login", base + tokenPath, "cid", "csecret")).getResponseCode());
+        createPutRequest(base + "/login", base + tokenPath, "clientid", "clientsecret")).getResponseCode());
 
-    HttpResponse putResp = makePutCall("provider/" + provider + "/credential/c1",
+    HttpResponse putCred = makePutCall("provider/" + provider + "/credential/cred1",
         new PutOAuthCredentialRequest("code1", "http://127.0.0.1/redirect", null));
-    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, putResp.getResponseCode());
-    Assert.assertEquals(expectedPutError, putResp.getResponseBodyAsString());
+    Assert.assertEquals(expectedStatus, putCred.getResponseCode());
+    Assert.assertEquals(expectedPutError, putCred.getResponseBodyAsString());
+    assertNoUpstreamBodyLeak(putCred.getResponseBodyAsString());
 
-    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-c1",
+    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-cred1",
         GSON.toJson(new OAuthRefreshToken("rt1", "http://127.0.0.1/redirect")), "Test", Collections.emptyMap());
-    HttpResponse getResp = makeGetCall("provider/" + provider + "/credential/c1");
-    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, getResp.getResponseCode());
-    Assert.assertEquals(expectedGetError, getResp.getResponseBodyAsString());
 
-    HttpResponse validResp = makeGetCall("provider/" + provider + "/credential/c1/valid");
+    HttpResponse getCred = makeGetCall("provider/" + provider + "/credential/cred1");
+    Assert.assertEquals(expectedStatus, getCred.getResponseCode());
+    Assert.assertEquals(expectedGetError, getCred.getResponseBodyAsString());
+    assertNoUpstreamBodyLeak(getCred.getResponseBodyAsString());
+
+    HttpResponse validResp = makeGetCall("provider/" + provider + "/credential/cred1/valid");
     Assert.assertEquals(HttpURLConnection.HTTP_OK, validResp.getResponseCode());
     Assert.assertTrue(validResp.getResponseBodyAsString().replaceAll("\\s+", "").contains("\"isValid\":false"));
+  }
+
+  private static void assertNoUpstreamBodyLeak(String body) {
+    Assert.assertFalse(body.contains("invalid_grant"));
+    Assert.assertFalse(body.contains("expired access/refresh token"));
+    Assert.assertFalse(body.contains("INTERNAL_HTML_LEAK"));
+    Assert.assertFalse(body.contains("LEAKED_INTERNAL_DATA"));
   }
 }
