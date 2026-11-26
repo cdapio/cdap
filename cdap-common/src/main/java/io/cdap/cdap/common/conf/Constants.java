@@ -142,6 +142,7 @@ public final class Constants {
     public static final String INTERNAL_ROUTER = "internal.router";
     public static final String AUTHENTICATION = "authentication";
     public static final String TASK_WORKER = "task.worker";
+    public static final String TASK_WORKER_MANAGER = "task.worker.manager";
     public static final String SYSTEM_WORKER = "system.worker";
     public static final String ARTIFACT_LOCALIZER = "artifact.localizer";
     public static final String SYSTEM_METRICS_EXPORTER = "system.metrics.exporter";
@@ -562,6 +563,33 @@ public final class Constants {
      */
     public static final String TASK_WORKER_PROBE_ENABLED = "task.worker.probe.enabled";
     public static final String TASK_WORKER_PROBE_PREFIX = "task.worker.probe.";
+  }
+
+  /**
+   * Task worker manager.
+   */
+  public static final class TaskWorkerManager {
+
+    public static final String ADDRESS = "task.worker.manager.bind.address";
+    public static final String PORT = "task.worker.manager.bind.port";
+    public static final String BOSS_THREADS = "task.worker.manager.boss.threads";
+    public static final String WORKER_THREADS = "task.worker.manager.worker.threads";
+
+    // Answered by the manager itself; the launcher uses it as the readiness probe.
+    public static final String PING_PATH = "/ping";
+
+    // Internal HTTP headers exchanged between App Fabric, the manager, and task workers.
+    public static final String HEADER_CDAP_NAMESPACE = "X-CDAP-Namespace";
+    public static final String HEADER_LEASED_NAMESPACE = "X-CDAP-Leased-Namespace";
+    // Sent by task workers on every task response; values are the TaskWorkerState names.
+    public static final String HEADER_TASK_WORKER_STATUS = "X-CDAP-Task-Worker-Status";
+
+    /**
+     * Body of the 503 the manager sends when no byte of the request reached a task worker, so the
+     * task didn't start and the caller can safely retry. RemoteTaskExecutor matches on it.
+     */
+    public static final String WORKER_UNREACHABLE_BODY =
+        "The task worker could not be reached; the request was not forwarded.";
   }
 
   /**
