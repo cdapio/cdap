@@ -823,31 +823,22 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     expectedCode = HttpURLConnection.HTTP_OK;
     addConnection(conn, creationRequest);
 
+    // Without GET permission, getting the connection is forbidden
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    getConnection(conn);
+    expectedCode = HttpURLConnection.HTTP_OK;
+
     // Grant Alice GET without USE: list and get return 200 with properties redacted
     getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.GET));
-    Connection redactedGet = GSON.fromJson(getConnection(conn).getResponseBodyAsString(), Connection.class);
-    Assert.assertEquals(Collections.emptyMap(), redactedGet.getPlugin().getProperties());
-    List<Connection> redactedList = GSON.fromJson(
-      listConnections(NamespaceId.DEFAULT.getNamespace()).getResponseBodyAsString(),
-      new TypeToken<List<Connection>>() { }.getType());
-    Connection redactedListEntry = redactedList.stream()
-      .filter(c -> conn.equals(c.getName())).findFirst().orElseThrow(AssertionError::new);
-    Assert.assertEquals(Collections.emptyMap(), redactedListEntry.getPlugin().getProperties());
+    assertConnectionProperties(conn, Collections.emptyMap());
 
     // Grant Alice permission to use connection: properties are returned and operations succeed
     getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.USE));
-    Connection fullGet = GSON.fromJson(getConnection(conn).getResponseBodyAsString(), Connection.class);
-    Assert.assertEquals(connProperties, fullGet.getPlugin().getProperties());
-    List<Connection> fullList = GSON.fromJson(
-      listConnections(NamespaceId.DEFAULT.getNamespace()).getResponseBodyAsString(),
-      new TypeToken<List<Connection>>() { }.getType());
-    Connection fullListEntry = fullList.stream()
-      .filter(c -> conn.equals(c.getName())).findFirst().orElseThrow(AssertionError::new);
-    Assert.assertEquals(connProperties, fullListEntry.getPlugin().getProperties());
+    assertConnectionProperties(conn, connProperties);
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
     getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
@@ -883,6 +874,19 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
       builder.addHeader(io.cdap.cdap.common.conf.Constants.Security.Headers.USER_ID, user);
     }
     return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+  }
+
+  private void assertConnectionProperties(String conn, Map<String, String> expectedProperties) throws IOException {
+    Connection fetched = GSON.fromJson(getConnection(conn).getResponseBodyAsString(), Connection.class);
+    Assert.assertEquals(expectedProperties, fetched.getPlugin().getProperties());
+    List<Connection> listed = GSON.fromJson(
+      listConnections(NamespaceId.DEFAULT.getNamespace()).getResponseBodyAsString(),
+      new TypeToken<List<Connection>>() { }.getType());
+    Connection listEntry = listed.stream()
+      .filter(c -> conn.equals(c.getName()))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Expected connection " + conn + " in list"));
+    Assert.assertEquals(expectedProperties, listEntry.getPlugin().getProperties());
   }
 
   private HttpResponse listConnections(String namespace) throws IOException {

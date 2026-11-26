@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -84,11 +85,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handler for all the connection operations
@@ -123,9 +126,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
+    initialize(context, new ConnectionStore(context), this.metrics);
+  }
+
+  @VisibleForTesting
+  void initialize(SystemHttpServiceContext context, ConnectionStore store,
+                  @Nullable Metrics metrics) throws Exception {
     super.initialize(context);
-    contextAccessEnforcer = context.getContextAccessEnforcer();
-    store = new ConnectionStore(context);
+    this.contextAccessEnforcer = context.getContextAccessEnforcer();
+    this.store = store;
+    this.metrics = metrics;
     String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
     this.disabledTypes = GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
   }
@@ -162,7 +172,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}")
   public void getConnection(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace,
-                            @PathParam("connection") String connection) {
+                            @PathParam("connection") String connection,
+                            @QueryParam("requireUse") @DefaultValue("false") boolean requireUse) {
     respond(namespace, responder, namespaceSummary -> {
       if (namespaceSummary.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
@@ -170,15 +181,18 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
-                                    StandardPermission.GET);
+      ConnectionEntityId entityId = new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection));
+      contextAccessEnforcer.enforce(entityId, StandardPermission.GET);
+      if (requireUse) {
+        contextAccessEnforcer.enforce(entityId, StandardPermission.USE);
+      }
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
       Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
                                                     Constants.CONNECTION_SERVICE_NAME,
                                                     Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
                                                     conn.getConnectionType()));
       child.count(Constants.Metrics.Connection.CONNECTION_GET_COUNT, 1);
-      responder.sendJson(redactPropertiesIfUnauthorizedToUse(namespace, conn));
+      responder.sendJson(requireUse ? conn : redactPropertiesIfUnauthorizedToUse(namespace, conn));
     });
   }
 
@@ -535,15 +549,17 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   }
 
   private Connection redactPropertiesIfUnauthorizedToUse(String namespace, Connection conn) {
+    PluginInfo plugin = conn.getPlugin();
+    if (plugin == null || plugin.getProperties() == null || plugin.getProperties().isEmpty()) {
+      return conn;
+    }
+    String connId = conn.getConnectionId() != null
+      ? conn.getConnectionId()
+      : ConnectionId.getConnectionId(conn.getName());
     try {
-      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, conn.getConnectionId()),
-                                    StandardPermission.USE);
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, connId), StandardPermission.USE);
       return conn;
     } catch (UnauthorizedException e) {
-      PluginInfo plugin = conn.getPlugin();
-      if (plugin == null || plugin.getProperties() == null || plugin.getProperties().isEmpty()) {
-        return conn;
-      }
       PluginInfo redactedPlugin = new PluginInfo(plugin.getName(), plugin.getType(), plugin.getCategory(),
                                                  Collections.emptyMap(), plugin.getArtifact());
       return new Connection(conn.getName(), conn.getConnectionId(), conn.getConnectionType(),
