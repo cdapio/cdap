@@ -26,7 +26,11 @@ import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshType;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.store.SecureStoreService;
+import io.cdap.cdap.test.ApplicationManager;
+import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -35,9 +39,12 @@ import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -49,10 +56,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -64,12 +75,18 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   @ClassRule
   public static final TestConfiguration AUTH_CONFIG = new TestConfiguration().enableAuthorization(TMP_FOLDER);
 
+  private static ServiceManager loopbackServiceManager;
+  private static URI loopbackServiceURI;
+
   private NettyHttpService mockOAuthServer;
+  private MockTokenHandler mockTokenHandler;
   private String mockTokenUrl;
   private int mockTokenPort;
   private String user;
 
   public static final class MockTokenHandler extends AbstractHttpHandler {
+    private final AtomicInteger secretHits = new AtomicInteger();
+
     @POST
     @Path("/token")
     public void token(FullHttpRequest request, HttpResponder responder) {
@@ -82,12 +99,46 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
           "{\"error\":\"invalid_grant\",\"error_description\":\"expired access/refresh token\"}");
     }
+
+    @POST
+    @Path("/token-redirect")
+    public void redirectToken(FullHttpRequest request, HttpResponder responder) {
+      DefaultHttpHeaders headers = new DefaultHttpHeaders();
+      headers.set(HttpHeaderNames.LOCATION, "/secret");
+      responder.sendStatus(HttpResponseStatus.FOUND, headers);
+    }
+
+    @GET
+    @Path("/secret")
+    public void secretGet(FullHttpRequest request, HttpResponder responder) {
+      secretHits.incrementAndGet();
+      responder.sendString(HttpResponseStatus.OK, "{\"access_token\":\"leaked\"}");
+    }
+
+    @POST
+    @Path("/secret")
+    public void secretPost(FullHttpRequest request, HttpResponder responder) {
+      secretHits.incrementAndGet();
+      responder.sendString(HttpResponseStatus.OK, "{\"access_token\":\"leaked\"}");
+    }
   }
 
   @BeforeClass
-  public static void setupMockSecureStoreLeasing() {
+  public static void setupMockSecureStoreLeasing() throws Exception {
     for (Object inst : new Object[] {getSecureStore(), getSecureStoreManager()}) {
       wrapSecureStoreService(inst);
+    }
+    ApplicationManager appManager = deployApplication(NamespaceId.SYSTEM, LoopbackOAuthApp.class);
+    loopbackServiceManager = appManager.getServiceManager(LoopbackOAuthApp.SERVICE_NAME);
+    loopbackServiceManager.startAndWaitForGoodRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
+    loopbackServiceURI = loopbackServiceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
+  }
+
+  @AfterClass
+  public static void teardownLoopbackService() throws Exception {
+    if (loopbackServiceManager != null) {
+      loopbackServiceManager.stop();
+      loopbackServiceManager.waitForStopped(2, TimeUnit.MINUTES);
     }
   }
 
@@ -132,11 +183,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   @Before
   public void setUpMockServer() throws Exception {
     user = null;
-    setupMockSecureStoreLeasing();
+    mockTokenHandler = new MockTokenHandler();
     mockOAuthServer = NettyHttpService.builder("mock-oauth-server")
         .setHost("localhost")
         .setPort(0)
-        .setHttpHandlers(new MockTokenHandler())
+        .setHttpHandlers(mockTokenHandler)
         .build();
     mockOAuthServer.start();
     mockTokenPort = mockOAuthServer.getBindAddress().getPort();
@@ -377,7 +428,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   private HttpResponse makeDeleteCall(String endpoint) throws IOException {
-    URL url = serviceURI
+    URL url = loopbackServiceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE, url);
@@ -504,7 +555,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   private HttpResponse makeGetCall(String endpoint) throws IOException {
-    URL url = serviceURI
+    URL url = loopbackServiceURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
@@ -521,7 +572,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   private <T> HttpResponse makePutCall(String endpoint, T body) throws IOException {
-    URL url = serviceURI
+    return makePutCall(loopbackServiceURI, endpoint, body);
+  }
+
+  private <T> HttpResponse makePutCall(URI baseURI, String endpoint, T body) throws IOException {
+    URL url = baseURI
         .resolve(String.format("v1/oauth/%s", endpoint))
         .toURL();
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, url)
@@ -651,5 +706,71 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     HttpResponse authUrl = makeGetCall(provider + "/authurl");
     Assert.assertEquals(HttpURLConnection.HTTP_OK, authUrl.getResponseCode());
     Assert.assertEquals(loginUrl + "?client_id=clientid&redirect_uri=null", authUrl.getResponseBodyAsString());
+  }
+
+  @Test
+  public void testStrictProductionHandlerRejectsDisallowedUrls() throws IOException {
+    String[] disallowedUrls = {
+        "http://oauth.example.invalid/token",
+        "https://169.254.169.254/computeMetadata/v1/",
+        "https://127.0.0.1/token",
+        "https://10.0.0.1/token",
+        "https://[::ffff:169.254.169.254]/token",
+        "https://localhost/token",
+        "https://user:pass@oauth.example.invalid/token"
+    };
+    for (int i = 0; i < disallowedUrls.length; i++) {
+      PutOAuthProviderRequest badRefresh = createPutRequest(
+          "https://oauth.example.invalid/login", disallowedUrls[i], "cid", "csec");
+      Assert.assertEquals("Expected 400 for tokenRefreshURL: " + disallowedUrls[i],
+                          400, makePutCall(serviceURI, "provider/strictBadRefresh" + i, badRefresh).getResponseCode());
+
+      PutOAuthProviderRequest badLogin = createPutRequest(
+          disallowedUrls[i], "https://oauth.example.invalid/token", "cid", "csec");
+      Assert.assertEquals("Expected 400 for loginURL: " + disallowedUrls[i],
+                          400, makePutCall(serviceURI, "provider/strictBadLogin" + i, badLogin).getResponseCode());
+    }
+
+    PutOAuthProviderRequest valid = createPutRequest(
+        "https://oauth.example.invalid/login", "https://oauth.example.invalid/token", "cid", "csec");
+    Assert.assertEquals(200, makePutCall(serviceURI, "provider/strictValid", valid).getResponseCode());
+  }
+
+  @Test
+  public void testOutboundRedirectsBlockedAndUnsafeIdentityUrlRejected() throws Exception {
+    String redirectProvider = "testRedirectBlocked";
+    PutOAuthProviderRequest redirectReq = createPutRequest(
+        "http://localhost:" + mockTokenPort + "/login",
+        "http://localhost:" + mockTokenPort + "/token-redirect", "clientid", "clientsecret");
+    Assert.assertEquals(200, makePutCall("provider/" + redirectProvider, redirectReq).getResponseCode());
+
+    HttpResponse redirectResp = makePutCall("provider/" + redirectProvider + "/credential/cred1",
+        new PutOAuthCredentialRequest("code1", "https://redirect.example.invalid", null));
+    Assert.assertEquals(302, redirectResp.getResponseCode());
+    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
+
+    // Cached access token with an internal metadata identityUrl must be rejected, triggering refresh
+    String idProvider = "testUnsafeIdentity";
+    String cred = "cred1";
+    PutOAuthProviderRequest rtrReq = createPutRequest("http://localhost:" + mockTokenPort + "/login",
+        mockTokenUrl, "clientid", "clientsecret", OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+        null, AuthType.STANDARD, RefreshType.RTR);
+    Assert.assertEquals(200, makePutCall("provider/" + idProvider, rtrReq).getResponseCode());
+    OAuthAccessToken unsafeCached = OAuthAccessToken.newBuilder()
+        .withAccessToken("stale_token")
+        .withExpiresAt(0L)
+        .withIdentityUrl("http://169.254.169.254/computeMetadata/v1/")
+        .build();
+    getSecureStoreManager().put("system",
+        "oauthaccesstoken-" + idProvider.toLowerCase() + "-" + cred,
+        GSON.toJson(unsafeCached), "Test", Collections.emptyMap());
+    getSecureStoreManager().put("system",
+        "oauthrefreshtoken-" + idProvider.toLowerCase() + "-" + cred,
+        GSON.toJson(new OAuthRefreshToken("valid_refresh_token", "https://redirect.example.invalid")),
+        "Test", Collections.emptyMap());
+
+    HttpResponse getResp = makeGetCall("provider/" + idProvider + "/credential/" + cred);
+    Assert.assertEquals(200, getResp.getResponseCode());
+    Assert.assertTrue(getResp.getResponseBodyAsString().contains("mock_access_token"));
   }
 }

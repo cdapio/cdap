@@ -18,6 +18,7 @@
 package io.cdap.cdap.datapipeline.service;
 
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -39,18 +40,23 @@ import io.cdap.cdap.datapipeline.oauth.OAuthProvider.CredentialEncodingStrategy;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
 import io.cdap.cdap.datapipeline.oauth.OAuthStoreException;
+import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshTokenResponse;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
-import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.HttpRequestConfig;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -60,6 +66,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -99,23 +106,31 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
   // The duration to hold the distributed refresh lease before it auto-expires
   private static final String RTR_LEASE_TTL_MS = "rtr.lease.ttl.ms";
 
+  private static final int MAX_RESPONSE_BYTES = 1024 * 1024;
+
   private long accessTokenRefreshBufferMs;
   private long leaseTakeoverTimeoutMs;
   private long accessTokenPollIntervalMs;
   private long leaseExpirationTimeoutMs;
 
   private OAuthStore oauthStore;
+  private OAuthUrlValidator urlValidator;
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
     super.initialize(context);
     Map<String, String> oauthConf = context.getConfiguration(OAUTH_CONF_PREFIX);
     this.oauthStore = new OAuthStore(context, context, context.getAdmin(), oauthConf);
+    this.urlValidator = createUrlValidator();
 
     accessTokenRefreshBufferMs = Long.parseLong(oauthConf.get(RTR_ACCESS_TOKEN_REFRESH_BUFFER_MS));
     leaseTakeoverTimeoutMs = Long.parseLong(oauthConf.get(RTR_REFRESH_WAIT_TIMEOUT_MS));
     accessTokenPollIntervalMs = Long.parseLong(oauthConf.get(RTR_REFRESH_POLL_INTERVAL_MS));
     leaseExpirationTimeoutMs = Long.parseLong(oauthConf.get(RTR_LEASE_TTL_MS));
+  }
+
+  protected OAuthUrlValidator createUrlValidator() {
+    return OAuthUrlValidator.strict();
   }
 
   @GET
@@ -130,6 +145,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       String formatURL = "%s";
       String loginUrl = oauthProvider.getLoginURL();
+      urlValidator.validate(loginUrl, false);
       if (!loginUrl.contains("?")) {
         formatURL += "?";
       } else if (!loginUrl.endsWith("&")) {
@@ -171,8 +187,8 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       String userAgent = putOAuthProviderRequest.getUserAgent();
       
       // Validate URLs
-      URL loginURL = new URL(putOAuthProviderRequest.getLoginURL());
-      URL tokenRefreshURL = new URL(putOAuthProviderRequest.getTokenRefreshURL());
+      URL loginURL = urlValidator.validate(putOAuthProviderRequest.getLoginURL(), false);
+      URL tokenRefreshURL = urlValidator.validate(putOAuthProviderRequest.getTokenRefreshURL(), false);
 
       LOG.info("Received putOAuthProvider request with write_client_credentials = {}", reuseClientCredentials);
       OAuthClientCredentials clientCredentials = null;
@@ -249,13 +265,13 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         oauthStore.deletePKCECodeVerifier(provider, state);
       }
 
-      HttpResponse response;
+      OAuthHttpResponse response;
       try {
-        response = HttpRequests.execute(createGetRefreshTokenRequest(
+        response = executeHttpRequest(createGetRefreshTokenRequest(
             oauthProvider,
             putOAuthCredentialRequest.getOneTimeCode(),
             putOAuthCredentialRequest.getRedirectURI(),
-            codeVerifier));
+            codeVerifier), true);
       } catch (IOException e) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Error while fetching refresh token", e);
       }
@@ -328,9 +344,10 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       throws Exception {
     OAuthRefreshToken refreshToken = getRefreshToken(provider, credentialId);
 
-    HttpResponse response;
+    OAuthHttpResponse response;
     try {
-      response = HttpRequests.execute(createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()));
+      response = executeHttpRequest(
+          createGetAccessTokenRequest(oauthProvider, refreshToken.getRefreshToken()), true);
     } catch (IOException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
           "Failed to fetch access token from provider", e);
@@ -496,7 +513,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
         HttpRequest request = HttpRequest.get(new URL(token.getIdentityUrl()))
             .addHeader("Authorization", "Bearer " + token.getAccessToken())
             .build();
-        HttpResponse response = HttpRequests.execute(request);
+        OAuthHttpResponse response = executeHttpRequest(request, false);
         return response.getResponseCode() == HttpURLConnection.HTTP_OK;
       } catch (Exception e) {
         LOG.warn("Failed to validate access token via identity URL {}: {}",
@@ -737,6 +754,91 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
    */
   private void enforceOnSecureKey(String secureKey, StandardPermission permission) {
     getContext().getContextAccessEnforcer().enforce(NamespaceId.SYSTEM.secureKey(secureKey), permission);
+  }
+
+  private OAuthHttpResponse executeHttpRequest(HttpRequest request, boolean readBodyOnSuccess) throws IOException {
+    urlValidator.validate(request.getURL(), true);
+    HttpURLConnection connection = (HttpURLConnection) request.getURL().openConnection(Proxy.NO_PROXY);
+    try {
+      connection.setInstanceFollowRedirects(false);
+      connection.setRequestMethod(request.getMethod().name());
+      connection.setConnectTimeout(HttpRequestConfig.DEFAULT.getConnectTimeout());
+      connection.setReadTimeout(HttpRequestConfig.DEFAULT.getReadTimeout());
+      if (request.getHeaders() != null) {
+        for (Map.Entry<String, String> header : request.getHeaders().entries()) {
+          connection.addRequestProperty(header.getKey(), header.getValue());
+        }
+      }
+      ContentProvider<? extends InputStream> bodyProvider = request.getBody();
+      if (bodyProvider != null) {
+        byte[] body;
+        try (InputStream in = bodyProvider.getInput()) {
+          body = ByteStreams.toByteArray(in);
+        }
+        connection.setDoOutput(true);
+        connection.setFixedLengthStreamingMode(body.length);
+        try (OutputStream out = connection.getOutputStream()) {
+          out.write(body);
+        }
+      }
+      int code = connection.getResponseCode();
+      return new OAuthHttpResponse(code, connection.getResponseMessage(),
+                                   readResponseBody(connection, code, readBodyOnSuccess));
+    } finally {
+      connection.disconnect();
+    }
+  }
+
+  private static String readResponseBody(HttpURLConnection connection, int code,
+                                         boolean readBodyOnSuccess) throws IOException {
+    if (code < 200 || code >= 300) {
+      try (InputStream ignored = connection.getErrorStream()) {
+        return "";
+      }
+    }
+    try (InputStream in = connection.getInputStream()) {
+      if (!readBodyOnSuccess || in == null) {
+        return "";
+      }
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      byte[] buf = new byte[4096];
+      int total = 0;
+      int n;
+      while ((n = in.read(buf)) != -1) {
+        total += n;
+        if (total > MAX_RESPONSE_BYTES) {
+          throw new IOException("OAuth response body exceeds maximum size of " + MAX_RESPONSE_BYTES + " bytes");
+        }
+        out.write(buf, 0, n);
+      }
+      return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    }
+  }
+
+  private static final class OAuthHttpResponse {
+    private final int responseCode;
+    @Nullable
+    private final String responseMessage;
+    private final String responseBody;
+
+    private OAuthHttpResponse(int responseCode, @Nullable String responseMessage, String responseBody) {
+      this.responseCode = responseCode;
+      this.responseMessage = responseMessage;
+      this.responseBody = responseBody;
+    }
+
+    int getResponseCode() {
+      return responseCode;
+    }
+
+    @Nullable
+    String getResponseMessage() {
+      return responseMessage;
+    }
+
+    String getResponseBodyAsString() {
+      return responseBody;
+    }
   }
 
   private void respond(HttpServiceResponder responder, EndpointRunnable runnable) {
