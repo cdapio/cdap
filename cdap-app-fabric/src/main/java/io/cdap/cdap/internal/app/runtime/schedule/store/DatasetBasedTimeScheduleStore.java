@@ -38,6 +38,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,12 +47,14 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.SerializationUtils;
+import org.quartz.CronExpression;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
 import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
+import org.quartz.impl.triggers.CronTriggerImpl;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.OperableTrigger;
@@ -67,7 +70,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedTimeScheduleStore.class);
   private static final String JOB_KEY = "job";
-  private static final String TRIGGER_KEY = "trigger";
+  @VisibleForTesting
+  static final String TRIGGER_KEY = "trigger";
 
   private final TransactionRunner transactionRunner;
 
@@ -258,10 +262,45 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   TriggerStatusV2 readTrigger(StructuredTable table, TriggerKey key) throws IOException {
     byte[] result = get(table, TRIGGER_KEY, key.getName());
     if (result != null) {
-      return (TriggerStatusV2) SerializationUtils.deserialize(result);
+      TriggerStatusV2 triggerStatus = (TriggerStatusV2) SerializationUtils.deserialize(result);
+      repairLegacyCronTrigger(triggerStatus.trigger);
+      return triggerStatus;
     } else {
       return null;
     }
+  }
+
+  /**
+   * Repairs a trigger persisted under Quartz 2.2 whose cron expression contains a step increment
+   * exceeding the field's upper bound (e.g. {@code 0/60}, {@code 0/24}). Quartz 2.3+ fails to parse
+   * such an expression when the trigger is deserialized, and then throws an {@link AssertionError}
+   * when the trigger is cloned or evaluated.
+   *
+   * @return {@code true} if the trigger is usable, because it was already valid or has been
+   *     repaired; {@code false} if its cron expression is invalid and cannot be repaired
+   */
+  @VisibleForTesting
+  static boolean repairLegacyCronTrigger(OperableTrigger trigger) {
+    if (!(trigger instanceof CronTriggerImpl)) {
+      return true;
+    }
+    CronTriggerImpl cronTrigger = (CronTriggerImpl) trigger;
+    String storedCron = cronTrigger.getCronExpression();
+    if (storedCron == null || CronExpression.isValidExpression(storedCron)) {
+      return true;
+    }
+    String normalized = Schedulers.normalizeQuartzCronExpression(storedCron);
+    try {
+      // Keeps the trigger's time zone, and leaves the trigger unchanged if parsing fails.
+      cronTrigger.setCronExpression(normalized);
+    } catch (ParseException | RuntimeException e) {
+      LOG.error("Trigger {} has an invalid cron expression '{}' that cannot be repaired.",
+          cronTrigger.getKey(), storedCron, e);
+      return false;
+    }
+    LOG.warn("Normalized legacy cron expression '{}' to '{}' for trigger {}",
+        storedCron, normalized, cronTrigger.getKey());
+    return true;
   }
 
   private void upsert(StructuredTable table, String type, String name, byte[] data)
@@ -328,6 +367,14 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     for (TriggerStatusV2 trigger : triggers) {
       if (!jobKeys.contains(trigger.trigger.getJobKey())) {
         triggersWithNoJob.add(trigger.trigger.getKey());
+        continue;
+      }
+      if (!repairLegacyCronTrigger(trigger.trigger)) {
+        // Quartz throws an AssertionError when it clones such a trigger, which would fail the
+        // scheduler startup for every schedule. Skip only this trigger and keep its entry in the
+        // store.
+        LOG.error("Skipping trigger {} of job {} because it cannot be loaded.",
+            trigger.trigger.getKey(), trigger.trigger.getJobKey());
         continue;
       }
       super.storeTrigger(trigger.trigger, true);

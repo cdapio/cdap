@@ -617,7 +617,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     /**
      * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing
-     * custom jobstore and turning off check for new versions.
+     * custom jobstore.
      *
      * @param store JobStore.
      * @param cConf CConfiguration.
@@ -641,7 +641,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       qrs.setThreadPool(threadPool);
       qrs.setThreadExecutor(new DefaultThreadExecutor());
       qrs.setJobStore(store);
-      qrs.setRunUpdateCheck(false);
       QuartzScheduler qs = new QuartzScheduler(qrs, -1, -1);
 
       ClassLoadHelper cch = new CascadingClassLoadHelper();
