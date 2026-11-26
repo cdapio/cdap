@@ -18,6 +18,7 @@ package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
 import org.eclipse.jgit.lib.Config;
@@ -87,6 +88,13 @@ public class SecureSystemReader extends SystemReader {
   @Override
   public FileBasedConfig openJGitConfig(Config config, FS fs) {
     return new EmptyConfig(gitConfig, null, fs);
+  }
+
+  @Override
+  public Path getXdgConfigDirectory(FS fs) {
+    // Hide the XDG config directory so that user-level files such as
+    // $HOME/.config/git/ignore are never read.
+    return null;
   }
 
   @Override

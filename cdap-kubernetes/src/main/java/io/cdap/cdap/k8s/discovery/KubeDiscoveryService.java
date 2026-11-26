@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -258,10 +257,10 @@ public class KubeDiscoveryService implements DiscoveryService,
    */
   private Optional<V1Service> getV1Service(CoreV1Api api,
       String serviceName, String discoveryName) throws ApiException {
-    V1ServiceList serviceList = api.listNamespacedService(namespace, null, null,
-        null, null,
-        "cdap.service=" + namePrefix + discoveryName, 1,
-        null, null, null, null);
+    V1ServiceList serviceList = api.listNamespacedService(namespace)
+        .labelSelector("cdap.service=" + namePrefix + discoveryName)
+        .limit(1)
+        .execute();
     // Find the service with the given name
     return serviceList.getItems().stream()
         .filter(service -> serviceName.equals(service.getMetadata().getName()))
@@ -285,7 +284,7 @@ public class KubeDiscoveryService implements DiscoveryService,
     // Try to create the service
     V1Service service = createService(serviceName, discoverable);
     try {
-      api.createNamespacedService(namespace, service, null, null, null, null);
+      api.createNamespacedService(namespace, service).execute();
       LOG.info(
           "Service created in kubernetes with name {}, type {} and port {}",
           serviceName, service.getSpec().getType(),
@@ -331,7 +330,7 @@ public class KubeDiscoveryService implements DiscoveryService,
         discoverable);
     try {
       api.replaceNamespacedService(service.getMetadata().getName(),
-          namespace, service, null, null, null, null);
+          namespace, service).execute();
       LOG.info(
           "Service updated in kubernetes with name {}, type {} and port {}",
           currentService.getMetadata().getName(), service.getSpec().getType(),
@@ -354,9 +353,9 @@ public class KubeDiscoveryService implements DiscoveryService,
     if (!expectedServiceType.equals(currentServiceType)) {
       return true;
     }
-    Integer port = servicePort.getPort();
+    int port = servicePort.getPort();
     // If the port has changed, we need to update.
-    if (port == null || port != discoverable.getSocketAddress().getPort()) {
+    if (port != discoverable.getSocketAddress().getPort()) {
       return true;
     }
     if (hasOwnerReferencesChanged(currentService, ownerReferences)) {
@@ -391,7 +390,7 @@ public class KubeDiscoveryService implements DiscoveryService,
 
   private boolean isPodTerminating(CoreV1Api api) throws ApiException {
     try {
-      V1Pod pod = api.readNamespacedPod(podName, namespace, null);
+      V1Pod pod = api.readNamespacedPod(podName, namespace).execute();
       return Optional.ofNullable(pod.getMetadata()).map(V1ObjectMeta::getDeletionTimestamp)
           .isPresent();
 
@@ -562,7 +561,6 @@ public class KubeDiscoveryService implements DiscoveryService,
             name, hostname,
             port, payload)
         )
-        .filter(Objects::nonNull)
         .findFirst()
         .map(Collections::singleton)
         .orElse(Collections.emptySet());
@@ -587,12 +585,10 @@ public class KubeDiscoveryService implements DiscoveryService,
    * @param servicePort the service port exposed by the service
    * @return a {@link Discoverable}
    */
-  @Nullable
   private Discoverable createDiscoverable(String name,
       String host, V1ServicePort servicePort, byte[] payload) {
-    Integer port = servicePort.getPort();
-    return port == null ? null : new Discoverable(name,
-        InetSocketAddress.createUnresolved(host, port),
+    return new Discoverable(name,
+        InetSocketAddress.createUnresolved(host, servicePort.getPort()),
         payload);
   }
 

@@ -30,15 +30,19 @@ import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.namespace.NamespaceDetail;
+import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
-import io.kubernetes.client.openapi.models.V1ClusterRoleBindingList;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1Namespace;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
-import io.kubernetes.client.openapi.models.V1RoleBindingList;
+import io.kubernetes.client.openapi.models.V1ResourceQuota;
+import io.kubernetes.client.openapi.models.V1ResourceQuotaSpec;
+import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
+import io.kubernetes.client.openapi.models.V1Volume;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Collections;
@@ -59,6 +63,14 @@ public class KubeTwillRunnerServiceTest {
 
   private CoreV1Api coreV1Api;
   private RbacAuthorizationV1Api rbacV1Api;
+  private CoreV1Api.APIreadNamespaceRequest readNamespaceRequest;
+  private CoreV1Api.APIcreateNamespaceRequest createNamespaceRequest;
+  private CoreV1Api.APIdeleteNamespaceRequest deleteNamespaceRequest;
+  private CoreV1Api.APIcreateNamespacedServiceAccountRequest createSaRequest;
+  private CoreV1Api.APIreadNamespacedConfigMapRequest readConfigMapRequest;
+  private CoreV1Api.APIcreateNamespacedConfigMapRequest createConfigMapRequest;
+  private RbacAuthorizationV1Api.APIcreateNamespacedRoleBindingRequest createRoleBindingRequest;
+  private RbacAuthorizationV1Api.APIcreateClusterRoleBindingRequest createClusterRoleBindingRequest;
   private KubeTwillRunnerService twillRunnerService;
 
   @Rule
@@ -68,6 +80,30 @@ public class KubeTwillRunnerServiceTest {
   public void init() {
     coreV1Api = mock(CoreV1Api.class);
     rbacV1Api = mock(RbacAuthorizationV1Api.class);
+    readNamespaceRequest = mock(CoreV1Api.APIreadNamespaceRequest.class);
+    createNamespaceRequest = mock(CoreV1Api.APIcreateNamespaceRequest.class);
+    deleteNamespaceRequest = mock(CoreV1Api.APIdeleteNamespaceRequest.class);
+    createSaRequest = mock(CoreV1Api.APIcreateNamespacedServiceAccountRequest.class);
+    readConfigMapRequest = mock(CoreV1Api.APIreadNamespacedConfigMapRequest.class);
+    createConfigMapRequest = mock(CoreV1Api.APIcreateNamespacedConfigMapRequest.class);
+    createRoleBindingRequest =
+        mock(RbacAuthorizationV1Api.APIcreateNamespacedRoleBindingRequest.class);
+    createClusterRoleBindingRequest =
+        mock(RbacAuthorizationV1Api.APIcreateClusterRoleBindingRequest.class);
+
+    when(coreV1Api.createNamespace(any())).thenReturn(createNamespaceRequest);
+    when(deleteNamespaceRequest.gracePeriodSeconds(0)).thenReturn(deleteNamespaceRequest);
+    when(deleteNamespaceRequest.propagationPolicy("Background"))
+        .thenReturn(deleteNamespaceRequest);
+    when(coreV1Api.deleteNamespace(KUBE_NAMESPACE)).thenReturn(deleteNamespaceRequest);
+    when(coreV1Api.createNamespacedServiceAccount(eq(KUBE_NAMESPACE), any()))
+        .thenReturn(createSaRequest);
+    when(coreV1Api.createNamespacedConfigMap(eq(KUBE_NAMESPACE), any()))
+        .thenReturn(createConfigMapRequest);
+    when(rbacV1Api.createNamespacedRoleBinding(eq(KUBE_NAMESPACE), any()))
+        .thenReturn(createRoleBindingRequest);
+    when(rbacV1Api.createClusterRoleBinding(any())).thenReturn(createClusterRoleBindingRequest);
+
     PodInfo podInfo = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
                                   "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
                                   "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
@@ -116,7 +152,8 @@ public class KubeTwillRunnerServiceTest {
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
     V1Namespace returnedNamespace = new V1Namespace().metadata(new V1ObjectMeta().name(KUBE_NAMESPACE));
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any())).thenReturn(returnedNamespace);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute()).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
     thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP", KUBE_NAMESPACE));
@@ -132,7 +169,8 @@ public class KubeTwillRunnerServiceTest {
     V1ObjectMeta returnedMeta = new V1ObjectMeta().name(KUBE_NAMESPACE)
       .putLabelsItem("cdap.namespace", "wrong namespace");
     V1Namespace returnedNamespace = new V1Namespace().metadata(returnedMeta);
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any())).thenReturn(returnedNamespace);
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute()).thenReturn(returnedNamespace);
 
     thrown.expect(IOException.class);
     thrown.expectMessage(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
@@ -163,15 +201,19 @@ public class KubeTwillRunnerServiceTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    skipRbacSteps();
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
       twillRunnerService.onNamespaceCreation(namespaceDetail);
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
+    verify(createNamespaceRequest).execute();
+    verify(createSaRequest).execute();
+    verify(createRoleBindingRequest).execute();
+    verify(createClusterRoleBindingRequest).execute();
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any());
   }
 
   @Test
@@ -186,16 +228,18 @@ public class KubeTwillRunnerServiceTest {
 
     // throw ApiException when coreV1Api.readNamespace() is called in findOrCreateKubeNamespace()
     // return returnedNamespace when coreV1Api.readNamespace() is called in deleteKubeNamespace()
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"))
-      .thenReturn(returnedNamespace);
-    when(coreV1Api.createNamespace(any(), any(), any(), any(), any()))
-      .thenThrow(new ApiException());
-    when(coreV1Api.deleteNamespace(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error message"));
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"))
+        .thenReturn(returnedNamespace);
+    when(createNamespaceRequest.execute()).thenThrow(new ApiException());
+    when(deleteNamespaceRequest.execute())
+        .thenThrow(
+            new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error message"));
 
     try {
       twillRunnerService.onNamespaceCreation(namespaceDetail);
+      Assert.fail("Expected IOException to be thrown");
     } catch (IOException e) {
       Assert.assertThat(e.getMessage(),
                         CoreMatchers.containsString("Error occurred while creating Kubernetes namespace"));
@@ -203,6 +247,9 @@ public class KubeTwillRunnerServiceTest {
       Assert.assertThat(e.getCause().getSuppressed()[0].getMessage(),
                         CoreMatchers.containsString("Error occurred while deleting Kubernetes namespace."));
     }
+    verify(deleteNamespaceRequest).gracePeriodSeconds(0);
+    verify(deleteNamespaceRequest).propagationPolicy("Background");
+    verify(deleteNamespaceRequest).execute();
   }
 
   @Test
@@ -211,13 +258,28 @@ public class KubeTwillRunnerServiceTest {
     properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
     NamespaceDetail namespaceDetail = new NamespaceDetail(CDAP_NAMESPACE, properties);
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
       twillRunnerService.onNamespaceDeletion(namespaceDetail);
     } catch (Exception e) {
       Assert.fail("Kubernetes deletion should not error if namespace does not exist. Exception: " + e);
     }
+  }
+
+  @Test
+  public void testOnNamespaceDeletionSkipsUnlabeledNamespace() throws Exception {
+    NamespaceDetail detail = new NamespaceDetail(CDAP_NAMESPACE,
+        Collections.singletonMap(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE));
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenReturn(new V1Namespace().metadata(new V1ObjectMeta().name(KUBE_NAMESPACE)));
+
+    twillRunnerService.onNamespaceDeletion(detail);
+
+    verify(coreV1Api, times(0)).deleteNamespace(any());
+    verify(deleteNamespaceRequest, times(0)).execute();
   }
 
   @Test
@@ -232,17 +294,20 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
-    skipRbacSteps();
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    when(coreV1Api.readNamespacedConfigMap(KUBE_NAMESPACE, "workload-identity-config"))
+        .thenReturn(readConfigMapRequest);
+    when(readConfigMapRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
     try {
       twillRunnerService.onNamespaceCreation(namespaceDetail);
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(1)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
+    verify(coreV1Api, times(1)).createNamespacedConfigMap(any(), any());
+    verify(createConfigMapRequest, times(1)).execute();
   }
 
   @Test
@@ -256,18 +321,20 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any()))
-      .thenReturn(new V1ConfigMap().metadata(new V1ObjectMeta().name("workload-identity-config")
-                                               .namespace(KUBE_NAMESPACE)));
-    skipRbacSteps();
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    when(coreV1Api.readNamespacedConfigMap(KUBE_NAMESPACE, "workload-identity-config"))
+        .thenReturn(readConfigMapRequest);
+    when(readConfigMapRequest.execute())
+        .thenReturn(new V1ConfigMap().metadata(new V1ObjectMeta().name("workload-identity-config")
+            .namespace(KUBE_NAMESPACE)));
     try {
       twillRunnerService.onNamespaceCreation(namespaceDetail);
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any());
   }
 
   @Test(expected = IOException.class)
@@ -281,12 +348,12 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(any(), any(), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error"));
-    when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any(), any())).thenThrow(new ApiException());
-    skipRbacSteps();
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    when(coreV1Api.readNamespacedConfigMap(any(), any())).thenReturn(readConfigMapRequest);
+    when(readConfigMapRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_INTERNAL_ERROR, "internal error"));
     twillRunnerService.onNamespaceCreation(namespaceDetail);
   }
 
@@ -301,12 +368,14 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    when(coreV1Api.readNamespacedConfigMap(eq(KUBE_NAMESPACE), eq("workload-identity-config"), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
-    when(coreV1Api.createNamespacedConfigMap(any(), any(), any(), any(), any(), any())).thenThrow(new ApiException());
-    skipRbacSteps();
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
+    when(coreV1Api.readNamespacedConfigMap(KUBE_NAMESPACE, "workload-identity-config"))
+        .thenReturn(readConfigMapRequest);
+    when(readConfigMapRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "config map not found"));
+    when(createConfigMapRequest.execute()).thenThrow(new ApiException());
     twillRunnerService.onNamespaceCreation(namespaceDetail);
   }
 
@@ -319,16 +388,16 @@ public class KubeTwillRunnerServiceTest {
 
     enableWorkloadIdentity();
 
-    when(coreV1Api.readNamespace(eq(KUBE_NAMESPACE), any()))
-      .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
-    skipRbacSteps();
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "namespace not found"));
     try {
       twillRunnerService.onNamespaceCreation(namespaceDetail);
     } catch (Exception e) {
       Assert.fail("Kubernetes creation should not error if namespace does not exist. Exception: " + e);
     }
-    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any(), any(), any(), any(), any());
-    verify(coreV1Api, times(0)).readNamespacedConfigMap(any(), any(), any());
+    verify(coreV1Api, times(0)).createNamespacedConfigMap(any(), any());
+    verify(coreV1Api, times(0)).readNamespacedConfigMap(any(), any());
 
   }
 
@@ -336,6 +405,73 @@ public class KubeTwillRunnerServiceTest {
   public void testDeleteWatchers() {
     twillRunnerService.addAndStartWatchers(KUBE_NAMESPACE);
     twillRunnerService.stopAndRemoveWatchers();
+  }
+
+  @Test
+  public void testOnNamespaceCreationResourceQuotaAndSecrets() throws Exception {
+    when(coreV1Api.readNamespace(KUBE_NAMESPACE)).thenReturn(readNamespaceRequest);
+    when(readNamespaceRequest.execute()).thenReturn(new V1Namespace()
+        .metadata(new V1ObjectMeta().name(KUBE_NAMESPACE)
+            .putLabelsItem("cdap.namespace", CDAP_NAMESPACE)));
+
+    CoreV1Api.APIreadNamespacedResourceQuotaRequest readQuotaReq =
+        mock(CoreV1Api.APIreadNamespacedResourceQuotaRequest.class);
+    CoreV1Api.APIcreateNamespacedResourceQuotaRequest createQuotaReq =
+        mock(CoreV1Api.APIcreateNamespacedResourceQuotaRequest.class);
+    CoreV1Api.APIreplaceNamespacedResourceQuotaRequest replaceQuotaReq =
+        mock(CoreV1Api.APIreplaceNamespacedResourceQuotaRequest.class);
+    when(coreV1Api.readNamespacedResourceQuota(any(), eq(KUBE_NAMESPACE))).thenReturn(readQuotaReq);
+    when(coreV1Api.createNamespacedResourceQuota(eq(KUBE_NAMESPACE), any()))
+        .thenReturn(createQuotaReq);
+    when(coreV1Api.replaceNamespacedResourceQuota(any(), eq(KUBE_NAMESPACE), any()))
+        .thenReturn(replaceQuotaReq);
+
+    V1ResourceQuota existingQuota = new V1ResourceQuota()
+        .metadata(new V1ObjectMeta().name("cdap-resource-quota")
+            .putLabelsItem("cdap.namespace", CDAP_NAMESPACE))
+        .spec(new V1ResourceQuotaSpec().hard(
+            Collections.singletonMap("limits.cpu", Quantity.fromString("1"))));
+    when(readQuotaReq.execute())
+        .thenThrow(new ApiException(HttpURLConnection.HTTP_NOT_FOUND, "Not Found"))
+        .thenReturn(existingQuota);
+
+    CoreV1Api.APIreadNamespacedSecretRequest readSecretReq =
+        mock(CoreV1Api.APIreadNamespacedSecretRequest.class);
+    CoreV1Api.APIcreateNamespacedSecretRequest createSecretReq =
+        mock(CoreV1Api.APIcreateNamespacedSecretRequest.class);
+    when(coreV1Api.readNamespacedSecret("my-secret", "test-pod-namespace"))
+        .thenReturn(readSecretReq);
+    when(readSecretReq.execute()).thenReturn(new V1Secret().type("Opaque"));
+    when(coreV1Api.createNamespacedSecret(eq(KUBE_NAMESPACE), any())).thenReturn(createSecretReq);
+
+    PodInfo podInfoWithSecret = new PodInfo("test-pod-name", "test-pod-dir", "test-label-file.txt",
+        "test-name-file.txt", "test-pod-uid", "test-uid-file.txt", "test-namespace-file.txt",
+        "test-pod-namespace", Collections.emptyMap(), Collections.emptyList(),
+        "test-pod-service-account", "test-pod-runtime-class",
+        Collections.singletonList(new V1Volume().name("sec")
+            .secret(new V1SecretVolumeSource().secretName("my-secret"))),
+        "test-pod-container-label", "test-pod-container-image",
+        Collections.emptyList(), Collections.emptyList(), new V1PodSecurityContext(),
+        "test-pod-image-pull-policy");
+    KubeTwillRunnerService runnerWithSecrets = new KubeTwillRunnerService(
+        mock(MasterEnvironmentContext.class), new DefaultApiClientFactory(10, 300),
+        KUBE_NAMESPACE, mock(DiscoveryServiceClient.class), podInfoWithSecret,
+        "", Collections.emptyMap(), true, false, null, null, null, null);
+    runnerWithSecrets.setCoreV1Api(coreV1Api);
+    runnerWithSecrets.setRbacV1Api(rbacV1Api);
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
+    properties.put("k8s.namespace.cpu.limits", "2");
+    NamespaceDetail detail = new NamespaceDetail(CDAP_NAMESPACE, properties);
+
+    runnerWithSecrets.onNamespaceCreation(detail);
+    runnerWithSecrets.onNamespaceCreation(detail);
+
+    verify(createQuotaReq, times(1)).execute();
+    verify(replaceQuotaReq, times(1)).execute();
+    verify(readSecretReq, times(2)).execute();
+    verify(createSecretReq, times(2)).execute();
   }
 
   private void enableWorkloadIdentity() {
@@ -346,13 +482,5 @@ public class KubeTwillRunnerServiceTest {
     twillRunnerService.setWorkloadIdentityEnabled();
     twillRunnerService.setWorkloadIdentityPool(workloadIdentityPool);
     twillRunnerService.setWorkloadIdentityProvider(workloadIdentityProvider);
-  }
-
-  private void skipRbacSteps() throws ApiException {
-    when(rbacV1Api.listNamespacedRoleBinding(eq(KUBE_NAMESPACE), any(), any(), any(), any(), any(), any(), any(),
-                                             any(), any(), any()))
-      .thenReturn(new V1RoleBindingList());
-    when(rbacV1Api.listClusterRoleBinding(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-      .thenReturn(new V1ClusterRoleBindingList());
   }
 }
