@@ -153,7 +153,7 @@
     <netty.http.version>1.8.0</netty.http.version>
     <netty.version>4.1.141.Final</netty.version>
     <powermock.version>2.0.9</powermock.version>
-    <quartz.version>2.2.0</quartz.version>
+    <quartz.version>2.3.2</quartz.version>
     <resteasy.version>3.0.26.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
@@ -1140,8 +1140,16 @@
         <version>${quartz.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>c3p0</groupId>
+            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.mchange</groupId>
+            <artifactId>mchange-commons-java</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP-java7</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1151,8 +1159,16 @@
         <version>${quartz.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>c3p0</groupId>
+            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.mchange</groupId>
+            <artifactId>mchange-commons-java</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP-java7</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
