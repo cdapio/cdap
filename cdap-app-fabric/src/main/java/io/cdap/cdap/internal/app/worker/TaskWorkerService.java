@@ -29,6 +29,7 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
+import io.cdap.cdap.common.internal.remote.TaskWorkerManagerUtil;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.http.ChannelPipelineModifier;
@@ -84,7 +85,7 @@ public class TaskWorkerService extends AbstractIdleService {
             Constants.Service.TASK_WORKER, false)
         .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.TaskWorker.PORT))
-        .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
+        .setExecThreadPoolSize(getExecThreadPoolSize(cConf))
         .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
         .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
@@ -127,6 +128,18 @@ public class TaskWorkerService extends AbstractIdleService {
      * the service gets stopped.
      */
     stopAsync();
+  }
+
+  /**
+   * Returns the exec thread pool size. With sticky leasing enabled, ensures at least
+   * {@code REQUEST_LIMIT + 1} threads so that /ping is answered when all task slots are full.
+   */
+  private static int getExecThreadPoolSize(CConfiguration cConf) {
+    int execThreads = cConf.getInt(TaskWorker.EXEC_THREADS);
+    if (!TaskWorkerManagerUtil.isStickyLeaseEnabled(cConf)) {
+      return execThreads;
+    }
+    return Math.max(execThreads, cConf.getInt(TaskWorker.REQUEST_LIMIT) + 1);
   }
 
   @VisibleForTesting

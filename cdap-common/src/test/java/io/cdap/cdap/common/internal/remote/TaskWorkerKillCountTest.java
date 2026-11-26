@@ -73,8 +73,7 @@ public class TaskWorkerKillCountTest {
     HttpResponder late = Mockito.mock(HttpResponder.class);
     handler.run(runRequest(), late);
 
-    Mockito.verify(late).sendStatus(
-        Mockito.eq(HttpResponseStatus.TOO_MANY_REQUESTS), Mockito.any(HttpHeaders.class));
+    Mockito.verify(late).sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
     Mockito.verify(late, Mockito.never()).sendContent(Mockito.any(HttpResponseStatus.class),
         Mockito.any(BodyProducer.class), Mockito.any(HttpHeaders.class));
     Assert.assertEquals("The late task must never start", 1, TASK_RUNS.get());
