@@ -909,7 +909,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   private void enforceSystemNamespaceReadAccess(String namespace) throws Exception {
     if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
       AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
-          authenticationContext.getPrincipal());
+          authenticationContext);
     }
   }
 }

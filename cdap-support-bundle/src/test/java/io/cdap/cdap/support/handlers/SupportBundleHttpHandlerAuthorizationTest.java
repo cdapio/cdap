@@ -67,14 +67,13 @@ public class SupportBundleHttpHandlerAuthorizationTest {
 
   @Test
   public void testSupportBundleReadsRequireInstanceUpdate() throws Exception {
-    FullHttpRequest emptyPost = new DefaultFullHttpRequest(
-        HttpVersion.HTTP_1_1, HttpMethod.POST, "/v3/support/bundles/" + uuid,
-        Unpooled.EMPTY_BUFFER);
-
     Mockito.doThrow(new UnauthorizedException("denied"))
         .when(enforcer).enforce(InstanceId.SELF, StandardPermission.UPDATE);
     assertUnauthorized(() -> handler.listSupportBundles(null, responder));
     assertUnauthorized(() -> handler.getSupportBundleStatus(null, responder, uuid));
+    FullHttpRequest emptyPost = new DefaultFullHttpRequest(
+        HttpVersion.HTTP_1_1, HttpMethod.POST, "/v3/support/bundles/" + uuid,
+        Unpooled.EMPTY_BUFFER);
     assertUnauthorized(() -> handler.downloadSupportBundle(emptyPost, responder, uuid));
     Mockito.verifyNoInteractions(generator);
 

@@ -28,8 +28,7 @@ import io.cdap.cdap.data2.transaction.TransactionSystemClientAdapter;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.StandardPermission;
-import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
@@ -84,19 +83,16 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private final CConfiguration cConf;
   private final TransactionSystemClient txClient;
   private final boolean pruneEnable;
-  private final AccessEnforcer accessEnforcer;
-  private final AuthenticationContext authenticationContext;
+  private final ContextAccessEnforcer contextAccessEnforcer;
   private volatile InvalidListPruningDebug pruningDebug;
 
   @Inject
   public TransactionHttpHandler(Configuration hConf, CConfiguration cConf,
-      TransactionSystemClient txClient, AccessEnforcer accessEnforcer,
-      AuthenticationContext authenticationContext) {
+      TransactionSystemClient txClient, ContextAccessEnforcer contextAccessEnforcer) {
     this.hConf = hConf;
     this.cConf = cConf;
     this.txClient = new TransactionSystemClientAdapter(txClient);
-    this.accessEnforcer = accessEnforcer;
-    this.authenticationContext = authenticationContext;
+    this.contextAccessEnforcer = contextAccessEnforcer;
     this.pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
         TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
   }
@@ -341,8 +337,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void enforceInstanceUpdate() {
-    accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
-        StandardPermission.UPDATE);
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
   }
 
   private boolean initializePruningDebug(HttpResponder responder) {

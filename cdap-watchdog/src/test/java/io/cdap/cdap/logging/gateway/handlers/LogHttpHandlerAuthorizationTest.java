@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.logging.gateway.handlers;
 
+import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.ErrorLogsClassifier;
@@ -33,9 +34,12 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryPrivilegeHolder;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
 import java.util.Collections;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,13 +56,15 @@ public class LogHttpHandlerAuthorizationTest {
   private static final Principal ADMIN = new Principal("admin", Principal.PrincipalType.USER);
 
   private LogReader logReader;
-  private ProgramRunRecordFetcher runRecordFetcher;
+  private ErrorLogsClassifier classifier;
   private HttpResponder responder;
   private LogHttpHandler handler;
   private ErrorClassificationHttpHandler classifyHandler;
 
   @Before
   public void setUp() throws Exception {
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
     InMemoryAccessController accessController = new InMemoryAccessController();
     // Granting GET on InstanceId.SELF, SystemServiceId, NamespaceId.SYSTEM, and system programs
     // simulates CDF's Accessor + system-namespace read bypass; system logs must still require
@@ -83,7 +89,9 @@ public class LogHttpHandlerAuthorizationTest {
         ADMIN, Collections.singleton(StandardPermission.UPDATE));
 
     logReader = Mockito.mock(LogReader.class);
-    runRecordFetcher = Mockito.mock(ProgramRunRecordFetcher.class);
+    Mockito.when(logReader.getLog(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(),
+        Mockito.any())).thenReturn(CloseableIterator.empty());
+    ProgramRunRecordFetcher runRecordFetcher = Mockito.mock(ProgramRunRecordFetcher.class);
     RunRecordDetail failedRun = RunRecordDetail.builder()
         .setProgramRunId(systemStudio.run("run-1"))
         .setStartTime(1L)
@@ -105,9 +113,17 @@ public class LogHttpHandlerAuthorizationTest {
 
     CConfiguration cConf = CConfiguration.create();
     AuthenticationTestContext authCtx = new AuthenticationTestContext();
+    classifier = Mockito.mock(ErrorLogsClassifier.class);
     handler = new LogHttpHandler(accessController, authCtx, logReader, runRecordFetcher, cConf);
     classifyHandler = new ErrorClassificationHttpHandler(accessController, authCtx, logReader,
-        runRecordFetcher, Mockito.mock(ErrorLogsClassifier.class), cConf);
+        runRecordFetcher, classifier, cConf);
+  }
+
+  @After
+  public void tearDown() {
+    SecurityRequestContext.reset();
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
   }
 
   @Test
@@ -130,6 +146,10 @@ public class LogHttpHandlerAuthorizationTest {
         Collections.emptyList());
     Mockito.verify(logReader).getLog(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(),
         Mockito.any());
+    Mockito.verify(logReader).getLogNext(Mockito.any(), Mockito.any(), Mockito.eq(50),
+        Mockito.any(), Mockito.any());
+    Mockito.verify(logReader).getLogPrev(Mockito.any(), Mockito.any(), Mockito.eq(50),
+        Mockito.any(), Mockito.any());
   }
 
   @Test
@@ -137,24 +157,58 @@ public class LogHttpHandlerAuthorizationTest {
     AuthenticationTestContext.actAsPrincipal(ACCESSOR);
     assertUnauthorized(() -> handler.getLogs(null, responder, "system", "pipeline", "services",
         "studio", -1, -1, true, "", "text", Collections.emptyList()));
+    assertUnauthorized(() -> handler.getLogs(null, responder, "SYSTEM", "pipeline", "services",
+        "studio", -1, -1, true, "", "text", Collections.emptyList()));
     assertUnauthorized(() -> handler.getRunIdLogs(null, responder, "system", "pipeline",
         "services", "studio", "run-1", -1, -1, true, "", "text", Collections.emptyList()));
+    assertUnauthorized(() -> handler.next(null, responder, "system", "pipeline", "services",
+        "studio", 50, "", true, "", "text", Collections.emptyList()));
+    assertUnauthorized(() -> handler.runIdNext(null, responder, "system", "pipeline", "services",
+        "studio", "run-1", 50, "", true, "", "text", Collections.emptyList()));
+    assertUnauthorized(() -> handler.prev(null, responder, "system", "pipeline", "services",
+        "studio", 50, "", true, "", "text", Collections.emptyList()));
+    assertUnauthorized(() -> handler.runIdPrev(null, responder, "system", "pipeline", "services",
+        "studio", "run-1", 50, "", true, "", "text", Collections.emptyList()));
     assertUnauthorized(() -> classifyHandler.classifyRunIdLogs(null, responder, "system",
+        "pipeline", "services", "studio", "run-1"));
+    assertUnauthorized(() -> classifyHandler.classifyRunIdLogs(null, responder, "SYSTEM",
         "pipeline", "services", "studio", "run-1"));
     Mockito.verifyNoInteractions(logReader);
 
-    // User-namespace program logs still succeed with ProgramId GET.
+    // User-namespace program logs and error classification still succeed with ProgramId GET.
     handler.getLogs(null, responder, "userns", "app1", "services", "svc", -1, -1, true, "",
         "text", Collections.emptyList());
-    Mockito.verify(logReader, Mockito.times(1))
-        .getLog(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any());
+    handler.next(null, responder, "userns", "app1", "services", "svc", 50, "", true, "", "text",
+        Collections.emptyList());
+    handler.runIdNext(null, responder, "userns", "app1", "services", "svc", "run-1", 50, "", true,
+        "", "text", Collections.emptyList());
+    handler.prev(null, responder, "userns", "app1", "services", "svc", 50, "", true, "", "text",
+        Collections.emptyList());
+    handler.runIdPrev(null, responder, "userns", "app1", "services", "svc", "run-1", 50, "", true,
+        "", "text", Collections.emptyList());
+    classifyHandler.classifyRunIdLogs(null, responder, "userns", "app1", "services", "svc",
+        "run-1");
+    Mockito.verify(classifier).classify(Mockito.any(), Mockito.eq(responder),
+        Mockito.eq("userns"), Mockito.eq("svc"), Mockito.eq("app1"), Mockito.eq("run-1"));
 
-    // Admin with InstanceId.SELF UPDATE can read system program logs.
+    // Admin with InstanceId.SELF UPDATE can read and classify system program logs.
     AuthenticationTestContext.actAsPrincipal(ADMIN);
     handler.getLogs(null, responder, "system", "pipeline", "services", "studio", -1, -1, true,
         "", "text", Collections.emptyList());
-    Mockito.verify(logReader, Mockito.times(2))
-        .getLog(Mockito.any(), Mockito.anyLong(), Mockito.anyLong(), Mockito.any());
+    handler.getRunIdLogs(null, responder, "system", "pipeline", "services", "studio", "run-1", -1,
+        -1, true, "", "text", Collections.emptyList());
+    handler.next(null, responder, "system", "pipeline", "services", "studio", 50, "", true, "",
+        "text", Collections.emptyList());
+    handler.runIdNext(null, responder, "system", "pipeline", "services", "studio", "run-1", 50,
+        "", true, "", "text", Collections.emptyList());
+    handler.prev(null, responder, "system", "pipeline", "services", "studio", 50, "", true, "",
+        "text", Collections.emptyList());
+    handler.runIdPrev(null, responder, "system", "pipeline", "services", "studio", "run-1", 50,
+        "", true, "", "text", Collections.emptyList());
+    classifyHandler.classifyRunIdLogs(null, responder, "system", "pipeline", "services", "studio",
+        "run-1");
+    Mockito.verify(classifier).classify(Mockito.any(), Mockito.eq(responder),
+        Mockito.eq("system"), Mockito.eq("studio"), Mockito.eq("pipeline"), Mockito.eq("run-1"));
   }
 
   private static void assertUnauthorized(ThrowingRunnable runnable) throws Exception {

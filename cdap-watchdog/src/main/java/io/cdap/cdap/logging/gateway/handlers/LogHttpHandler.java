@@ -27,10 +27,7 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.InstanceId;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -215,7 +212,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       @QueryParam("filter") @DefaultValue("") String filterStr,
       @QueryParam("format") @DefaultValue("text") String format,
       @QueryParam("suppress") List<String> suppress) throws Exception {
-    ensureVisibilityOnSystemService();
+    enforceInstanceUpdate();
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
         Id.Namespace.SYSTEM.getId(), componentId,
         serviceId);
@@ -234,7 +231,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       @QueryParam("filter") @DefaultValue("") String filterStr,
       @QueryParam("format") @DefaultValue("text") String format,
       @QueryParam("suppress") List<String> suppress) throws Exception {
-    ensureVisibilityOnSystemService();
+    enforceInstanceUpdate();
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
         Id.Namespace.SYSTEM.getId(), componentId,
         serviceId);
@@ -253,7 +250,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       @QueryParam("filter") @DefaultValue("") String filterStr,
       @QueryParam("format") @DefaultValue("text") String format,
       @QueryParam("suppress") List<String> suppress) throws Exception {
-    ensureVisibilityOnSystemService();
+    enforceInstanceUpdate();
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
         Id.Namespace.SYSTEM.getId(), componentId,
         serviceId);
@@ -272,20 +269,12 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
   }
 
   private void ensureVisibilityOnProgram(String namespace, String application, String programType,
-      String program)
-      throws Exception {
-    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
-      accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
-          StandardPermission.UPDATE);
-      return;
-    }
-    ApplicationId appId = new ApplicationId(namespace, application);
-    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
-        program);
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+      String program) {
+    ensureVisibilityOnProgram(accessEnforcer, authenticationContext.getPrincipal(), namespace,
+        application, programType, program);
   }
 
-  private void ensureVisibilityOnSystemService() throws Exception {
+  private void enforceInstanceUpdate() {
     accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
         StandardPermission.UPDATE);
   }

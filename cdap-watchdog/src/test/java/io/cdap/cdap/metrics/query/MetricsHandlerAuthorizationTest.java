@@ -17,6 +17,8 @@
 package io.cdap.cdap.metrics.query;
 
 import io.cdap.cdap.api.metrics.MetricStore;
+import io.cdap.cdap.api.security.AccessException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -69,12 +71,15 @@ public class MetricsHandlerAuthorizationTest {
     handler.search(null, responder, "metric", Collections.singletonList("namespace:allowed"));
     Mockito.verify(queryHelper).searchMetric(Collections.singletonList("namespace:allowed"));
 
+    assertUnauthorized(() -> handler.search(null, responder, "tag", null));
     assertUnauthorized(() -> handler.search(null, responder, "tag",
         Arrays.asList("namespace:allowed", "ns:denied")));
     assertUnauthorized(() -> handler.search(null, responder, "tag",
         Collections.singletonList("namespace:*")));
     assertUnauthorized(() -> handler.search(null, responder, "tag",
         Collections.singletonList("namespace:system")));
+    assertUnauthorized(() -> handler.search(null, responder, "tag",
+        Collections.singletonList("namespace:SYSTEM")));
     assertUnauthorized(() -> handler.search(null, responder, "tag",
         Collections.singletonList("app:myapp")));
     Mockito.verify(queryHelper, Mockito.never()).searchTags(Mockito.any());
@@ -94,6 +99,9 @@ public class MetricsHandlerAuthorizationTest {
     assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query?tag=ns:system", null),
         responder, Collections.emptyList(), Collections.emptyList(),
         Collections.singletonList("ns:system")));
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query?tag=ns:SYSTEM", null),
+        responder, Collections.emptyList(), Collections.emptyList(),
+        Collections.singletonList("ns:SYSTEM")));
     assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query?metric=m", null),
         responder, Collections.singletonList("m"), Collections.emptyList(),
         Collections.emptyList()));
@@ -108,6 +116,22 @@ public class MetricsHandlerAuthorizationTest {
         Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     Mockito.verify(queryHelper).executeBatchQueries(Mockito.any());
 
+    // Empty JSON map, wildcard, missing tags, null namespace, uppercase SYSTEM, and mixed batch
+    // all require InstanceId.SELF UPDATE.
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query", "{}"), responder,
+        Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
+        "{\"q1\": {\"tags\": {\"namespace\": \"*\"}, \"metrics\": [\"m\"]}}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
+        "{\"q1\": {\"metrics\": [\"m\"]}}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
+        "{\"q1\": {\"tags\": {\"namespace\": null}, \"metrics\": [\"m\"]}}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+    assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
+        "{\"q1\": {\"tags\": {\"namespace\": \"SYSTEM\"}, \"metrics\": [\"m\"]}}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
     assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
         "{\"q1\": {\"tags\": {\"namespace\": \"allowed\"}, \"metrics\": [\"m\"]},"
             + " \"q2\": {\"tags\": {\"namespace\": \"system\"}, \"metrics\": [\"m\"]}}"),
@@ -115,7 +139,49 @@ public class MetricsHandlerAuthorizationTest {
     assertUnauthorized(() -> handler.query(createRequest("/v3/metrics/query",
         "{\"q1\": {\"tags\": {\"app\": \"myapp\"}, \"metrics\": [\"m\"]}}"),
         responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()));
+
+    // Null JSON payload and null batch entry return 400 BAD_REQUEST.
+    handler.query(createRequest("/v3/metrics/query", "null"), responder,
+        Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+    Mockito.verify(responder).sendJson(
+        Mockito.eq(HttpResponseStatus.BAD_REQUEST), Mockito.eq("Batch request with empty content"));
+
+    handler.query(createRequest("/v3/metrics/query", "{\"q1\": null}"), responder,
+        Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+    Mockito.verify(responder).sendJson(
+        Mockito.eq(HttpResponseStatus.BAD_REQUEST), Mockito.eq("Batch query 'q1' cannot be null"));
     Mockito.verify(queryHelper, Mockito.times(1)).executeBatchQueries(Mockito.any());
+  }
+
+  @Test
+  public void testAdminPathsAndAccessExceptionPropagation() throws Exception {
+    Mockito.reset(enforcer);
+    handler.search(null, responder, "tag", Collections.singletonList("namespace:system"));
+    Mockito.verify(queryHelper).searchTags(Collections.singletonList("namespace:system"));
+    handler.query(createRequest("/v3/metrics/query?metric=m", null), responder,
+        Collections.singletonList("m"), Collections.emptyList(), Collections.emptyList());
+    handler.query(createRequest("/v3/metrics/query",
+        "{\"q1\": {\"tags\": {\"namespace\": \"*\"}, \"metrics\": [\"m\"]}}"),
+        responder, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+    Mockito.verify(enforcer, Mockito.times(3))
+        .enforce(InstanceId.SELF, StandardPermission.UPDATE);
+
+    // Wrapped AccessException(ServiceUnavailableException) must propagate rather than become 500.
+    Mockito.doThrow(new AccessException(new ServiceUnavailableException("appfabric")))
+        .when(enforcer).enforce(InstanceId.SELF, StandardPermission.UPDATE);
+    try {
+      handler.search(null, responder, "tag", null);
+      Assert.fail("Expected AccessException");
+    } catch (AccessException e) {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
+    try {
+      handler.query(createRequest("/v3/metrics/query", "{}"), responder,
+          Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      Assert.fail("Expected AccessException");
+    } catch (AccessException e) {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
   }
 
   @Test

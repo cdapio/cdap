@@ -85,7 +85,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getInstancePrefs(HttpRequest request, HttpResponder responder) throws Exception {
     AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
-        authenticationContext.getPrincipal());
+        authenticationContext);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties()));
   }
 
@@ -122,6 +122,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved)
       throws Exception {
+    enforceSystemNamespaceReadAccess(namespace);
     NamespaceId namespaceId = new NamespaceId(namespace);
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         StandardPermission.GET);
@@ -185,6 +186,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
       @QueryParam("resolved") boolean resolved) throws Exception {
+    enforceSystemNamespaceReadAccess(namespace);
     ApplicationId applicationId = new ApplicationId(namespace, appId,
         getLatestAppVersion(new NamespaceId(namespace), appId));
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
@@ -257,6 +259,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
       @PathParam("program-type") String programType, @PathParam("program-id") String programId,
       @QueryParam("resolved") boolean resolved) throws Exception {
+    enforceSystemNamespaceReadAccess(namespace);
     ApplicationId applicationId = new ApplicationId(namespace, appId,
         getLatestAppVersion(new NamespaceId(namespace), appId));
     ProgramId program = new ProgramId(applicationId, getProgramType(programType), programId);
@@ -336,5 +339,12 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
     }
     return latestApplicationMeta.getSpec().getAppVersion();
+  }
+
+  private void enforceSystemNamespaceReadAccess(String namespace) throws Exception {
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+          authenticationContext);
+    }
   }
 }

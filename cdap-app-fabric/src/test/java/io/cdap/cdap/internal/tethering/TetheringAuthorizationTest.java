@@ -29,6 +29,8 @@ import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryPrivilegeHolder;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.HttpResponder;
@@ -39,6 +41,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,6 +64,9 @@ public class TetheringAuthorizationTest {
 
   @Before
   public void setUp() {
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
+
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED, true);
 
@@ -83,9 +89,25 @@ public class TetheringAuthorizationTest {
         Mockito.mock(MessagingProgramStatePublisher.class));
   }
 
+  @After
+  public void tearDown() {
+    SecurityRequestContext.reset();
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
+  }
+
   @Test
   public void testTetheringHandlerRequiresInstanceUpdate() throws Exception {
     AuthenticationTestContext.actAsPrincipal(ACCESSOR);
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> tetheringHandler.getTethers(null, responder));
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> tetheringHandler.getTether(null, responder, "peer1"));
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> tetheringHandler.deleteTether(null, responder, "peer1"));
+
+    // TETHER_AGENT holds InstancePermission.TETHER, not StandardPermission.UPDATE.
+    AuthenticationTestContext.actAsPrincipal(TETHER_AGENT);
     Assert.assertThrows(UnauthorizedException.class,
         () -> tetheringHandler.getTethers(null, responder));
     Assert.assertThrows(UnauthorizedException.class,
@@ -96,36 +118,53 @@ public class TetheringAuthorizationTest {
 
     AuthenticationTestContext.actAsPrincipal(ADMIN);
     Mockito.when(store.getPeers()).thenReturn(Collections.emptyList());
+    Mockito.when(store.getPeer("peer1")).thenThrow(new PeerNotFoundException("peer1"));
     tetheringHandler.getTethers(null, responder);
+    Assert.assertThrows(PeerNotFoundException.class,
+        () -> tetheringHandler.getTether(null, responder, "peer1"));
+    tetheringHandler.deleteTether(null, responder, "peer1");
     Mockito.verify(store).getPeers();
+    Mockito.verify(store).deletePeer("peer1", false);
   }
 
   @Test
   public void testTetheringServerHandlerChannelsAndActions() throws Exception {
-    FullHttpRequest actionReq = jsonPost("{\"action\":\"reject\"}");
-    FullHttpRequest channelReq = jsonPost("{}");
-
     AuthenticationTestContext.actAsPrincipal(ACCESSOR);
     Assert.assertThrows(UnauthorizedException.class,
-        () -> serverHandler.tetheringAction(actionReq, responder, "peer1"));
+        () -> serverHandler.tetheringAction(jsonPost("{\"action\":\"reject\"}"), responder,
+            "peer1"));
     Assert.assertThrows(UnauthorizedException.class,
-        () -> serverHandler.pollControlChannel(channelReq, responder, "peer1"));
+        () -> serverHandler.pollControlChannel(jsonPost("{}"), responder, "peer1"));
     Assert.assertThrows(UnauthorizedException.class,
-        () -> serverHandler.connectControlChannel(channelReq, responder, "peer1"));
+        () -> serverHandler.connectControlChannel(jsonPost("{}"), responder, "peer1"));
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> serverHandler.createTethering(jsonPost("{}"), responder, "peer1"));
     Mockito.verifyNoInteractions(store);
 
-    // Tethering agent can poll control channels, but cannot accept/reject tether requests.
+    // Tethering agent can poll/connect control channels, but cannot accept/reject tether requests.
     AuthenticationTestContext.actAsPrincipal(TETHER_AGENT);
     Assert.assertThrows(UnauthorizedException.class,
-        () -> serverHandler.tetheringAction(actionReq, responder, "peer1"));
+        () -> serverHandler.tetheringAction(jsonPost("{\"action\":\"reject\"}"), responder,
+            "peer1"));
     Mockito.when(store.getPeer("peer1")).thenThrow(new PeerNotFoundException("peer1"));
-    serverHandler.pollControlChannel(channelReq, responder, "peer1");
-    Mockito.verify(store).getPeer("peer1");
-
-    // Admin can accept/reject tether requests.
-    AuthenticationTestContext.actAsPrincipal(ADMIN);
-    serverHandler.tetheringAction(actionReq, responder, "peer1");
+    serverHandler.pollControlChannel(jsonPost("{}"), responder, "peer1");
+    Assert.assertThrows(PeerNotFoundException.class,
+        () -> serverHandler.connectControlChannel(jsonPost("{}"), responder, "peer1"));
+    Mockito.verify(store).updatePeerTimestamp("peer1");
     Mockito.verify(store, Mockito.times(2)).getPeer("peer1");
+
+    // Admin with StandardPermission.UPDATE (without InstancePermission.TETHER) can accept/reject
+    // tether requests, and is rejected on peer control-channel and connection endpoints.
+    AuthenticationTestContext.actAsPrincipal(ADMIN);
+    serverHandler.tetheringAction(jsonPost("{\"action\":\"reject\"}"), responder, "peer1");
+    Mockito.verify(store, Mockito.times(3)).getPeer("peer1");
+
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> serverHandler.pollControlChannel(jsonPost("{}"), responder, "peer1"));
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> serverHandler.connectControlChannel(jsonPost("{}"), responder, "peer1"));
+    Assert.assertThrows(UnauthorizedException.class,
+        () -> serverHandler.createTethering(jsonPost("{}"), responder, "peer1"));
   }
 
   private static FullHttpRequest jsonPost(String body) {

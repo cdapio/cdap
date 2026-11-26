@@ -443,7 +443,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param zipOut the {@link ZipOutputStream} for writing out the application details
    */
   public void createAppDetailsArchive(ZipOutputStream zipOut) {
-    accessEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
+    accessEnforcer.enforce(InstanceId.SELF,
         authenticationContext.getPrincipal(), StandardPermission.UPDATE);
 
     Set<NamespaceId> namespaces = new HashSet<>();

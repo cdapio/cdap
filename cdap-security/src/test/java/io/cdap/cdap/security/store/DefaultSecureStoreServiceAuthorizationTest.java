@@ -24,9 +24,13 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryPrivilegeHolder;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.util.Collections;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -34,6 +38,19 @@ import org.mockito.Mockito;
  * Tests that listing secure keys in the {@code system} namespace requires instance {@code UPDATE}.
  */
 public class DefaultSecureStoreServiceAuthorizationTest {
+
+  @Before
+  public void setUp() {
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
+  }
+
+  @After
+  public void tearDown() {
+    SecurityRequestContext.reset();
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
+  }
 
   @Test
   public void testSystemNamespaceListRequiresInstanceUpdate() throws Exception {

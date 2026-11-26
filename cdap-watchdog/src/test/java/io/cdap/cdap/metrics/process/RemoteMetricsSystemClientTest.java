@@ -19,6 +19,7 @@ package io.cdap.cdap.metrics.process;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -32,6 +33,7 @@ import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,7 +49,8 @@ import org.mockito.Mockito;
 
 /**
  * Tests that {@link RemoteMetricsSystemClient} attaches internal authentication headers via
- * {@link io.cdap.cdap.common.internal.remote.RemoteClientFactory}.
+ * {@link io.cdap.cdap.common.internal.remote.RemoteClientFactory} and preserves the
+ * {@link IOException} contract on unavailable or failing endpoints.
  */
 public class RemoteMetricsSystemClientTest {
 
@@ -90,8 +93,58 @@ public class RemoteMetricsSystemClientTest {
       } catch (UnauthorizedException e) {
         // expected
       }
+
+      try {
+        client.query(0, 10, 1,
+            Collections.singletonMap("namespace", "forbidden"),
+            Collections.singletonList("system.m"),
+            Collections.emptyList());
+        Assert.fail("Expected UnauthorizedException");
+      } catch (UnauthorizedException e) {
+        // expected
+      }
+
+      try {
+        client.search(Collections.singletonMap("ns", "unavailable"));
+        Assert.fail("Expected IOException on 503 response");
+      } catch (IOException e) {
+        Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+      }
     } finally {
       httpService.stop();
+    }
+  }
+
+  @Test
+  public void testUnregisteredMetricsServiceThrowsIOException() throws Exception {
+    Injector injector = Guice.createInjector(
+        new ConfigModule(CConfiguration.create()),
+        new InMemoryDiscoveryModule(),
+        RemoteAuthenticatorModules.getNoOpModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MessagingService.class).toInstance(Mockito.mock(MessagingService.class));
+            bind(InternalAuthenticator.class).toInstance(setter -> { });
+          }
+        });
+    RemoteMetricsSystemClient client = injector.getInstance(RemoteMetricsSystemClient.class);
+
+    try {
+      client.search(Collections.singletonMap("ns", "allowed"));
+      Assert.fail("Expected IOException when metrics service is not discoverable");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
+
+    try {
+      client.query(0, 10, 1,
+          Collections.singletonMap("namespace", "allowed"),
+          Collections.singletonList("system.m"),
+          Collections.emptyList());
+      Assert.fail("Expected IOException when metrics service is not discoverable");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
     }
   }
 
@@ -113,13 +166,22 @@ public class RemoteMetricsSystemClientTest {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "denied");
         return;
       }
+      if (tags.contains("ns:unavailable")) {
+        responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, "restarting");
+        return;
+      }
       responder.sendJson(HttpResponseStatus.OK, "[\"system.m\"]");
     }
 
     @POST
     @Path("/v3/metrics/query")
-    public void query(HttpRequest request, HttpResponder responder) {
+    public void query(HttpRequest request, HttpResponder responder,
+        @QueryParam("tag") List<String> tags) {
       capturedAuthHeaders.add(request.headers().get("X-Test-Auth"));
+      if (tags != null && tags.contains("namespace:forbidden")) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, "denied");
+        return;
+      }
       responder.sendJson(HttpResponseStatus.OK, "{\"startTime\":0,\"endTime\":0,\"series\":[]}");
     }
   }

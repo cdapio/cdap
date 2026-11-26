@@ -117,17 +117,18 @@ public final class AuthorizationUtil {
   }
 
   /**
-   * Enforces that the given principal has visibility on at least one user namespace, or holds
-   * {@link StandardPermission#LIST} on {@link EntityType#NAMESPACE} under {@link InstanceId#SELF}
-   * when no user namespaces are visible.
+   * Enforces that the current principal in {@code authenticationContext} has visibility on at least
+   * one user namespace, or holds {@link StandardPermission#LIST} on {@link EntityType#NAMESPACE}
+   * under {@link InstanceId#SELF} when no user namespaces are visible.
    */
   public static void enforceAnyNamespaceAccess(NamespaceQueryAdmin namespaceQueryAdmin,
-      AccessEnforcer accessEnforcer, Principal principal) throws Exception {
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) throws Exception {
     if (!namespaceQueryAdmin.list().isEmpty()) {
       return;
     }
     accessEnforcer.enforceOnParent(
-        EntityType.NAMESPACE, InstanceId.SELF, principal, StandardPermission.LIST);
+        EntityType.NAMESPACE, InstanceId.SELF, authenticationContext.getPrincipal(),
+        StandardPermission.LIST);
   }
 
   /**

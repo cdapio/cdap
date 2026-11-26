@@ -40,6 +40,7 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
+import io.cdap.cdap.security.authorization.InMemoryPrivilegeHolder;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -50,6 +51,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -74,12 +76,13 @@ public class ApplicationLifecycleServiceAuthorizationTest {
 
   @BeforeClass
   public static void setup() {
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
+
     accessController = new InMemoryAccessController();
     authenticationContext = new AuthenticationTestContext();
-    CConfiguration cConf = CConfiguration.create();
-    InstanceId instanceId = new InstanceId(cConf.get("instance.name"));
-    grant(instanceId, BOB, EnumSet.of(StandardPermission.GET));
-    grant(instanceId, ADMIN, EnumSet.of(StandardPermission.UPDATE));
+    grant(InstanceId.SELF, BOB, EnumSet.of(StandardPermission.GET));
+    grant(InstanceId.SELF, ADMIN, EnumSet.of(StandardPermission.UPDATE));
     grant(NAMESPACE, BOB, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE, CAROL, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE.app(APP1), CAROL, EnumSet.of(StandardPermission.GET));
@@ -90,6 +93,12 @@ public class ApplicationLifecycleServiceAuthorizationTest {
   @After
   public void tearDown() {
     SecurityRequestContext.reset();
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    InMemoryPrivilegeHolder.getPrivileges().clear();
+    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
   }
 
   @Test

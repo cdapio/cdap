@@ -26,6 +26,8 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -120,9 +122,7 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
         "aggregate=true&start=" + start + "&end=" + end + "&resolution=" + resolution + "s"
             + metricsParam + tagsParam + groupByParam;
 
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "query?" + queryString)
-        .build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = executePost("query?" + queryString);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Failed to query for metrics " + metrics + ", with tags " + tags
           + ". Error code " + response.getResponseCode()
@@ -149,9 +149,7 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
       queryString = "&tag=" + queryString;
     }
 
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST,
-        "search?target=metric" + queryString).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = executePost("search?target=metric" + queryString);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException("Failed to search for metrics names for tags " + tags
           + ". Error code " + response.getResponseCode()
@@ -159,5 +157,14 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
     }
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<String>>() {
     }.getType());
+  }
+
+  private HttpResponse executePost(String resource) throws IOException {
+    try {
+      HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, resource).build();
+      return remoteClient.execute(request);
+    } catch (RetryableException | ServiceException e) {
+      throw new IOException("Failed to execute metrics request for resource " + resource, e);
+    }
   }
 }
