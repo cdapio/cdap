@@ -139,6 +139,8 @@
     <jackson.annotations.version>2.23</jackson.annotations.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty9.version>9.4.58.v20250814</jetty9.version>
+    <jetty9.http.version>${jetty9.version}</jetty9.http.version>
+    <jetty9.security.version>${jetty9.version}</jetty9.security.version>
     <jline.version>2.12</jline.version>
     <jline3.version>3.30.17</jline3.version>
     <junit.version>4.11</junit.version>
@@ -1164,6 +1166,16 @@
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-http</artifactId>
+        <version>${jetty9.http.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-security</artifactId>
+        <version>${jetty9.security.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-bom</artifactId>
         <version>${jetty9.version}</version>
         <type>pom</type>
@@ -1172,11 +1184,6 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-server</artifactId>
-        <version>${jetty9.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-security</artifactId>
         <version>${jetty9.version}</version>
       </dependency>
       <dependency>
