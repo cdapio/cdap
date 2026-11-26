@@ -82,6 +82,24 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
           "{\"error\":\"invalid_grant\",\"error_description\":\"expired access/refresh token\"}");
     }
+
+    @POST
+    @Path("/token-malformed")
+    public void malformedToken(FullHttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "<html><body>INTERNAL_HTML_LEAK</body></html>");
+    }
+
+    @POST
+    @Path("/token-missing-fields")
+    public void missingFieldsToken(FullHttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "{\"unexpected\":\"LEAKED_INTERNAL_DATA\"}");
+    }
+
+    @POST
+    @Path("/token-null")
+    public void nullToken(FullHttpRequest request, HttpResponder responder) {
+      responder.sendString(HttpResponseStatus.OK, "null");
+    }
   }
 
   @BeforeClass
@@ -651,5 +669,68 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     HttpResponse authUrl = makeGetCall(provider + "/authurl");
     Assert.assertEquals(HttpURLConnection.HTTP_OK, authUrl.getResponseCode());
     Assert.assertEquals(loginUrl + "?client_id=clientid&redirect_uri=null", authUrl.getResponseBodyAsString());
+  }
+
+  @Test
+  public void testReuseMissingCredentialDoesNotMutateProviderTable() throws IOException {
+    String provider = "missingCredsReuseProvider";
+    String base = "http://127.0.0.1:" + mockTokenPort;
+    HttpResponse response = makePutCall("provider/" + provider + "?reuse_client_credentials=true",
+        createPutRequest(base + "/login", base + "/token", null, null));
+    Assert.assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_NOT_FOUND,
+        makeGetCall("provider/" + provider + "/authurl").getResponseCode());
+  }
+
+  @Test
+  public void testTokenExchangeAndUpstreamResponseSanitization() throws Exception {
+    assertUpstreamFailureSanitized("sanitizeHttpErr", "/token-invalid",
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        "Request for refresh token did not return 200. Response code: 400",
+        "Request for access token did not return 200. Response code: 400");
+    assertUpstreamFailureSanitized("sanitizeMalformed", "/token-malformed",
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        "Refresh token response is missing the required access token or refresh token",
+        "Access token response body does not have access token");
+    assertUpstreamFailureSanitized("sanitizeMissingFields", "/token-missing-fields",
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        "Refresh token response is missing the required access token or refresh token",
+        "Access token response body does not have access token");
+    assertUpstreamFailureSanitized("sanitizeNull", "/token-null",
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        "Refresh token response is missing the required access token or refresh token",
+        "Access token response body does not have access token");
+  }
+
+  private void assertUpstreamFailureSanitized(String provider, String tokenPath, int expectedStatus,
+                                              String expectedPutError, String expectedGetError) throws Exception {
+    String base = "http://127.0.0.1:" + mockTokenPort;
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall("provider/" + provider,
+        createPutRequest(base + "/login", base + tokenPath, "clientid", "clientsecret")).getResponseCode());
+
+    HttpResponse putCred = makePutCall("provider/" + provider + "/credential/cred1",
+        new PutOAuthCredentialRequest("code1", "http://127.0.0.1/redirect", null));
+    Assert.assertEquals(expectedStatus, putCred.getResponseCode());
+    Assert.assertEquals(expectedPutError, putCred.getResponseBodyAsString());
+    assertNoUpstreamBodyLeak(putCred.getResponseBodyAsString());
+
+    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-cred1",
+        GSON.toJson(new OAuthRefreshToken("rt1", "http://127.0.0.1/redirect")), "Test", Collections.emptyMap());
+
+    HttpResponse getCred = makeGetCall("provider/" + provider + "/credential/cred1");
+    Assert.assertEquals(expectedStatus, getCred.getResponseCode());
+    Assert.assertEquals(expectedGetError, getCred.getResponseBodyAsString());
+    assertNoUpstreamBodyLeak(getCred.getResponseBodyAsString());
+
+    HttpResponse validResp = makeGetCall("provider/" + provider + "/credential/cred1/valid");
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, validResp.getResponseCode());
+    Assert.assertTrue(validResp.getResponseBodyAsString().replaceAll("\\s+", "").contains("\"isValid\":false"));
+  }
+
+  private static void assertNoUpstreamBodyLeak(String body) {
+    Assert.assertFalse(body.contains("invalid_grant"));
+    Assert.assertFalse(body.contains("expired access/refresh token"));
+    Assert.assertFalse(body.contains("INTERNAL_HTML_LEAK"));
+    Assert.assertFalse(body.contains("LEAKED_INTERNAL_DATA"));
   }
 }

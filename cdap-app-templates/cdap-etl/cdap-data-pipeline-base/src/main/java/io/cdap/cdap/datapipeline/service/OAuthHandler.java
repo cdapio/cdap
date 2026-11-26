@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
@@ -262,21 +263,18 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
       if (response.getResponseCode() != 200) {
         throw new OAuthServiceException(response.getResponseCode(),
-            "Request for refresh token did not return 200. Response code: " + response.getResponseCode()
-            + " , response message: " + response.getResponseMessage()
-            + " , response body: " + response.getResponseBodyAsString());
+            "Request for refresh token did not return 200. Response code: " + response.getResponseCode());
       }
 
-      RefreshTokenResponse refreshTokenResponse = GSON.fromJson(response.getResponseBodyAsString(),
-          RefreshTokenResponse.class);
-
-      boolean hasRefreshToken = !Strings.isNullOrEmpty(refreshTokenResponse.getRefreshToken());
-      boolean hasAccessToken = !Strings.isNullOrEmpty(refreshTokenResponse.getAccessToken());
+      RefreshTokenResponse refreshTokenResponse = parseTokenResponse(response);
+      boolean hasRefreshToken = refreshTokenResponse != null
+          && !Strings.isNullOrEmpty(refreshTokenResponse.getRefreshToken());
+      boolean hasAccessToken = refreshTokenResponse != null
+          && !Strings.isNullOrEmpty(refreshTokenResponse.getAccessToken());
 
       if (!hasAccessToken && !hasRefreshToken) {
         throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
-            String.format("Refresh token response is missing the required access token or refresh token. " +
-                "The actual response received: %s", response.getResponseBodyAsString()));
+            "Refresh token response is missing the required access token or refresh token");
       }
 
       if (hasRefreshToken) {
@@ -338,19 +336,15 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
 
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new OAuthServiceException(response.getResponseCode(),
-          "Request for access token did not return 200. Response code: " + response.getResponseCode()
-              + " , response message: " + response.getResponseMessage()
-              + " , response body: " + response.getResponseBodyAsString(),
+          "Request for access token did not return 200. Response code: " + response.getResponseCode(),
           null, true);
     }
 
-    RefreshTokenResponse tokenResponse = GSON.fromJson(
-        response.getResponseBodyAsString(), RefreshTokenResponse.class);
+    RefreshTokenResponse tokenResponse = parseTokenResponse(response);
 
     if (tokenResponse == null || Strings.isNullOrEmpty(tokenResponse.getAccessToken())) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST,
-          "Access token response body does not have access token: " + response.getResponseBodyAsString(),
-          null, true);
+          "Access token response body does not have access token", null, true);
     }
     // If provider returned a rotated refresh token, persist the updated refresh token
     String newRefreshToken = tokenResponse.getRefreshToken();
@@ -668,6 +662,14 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       return buildHttpRequest(body, strategy, clientCreds, tokenRefreshURL, false, userAgent).build();
     } catch (MalformedURLException e) {
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR, "Malformed URL", e);
+    }
+  }
+
+  private RefreshTokenResponse parseTokenResponse(HttpResponse response) {
+    try {
+      return GSON.fromJson(response.getResponseBodyAsString(), RefreshTokenResponse.class);
+    } catch (JsonParseException e) {
+      return null;
     }
   }
 

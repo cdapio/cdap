@@ -21,6 +21,7 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.InvalidFieldException;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -131,46 +132,46 @@ public class OAuthStore {
    * @throws OAuthStoreException if the write fails
    */
   public void writeProvider(OAuthProvider oauthProvider, boolean reuseClientCredentials) throws OAuthStoreException {
+    String namespace = NamespaceId.SYSTEM.getNamespace();
+    String name = getClientCredsKey(oauthProvider.getName());
+
+    // Validate or persist client credentials in secure store before mutating the provider table.
+    if (reuseClientCredentials) {
+      SecureStoreMetadata metadata;
+      try {
+        metadata = secureStore.getMetadata(namespace, name);
+      } catch (IOException e) {
+        throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
+      } catch (Exception e) {
+        throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + name + "\" does not exist", e);
+      }
+      if (metadata == null) {
+        throw new OAuthStoreException("Client credential should be present in the secure store", null);
+      }
+    } else {
+      try {
+        secureStoreManager.put(
+            namespace,
+            name,
+            GSON.toJson(oauthProvider.getClientCredentials()),
+            "OAuth client creds",
+            Collections.emptyMap());
+      } catch (IOException e) {
+        throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
+      } catch (Exception e) {
+        throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
+      }
+    }
+
     try {
       TransactionRunners.run(transactionRunner, context -> {
         StructuredTable table = context.getTable(TABLE_ID);
         table.upsert(getRow(oauthProvider));
-
       }, TableNotFoundException.class, InvalidFieldException.class);
     } catch (TableNotFoundException e) {
       throw new OAuthStoreException("OAuth provider table not found", e);
     } catch (InvalidFieldException e) {
       throw new OAuthStoreException("OAuth provider object fields do not match table", e);
-    }
-
-    String namespace = NamespaceId.SYSTEM.getNamespace();
-    String name = getClientCredsKey(oauthProvider.getName());
-
-    // Check for existence of client credential when reusing them.
-    try {
-      if (reuseClientCredentials) {
-        if (secureStore.getMetadata(namespace, name) == null) {
-          throw new OAuthStoreException("Client credential should be present in the secure store", null);
-        }
-        return;
-      }
-    } catch (IOException e) {
-      throw new OAuthStoreException("Failed to check existence of client credential in secure storage", e);
-    } catch (Exception e) {
-      throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + name + "\" does not exist", e);
-    }
-
-    try {
-      secureStoreManager.put(
-          namespace,
-          name,
-          GSON.toJson(oauthProvider.getClientCredentials()),
-          "OAuth client creds",
-          Collections.emptyMap());
-    } catch (IOException e) {
-      throw new OAuthStoreException("Failed to write to OAuth provider secure storage", e);
-    } catch (Exception e) {
-      throw new OAuthStoreException("Namespace \"" + namespace + "\" does not exist", e);
     }
   }
 
