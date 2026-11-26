@@ -127,10 +127,9 @@ public class OpaqueDatasetCollection<T> extends DatasetCollection<T> {
   }
 
   /**
-   * This is required to handle breaking changes between spark 3.3.2 (Dataproc 2.1) to 3.5.1 (Dataproc 2.2).
-   * And we need to support both.
-   * Here we are trying to check if the new method introduced in 3.5.1 exists or not, and based on that we
-   * invoke the new method or the old one.
+   * Resolves a {@link Row} encoder across Spark 3.5+ (Dataproc 2.2/2.3) and Spark 3.3 (Dataproc 2.1).
+   * Both paths must stay reflective: {@code RowEncoder.encoderFor} and {@code AgnosticEncoder} do not
+   * exist on Spark 3.3, while {@code RowEncoder.apply(StructType)} was removed in Spark 3.5.
    */
   public static ExpressionEncoder<Row> getRowEncoder(StructType sparkSchema) {
 

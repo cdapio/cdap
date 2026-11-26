@@ -150,8 +150,9 @@ public final class SparkRuntimeContextProvider {
     // Try to find it from the context classloader
     ClassLoader runtimeClassLoader = Thread.currentThread().getContextClassLoader();
 
-    // For interactive Spark, it uses ExecutorClassLoader, which doesn't follow normal classloader hierarchy.
-    // Since the presence of ExecutorClassLoader is optional in Spark, use reflection to gain access to the parentLoader
+    // Interactive Spark uses ExecutorClassLoader, which doesn't follow the normal classloader hierarchy.
+    // SPARK-43043 moved it from org.apache.spark.repl to org.apache.spark.executor in Spark 3.5; keep
+    // reflection instead of instanceof because Spark 3.3 (Dataproc 2.1) lacks the executor class.
     String clName = runtimeClassLoader.getClass().getName();
     if (EXECUTOR_CLASSLOADER_NAME.equals(clName) || SPARK_EXECUTOR_CLASSLOADER_NAME.equals(clName)) {
       try {
