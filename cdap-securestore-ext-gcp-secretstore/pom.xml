@@ -31,7 +31,25 @@
 
   <properties>
     <google.cloud.secretmanager.version>2.8.0</google.cloud.secretmanager.version>
+    <protobuf.version>3.25.5</protobuf.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Floor for the protobuf runtime that google-cloud-secretmanager pulls in (CVE fix).
+           Pinned per module, not in the root POM, so modules already on protobuf 4.x keep it. -->
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>${protobuf.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java-util</artifactId>
+        <version>${protobuf.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -44,11 +62,23 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-secretmanager</artifactId>
       <version>${google.cloud.secretmanager.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-core</artifactId>
       <version>2.10.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.auto.value</groupId>
+          <artifactId>auto-value</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
