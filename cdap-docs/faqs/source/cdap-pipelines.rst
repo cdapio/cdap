@@ -30,12 +30,6 @@ On which public clouds does CDAP work?
 --------------------------------------
 Customers have CDAP running in AWS, GCE, and Azure.
 
-Do CDAP Pipelines integrate with Apache Sentry for authorization?
------------------------------------------------------------------
-CDAP supports :ref:`integration with Sentry <apache-sentry>` for authorization. Since CDAP
-pipelines are built using CDAP, the :ref:`same authorization policies
-<admin-authorization>` can and are applied as in CDAP.
-
 If I have a question about a data pipeline I am building, how can I get help?
 -----------------------------------------------------------------------------
 CDAP has an open source support system. It has a Google group where developers and users

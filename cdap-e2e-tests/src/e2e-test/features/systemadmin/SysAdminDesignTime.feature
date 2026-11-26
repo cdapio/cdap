@@ -53,12 +53,12 @@ Feature: Sysadmin - Validate system admin page design time scenarios
   Scenario:Validate user is able to open compute profile page and create a compute profile for selected provisioner
     Then Click on the Compute Profile from the System admin page
     Then Click on create compute profile button
-    Then Select a provisioner: "remoteHadoopProvisioner" for the compute profile
+    Then Select a provisioner: "existingDataProc" for the compute profile
     Then Verify the Create a Profile page is loaded for selected provisioner
     Then Enter input plugin property: "profileLabel" with value: "validProfile"
     Then Enter textarea plugin property: "profileDescription" with value: "validDescription"
-    Then Enter input plugin property: "host" with value: "testHost"
-    Then Enter input plugin property: "user" with value: "testUser"
-    Then Enter textarea plugin property: "sshKey" with value: "testSSHKey"
+    Then Enter input plugin property: "profileProjectId" with value: "projectId"
+    Then Enter input plugin property: "clusterName" with value: "validClusterName"
+    Then Enter textarea plugin property: "accountKey" with value: "testAccountKey"
     Then Click on: "Create" button in the properties
     Then Verify the created compute profile: "validProfile" is displayed in system compute profile list

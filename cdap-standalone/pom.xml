@@ -429,18 +429,6 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-runtime-ext-emr</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-cloudkms</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
@@ -635,22 +623,6 @@
                         <include>*.json</include>
                       </includes>
                     </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-runtime-ext-remote-hadoop/target/libexec</directory>
-                      <targetPath>ext/runtimeproviders/remote-hadoop</targetPath>
-                      <includes>
-                        <include>*.jar</include>
-                        <include>*.json</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-runtime-ext-emr/target/libexec</directory>
-                      <targetPath>ext/runtimeproviders/aws-emr</targetPath>
-                      <includes>
-                        <include>*.jar</include>
-                        <include>*.json</include>
-                      </includes>
-                    </resource>
                     <!-- copy secure store extensions -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>
@@ -712,26 +684,6 @@
                       </directory>
                       <includes>
                         <include>cdap-data-quality-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-program-report-app-spark3</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark3.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
-                      </directory>
-                      <includes>
-                        <include>cdap-program-report-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>

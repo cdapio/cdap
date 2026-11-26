@@ -117,9 +117,6 @@ Guides
 .. |integ-man-cl-black| replace:: `Cloudera:`
 .. _integ-man-cl-black: integrations/partners/cloudera/index.html
 
-.. |integ-man-as-black| replace:: `Apache Sentry:`
-.. _integ-man-as-black: integrations/apache-sentry.html
-
 .. |integ-man-ar-black| replace:: `Apache Ranger:`
 .. _integ-man-ar-black: integrations/apache-ranger.html
 
@@ -143,7 +140,6 @@ Guides
 
   - |integ-man-hub-black|_ A source for re-usable applications, data, and code for all CDAP users
   - |integ-man-cl-black|_ Integrating CDAP into Cloudera, using Cloudera Manager and running interactive queries with Impala
-  - |integ-man-as-black|_ Configuring and integrating CDAP with *Apache Sentry*
   - |integ-man-ar-black|_ Configuring and integrating CDAP with *Apache Ranger*
   - |integ-man-ah-black|_ Configuring and integrating CDAP with *Apache Hadoop Key Management Service (KMS)*
   - |integ-man-jd-black|_ The CDAP JDBC driver, included with CDAP

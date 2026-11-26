@@ -18,10 +18,10 @@ Provisioners
 A provisioner is responsible for creating and tearing down the cloud cluster where
 the batch pipeline will be executed. Different provisioners are capable of creating
 different types of clusters on various clouds. Currently, there is a Google Dataproc
-provisioner, an Amazon Elastic MapReduce (EMR) provisioner, and a Remote Hadoop provisioner.
+provisioner.
 
 Each provisioner exposes a set of configuration settings that control the type of cluster that will be created for a run.
-For example, the Google Dataproc and Amazon EMR provisioners have configuration settings for the size of the cluster.
+For example, the Google Dataproc provisioner has configuration settings for the size of the cluster.
 Provisioners also have settings for the credentials required to talk to their respective clouds and provision the required compute nodes.
 Profiles provide these configuration settings.
 

@@ -12,7 +12,6 @@ CDAP Integrations Table of Contents
     Introduction <index>
     Hub <hub>
     Cloudera <partners/cloudera/index>
-    Apache Sentry <apache-sentry>
     Apache Ranger <apache-ranger>
     Apache Hadoop KMS <hadoop-kms>
     CDAP JDBC Driver <jdbc>

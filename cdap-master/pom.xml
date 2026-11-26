@@ -302,19 +302,7 @@
         </dependency>
         <dependency>
           <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-runtime-ext-emr</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-runtime-ext-dataproc</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -453,26 +441,6 @@
                   </resources>
                 </configuration>
               </execution>
-              <execution>
-                <id>copy-program-report-app-spark3</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}/${spark3.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-program-report/target
-                      </directory>
-                      <includes>
-                        <include>cdap-program-report-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
 
               <!-- Copy cdap-kms. -->
               <execution>
@@ -583,27 +551,6 @@
 
               <!-- Copy runtime provider extensions -->
               <execution>
-                <id>copy-runtime-ext-emr</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.providers.ext.dir}/emr</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-runtime-ext-emr/target/libexec/
-                      </directory>
-                      <includes>
-                        <include>*.jar</include>
-                        <include>*.json</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-runtime-ext-dataproc</id>
                 <phase>process-resources</phase>
                 <goals>
@@ -615,27 +562,6 @@
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec/
-                      </directory>
-                      <includes>
-                        <include>*.jar</include>
-                        <include>*.json</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-runtime-ext-remote-hadoop</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.providers.ext.dir}/remote-hadoop</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-runtime-ext-remote-hadoop/target/libexec/
                       </directory>
                       <includes>
                         <include>*.jar</include>
