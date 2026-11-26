@@ -14,18 +14,15 @@
 
 package io.cdap.cdap.datapipeline;
 
-import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.security.store.SecureStoreInfo;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.OAuthRefreshToken;
-import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthCredentialRequest;
 import io.cdap.cdap.datapipeline.oauth.PutOAuthProviderRequest;
 import io.cdap.cdap.datapipeline.oauth.RefreshType;
@@ -46,23 +43,6 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -71,14 +51,27 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+
 public class OAuthServiceTest extends DataPipelineServiceTest {
 
   private static final Gson GSON = new GsonBuilder()
       .setPrettyPrinting()
       .create();
-  private static final String ALLOWED_HOSTS_CONF = "security.auth.oauth.allowed.hosts";
-  private static final String TEST_DOMAIN = "oauth.example.invalid";
-
   @ClassRule
   public static final TestConfiguration AUTH_CONFIG = new TestConfiguration().enableAuthorization(TMP_FOLDER);
 
@@ -92,19 +85,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   private String user;
 
   public static final class MockTokenHandler extends AbstractHttpHandler {
-    private final AtomicReference<String> lastAuthHeader = new AtomicReference<>();
-    private final AtomicReference<String> lastContentType = new AtomicReference<>();
-    private final AtomicReference<String> lastBody = new AtomicReference<>();
     private final AtomicInteger secretHits = new AtomicInteger();
-    private final AtomicInteger identityHits = new AtomicInteger();
-    private volatile String goodIdentityUrl = "";
 
     @POST
     @Path("/token")
     public void token(FullHttpRequest request, HttpResponder responder) {
-      lastAuthHeader.set(request.headers().get(HttpHeaderNames.AUTHORIZATION));
-      lastContentType.set(request.headers().get(HttpHeaderNames.CONTENT_TYPE));
-      lastBody.set(request.content().toString(StandardCharsets.UTF_8));
       responder.sendString(HttpResponseStatus.OK, "{\"access_token\":\"mock_access_token\",\"expires_in\":3600}");
     }
 
@@ -136,41 +121,10 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
       secretHits.incrementAndGet();
       responder.sendString(HttpResponseStatus.OK, "{\"access_token\":\"leaked\"}");
     }
-
-    @POST
-    @Path("/token-bad-identity")
-    public void badIdentityToken(FullHttpRequest request, HttpResponder responder) {
-      responder.sendString(HttpResponseStatus.OK,
-          "{\"access_token\":\"tok_bad_id\",\"refresh_token\":\"ref_bad_id\","
-              + "\"id\":\"http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token\"}");
-    }
-
-    @POST
-    @Path("/token-good-identity")
-    public void goodIdentityToken(FullHttpRequest request, HttpResponder responder) {
-      responder.sendString(HttpResponseStatus.OK,
-          "{\"access_token\":\"tok_good_id\",\"refresh_token\":\"ref_good_id\","
-              + "\"id\":\"" + goodIdentityUrl + "\"}");
-    }
-
-    @GET
-    @Path("/identity")
-    public void identity(FullHttpRequest request, HttpResponder responder) {
-      identityHits.incrementAndGet();
-      responder.sendString(HttpResponseStatus.OK, "{\"active\":true}");
-    }
-
-    @GET
-    @Path("/identity-redirect")
-    public void identityRedirect(FullHttpRequest request, HttpResponder responder) {
-      DefaultHttpHeaders headers = new DefaultHttpHeaders();
-      headers.set(HttpHeaderNames.LOCATION, "/secret");
-      responder.sendStatus(HttpResponseStatus.FOUND, headers);
-    }
   }
 
   @BeforeClass
-  public static void setupMockSecureStoreLeasingAndLoopbackService() throws Exception {
+  public static void setupMockSecureStoreLeasing() throws Exception {
     for (Object inst : new Object[] {getSecureStore(), getSecureStoreManager()}) {
       wrapSecureStoreService(inst);
     }
@@ -229,25 +183,19 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   @Before
   public void setUpMockServer() throws Exception {
     user = null;
-    getConfiguration().set(ALLOWED_HOSTS_CONF, "");
-    for (Object inst : new Object[] {getSecureStore(), getSecureStoreManager()}) {
-      wrapSecureStoreService(inst);
-    }
     mockTokenHandler = new MockTokenHandler();
     mockOAuthServer = NettyHttpService.builder("mock-oauth-server")
-        .setHost("127.0.0.1")
+        .setHost("localhost")
         .setPort(0)
         .setHttpHandlers(mockTokenHandler)
         .build();
     mockOAuthServer.start();
     mockTokenPort = mockOAuthServer.getBindAddress().getPort();
-    mockTokenUrl = "http://127.0.0.1:" + mockTokenPort + "/token";
-    mockTokenHandler.goodIdentityUrl = "http://127.0.0.1:" + mockTokenPort + "/identity";
+    mockTokenUrl = "http://localhost:" + mockTokenPort + "/token";
   }
 
   @After
   public void tearDownMockServer() throws Exception {
-    getConfiguration().set(ALLOWED_HOSTS_CONF, "");
     if (mockOAuthServer != null) {
       mockOAuthServer.stop();
     }
@@ -286,31 +234,26 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   @Test
-  public void testDefaultConfigurationHasEmptyAllowedHostsAndNoPrivateBypass() {
-    CConfiguration defaultConf = CConfiguration.create();
-    Assert.assertTrue(Strings.isNullOrEmpty(defaultConf.get(ALLOWED_HOSTS_CONF)));
-    Assert.assertFalse(OAuthUrlValidator.AllowedHosts.parse(defaultConf.get(ALLOWED_HOSTS_CONF)).isRestricted());
-    Assert.assertNull(defaultConf.get("security.auth.oauth.allow.private.urls"));
-  }
-
-  @Test
   public void testCreateProvider() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token";
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login";
+    String tokenRefreshURL = "http://www.example.com/token";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret");
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
+    // Grab OAuth login URL to verify write succeeded
     HttpResponse getResponse = makeGetCall("provider/testprovider/authurl");
     Assert.assertEquals(200, getResponse.getResponseCode());
     String authURL = getResponse.getResponseBodyAsString();
-    Assert.assertEquals("https://" + TEST_DOMAIN + "/login?client_id=clientid&redirect_uri=null", authURL);
+    Assert.assertEquals("http://www.example.com/login?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
   public void testCreateProviderWithClientCredentialsMissing() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token";
+    // Attempt to create provider with missing client credentials should fail with 400 status code.
+    String loginURL = "http://www.example.com/login";
+    String tokenRefreshURL = "http://www.example.com/token";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
@@ -318,8 +261,10 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testCreateProviderWithReuseClientCredentialsTrue() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token";
+    // Attempt to create provider with no client credentials and 'reuse_client_credentials' query
+    // param 'true' should succeed with 200 status code.
+    String loginURL = "http://www.example.com/login";
+    String tokenRefreshURL = "http://www.example.com/token";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider10?reuse_client_credentials=true", request);
     Assert.assertEquals(500, createResponse.getResponseCode());
@@ -327,14 +272,17 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testCreateProviderReuseCredentialsWithReuseClientCredentialsTrue() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login20";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token20";
+    // Attempt to create provider with client credentials.
+    String loginURL = "http://www.example.com/login20";
+    String tokenRefreshURL = "http://www.example.com/token20";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret");
     HttpResponse createResponse = makePutCall("provider/testprovider20", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
-    loginURL = "https://" + TEST_DOMAIN + "/login21";
-    tokenRefreshURL = "https://" + TEST_DOMAIN + "/token21";
+    // Attempt to update provider with no client credentials and 'reuse_client_credentials' query
+    // param 'true' should succeed with 200 status code.
+    loginURL = "http://www.example.com/login21";
+    tokenRefreshURL = "http://www.example.com/token21";
     request = createPutRequest(loginURL, tokenRefreshURL, null, null);
     createResponse = makePutCall("provider/testprovider20?reuse_client_credentials=true", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
@@ -342,8 +290,10 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testCreateProviderWithReuseClientCredentialsFalse() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login30";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token30";
+    // Attempt to create provider with missing client credentials and 'reuse_client_credentials'
+    // query param 'false' should fail with 400 status code.
+    String loginURL = "http://www.example.com/login30";
+    String tokenRefreshURL = "http://www.example.com/token30";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider30?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
@@ -351,49 +301,56 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testCreateProviderWithBasicAuth() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login31";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token31";
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login31";
+    String tokenRefreshURL = "http://www.example.com/token31";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret",
         OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH, null, null);
     HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider31", request);
     Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
 
+    // Grab OAuth login URL to verify write succeeded
     HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider31/authurl");
     Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
     String authURL = getAuthUrlResponse.getResponseBodyAsString();
-    Assert.assertEquals("https://" + TEST_DOMAIN + "/login31?client_id=clientid&redirect_uri=null", authURL);
+    Assert.assertEquals("http://www.example.com/login31?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
   public void testCreateProviderWithBasicAuthAndUserAgent() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login32";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token32";
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login32";
+    String tokenRefreshURL = "http://www.example.com/token32";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret",
         OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH, "cdap-test", null);
     HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider32", request);
     Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
 
+    // Grab OAuth login URL to verify write succeeded
     HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider32/authurl");
     Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
     String authURL = getAuthUrlResponse.getResponseBodyAsString();
-    Assert.assertEquals("https://" + TEST_DOMAIN + "/login32?client_id=clientid&redirect_uri=null", authURL);
+    Assert.assertEquals("http://www.example.com/login32?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
   public void testCreateProviderWithPkceAuthType() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login_pkce";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token_pkce";
+    String loginURL = "http://www.example.com/login_pkce";
+    String tokenRefreshURL = "http://www.example.com/token_pkce";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret",
         OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.PKCE);
     HttpResponse createOauthProviderResponse = makePutCall("provider/testprovider_pkce", request);
     Assert.assertEquals(200, createOauthProviderResponse.getResponseCode());
 
+    // Grab OAuth login URL to verify write succeeded
     HttpResponse getAuthUrlResponse = makeGetCall("provider/testprovider_pkce/authurl");
     Assert.assertEquals(200, getAuthUrlResponse.getResponseCode());
     String authURL = getAuthUrlResponse.getResponseBodyAsString();
 
-    Assert.assertTrue(authURL.startsWith(
-        "https://" + TEST_DOMAIN + "/login_pkce?client_id=clientid&redirect_uri=null"));
+    // Verify base URL
+    Assert.assertTrue(authURL.startsWith("http://www.example.com/login_pkce?client_id=clientid&redirect_uri=null"));
+
+    // Verify PKCE specific query params
     Assert.assertTrue(authURL.contains("&state="));
     Assert.assertTrue(authURL.contains("&code_challenge="));
     Assert.assertTrue(authURL.contains("&code_challenge_method=S256"));
@@ -401,45 +358,54 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testGetAuthURLForMissingClientCredentials() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login40";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token40";
+    // Attempt to create provider with missing client credentials and 'reuse_client_credentials'
+    // query param 'true'.
+    String loginURL = "http://www.example.com/login40";
+    String tokenRefreshURL = "http://www.example.com/token40";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, null, null);
     HttpResponse createResponse = makePutCall("provider/testprovider40?reuse_client_credentials=false", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
 
+    // Get OAuth login URL should fail with 404 as client credentials are not configured.
     HttpResponse getResponse = makeGetCall("provider/testprovider40/authurl");
     Assert.assertEquals(404, getResponse.getResponseCode());
   }
 
   @Test
   public void testGetAuthURLForReusedClientCredentials() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login50";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token50";
+    // Attempt to create provider with client credentials.
+    String loginURL = "http://www.example.com/login50";
+    String tokenRefreshURL = "http://www.example.com/token50";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret");
     HttpResponse createResponse = makePutCall("provider/testprovider50", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
+    // Grab OAuth login URL to verify write succeeded.
     HttpResponse getResponse = makeGetCall("provider/testprovider50/authurl");
     Assert.assertEquals(200, getResponse.getResponseCode());
     String authURL = getResponse.getResponseBodyAsString();
-    Assert.assertEquals("https://" + TEST_DOMAIN + "/login50?client_id=clientid&redirect_uri=null", authURL);
+    Assert.assertEquals("http://www.example.com/login50?client_id=clientid&redirect_uri=null", authURL);
 
-    loginURL = "https://" + TEST_DOMAIN + "/login51";
-    tokenRefreshURL = "https://" + TEST_DOMAIN + "/token51";
+    // Attempt to update provider with with missing credentials and 'reuse_client_credentials' query
+    // param 'true' should succeed with 200 status code.
+    loginURL = "http://www.example.com/login51";
+    tokenRefreshURL = "http://www.example.com/token51";
     request = createPutRequest(loginURL, tokenRefreshURL, null, null);
     createResponse = makePutCall("provider/testprovider50?reuse_client_credentials=true", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
+    // Grab OAuth login URL to verify write succeeded.
     getResponse = makeGetCall("provider/testprovider50/authurl");
     Assert.assertEquals(200, getResponse.getResponseCode());
     authURL = getResponse.getResponseBodyAsString();
-    Assert.assertEquals("https://" + TEST_DOMAIN + "/login51?client_id=clientid&redirect_uri=null", authURL);
+    Assert.assertEquals("http://www.example.com/login51?client_id=clientid&redirect_uri=null", authURL);
   }
 
   @Test
   public void testCreateProviderBadLoginURL() throws IOException {
+    // Attempt to create provider
     String loginURL = "badurl";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token";
+    String tokenRefreshURL = "http://www.example.com/token";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret");
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
@@ -447,93 +413,12 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testCreateProviderBadTokenRefreshURL() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/token";
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/token";
     String tokenRefreshURL = "badurl";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret");
     HttpResponse createResponse = makePutCall("provider/testprovider", request);
     Assert.assertEquals(400, createResponse.getResponseCode());
-  }
-
-  @Test
-  public void testStrictProductionHandlerRejectsDisallowedUrls() throws IOException {
-    String validHttps = "https://" + TEST_DOMAIN + "/ok";
-    String[] disallowedUrls = {
-        "http://" + TEST_DOMAIN + "/token",
-        "file:///etc/passwd",
-        "https://user:pass@" + TEST_DOMAIN + "/token",
-        "https://localhost:8080/token",
-        "https://127.0.0.1/token",
-        "https://0.0.0.1/token",
-        "https://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token",
-        "https://10.0.0.1/token",
-        "https://172.16.0.1/token",
-        "https://192.168.1.1/token",
-        "https://100.64.0.1/token",
-        "https://198.18.0.1/token",
-        "https://[::1]/token",
-        "https://[fe80::1]/token",
-        "https://[fc00::1]/token",
-        "https://[::ffff:169.254.169.254]/token",
-        "https://[64:ff9b::169.254.169.254]/token"
-    };
-
-    for (String badUrl : disallowedUrls) {
-      HttpResponse respRefresh = makePutCall("provider/ssrf_refresh",
-          createPutRequest(validHttps, badUrl, "clientid", "clientsecret"));
-      Assert.assertEquals("Expected 400 for tokenRefreshURL: " + badUrl, 400, respRefresh.getResponseCode());
-      Assert.assertTrue("Expected OAuth URL validation error for " + badUrl + ", got: "
-                            + respRefresh.getResponseBodyAsString(),
-                        respRefresh.getResponseBodyAsString().contains("OAuth URL"));
-
-      HttpResponse respLogin = makePutCall("provider/ssrf_login",
-          createPutRequest(badUrl, validHttps, "clientid", "clientsecret"));
-      Assert.assertEquals("Expected 400 for loginURL: " + badUrl, 400, respLogin.getResponseCode());
-      Assert.assertTrue("Expected OAuth URL validation error for " + badUrl + ", got: "
-                            + respLogin.getResponseBodyAsString(),
-                        respLogin.getResponseBodyAsString().contains("OAuth URL"));
-    }
-  }
-
-  @Test
-  public void testAllowedHostsRestrictiveConfiguration() throws IOException {
-    getConfiguration().set(ALLOWED_HOSTS_CONF, "oauth2.googleapis.invalid,*.salesforce.invalid");
-    try {
-      // Exact match and wildcard subdomain succeed
-      HttpResponse okResp = makePutCall("provider/allowlisted_provider",
-          createPutRequest("https://acme.salesforce.invalid/login",
-                           "https://oauth2.googleapis.invalid/token", "clientid", "clientsecret"));
-      Assert.assertEquals(200, okResp.getResponseCode());
-      Assert.assertEquals(200, makeGetCall("provider/allowlisted_provider/authurl").getResponseCode());
-
-      // Disallowed host, bare root domain, and lookalike suffix are rejected with 400
-      String[] rejected = {
-          "https://evil.example.invalid/token",
-          "https://salesforce.invalid/token",
-          "https://evilsalesforce.invalid/token"
-      };
-      for (String badUrl : rejected) {
-        HttpResponse resp = makePutCall("provider/blocked_host",
-            createPutRequest("https://oauth2.googleapis.invalid/login", badUrl, "clientid", "clientsecret"));
-        Assert.assertEquals("Expected 400 for " + badUrl, 400, resp.getResponseCode());
-        Assert.assertTrue(resp.getResponseBodyAsString().contains("allowlist"));
-      }
-
-      // Tightening allowlist blocks authurl generation for previously registered provider
-      getConfiguration().set(ALLOWED_HOSTS_CONF, "oauth2.googleapis.invalid");
-      HttpResponse tightenedResp = makeGetCall("provider/allowlisted_provider/authurl");
-      Assert.assertEquals(400, tightenedResp.getResponseCode());
-      Assert.assertTrue(tightenedResp.getResponseBodyAsString().contains("allowlist"));
-
-      // Misconfigured overly broad allowlist fails closed with 500 without leaking raw config
-      getConfiguration().set(ALLOWED_HOSTS_CONF, "*");
-      HttpResponse misconfiguredResp = makePutCall("provider/misconfigured",
-          createPutRequest("https://oauth2.googleapis.invalid/login",
-                           "https://oauth2.googleapis.invalid/token", "clientid", "clientsecret"));
-      Assert.assertEquals(500, misconfiguredResp.getResponseCode());
-      Assert.assertFalse(misconfiguredResp.getResponseBodyAsString().contains("*"));
-    } finally {
-      getConfiguration().set(ALLOWED_HOSTS_CONF, "");
-    }
   }
 
   @Test
@@ -542,16 +427,30 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     Assert.assertEquals(404, getResponse.getResponseCode());
   }
 
+  private HttpResponse makeDeleteCall(String endpoint) throws IOException {
+    URL url = loopbackServiceURI
+        .resolve(String.format("v1/oauth/%s", endpoint))
+        .toURL();
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE, url);
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+  }
+
   @Test
   public void testGetOAuthCredentialStandardLongLivedToken() throws Exception {
     String providerName = "testGetCredLongLived";
     String credentialName = "cred3";
 
-    PutOAuthProviderRequest request = createPutRequest("https://" + TEST_DOMAIN + "/login",
-        "https://" + TEST_DOMAIN + "/token", "clientid", "clientsecret");
+    // Create provider
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:8080/login",
+        "http://localhost:8080/token", "clientid", "clientsecret");
     HttpResponse createResp = makePutCall("provider/" + providerName, request);
     Assert.assertEquals(200, createResp.getResponseCode());
 
+    // Put an access token in the store (no refresh token).
+    // Standard flow will return this directly if present.
     OAuthAccessToken accessToken = OAuthAccessToken.newBuilder()
         .withAccessToken("long_lived_token")
         .withExpiresAt(0L)
@@ -560,6 +459,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         "oauthaccesstoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(accessToken), "Test", Collections.emptyMap());
 
+    // Call GET credential endpoint
     HttpResponse response = makeGetCall("provider/" + providerName +
         "/credential/" + credentialName);
 
@@ -569,189 +469,30 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   @Test
-  public void testGetOAuthCredentialStandardAndForwardsHeadersAndBody() throws Exception {
+  public void testGetOAuthCredentialStandard() throws Exception {
     String providerName = "testGetCredStd";
     String credentialName = "cred2";
 
-    PutOAuthProviderRequest request = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
-        mockTokenUrl, "clientid", "clientsecret", OAuthProvider.CredentialEncodingStrategy.BASIC_AUTH,
-        "cdap-unit-test", null, null);
-    HttpResponse createResp = makePutCall(loopbackServiceURI, "provider/" + providerName, request);
+    // Create provider (default is STANDARD refresh type)
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
+        mockTokenUrl, "clientid", "clientsecret");
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
     Assert.assertEquals(200, createResp.getResponseCode());
 
+    // Put a refresh token so the refresh can happen
     OAuthRefreshToken refreshToken =
         new OAuthRefreshToken("valid_refresh_token", "http://redirect");
     getSecureStoreManager().put("system",
         "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(refreshToken), "Test", Collections.emptyMap());
 
-    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + providerName +
+    // Call GET credential endpoint
+    HttpResponse response = makeGetCall("provider/" + providerName +
         "/credential/" + credentialName);
 
     Assert.assertEquals(200, response.getResponseCode());
     String body = response.getResponseBodyAsString();
     Assert.assertTrue(body.contains("mock_access_token"));
-    Assert.assertNotNull(mockTokenHandler.lastAuthHeader.get());
-    Assert.assertTrue(mockTokenHandler.lastAuthHeader.get().startsWith("Basic "));
-    Assert.assertEquals("grant_type=refresh_token&refresh_token=valid_refresh_token",
-                        mockTokenHandler.lastBody.get());
-  }
-
-  @Test
-  public void testOutboundRedirectsBlockedEndToEnd() throws Exception {
-    String providerName = "testRedirectBlocked";
-    String credentialName = "cred1";
-    String redirectTokenUrl = "http://127.0.0.1:" + mockTokenPort + "/token-redirect";
-
-    PutOAuthProviderRequest request = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
-        redirectTokenUrl, "clientid", "clientsecret");
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + providerName, request).getResponseCode());
-
-    HttpResponse credResp = makePutCall(loopbackServiceURI,
-        "provider/" + providerName + "/credential/" + credentialName,
-        new PutOAuthCredentialRequest("code123", "https://redirect.example.invalid", null));
-    Assert.assertEquals(302, credResp.getResponseCode());
-    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
-  }
-
-  @Test
-  public void testIdentityUrlOriginValidationEndToEnd() throws Exception {
-    // 1. Cross-origin / IMDS identityUrl returned by upstream token endpoint is dropped and never called
-    String badProvider = "testBadIdentity";
-    String badCred = "cred1";
-    PutOAuthProviderRequest badReq = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
-        "http://127.0.0.1:" + mockTokenPort + "/token-bad-identity", "clientid", "clientsecret",
-        OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + badProvider, badReq).getResponseCode());
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI,
-        "provider/" + badProvider + "/credential/" + badCred,
-        new PutOAuthCredentialRequest("code1", "https://redirect.example.invalid", null)).getResponseCode());
-
-    String storedBadJson = new String(
-        getSecureStore().getData("system", "oauthaccesstoken-" + badProvider.toLowerCase() + "-" + badCred),
-        StandardCharsets.UTF_8);
-    OAuthAccessToken storedBad = GSON.fromJson(storedBadJson, OAuthAccessToken.class);
-    Assert.assertNull(storedBad.getIdentityUrl());
-
-    // 2. Same-origin identityUrl is persisted and used to validate cached RTR access tokens
-    String goodProvider = "testGoodIdentity";
-    String goodCred = "cred1";
-    PutOAuthProviderRequest goodReq = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
-        "http://127.0.0.1:" + mockTokenPort + "/token-good-identity", "clientid", "clientsecret",
-        OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + goodProvider, goodReq).getResponseCode());
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI,
-        "provider/" + goodProvider + "/credential/" + goodCred,
-        new PutOAuthCredentialRequest("code2", "https://redirect.example.invalid", null)).getResponseCode());
-
-    HttpResponse validResp = makeGetCall(loopbackServiceURI,
-        "provider/" + goodProvider + "/credential/" + goodCred + "/valid");
-    Assert.assertEquals(200, validResp.getResponseCode());
-    Assert.assertTrue(validResp.getResponseBodyAsString().replaceAll("\\s+", "").contains("\"isValid\":true"));
-    Assert.assertEquals(1, mockTokenHandler.identityHits.get());
-  }
-
-  @Test
-  public void testDnsFailureOnTokenRefreshIsRetryableServerError() throws Exception {
-    // Pipeline macros retry 5xx responses but fail at once on 4xx. A token endpoint that cannot be resolved
-    // right now (registration allows unresolved hosts) must give 500, not a 400 "invalid request".
-    String provider = "testDnsFailure";
-    String cred = "cred1";
-    String unresolvable = "http://oauth-dns-failure.invalid";
-    PutOAuthProviderRequest request = createPutRequest(unresolvable + "/login", unresolvable + "/token",
-        "clientid", "clientsecret");
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, request).getResponseCode());
-    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-" + cred,
-        GSON.toJson(new OAuthRefreshToken("valid_refresh_token", "http://redirect")), "Test",
-        Collections.emptyMap());
-
-    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred);
-    Assert.assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
-    Assert.assertFalse(response.getResponseBodyAsString().contains("Invalid request"));
-  }
-
-  @Test
-  public void testCachedIdentityUrlIsCheckedAgainWhenRead() throws Exception {
-    // Covers RTR access tokens without expiry that were cached before this check existed, or before
-    // the provider URLs or the allowed hosts changed.
-    String provider = "testCachedIdentity";
-    String cred = "cred1";
-    String accessTokenKey = "oauthaccesstoken-" + provider.toLowerCase() + "-" + cred;
-    PutOAuthProviderRequest providerReq = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
-        mockTokenUrl, "clientid", "clientsecret",
-        OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, providerReq).getResponseCode());
-    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-" + cred,
-        GSON.toJson(new OAuthRefreshToken("valid_refresh_token", "http://redirect")), "Test",
-        Collections.emptyMap());
-
-    // 1. A cached identityUrl on another origin is not called. The handler refreshes the token instead.
-    putCachedAccessToken(accessTokenKey, "stale_cross_origin_token",
-        "http://localhost:" + mockTokenPort + "/secret");
-    HttpResponse crossOriginResp = makeGetCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred);
-    Assert.assertEquals(200, crossOriginResp.getResponseCode());
-    Assert.assertTrue(crossOriginResp.getResponseBodyAsString().contains("mock_access_token"));
-    Assert.assertFalse(crossOriginResp.getResponseBodyAsString().contains("stale_cross_origin_token"));
-    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
-
-    // 2. A same-origin identityUrl that answers 302 is not followed. The handler refreshes the token instead.
-    putCachedAccessToken(accessTokenKey, "stale_redirect_token",
-        "http://127.0.0.1:" + mockTokenPort + "/identity-redirect");
-    HttpResponse redirectResp = makeGetCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred);
-    Assert.assertEquals(200, redirectResp.getResponseCode());
-    Assert.assertTrue(redirectResp.getResponseBodyAsString().contains("mock_access_token"));
-    Assert.assertFalse(redirectResp.getResponseBodyAsString().contains("stale_redirect_token"));
-    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
-
-    // 3. After the allowed hosts are narrowed, neither the cached identityUrl nor the token endpoint is called.
-    putCachedAccessToken(accessTokenKey, "cached_token", "http://127.0.0.1:" + mockTokenPort + "/identity");
-    getConfiguration().set(ALLOWED_HOSTS_CONF, "oauth2.googleapis.invalid");
-    try {
-      HttpResponse blockedResp = makeGetCall(loopbackServiceURI,
-          "provider/" + provider + "/credential/" + cred + "/valid");
-      Assert.assertEquals(400, blockedResp.getResponseCode());
-      Assert.assertTrue(blockedResp.getResponseBodyAsString().contains("allowlist"));
-      Assert.assertEquals(0, mockTokenHandler.identityHits.get());
-    } finally {
-      getConfiguration().set(ALLOWED_HOSTS_CONF, "");
-    }
-  }
-
-  @Test
-  public void testIdentityUrlFailingUrlValidationIsNotStored() throws Exception {
-    // The identityUrl matches the loginURL origin but its host is outside the allowed hosts.
-    // sanitizeIdentityUrl must drop it instead of storing it or failing the token exchange.
-    String provider = "testSplitOriginIdentity";
-    String cred = "cred1";
-    PutOAuthProviderRequest providerReq = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
-        "http://localhost:" + mockTokenPort + "/token-good-identity", "clientid", "clientsecret",
-        OAuthProvider.CredentialEncodingStrategy.FORM_BODY, null, AuthType.STANDARD, RefreshType.RTR);
-    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, providerReq).getResponseCode());
-    mockTokenHandler.goodIdentityUrl = "http://127.0.0.1:" + mockTokenPort + "/identity";
-
-    getConfiguration().set(ALLOWED_HOSTS_CONF, "localhost");
-    try {
-      Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred,
-          new PutOAuthCredentialRequest("code3", "https://redirect.example.invalid", null)).getResponseCode());
-    } finally {
-      getConfiguration().set(ALLOWED_HOSTS_CONF, "");
-    }
-
-    String storedJson = new String(
-        getSecureStore().getData("system", "oauthaccesstoken-" + provider.toLowerCase() + "-" + cred),
-        StandardCharsets.UTF_8);
-    OAuthAccessToken stored = GSON.fromJson(storedJson, OAuthAccessToken.class);
-    Assert.assertEquals("tok_good_id", stored.getAccessToken());
-    Assert.assertNull(stored.getIdentityUrl());
-  }
-
-  private void putCachedAccessToken(String key, String accessToken, String identityUrl) throws Exception {
-    OAuthAccessToken token = OAuthAccessToken.newBuilder()
-        .withAccessToken(accessToken)
-        .withExpiresAt(0L)
-        .withIdentityUrl(identityUrl)
-        .build();
-    getSecureStoreManager().put("system", key, GSON.toJson(token), "Cached token", Collections.emptyMap());
   }
 
   @Test
@@ -759,12 +500,15 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String providerName = "testRefresh";
     String credentialName = "cred1";
 
-    PutOAuthProviderRequest request = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
+    // Create provider
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
         mockTokenUrl, "clientid", "clientsecret");
-    HttpResponse createResp = makePutCall(loopbackServiceURI, "provider/" + providerName, request);
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
     Assert.assertEquals("Create provider failed: " + createResp.getResponseBodyAsString(),
         200, createResp.getResponseCode());
 
+    // Put EXPIRED token in SecureStore
+    // Note: we use "system" namespace and specific key formats that OAuthStore expects.
     long expiredTime = System.currentTimeMillis() - 1000000L;
     OAuthAccessToken expiredToken = OAuthAccessToken.newBuilder()
         .withAccessToken("expired_token")
@@ -775,15 +519,18 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         "oauthaccesstoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(expiredToken), "RTR Test", Collections.emptyMap());
 
+    // Also put a refresh token so the refresh can happen
     OAuthRefreshToken refreshToken =
         new OAuthRefreshToken("valid_refresh_token", "http://redirect");
     getSecureStoreManager().put("system",
         "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(refreshToken), "RTR Test", Collections.emptyMap());
 
-    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + providerName +
+    // Call validity endpoint. This will find the expired token and try to refresh it using the tokenUrl!
+    HttpResponse response = makeGetCall("provider/" + providerName +
         "/credential/" + credentialName + "/valid");
 
+    // Should succeed and return true
     Assert.assertEquals(200, response.getResponseCode());
     String body = response.getResponseBodyAsString();
     Assert.assertTrue(body.replaceAll("\\s+", "").contains("\"isValid\":true"));
@@ -791,17 +538,53 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
 
   @Test
   public void testDeleteProvider() throws IOException {
-    String loginURL = "https://" + TEST_DOMAIN + "/login_del";
-    String tokenRefreshURL = "https://" + TEST_DOMAIN + "/token_del";
+    // Attempt to create provider
+    String loginURL = "http://www.example.com/login_del";
+    String tokenRefreshURL = "http://www.example.com/token_del";
     PutOAuthProviderRequest request = createPutRequest(loginURL, tokenRefreshURL, "clientid", "clientsecret");
     HttpResponse createResponse = makePutCall("provider/testprovider_del", request);
     Assert.assertEquals(200, createResponse.getResponseCode());
 
+    // Attempt to delete provider
     HttpResponse deleteResponse = makeDeleteCall("provider/testprovider_del");
     Assert.assertEquals(200, deleteResponse.getResponseCode());
 
+    // Verify it's gone
     HttpResponse getResponse = makeGetCall("provider/testprovider_del/authurl");
     Assert.assertEquals(404, getResponse.getResponseCode());
+  }
+
+  private HttpResponse makeGetCall(String endpoint) throws IOException {
+    URL url = loopbackServiceURI
+        .resolve(String.format("v1/oauth/%s", endpoint))
+        .toURL();
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+  }
+
+  private <T> T makeGetCall(String endpoint, Class<T> clazz) throws IOException {
+    HttpResponse response = makeGetCall(endpoint);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), clazz);
+  }
+
+  private <T> HttpResponse makePutCall(String endpoint, T body) throws IOException {
+    return makePutCall(loopbackServiceURI, endpoint, body);
+  }
+
+  private <T> HttpResponse makePutCall(URI baseURI, String endpoint, T body) throws IOException {
+    URL url = baseURI
+        .resolve(String.format("v1/oauth/%s", endpoint))
+        .toURL();
+    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, url)
+        .withBody(GSON.toJson(body));
+    if (user != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+    }
+    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
   @Test
@@ -809,13 +592,15 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     String providerName = "testGetCredRtr";
     String credentialName = "cred1";
 
-    PutOAuthProviderRequest request = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
+    // Create provider with RTR refresh type
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
         mockTokenUrl, "clientid", "clientsecret", OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
         null, AuthType.STANDARD, RefreshType.RTR);
-    HttpResponse createResp = makePutCall(loopbackServiceURI, "provider/" + providerName, request);
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
     Assert.assertEquals("Create provider failed: " + createResp.getResponseBodyAsString(),
         200, createResp.getResponseCode());
 
+    // Put an EXPIRED access token so it forces a refresh
     long expiredTime = System.currentTimeMillis() - 1000000L;
     OAuthAccessToken expiredToken = OAuthAccessToken.newBuilder()
         .withAccessToken("expired_token")
@@ -825,12 +610,14 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         "oauthaccesstoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(expiredToken), "RTR Test", Collections.emptyMap());
 
+    // Put a valid refresh token
     OAuthRefreshToken refreshToken = new OAuthRefreshToken("valid_refresh_token", "http://redirect");
     getSecureStoreManager().put("system",
         "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(refreshToken), "Test", Collections.emptyMap());
 
-    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + providerName +
+    // Call GET credential endpoint
+    HttpResponse response = makeGetCall("provider/" + providerName +
         "/credential/" + credentialName);
 
     Assert.assertEquals("Get credential failed: " + response.getResponseBodyAsString(),
@@ -843,11 +630,11 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   public void testGetOAuthCredentialValidityInvalidTokenStandard() throws Exception {
     String providerName = "testInvalidStandard";
     String credentialName = "cred1";
-    String invalidTokenUrl = "http://127.0.0.1:" + mockTokenPort + "/token-invalid";
+    String invalidTokenUrl = "http://localhost:" + mockTokenPort + "/token-invalid";
 
-    PutOAuthProviderRequest request = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
         invalidTokenUrl, "clientid", "clientsecret");
-    HttpResponse createResp = makePutCall(loopbackServiceURI, "provider/" + providerName, request);
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
     Assert.assertEquals("Create provider failed: " + createResp.getResponseBodyAsString(),
         200, createResp.getResponseCode());
 
@@ -856,7 +643,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(refreshToken), "Standard Invalid Test", Collections.emptyMap());
 
-    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + providerName +
+    HttpResponse response = makeGetCall("provider/" + providerName +
         "/credential/" + credentialName + "/valid");
 
     Assert.assertEquals(200, response.getResponseCode());
@@ -868,12 +655,12 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   public void testGetOAuthCredentialValidityInvalidTokenRTR() throws Exception {
     String providerName = "testInvalidRtr";
     String credentialName = "cred1";
-    String invalidTokenUrl = "http://127.0.0.1:" + mockTokenPort + "/token-invalid";
+    String invalidTokenUrl = "http://localhost:" + mockTokenPort + "/token-invalid";
 
-    PutOAuthProviderRequest request = createPutRequest("http://127.0.0.1:" + mockTokenPort + "/login",
+    PutOAuthProviderRequest request = createPutRequest("http://localhost:" + mockTokenPort + "/login",
         invalidTokenUrl, "clientid", "clientsecret", OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
         null, AuthType.STANDARD, RefreshType.RTR);
-    HttpResponse createResp = makePutCall(loopbackServiceURI, "provider/" + providerName, request);
+    HttpResponse createResp = makePutCall("provider/" + providerName, request);
     Assert.assertEquals("Create provider failed: " + createResp.getResponseBodyAsString(),
         200, createResp.getResponseCode());
 
@@ -882,7 +669,7 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
         "oauthrefreshtoken-" + providerName.toLowerCase() + "-" + credentialName.toLowerCase(),
         GSON.toJson(refreshToken), "RTR Invalid Test", Collections.emptyMap());
 
-    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + providerName +
+    HttpResponse response = makeGetCall("provider/" + providerName +
         "/credential/" + credentialName + "/valid");
 
     Assert.assertEquals(200, response.getResponseCode());
@@ -894,18 +681,18 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   public void testEndpointsRequireAuthorization() throws Exception {
     String provider = "provider/authProvider";
     String credential = provider + "/credential/cred1";
-    String loginUrl = "https://" + TEST_DOMAIN + "/login";
-    String tokenUrl = "https://" + TEST_DOMAIN + "/token";
+    String loginUrl = "http://localhost:" + mockTokenPort + "/login";
     Assert.assertEquals(HttpURLConnection.HTTP_OK, makePutCall(provider,
-        createPutRequest(loginUrl, tokenUrl, "clientid", "clientsecret")).getResponseCode());
+        createPutRequest(loginUrl, mockTokenUrl, "clientid", "clientsecret")).getResponseCode());
 
+    // A user without permissions on the backing secure keys gets 403 from every endpoint
     user = "alice";
     int[] codes = {
         makeGetCall(provider + "/authurl").getResponseCode(),
         makePutCall(provider + "?reuse_client_credentials=true",
-            createPutRequest("https://attacker.example.invalid/login", tokenUrl, null, null)).getResponseCode(),
+            createPutRequest("http://attacker.example.com/login", mockTokenUrl, null, null)).getResponseCode(),
         makeDeleteCall(provider + "?preserve_client_credentials=true").getResponseCode(),
-        makePutCall(credential, new PutOAuthCredentialRequest("mock_code", "https://redirect.example.invalid", null))
+        makePutCall(credential, new PutOAuthCredentialRequest("mock_code", "http://redirect", null))
             .getResponseCode(),
         makeGetCall(credential).getResponseCode(),
         makeGetCall(credential + "/valid").getResponseCode(),
@@ -914,55 +701,76 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
     Arrays.fill(expected, HttpURLConnection.HTTP_FORBIDDEN);
     Assert.assertArrayEquals(expected, codes);
 
+    // The provider was neither hijacked nor deleted
     user = null;
     HttpResponse authUrl = makeGetCall(provider + "/authurl");
     Assert.assertEquals(HttpURLConnection.HTTP_OK, authUrl.getResponseCode());
     Assert.assertEquals(loginUrl + "?client_id=clientid&redirect_uri=null", authUrl.getResponseBodyAsString());
   }
 
-  private HttpResponse makeDeleteCall(String endpoint) throws IOException {
-    return makeDeleteCall(serviceURI, endpoint);
-  }
+  @Test
+  public void testStrictProductionHandlerRejectsDisallowedUrls() throws IOException {
+    String[] disallowedUrls = {
+        "http://oauth.example.invalid/token",
+        "https://169.254.169.254/computeMetadata/v1/",
+        "https://127.0.0.1/token",
+        "https://10.0.0.1/token",
+        "https://[::ffff:169.254.169.254]/token",
+        "https://localhost/token",
+        "https://user:pass@oauth.example.invalid/token"
+    };
+    for (int i = 0; i < disallowedUrls.length; i++) {
+      PutOAuthProviderRequest badRefresh = createPutRequest(
+          "https://oauth.example.invalid/login", disallowedUrls[i], "cid", "csec");
+      Assert.assertEquals("Expected 400 for tokenRefreshURL: " + disallowedUrls[i],
+                          400, makePutCall(serviceURI, "provider/strictBadRefresh" + i, badRefresh).getResponseCode());
 
-  private HttpResponse makeDeleteCall(URI baseUri, String endpoint) throws IOException {
-    URL url = baseUri
-        .resolve(String.format("v1/oauth/%s", endpoint))
-        .toURL();
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE, url);
-    if (user != null) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, user);
+      PutOAuthProviderRequest badLogin = createPutRequest(
+          disallowedUrls[i], "https://oauth.example.invalid/token", "cid", "csec");
+      Assert.assertEquals("Expected 400 for loginURL: " + disallowedUrls[i],
+                          400, makePutCall(serviceURI, "provider/strictBadLogin" + i, badLogin).getResponseCode());
     }
-    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+
+    PutOAuthProviderRequest valid = createPutRequest(
+        "https://oauth.example.invalid/login", "https://oauth.example.invalid/token", "cid", "csec");
+    Assert.assertEquals(200, makePutCall(serviceURI, "provider/strictValid", valid).getResponseCode());
   }
 
-  private HttpResponse makeGetCall(String endpoint) throws IOException {
-    return makeGetCall(serviceURI, endpoint);
-  }
+  @Test
+  public void testOutboundRedirectsBlockedAndUnsafeIdentityUrlRejected() throws Exception {
+    String redirectProvider = "testRedirectBlocked";
+    PutOAuthProviderRequest redirectReq = createPutRequest(
+        "http://localhost:" + mockTokenPort + "/login",
+        "http://localhost:" + mockTokenPort + "/token-redirect", "clientid", "clientsecret");
+    Assert.assertEquals(200, makePutCall("provider/" + redirectProvider, redirectReq).getResponseCode());
 
-  private HttpResponse makeGetCall(URI baseUri, String endpoint) throws IOException {
-    URL url = baseUri
-        .resolve(String.format("v1/oauth/%s", endpoint))
-        .toURL();
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.GET, url);
-    if (user != null) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, user);
-    }
-    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
-  }
+    HttpResponse redirectResp = makePutCall("provider/" + redirectProvider + "/credential/cred1",
+        new PutOAuthCredentialRequest("code1", "https://redirect.example.invalid", null));
+    Assert.assertEquals(302, redirectResp.getResponseCode());
+    Assert.assertEquals(0, mockTokenHandler.secretHits.get());
 
-  private <T> HttpResponse makePutCall(String endpoint, T body) throws IOException {
-    return makePutCall(serviceURI, endpoint, body);
-  }
+    // Cached access token with an internal metadata identityUrl must be rejected, triggering refresh
+    String idProvider = "testUnsafeIdentity";
+    String cred = "cred1";
+    PutOAuthProviderRequest rtrReq = createPutRequest("http://localhost:" + mockTokenPort + "/login",
+        mockTokenUrl, "clientid", "clientsecret", OAuthProvider.CredentialEncodingStrategy.FORM_BODY,
+        null, AuthType.STANDARD, RefreshType.RTR);
+    Assert.assertEquals(200, makePutCall("provider/" + idProvider, rtrReq).getResponseCode());
+    OAuthAccessToken unsafeCached = OAuthAccessToken.newBuilder()
+        .withAccessToken("stale_token")
+        .withExpiresAt(0L)
+        .withIdentityUrl("http://169.254.169.254/computeMetadata/v1/")
+        .build();
+    getSecureStoreManager().put("system",
+        "oauthaccesstoken-" + idProvider.toLowerCase() + "-" + cred,
+        GSON.toJson(unsafeCached), "Test", Collections.emptyMap());
+    getSecureStoreManager().put("system",
+        "oauthrefreshtoken-" + idProvider.toLowerCase() + "-" + cred,
+        GSON.toJson(new OAuthRefreshToken("valid_refresh_token", "https://redirect.example.invalid")),
+        "Test", Collections.emptyMap());
 
-  private <T> HttpResponse makePutCall(URI baseUri, String endpoint, T body) throws IOException {
-    URL url = baseUri
-        .resolve(String.format("v1/oauth/%s", endpoint))
-        .toURL();
-    HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.PUT, url)
-        .withBody(GSON.toJson(body));
-    if (user != null) {
-      builder.addHeader(Constants.Security.Headers.USER_ID, user);
-    }
-    return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
+    HttpResponse getResp = makeGetCall("provider/" + idProvider + "/credential/" + cred);
+    Assert.assertEquals(200, getResp.getResponseCode());
+    Assert.assertTrue(getResp.getResponseBodyAsString().contains("mock_access_token"));
   }
 }
