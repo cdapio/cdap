@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -1668,23 +1669,46 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     }
   }
 
+  private static DocumentBuilderFactory createSecureDocumentBuilderFactory()
+      throws ParserConfigurationException {
+    DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+    docBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    docBuilderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    docBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+    docBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+    docBuilderFactory.setFeature(
+        "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+    docBuilderFactory.setXIncludeAware(false);
+    docBuilderFactory.setExpandEntityReferences(false);
+    setAttributeIfSupported(docBuilderFactory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
+    setAttributeIfSupported(docBuilderFactory, XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+    return docBuilderFactory;
+  }
+
+  private static void setAttributeIfSupported(
+      DocumentBuilderFactory factory, String attribute, Object value) {
+    try {
+      factory.setAttribute(attribute, value);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("DocumentBuilderFactory {} does not recognize attribute {}", factory, attribute, e);
+    }
+  }
+
+  private static void setAttributeIfSupported(
+      TransformerFactory factory, String attribute, Object value) {
+    try {
+      factory.setAttribute(attribute, value);
+    } catch (IllegalArgumentException e) {
+      LOG.debug("TransformerFactory {} does not recognize attribute {}", factory, attribute, e);
+    }
+  }
+
   private void loadResource(Properties properties, Object name, boolean quiet) {
     try {
-      DocumentBuilderFactory docBuilderFactory
-          = DocumentBuilderFactory.newInstance();
-      //ignore all comments inside the xml file
+      DocumentBuilderFactory docBuilderFactory = createSecureDocumentBuilderFactory();
+      // ignore all comments inside the xml file
       docBuilderFactory.setIgnoringComments(true);
-
-      //allow includes in the xml file
       docBuilderFactory.setNamespaceAware(true);
-      try {
-        docBuilderFactory.setXIncludeAware(true);
-      } catch (UnsupportedOperationException e) {
-        LOG.error("Failed to set setXIncludeAware(true) for parser "
-                + docBuilderFactory
-                + ":" + e,
-            e);
-      }
       DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
       Document doc = null;
       Element root = null;
@@ -1754,13 +1778,13 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
             continue;
           }
           Element field = (Element) fieldNode;
-          if ("name".equals(field.getTagName()) && field.hasChildNodes()) {
+          if ("name".equals(field.getTagName()) && field.getFirstChild() instanceof Text) {
             attr = ((Text) field.getFirstChild()).getData().trim();
           }
-          if ("value".equals(field.getTagName()) && field.hasChildNodes()) {
+          if ("value".equals(field.getTagName()) && field.getFirstChild() instanceof Text) {
             value = ((Text) field.getFirstChild()).getData();
           }
-          if ("final".equals(field.getTagName()) && field.hasChildNodes()) {
+          if ("final".equals(field.getTagName()) && field.getFirstChild() instanceof Text) {
             finalParameter = "true".equals(((Text) field.getFirstChild()).getData());
           }
           if ("activation".equals(field.getTagName()) && field.hasChildNodes()) {
@@ -1771,7 +1795,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
                 continue;
               }
               Element element = (Element) node;
-              if (element.hasChildNodes()) {
+              if (element.getFirstChild() instanceof Text) {
                 activation = new Activation(element.getTagName(),
                     ((Text) element.getFirstChild()).getData().trim());
               }
@@ -1846,10 +1870,13 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     Document doc = asXmlDocument();
 
     try {
+      TransformerFactory transFactory = TransformerFactory.newInstance();
+      transFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      setAttributeIfSupported(transFactory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      setAttributeIfSupported(transFactory, XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+      Transformer transformer = transFactory.newTransformer();
       DOMSource source = new DOMSource(doc);
       StreamResult result = new StreamResult(out);
-      TransformerFactory transFactory = TransformerFactory.newInstance();
-      Transformer transformer = transFactory.newTransformer();
 
       // Important to not hold Configuration log while writing result, since
       // 'out' may be an HDFS stream which needs to lock this configuration
@@ -1866,8 +1893,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   private synchronized Document asXmlDocument() throws IOException {
     Document doc;
     try {
-      doc =
-          DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+      doc = createSecureDocumentBuilderFactory().newDocumentBuilder().newDocument();
     } catch (ParserConfigurationException pe) {
       throw new IOException(pe);
     }
