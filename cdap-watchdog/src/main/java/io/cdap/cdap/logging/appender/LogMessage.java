@@ -22,8 +22,11 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import com.google.common.base.MoreObjects;
 import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.logging.LoggingUtil;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Marker;
+import org.slf4j.event.KeyValuePair;
 
 /**
  * Represents an event to be logged along with the context.
@@ -39,7 +42,7 @@ public class LogMessage implements ILoggingEvent {
     this.loggingEvent = loggingEvent;
     this.loggingContext = loggingContext;
     this.mdc = new LoggingContextMDC(loggingContext.getSystemTagsAsString(),
-        loggingEvent.getMDCPropertyMap());
+        LoggingUtil.getMDCPropertyMap(loggingEvent));
   }
 
   public LoggingContext getLoggingContext() {
@@ -102,6 +105,11 @@ public class LogMessage implements ILoggingEvent {
   }
 
   @Override
+  public List<Marker> getMarkerList() {
+    return loggingEvent.getMarkerList();
+  }
+
+  @Override
   public Map<String, String> getMDCPropertyMap() {
     return mdc;
   }
@@ -114,6 +122,21 @@ public class LogMessage implements ILoggingEvent {
   @Override
   public long getTimeStamp() {
     return loggingEvent.getTimeStamp();
+  }
+
+  @Override
+  public int getNanoseconds() {
+    return loggingEvent.getNanoseconds();
+  }
+
+  @Override
+  public long getSequenceNumber() {
+    return loggingEvent.getSequenceNumber();
+  }
+
+  @Override
+  public List<KeyValuePair> getKeyValuePairs() {
+    return loggingEvent.getKeyValuePairs();
   }
 
   @Override

@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.common.Constants;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Marker;
+import org.slf4j.event.KeyValuePair;
 
 /**
  * Inserts the stage name as the start of the log message, then delegates to other appenders. Uses
@@ -141,6 +142,11 @@ public class LogStageAppender extends AppenderBase<ILoggingEvent> {
     }
 
     @Override
+    public List<Marker> getMarkerList() {
+      return event.getMarkerList();
+    }
+
+    @Override
     public Map<String, String> getMDCPropertyMap() {
       return event.getMDCPropertyMap();
     }
@@ -153,6 +159,21 @@ public class LogStageAppender extends AppenderBase<ILoggingEvent> {
     @Override
     public long getTimeStamp() {
       return event.getTimeStamp();
+    }
+
+    @Override
+    public int getNanoseconds() {
+      return event.getNanoseconds();
+    }
+
+    @Override
+    public long getSequenceNumber() {
+      return event.getSequenceNumber();
+    }
+
+    @Override
+    public List<KeyValuePair> getKeyValuePairs() {
+      return event.getKeyValuePairs();
     }
 
     @Override
