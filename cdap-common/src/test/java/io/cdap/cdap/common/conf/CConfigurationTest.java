@@ -19,13 +19,18 @@ package io.cdap.cdap.common.conf;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Map;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.xml.sax.SAXParseException;
 
 /**
  * Testing CConfiguration.
@@ -33,6 +38,9 @@ import org.junit.Test;
 public class CConfigurationTest {
 
   private static final String DEPRECATED_PROPERTY_VALUE = "Value of deprecated property";
+
+  @Rule
+  public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @Test
   public void testConfiguration() throws Exception {
@@ -239,6 +247,141 @@ public class CConfigurationTest {
 
     cConf.addResource("test-override.xml");
     Assert.assertEquals(3, cConf.getInt("conf.test.activate"));
+  }
+
+  @Test
+  public void testDoctypeXxeRejectedFromInputStream() throws Exception {
+    File secretFile = tmpFolder.newFile("secret.txt");
+    Files.writeString(secretFile.toPath(), "TOP_SECRET_VALUE", StandardCharsets.UTF_8);
+
+    String xxeXml = "<?xml version=\"1.0\"?>"
+        + "<!DOCTYPE configuration [<!ENTITY xxe SYSTEM \"" + secretFile.toURI() + "\">]>"
+        + "<configuration><property><name>xxe.prop</name><value>&xxe;</value></property>"
+        + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(xxeXml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      cConf.get("xxe.prop");
+      Assert.fail("Expected RuntimeException when loading XML with DOCTYPE declaration");
+    } catch (RuntimeException e) {
+      Assert.assertTrue("Expected SAXParseException cause, got: " + e.getCause(),
+          e.getCause() instanceof SAXParseException);
+    }
+  }
+
+  @Test
+  public void testDoctypeXxeRejectedFromUrl() throws Exception {
+    File secretFile = tmpFolder.newFile("secret-url.txt");
+    Files.writeString(secretFile.toPath(), "TOP_SECRET_URL_VALUE", StandardCharsets.UTF_8);
+
+    File xmlFile = tmpFolder.newFile("xxe-site.xml");
+    String xxeXml = "<?xml version=\"1.0\"?>"
+        + "<!DOCTYPE configuration [<!ENTITY xxe SYSTEM \"" + secretFile.toURI() + "\">]>"
+        + "<configuration><property><name>xxe.url.prop</name><value>&xxe;</value></property>"
+        + "</configuration>";
+    Files.writeString(xmlFile.toPath(), xxeXml, StandardCharsets.UTF_8);
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(xmlFile.toURI().toURL());
+    try {
+      cConf.get("xxe.url.prop");
+      Assert.fail("Expected RuntimeException when loading XML URL with DOCTYPE declaration");
+    } catch (RuntimeException e) {
+      Assert.assertTrue("Expected SAXParseException cause, got: " + e.getCause(),
+          e.getCause() instanceof SAXParseException);
+    }
+  }
+
+  @Test
+  public void testParameterEntityXxeRejected() throws Exception {
+    File dtdFile = tmpFolder.newFile("external.dtd");
+    Files.writeString(dtdFile.toPath(), "<!ENTITY param 'LEAKED'>", StandardCharsets.UTF_8);
+
+    String xml = "<?xml version=\"1.0\"?>"
+        + "<!DOCTYPE configuration [<!ENTITY % pe SYSTEM \"" + dtdFile.toURI() + "\"> %pe;]>"
+        + "<configuration><property><name>pe.prop</name><value>v</value></property>"
+        + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    try {
+      cConf.get("pe.prop");
+      Assert.fail("Expected RuntimeException for external parameter entity DOCTYPE");
+    } catch (RuntimeException e) {
+      Assert.assertTrue("Expected SAXParseException cause, got: " + e.getCause(),
+          e.getCause() instanceof SAXParseException);
+    }
+  }
+
+  @Test
+  public void testXincludeDisabledFromInputStream() throws Exception {
+    File secretFile = tmpFolder.newFile("xinclude-secret.txt");
+    Files.writeString(secretFile.toPath(), "XINCLUDE_SECRET_TEXT", StandardCharsets.UTF_8);
+
+    File includedXml = tmpFolder.newFile("included-conf.xml");
+    Files.writeString(includedXml.toPath(),
+        "<configuration><property><name>included.key</name><value>INCLUDED_VAL</value></property>"
+            + "</configuration>",
+        StandardCharsets.UTF_8);
+
+    String xml = "<?xml version=\"1.0\"?>"
+        + "<configuration xmlns:xi=\"http://www.w3.org/2001/XInclude\">"
+        + "<xi:include href=\"" + includedXml.toURI() + "\"/>"
+        + "<property><name>xinclude.text</name><value>"
+        + "<xi:include href=\"" + secretFile.toURI() + "\" parse=\"text\"/>"
+        + "</value></property>"
+        + "<property><name>normal.key</name><value>normal.val</value></property>"
+        + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    Assert.assertNull(cConf.get("xinclude.text"));
+    Assert.assertNull(cConf.get("included.key"));
+    Assert.assertEquals("normal.val", cConf.get("normal.key"));
+  }
+
+  @Test
+  public void testXincludeDisabledFromUrl() throws Exception {
+    File secretFile = tmpFolder.newFile("xinclude-url-secret.txt");
+    Files.writeString(secretFile.toPath(), "XINCLUDE_URL_SECRET", StandardCharsets.UTF_8);
+
+    File xmlFile = tmpFolder.newFile("xinclude-site.xml");
+    String xml = "<?xml version=\"1.0\"?>"
+        + "<configuration xmlns:xi=\"http://www.w3.org/2001/XInclude\">"
+        + "<property><name>control.key</name><value>loaded</value></property>"
+        + "<property><name>xinclude.url</name><value>"
+        + "<xi:include href=\"" + secretFile.toURI() + "\" parse=\"text\"/>"
+        + "</value></property>"
+        + "</configuration>";
+    Files.writeString(xmlFile.toPath(), xml, StandardCharsets.UTF_8);
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(xmlFile.toURI().toURL());
+    Assert.assertEquals("loaded", cConf.get("control.key"));
+    Assert.assertNull(cConf.get("xinclude.url"));
+  }
+
+  @Test
+  public void testNormalXmlWithCdataCommentsAndWriteRoundTrip() throws Exception {
+    String xml = "<?xml version=\"1.0\"?>"
+        + "<configuration>"
+        + "<!-- leading comment -->"
+        + "<property><name>cdata.key</name><value><![CDATA[a < b & c > d]]></value></property>"
+        + "<property><name>plain.key</name><value>plain &amp; simple</value></property>"
+        + "</configuration>";
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    Assert.assertEquals("a < b & c > d", cConf.get("cdata.key"));
+    Assert.assertEquals("plain & simple", cConf.get("plain.key"));
+
+    StringWriter writer = new StringWriter();
+    cConf.writeXml(writer);
+    CConfiguration reloaded = CConfiguration.create(
+        new ByteArrayInputStream(writer.toString().getBytes(StandardCharsets.UTF_8)));
+    Assert.assertEquals("a < b & c > d", reloaded.get("cdata.key"));
+    Assert.assertEquals("plain & simple", reloaded.get("plain.key"));
   }
 
   private enum TestEnum {FIRST}
