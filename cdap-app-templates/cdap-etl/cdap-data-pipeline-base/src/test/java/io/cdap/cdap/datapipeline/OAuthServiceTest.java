@@ -652,6 +652,25 @@ public class OAuthServiceTest extends DataPipelineServiceTest {
   }
 
   @Test
+  public void testDnsFailureOnTokenRefreshIsRetryableServerError() throws Exception {
+    // Pipeline macros retry 5xx responses but fail at once on 4xx. A token endpoint that cannot be resolved
+    // right now (registration allows unresolved hosts) must give 500, not a 400 "invalid request".
+    String provider = "testDnsFailure";
+    String cred = "cred1";
+    String unresolvable = "http://oauth-dns-failure.invalid";
+    PutOAuthProviderRequest request = createPutRequest(unresolvable + "/login", unresolvable + "/token",
+        "clientid", "clientsecret");
+    Assert.assertEquals(200, makePutCall(loopbackServiceURI, "provider/" + provider, request).getResponseCode());
+    getSecureStoreManager().put("system", "oauthrefreshtoken-" + provider.toLowerCase() + "-" + cred,
+        GSON.toJson(new OAuthRefreshToken("valid_refresh_token", "http://redirect")), "Test",
+        Collections.emptyMap());
+
+    HttpResponse response = makeGetCall(loopbackServiceURI, "provider/" + provider + "/credential/" + cred);
+    Assert.assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+    Assert.assertFalse(response.getResponseBodyAsString().contains("Invalid request"));
+  }
+
+  @Test
   public void testCachedIdentityUrlIsCheckedAgainWhenRead() throws Exception {
     // Covers RTR access tokens without expiry that were cached before this check existed, or before
     // the provider URLs or the allowed hosts changed.

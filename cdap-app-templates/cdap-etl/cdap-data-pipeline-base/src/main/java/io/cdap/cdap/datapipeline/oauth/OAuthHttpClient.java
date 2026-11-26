@@ -17,6 +17,7 @@
 package io.cdap.cdap.datapipeline.oauth;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
@@ -36,10 +37,12 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
@@ -53,6 +56,8 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public final class OAuthHttpClient {
   public static final int DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024;
+  /** Maximum number of resolved addresses tried before giving up on a request. */
+  static final int MAX_CONNECT_ATTEMPTS = 4;
   private static final int READ_BUFFER_BYTES = 4096;
 
   private final OAuthUrlValidator urlValidator;
@@ -111,20 +116,38 @@ public final class OAuthHttpClient {
    * Validates the request URL, pins the connection to validated resolved IP addresses, disables HTTP
    * redirects, and executes the request.
    *
+   * <p>If a TCP connect fails, the next resolved address is tried, up to {@link #MAX_CONNECT_ATTEMPTS}
+   * addresses with address families interleaved. All attempts together share one connect timeout. Once a
+   * TCP connection is open the request is never retried, so single-use codes and tokens are sent once.
+   *
    * @param request the outbound HTTP request
    * @param allowedHosts optional restrictive host allowlist
    * @param readBodyOnSuccess if true, reads and bounds 2xx response bodies; non-2xx bodies are never buffered
+   * @return the response status and, for a read 2xx response, the bounded UTF-8 body
+   * @throws IllegalArgumentException if the URL violates scheme, syntax, allowlist, or IP rules
+   * @throws IOException if DNS resolution or every connect attempt fails, or the response is too large
    */
   public Response execute(HttpRequest request, OAuthUrlValidator.AllowedHosts allowedHosts,
                           boolean readBodyOnSuccess) throws IOException {
     OAuthUrlValidator.ValidatedUrl validatedUrl = urlValidator.validate(
         request.getURL().toString(), OAuthUrlValidator.HostResolution.REQUIRE_RESOLVABLE, allowedHosts);
-    List<InetAddress> addresses = validatedUrl.getResolvedAddresses();
+    byte[] body = readRequestBody(request);
+    List<InetAddress> candidates = selectConnectCandidates(validatedUrl.getResolvedAddresses(), MAX_CONNECT_ATTEMPTS);
+    long deadlineNanos = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(connectTimeoutMs);
     IOException lastConnectFailure = null;
-    for (InetAddress address : addresses) {
+    for (int i = 0; i < candidates.size(); i++) {
+      int attemptTimeoutMs = connectTimeoutMs;
+      if (connectTimeoutMs > 0) {
+        long remainingMs = TimeUnit.NANOSECONDS.toMillis(deadlineNanos - System.nanoTime());
+        if (remainingMs <= 0) {
+          break;
+        }
+        attemptTimeoutMs = (int) Math.max(1L, remainingMs / (candidates.size() - i));
+      }
       AtomicBoolean connected = new AtomicBoolean(false);
       try {
-        return executePinned(request, validatedUrl, address, connected, readBodyOnSuccess);
+        return executePinned(request, body, validatedUrl, candidates.get(i), attemptTimeoutMs, connected,
+                             readBodyOnSuccess);
       } catch (IOException e) {
         if (connected.get()) {
           throw e;
@@ -135,78 +158,128 @@ public final class OAuthHttpClient {
     throw lastConnectFailure != null ? lastConnectFailure : new IOException("No resolved IP addresses available");
   }
 
-  private Response executePinned(HttpRequest request, OAuthUrlValidator.ValidatedUrl validatedUrl,
-                                 InetAddress pinnedAddress, AtomicBoolean connected,
-                                 boolean readBodyOnSuccess) throws IOException {
-    URL targetUrl = validatedUrl.getUrl();
-    int effectivePort = validatedUrl.getEffectivePort();
-    HttpURLConnection connection;
-    boolean isHttps = "https".equalsIgnoreCase(targetUrl.getProtocol());
-    if (isHttps) {
-      HttpsURLConnection httpsConnection = (HttpsURLConnection) targetUrl.openConnection(Proxy.NO_PROXY);
-      httpsConnection.setSSLSocketFactory(new PinnedSSLSocketFactory(
-          sslSocketFactory, validatedUrl.getConnectHost(), pinnedAddress, effectivePort,
-          connectTimeoutMs, connected));
-      connection = httpsConnection;
-    } else {
-      URL pinnedHttpUrl = new URL("http", formatUrlHost(pinnedAddress), effectivePort, targetUrl.getFile());
-      connection = (HttpURLConnection) pinnedHttpUrl.openConnection(Proxy.NO_PROXY);
+  /**
+   * Returns up to {@code maxAttempts} addresses, alternating address families starting with the family of
+   * the first record, so that one unreachable family (for example IPv6 dropped by a firewall) cannot use
+   * up every attempt.
+   */
+  @VisibleForTesting
+  static List<InetAddress> selectConnectCandidates(List<InetAddress> resolved, int maxAttempts) {
+    if (resolved.isEmpty()) {
+      return resolved;
     }
+    boolean firstIsIpv6 = resolved.get(0) instanceof Inet6Address;
+    List<InetAddress> sameFamily = new ArrayList<>();
+    List<InetAddress> otherFamily = new ArrayList<>();
+    for (InetAddress address : resolved) {
+      if ((address instanceof Inet6Address) == firstIsIpv6) {
+        sameFamily.add(address);
+      } else {
+        otherFamily.add(address);
+      }
+    }
+    List<InetAddress> selected = new ArrayList<>(Math.min(resolved.size(), maxAttempts));
+    for (int i = 0; selected.size() < maxAttempts && (i < sameFamily.size() || i < otherFamily.size()); i++) {
+      if (i < sameFamily.size()) {
+        selected.add(sameFamily.get(i));
+      }
+      if (i < otherFamily.size() && selected.size() < maxAttempts) {
+        selected.add(otherFamily.get(i));
+      }
+    }
+    return selected;
+  }
 
+  private Response executePinned(HttpRequest request, @Nullable byte[] body,
+                                 OAuthUrlValidator.ValidatedUrl validatedUrl, InetAddress pinnedAddress,
+                                 int attemptTimeoutMs, AtomicBoolean connected,
+                                 boolean readBodyOnSuccess) throws IOException {
+    boolean isHttps = "https".equalsIgnoreCase(validatedUrl.getUrl().getProtocol());
+    HttpURLConnection connection = openPinnedConnection(validatedUrl, pinnedAddress, attemptTimeoutMs, connected);
     try {
-      connection.setInstanceFollowRedirects(false);
-      connection.setRequestMethod(request.getMethod().name());
-      connection.setConnectTimeout(connectTimeoutMs);
-      connection.setReadTimeout(readTimeoutMs);
-      connection.setRequestProperty("Connection", "close");
-
-      if (request.getHeaders() != null) {
-        for (Map.Entry<String, String> header : request.getHeaders().entries()) {
-          if (!"Connection".equalsIgnoreCase(header.getKey())) {
-            connection.addRequestProperty(header.getKey(), header.getValue());
-          }
-        }
-      }
-
-      ContentProvider<? extends InputStream> body = request.getBody();
-      byte[] bodyBytes = null;
-      if (body != null) {
-        try (InputStream input = body.getInput()) {
-          bodyBytes = ByteStreams.toByteArray(input);
-        }
-        connection.setDoOutput(true);
-        // Fixed-length streaming mode stops HttpURLConnection from silently resending the request
-        // (sun.net.http.retryPost) when the connection drops, which would replay single-use codes and tokens.
-        connection.setFixedLengthStreamingMode(bodyBytes.length);
-      }
+      configureConnection(connection, request, body, attemptTimeoutMs);
       if (!isHttps) {
         connection.connect();
         connected.set(true);
       }
-      if (bodyBytes != null) {
+      if (body != null) {
         try (OutputStream output = connection.getOutputStream()) {
-          output.write(bodyBytes);
+          output.write(body);
         }
       }
-
       int responseCode = connection.getResponseCode();
       connected.set(true);
       String responseMessage = connection.getResponseMessage();
-      String responseBody = "";
-      if (readBodyOnSuccess && responseCode >= 200 && responseCode < 300) {
-        InputStream inputStream = connection.getInputStream();
-        if (inputStream != null) {
-          try (InputStream stream = inputStream) {
-            responseBody = readBoundedUtf8(stream, connection.getContentEncoding(), maxResponseBytes);
-          }
-        }
-      } else {
-        closeQuietly(responseCode >= 200 && responseCode < 300
-                         ? connection.getInputStream() : connection.getErrorStream());
-      }
+      String responseBody = readOrDiscardResponseBody(connection, responseCode, readBodyOnSuccess);
       return new Response(responseCode, responseMessage, responseBody);
     } finally {
       connection.disconnect();
+    }
+  }
+
+  private HttpURLConnection openPinnedConnection(OAuthUrlValidator.ValidatedUrl validatedUrl,
+                                                 InetAddress pinnedAddress, int attemptTimeoutMs,
+                                                 AtomicBoolean connected) throws IOException {
+    URL targetUrl = validatedUrl.getUrl();
+    int effectivePort = validatedUrl.getEffectivePort();
+    if ("https".equalsIgnoreCase(targetUrl.getProtocol())) {
+      HttpsURLConnection httpsConnection = (HttpsURLConnection) targetUrl.openConnection(Proxy.NO_PROXY);
+      httpsConnection.setSSLSocketFactory(new PinnedSSLSocketFactory(
+          sslSocketFactory, validatedUrl.getNormalizedHost(), pinnedAddress, effectivePort,
+          attemptTimeoutMs, connected));
+      return httpsConnection;
+    }
+    URL pinnedHttpUrl = new URL("http", formatUrlHost(pinnedAddress), effectivePort, targetUrl.getFile());
+    return (HttpURLConnection) pinnedHttpUrl.openConnection(Proxy.NO_PROXY);
+  }
+
+  private void configureConnection(HttpURLConnection connection, HttpRequest request, @Nullable byte[] body,
+                                   int attemptTimeoutMs) throws IOException {
+    connection.setInstanceFollowRedirects(false);
+    connection.setRequestMethod(request.getMethod().name());
+    connection.setConnectTimeout(attemptTimeoutMs);
+    connection.setReadTimeout(readTimeoutMs);
+    connection.setRequestProperty("Connection", "close");
+    if (request.getHeaders() != null) {
+      for (Map.Entry<String, String> header : request.getHeaders().entries()) {
+        if (!"Connection".equalsIgnoreCase(header.getKey())) {
+          connection.addRequestProperty(header.getKey(), header.getValue());
+        }
+      }
+    }
+    if (body != null) {
+      connection.setDoOutput(true);
+      // Fixed-length streaming mode stops HttpURLConnection from silently resending the request
+      // (sun.net.http.retryPost) when the connection drops, which would replay single-use codes and tokens.
+      connection.setFixedLengthStreamingMode(body.length);
+    }
+  }
+
+  @Nullable
+  private static byte[] readRequestBody(HttpRequest request) throws IOException {
+    ContentProvider<? extends InputStream> body = request.getBody();
+    if (body == null) {
+      return null;
+    }
+    try (InputStream input = body.getInput()) {
+      return ByteStreams.toByteArray(input);
+    }
+  }
+
+  private String readOrDiscardResponseBody(HttpURLConnection connection, int responseCode,
+                                           boolean readBodyOnSuccess) throws IOException {
+    boolean isSuccess = responseCode >= 200 && responseCode < 300;
+    if (!isSuccess) {
+      closeQuietly(connection.getErrorStream());
+      return "";
+    }
+    InputStream stream = connection.getInputStream();
+    if (!readBodyOnSuccess || stream == null) {
+      closeQuietly(stream);
+      return "";
+    }
+    try (InputStream input = stream) {
+      return readBoundedUtf8(input, connection.getContentEncoding(), maxResponseBytes);
     }
   }
 
@@ -251,10 +324,10 @@ public final class OAuthHttpClient {
 
   private static InputStream wrapContentEncoding(InputStream stream, @Nullable String contentEncoding)
       throws IOException {
-    if (contentEncoding == null || contentEncoding.trim().isEmpty()) {
+    String encoding = Strings.nullToEmpty(contentEncoding).trim().toLowerCase(Locale.ROOT);
+    if (encoding.isEmpty()) {
       return stream;
     }
-    String encoding = contentEncoding.trim().toLowerCase(Locale.ROOT);
     if ("gzip".equals(encoding) || "x-gzip".equals(encoding)) {
       return new GZIPInputStream(stream);
     }

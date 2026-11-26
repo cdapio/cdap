@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline.oauth;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator.AllowedHosts;
 import io.cdap.common.http.HttpRequest;
 import java.io.BufferedReader;
@@ -35,6 +36,8 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +46,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.ExtendedSSLSession;
 import javax.net.ssl.KeyManagerFactory;
@@ -76,57 +80,97 @@ public class OAuthHttpClientTest {
   @Test
   public void testPinnedHttpsPreservesSniHeadersBodyAndResistsDnsRebinding() throws Exception {
     SSLContext sslContext = createTestSslContext(TEST_HOST);
-    AtomicInteger serverAHits = new AtomicInteger();
-    AtomicInteger serverBHits = new AtomicInteger();
+    InetAddress primary = InetAddress.getByName("127.0.0.1");
+    AtomicInteger primaryHits = new AtomicInteger();
+    AtomicInteger reboundHits = new AtomicInteger();
     AtomicReference<String> capturedSni = new AtomicReference<>();
     AtomicReference<Map<String, String>> capturedHeaders = new AtomicReference<>();
     AtomicReference<String> capturedBody = new AtomicReference<>();
 
-    try (MiniTlsServer serverA = new MiniTlsServer(sslContext, InetAddress.getByName("127.0.0.1"),
-                                                   (sni, path, headers, body, out) -> {
-                                                     serverAHits.incrementAndGet();
-                                                     capturedSni.set(sni);
-                                                     capturedHeaders.set(headers);
-                                                     capturedBody.set(body);
-                                                     writeHttpResponse(out, 200, "OK",
-                                                                       "{\"access_token\":\"tok\"}", null);
-                                                   });
-         MiniTlsServer serverB = new MiniTlsServer(sslContext, InetAddress.getByName("127.0.0.2"),
-                                                   (sni, path, headers, body, out) -> {
-                                                     serverBHits.incrementAndGet();
-                                                     writeHttpResponse(out, 200, "OK",
-                                                                       "{\"access_token\":\"evil\"}", null);
-                                                   })) {
-      // Simulate DNS rebinding: first resolution returns 127.0.0.1 (Server A), subsequent calls return 127.0.0.2
-      AtomicInteger resolveCalls = new AtomicInteger();
-      OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host -> {
-        Assert.assertEquals(TEST_HOST, host);
-        if (resolveCalls.getAndIncrement() == 0) {
-          return new InetAddress[] {InetAddress.getByName("127.0.0.1")};
-        }
-        return new InetAddress[] {InetAddress.getByName("127.0.0.2")};
-      });
-      OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, 1024);
+    try (MiniTlsServer primaryServer = new MiniTlsServer(sslContext, primary,
+                                                         (sni, path, headers, body, out) -> {
+                                                           primaryHits.incrementAndGet();
+                                                           capturedSni.set(sni);
+                                                           capturedHeaders.set(headers);
+                                                           capturedBody.set(body);
+                                                           writeHttpResponse(out, 200, "OK",
+                                                                             "{\"access_token\":\"tok\"}", null);
+                                                         })) {
+      int port = primaryServer.getPort();
+      InetAddress rebound = secondaryLoopbackOrSkip(port);
+      // The rebound server listens on the same port, so a second DNS lookup would reach it.
+      try (MiniTlsServer reboundServer = new MiniTlsServer(sslContext, rebound, port,
+                                                           (sni, path, headers, body, out) -> {
+                                                             reboundHits.incrementAndGet();
+                                                             writeHttpResponse(out, 200, "OK",
+                                                                               "{\"access_token\":\"evil\"}", null);
+                                                           })) {
+        // Simulate DNS rebinding: the first lookup returns the primary server, later lookups the rebound one
+        AtomicInteger resolveCalls = new AtomicInteger();
+        OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host -> {
+          Assert.assertEquals(TEST_HOST, host);
+          return new InetAddress[] {resolveCalls.getAndIncrement() == 0 ? primary : rebound};
+        });
+        OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, 1024);
 
-      HttpRequest req = HttpRequest.post(new URL("https://" + TEST_HOST + ":" + serverA.getPort() + "/token"))
-          .addHeader("Authorization", "Basic dXNlcjpwYXNz")
-          .addHeader("Content-Type", "application/x-www-form-urlencoded")
-          .addHeader("User-Agent", "cdap-oauth-test")
-          .withBody("grant_type=refresh_token&refresh_token=abc")
-          .build();
+        HttpRequest req = HttpRequest.post(new URL("https://" + TEST_HOST + ":" + port + "/token"))
+            .addHeader("Authorization", "Basic dXNlcjpwYXNz")
+            .addHeader("Content-Type", "application/x-www-form-urlencoded")
+            .addHeader("User-Agent", "cdap-oauth-test")
+            .withBody("grant_type=refresh_token&refresh_token=abc")
+            .build();
 
-      OAuthHttpClient.Response resp = client.execute(req, AllowedHosts.parse(TEST_HOST), true);
-      Assert.assertEquals(200, resp.getResponseCode());
-      Assert.assertEquals("{\"access_token\":\"tok\"}", resp.getResponseBodyAsString());
-      Assert.assertEquals(1, serverAHits.get());
-      Assert.assertEquals(0, serverBHits.get());
-      Assert.assertEquals(1, resolveCalls.get());
-      Assert.assertEquals(TEST_HOST, capturedSni.get());
-      Assert.assertEquals("Basic dXNlcjpwYXNz", capturedHeaders.get().get("authorization"));
-      Assert.assertEquals("application/x-www-form-urlencoded", capturedHeaders.get().get("content-type"));
-      Assert.assertEquals("cdap-oauth-test", capturedHeaders.get().get("user-agent"));
-      Assert.assertEquals(TEST_HOST + ":" + serverA.getPort(), capturedHeaders.get().get("host"));
-      Assert.assertEquals("grant_type=refresh_token&refresh_token=abc", capturedBody.get());
+        OAuthHttpClient.Response resp = client.execute(req, AllowedHosts.parse(TEST_HOST), true);
+        Assert.assertEquals(200, resp.getResponseCode());
+        Assert.assertEquals("{\"access_token\":\"tok\"}", resp.getResponseBodyAsString());
+        Assert.assertEquals(1, primaryHits.get());
+        Assert.assertEquals(0, reboundHits.get());
+        Assert.assertEquals(1, resolveCalls.get());
+        Assert.assertEquals(TEST_HOST, capturedSni.get());
+        Assert.assertEquals("Basic dXNlcjpwYXNz", capturedHeaders.get().get("authorization"));
+        Assert.assertEquals("application/x-www-form-urlencoded", capturedHeaders.get().get("content-type"));
+        Assert.assertEquals("cdap-oauth-test", capturedHeaders.get().get("user-agent"));
+        Assert.assertEquals(TEST_HOST + ":" + port, capturedHeaders.get().get("host"));
+        Assert.assertEquals("grant_type=refresh_token&refresh_token=abc", capturedBody.get());
+      }
+    }
+  }
+
+  @Test
+  public void testPinnedHttpsIgnoresOperatingSystemDns() throws Exception {
+    // "localhost" resolves through the OS. The validator pins it to a different loopback address, and the
+    // client must connect to the pinned address only.
+    String host = "localhost";
+    SSLContext sslContext = createTestSslContext(host);
+    InetAddress osDnsTarget = InetAddress.getByName(host);
+    AtomicInteger osDnsHits = new AtomicInteger();
+    AtomicInteger pinnedHits = new AtomicInteger();
+
+    try (MiniTlsServer osDnsServer = new MiniTlsServer(sslContext, osDnsTarget,
+                                                       (sni, path, headers, body, out) -> {
+                                                         osDnsHits.incrementAndGet();
+                                                         writeHttpResponse(out, 200, "OK",
+                                                                           "{\"access_token\":\"os_dns\"}", null);
+                                                       })) {
+      int port = osDnsServer.getPort();
+      InetAddress pinned = secondaryLoopbackOrSkip(port, osDnsTarget);
+      try (MiniTlsServer pinnedServer = new MiniTlsServer(sslContext, pinned, port,
+                                                          (sni, path, headers, body, out) -> {
+                                                            pinnedHits.incrementAndGet();
+                                                            writeHttpResponse(out, 200, "OK",
+                                                                              "{\"access_token\":\"pinned\"}", null);
+                                                          })) {
+        OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, h -> new InetAddress[] {pinned});
+        OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, 1024);
+        HttpRequest req = HttpRequest.post(new URL("https://" + host + ":" + port + "/token"))
+            .withBody("grant_type=refresh_token&refresh_token=abc")
+            .build();
+
+        OAuthHttpClient.Response resp = client.execute(req, AllowedHosts.allowAll(), true);
+        Assert.assertEquals("{\"access_token\":\"pinned\"}", resp.getResponseBodyAsString());
+        Assert.assertEquals(1, pinnedHits.get());
+        Assert.assertEquals(0, osDnsHits.get());
+      }
     }
   }
 
@@ -141,9 +185,10 @@ public class OAuthHttpClientTest {
                                                     writeHttpResponse(out, 200, "OK",
                                                                       "{\"access_token\":\"fallback_ok\"}", null);
                                                   })) {
-      // First IP (127.0.0.2) has no listener on server.getPort() so connect fails; fallback to 127.0.0.1 succeeds
+      // The first address has no listener on the port, so connect fails and the client falls back
+      InetAddress refusing = secondaryLoopbackOrSkip(server.getPort());
       OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host -> new InetAddress[] {
-          InetAddress.getByName("127.0.0.2"),
+          refusing,
           InetAddress.getByName("127.0.0.1")
       });
       OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, 1024);
@@ -156,6 +201,69 @@ public class OAuthHttpClientTest {
       Assert.assertEquals("{\"access_token\":\"fallback_ok\"}", resp.getResponseBodyAsString());
       Assert.assertEquals(1, serverHits.get());
     }
+  }
+
+  @Test
+  public void testConnectAttemptsAreCapped() throws Exception {
+    InetAddress[] refusing = new InetAddress[OAuthHttpClient.MAX_CONNECT_ATTEMPTS];
+    for (int i = 0; i < refusing.length; i++) {
+      refusing[i] = InetAddress.getByName("127.0.0." + (i + 2));
+    }
+    InetAddress listening = InetAddress.getByName("127.0.0." + (refusing.length + 2));
+    Assume.assumeTrue("Host cannot bind " + listening, canBind(listening));
+    SSLContext sslContext = createTestSslContext(TEST_HOST);
+    AtomicInteger serverHits = new AtomicInteger();
+
+    try (MiniTlsServer server = new MiniTlsServer(sslContext, listening,
+                                                  (sni, path, headers, body, out) -> {
+                                                    serverHits.incrementAndGet();
+                                                    writeHttpResponse(out, 200, "OK", "{}", null);
+                                                  })) {
+      URL url = new URL("https://" + TEST_HOST + ":" + server.getPort() + "/token");
+
+      // The listening address is the 5th record, beyond the attempt limit, so it is never tried
+      InetAddress[] tooMany = Arrays.copyOf(refusing, refusing.length + 1);
+      tooMany[refusing.length] = listening;
+      OAuthHttpClient client = new OAuthHttpClient(
+          OAuthUrlValidator.forTesting(true, true, host -> tooMany), sslContext.getSocketFactory(), 5000, 5000, 1024);
+      try {
+        client.execute(HttpRequest.get(url).build(), AllowedHosts.allowAll(), true);
+        Assert.fail("Expected ConnectException when the reachable address is beyond the attempt limit");
+      } catch (ConnectException expected) {
+        // expected
+      }
+      Assert.assertEquals(0, serverHits.get());
+
+      // Within the limit, the client reaches the listening address after the refused ones
+      InetAddress[] withinLimit = Arrays.copyOf(refusing, refusing.length);
+      withinLimit[refusing.length - 1] = listening;
+      client = new OAuthHttpClient(
+          OAuthUrlValidator.forTesting(true, true, host -> withinLimit), sslContext.getSocketFactory(),
+          5000, 5000, 1024);
+      Assert.assertEquals(200, client.execute(HttpRequest.get(url).build(), AllowedHosts.allowAll(), true)
+          .getResponseCode());
+      Assert.assertEquals(1, serverHits.get());
+    }
+  }
+
+  @Test
+  public void testSelectConnectCandidatesInterleavesFamiliesAndCaps() throws Exception {
+    List<InetAddress> ipv6 = new ArrayList<>();
+    for (int i = 1; i <= 7; i++) {
+      ipv6.add(InetAddress.getByName("2001:db8::" + i));
+    }
+    InetAddress v4a = InetAddress.getByName("192.0.2.1");
+    InetAddress v4b = InetAddress.getByName("192.0.2.2");
+    List<InetAddress> dualStack = new ArrayList<>(ipv6);
+    dualStack.add(v4a);
+    dualStack.add(v4b);
+
+    // Seven IPv6 records ahead of two IPv4 records must not use up every attempt on IPv6
+    Assert.assertEquals(Arrays.asList(ipv6.get(0), v4a, ipv6.get(1), v4b),
+                        OAuthHttpClient.selectConnectCandidates(dualStack, 4));
+    Assert.assertEquals(ipv6.subList(0, 4), OAuthHttpClient.selectConnectCandidates(ipv6, 4));
+    Assert.assertEquals(Arrays.asList(v4a, v4b), OAuthHttpClient.selectConnectCandidates(Arrays.asList(v4a, v4b), 4));
+    Assert.assertTrue(OAuthHttpClient.selectConnectCandidates(new ArrayList<InetAddress>(), 4).isEmpty());
   }
 
   @Test
@@ -353,9 +461,65 @@ public class OAuthHttpClientTest {
     }
   }
 
+  @Test
+  public void testDeflateDecodingAndExactResponseSizeLimit() throws Exception {
+    SSLContext sslContext = createTestSslContext(TEST_HOST);
+    int limit = 512;
+    String exactPayload = Strings.repeat("x", limit);
+    String oneByteOver = exactPayload + "y";
+    String oversized = Strings.repeat("0123456789", 400);
+
+    try (MiniTlsServer server = new MiniTlsServer(sslContext, InetAddress.getByName("127.0.0.1"),
+                                                  (sni, path, headers, body, out) -> {
+                                                    if ("/deflate-ok".equals(path)) {
+                                                      writeHttpResponse(out, 200, "OK",
+                                                                        "{\"access_token\":\"def\"}", "deflate");
+                                                    } else if ("/deflate-bomb".equals(path)) {
+                                                      writeHttpResponse(out, 200, "OK", oversized, "deflate");
+                                                    } else if ("/exact".equals(path)) {
+                                                      writeHttpResponse(out, 200, "OK", exactPayload, null);
+                                                    } else if ("/exact-gzip".equals(path)) {
+                                                      writeHttpResponse(out, 200, "OK", exactPayload, "gzip");
+                                                    } else {
+                                                      writeHttpResponse(out, 200, "OK", oneByteOver, null);
+                                                    }
+                                                  })) {
+      OAuthUrlValidator validator = OAuthUrlValidator.forTesting(true, true, host ->
+          new InetAddress[] {InetAddress.getByName("127.0.0.1")});
+      OAuthHttpClient client = new OAuthHttpClient(validator, sslContext.getSocketFactory(), 5000, 5000, limit);
+      String base = "https://" + TEST_HOST + ":" + server.getPort();
+
+      Assert.assertEquals("{\"access_token\":\"def\"}", client.execute(
+          HttpRequest.get(new URL(base + "/deflate-ok")).build(), AllowedHosts.allowAll(), true)
+          .getResponseBodyAsString());
+      // A body of exactly the limit is accepted, both raw and after decompression
+      Assert.assertEquals(exactPayload, client.execute(
+          HttpRequest.get(new URL(base + "/exact")).build(), AllowedHosts.allowAll(), true).getResponseBodyAsString());
+      Assert.assertEquals(exactPayload, client.execute(
+          HttpRequest.get(new URL(base + "/exact-gzip")).build(), AllowedHosts.allowAll(), true)
+          .getResponseBodyAsString());
+
+      for (String path : new String[] {"/deflate-bomb", "/over"}) {
+        try {
+          client.execute(HttpRequest.get(new URL(base + path)).build(), AllowedHosts.allowAll(), true);
+          Assert.fail("Expected IOException for response larger than the limit: " + path);
+        } catch (IOException expected) {
+          Assert.assertTrue(expected.getMessage().contains("exceeds maximum size"));
+        }
+      }
+    }
+  }
+
   private static void writeHttpResponse(OutputStream out, int code, String reason,
                                         String body, String contentEncoding) throws IOException {
     byte[] payload = body.getBytes(StandardCharsets.UTF_8);
+    if ("deflate".equals(contentEncoding)) {
+      ByteArrayOutputStream deflated = new ByteArrayOutputStream();
+      try (DeflaterOutputStream deflater = new DeflaterOutputStream(deflated)) {
+        deflater.write(payload);
+      }
+      payload = deflated.toByteArray();
+    }
     if ("gzip".equals(contentEncoding)) {
       ByteArrayOutputStream gzOut = new ByteArrayOutputStream();
       try (GZIPOutputStream gzip = new GZIPOutputStream(gzOut)) {
@@ -380,8 +544,15 @@ public class OAuthHttpClientTest {
    * the host has no second loopback address (for example macOS without a 127.0.0.2 alias and no IPv6).
    */
   private static InetAddress secondaryLoopbackOrSkip(int port) throws IOException {
-    for (String candidate : new String[] {"127.0.0.2", "::1"}) {
+    return secondaryLoopbackOrSkip(port, InetAddress.getByName("127.0.0.1"));
+  }
+
+  private static InetAddress secondaryLoopbackOrSkip(int port, InetAddress exclude) throws IOException {
+    for (String candidate : new String[] {"127.0.0.2", "::1", "127.0.0.1"}) {
       InetAddress address = InetAddress.getByName(candidate);
+      if (address.equals(exclude)) {
+        continue;
+      }
       try (ServerSocket probe = new ServerSocket(port, 1, address)) {
         return address;
       } catch (IOException e) {
@@ -390,6 +561,14 @@ public class OAuthHttpClientTest {
     }
     Assume.assumeTrue("No secondary loopback address can bind port " + port, false);
     throw new AssertionError("unreachable");
+  }
+
+  private static boolean canBind(InetAddress address) {
+    try (ServerSocket probe = new ServerSocket(0, 1, address)) {
+      return true;
+    } catch (IOException e) {
+      return false;
+    }
   }
 
   private static SSLContext createTestSslContext(String dnsSan) throws Exception {

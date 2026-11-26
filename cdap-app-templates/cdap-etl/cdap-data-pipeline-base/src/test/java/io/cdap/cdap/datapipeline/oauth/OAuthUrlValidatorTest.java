@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline.oauth;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator.AllowedHosts;
 import io.cdap.cdap.datapipeline.oauth.OAuthUrlValidator.HostResolution;
 import java.net.Inet6Address;
@@ -205,7 +206,8 @@ public class OAuthUrlValidatorTest {
       Assert.assertTrue(expected.getMessage().contains("169.254.169.254"));
     }
 
-    // Unresolvable host succeeds with ALLOW_UNRESOLVED (empty resolved list) and fails with REQUIRE_RESOLVABLE
+    // An unresolvable host succeeds with ALLOW_UNRESOLVED (empty resolved list). With REQUIRE_RESOLVABLE it
+    // throws UnknownHostException so callers report a retryable infrastructure error instead of a 400.
     OAuthUrlValidator.ValidatedUrl unresolved = validator.validate(
         "https://unknown.example.invalid/token", HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
     Assert.assertTrue(unresolved.getResolvedAddresses().isEmpty());
@@ -213,10 +215,92 @@ public class OAuthUrlValidatorTest {
     try {
       validator.validate("https://unknown.example.invalid/token",
                          HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
-      Assert.fail("Expected rejection for unresolvable host under REQUIRE_RESOLVABLE");
-    } catch (IllegalArgumentException expected) {
+      Assert.fail("Expected UnknownHostException for unresolvable host under REQUIRE_RESOLVABLE");
+    } catch (UnknownHostException expected) {
+      // expected
+    }
+
+    // An empty DNS answer is handled like an unresolvable host
+    OAuthUrlValidator emptyDns = OAuthUrlValidator.forTesting(true, false, host -> new InetAddress[0]);
+    Assert.assertTrue(emptyDns.validate("https://empty.example.invalid/token", HostResolution.ALLOW_UNRESOLVED,
+                                        AllowedHosts.allowAll()).getResolvedAddresses().isEmpty());
+    try {
+      emptyDns.validate("https://empty.example.invalid/token", HostResolution.REQUIRE_RESOLVABLE,
+                        AllowedHosts.allowAll());
+      Assert.fail("Expected UnknownHostException for an empty DNS answer under REQUIRE_RESOLVABLE");
+    } catch (UnknownHostException expected) {
       Assert.assertTrue(expected.getMessage().contains("Unresolvable"));
     }
+  }
+
+  @Test
+  public void testIpLiteralsAreParsedStrictlyWithoutDns() throws Exception {
+    OAuthUrlValidator noDns = OAuthUrlValidator.forTesting(true, false, host -> {
+      throw new AssertionError("DNS must not be used for IP literal " + host);
+    });
+
+    // Forms that the JDK reads as decimal but browsers read as octal or hex, or that only browsers accept
+    String[] ambiguous = {
+        "https://0177.0.0.1/token",            // JDK: 177.0.0.1, browser: 127.0.0.1
+        "https://012.0.0.1/token",             // JDK: 12.0.0.1, browser: 10.0.0.1
+        "https://0251.0376.0251.0376/token",   // browser: 169.254.169.254
+        "https://2130706433/token",            // browser: 127.0.0.1
+        "https://127.1/token",
+        "https://0x7f.0.0.1/token",
+        "https://1.2.3.0x4/token",
+        "https://1.2.3.256/token",
+        "https://[::ffff:0177.0.0.1]/token"
+    };
+    for (String url : ambiguous) {
+      try {
+        noDns.validate(url, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
+        Assert.fail("Expected rejection for ambiguous IP literal: " + url);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    // Disallowed literals are rejected even when DNS resolution is not required
+    for (String url : new String[] {"https://169.254.169.254/token", "https://10.0.0.1/token",
+        "https://[::ffff:169.254.169.254]/token", "https://[64:ff9b::a9fe:a9fe]/token"}) {
+      try {
+        noDns.validate(url, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
+        Assert.fail("Expected rejection for disallowed IP literal: " + url);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    // Canonical public literals are accepted and pinned without DNS
+    OAuthUrlValidator.ValidatedUrl v4 = noDns.validate("https://8.8.8.8/token", HostResolution.REQUIRE_RESOLVABLE,
+                                                       AllowedHosts.allowAll());
+    Assert.assertEquals("8.8.8.8", v4.getNormalizedHost());
+    Assert.assertEquals(ImmutableList.of(ipv4(8, 8, 8, 8)), v4.getResolvedAddresses());
+
+    OAuthUrlValidator.ValidatedUrl v6 = noDns.validate("https://[2001:4860:4860::8888]/token",
+                                                       HostResolution.REQUIRE_RESOLVABLE, AllowedHosts.allowAll());
+    Assert.assertEquals("2001:4860:4860:0:0:0:0:8888", v6.getNormalizedHost());
+    Assert.assertEquals(1, v6.getResolvedAddresses().size());
+  }
+
+  @Test
+  public void testLocalhostNamesAreRejectedWithoutDns() throws Exception {
+    OAuthUrlValidator unresolvable = OAuthUrlValidator.forTesting(true, false, host -> {
+      throw new UnknownHostException(host);
+    });
+    for (String url : new String[] {"https://localhost/token", "https://LOCALHOST./token",
+        "https://api.localhost/token"}) {
+      try {
+        unresolvable.validate(url, HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll());
+        Assert.fail("Expected rejection for loopback name: " + url);
+      } catch (IllegalArgumentException expected) {
+        Assert.assertTrue(expected.getMessage().contains("Loopback"));
+      }
+    }
+    // A hostname that only contains "localhost" as a label prefix is a normal DNS name
+    Assert.assertTrue(unresolvable.validate("https://localhost.example.invalid/token",
+                                            HostResolution.ALLOW_UNRESOLVED, AllowedHosts.allowAll())
+                          .getResolvedAddresses().isEmpty());
   }
 
   @Test
@@ -237,7 +321,13 @@ public class OAuthUrlValidatorTest {
     String[] invalidPatterns = {
         "*", "*.", "*.com", "*.*.salesforce.com", "foo*.salesforce.com", "a.*.salesforce.com",
         "https://oauth2.googleapis.com", "oauth2.googleapis.com/token", "oauth2.googleapis.com:443",
-        "user@oauth2.googleapis.com", "oauth2.googleapis.com..", ",,,"
+        "user@oauth2.googleapis.com", "oauth2.googleapis.com..", ",,,",
+        // host:port and unbracketed IPv6 are rejected instead of being stored as patterns that never match
+        "93.184.216.34:443", "dead.beef:443", "::::", "2001:db8::1",
+        // malformed bracketed IPv6
+        "[2001:db8::1", "2001:db8::1]", "[]", "[2001:db8::g]",
+        // ambiguous IPv4 forms
+        "0177.0.0.1", "127.1", "2130706433", "*.0.0.1"
     };
     for (String bad : invalidPatterns) {
       try {
@@ -246,6 +336,21 @@ public class OAuthUrlValidatorTest {
       } catch (IllegalArgumentException expected) {
         // expected
       }
+    }
+
+    // IPv6 entries are canonicalized, so any spelling of the same address matches
+    AllowedHosts ipv6Allowlist = AllowedHosts.parse("[2001:4860:4860::8888], 8.8.8.8");
+    OAuthUrlValidator noDns = OAuthUrlValidator.forTesting(true, false, host -> {
+      throw new AssertionError("DNS must not be used for IP literal " + host);
+    });
+    noDns.validate("https://[2001:4860:4860:0:0:0:0:8888]/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
+    noDns.validate("https://[2001:4860:4860::8888]/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
+    noDns.validate("https://8.8.8.8/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
+    try {
+      noDns.validate("https://[2001:4860:4860::8844]/token", HostResolution.REQUIRE_RESOLVABLE, ipv6Allowlist);
+      Assert.fail("Expected non-allowlisted IPv6 host to be rejected");
+    } catch (IllegalArgumentException expected) {
+      Assert.assertTrue(expected.getMessage().contains("allowlist"));
     }
 
     // Even when a host is explicitly in AllowedHosts, private/IMDS IPs are still blocked

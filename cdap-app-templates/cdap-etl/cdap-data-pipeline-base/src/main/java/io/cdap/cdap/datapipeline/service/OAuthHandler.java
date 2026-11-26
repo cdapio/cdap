@@ -138,9 +138,9 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     try {
       return OAuthUrlValidator.AllowedHosts.parse(configured);
     } catch (IllegalArgumentException e) {
-      LOG.error("Invalid configuration for {}{}: {}", OAUTH_CONF_PREFIX, ALLOWED_HOSTS, e.getMessage());
+      // respond() logs this 500 with its cause and returns a generic message to the caller.
       throw new OAuthServiceException(HttpURLConnection.HTTP_INTERNAL_ERROR,
-          "Invalid OAuth allowed hosts configuration", e);
+          "Invalid configuration for " + OAUTH_CONF_PREFIX + ALLOWED_HOSTS, e);
     }
   }
 
@@ -512,7 +512,7 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
     try {
       urlValidator.validate(identityUrl, OAuthUrlValidator.HostResolution.ALLOW_UNRESOLVED, getAllowedHosts());
       return identityUrl;
-    } catch (MalformedURLException | IllegalArgumentException | OAuthServiceException e) {
+    } catch (IOException | IllegalArgumentException | OAuthServiceException e) {
       LOG.warn("Ignoring invalid OAuth identity URL {} for provider {}: {}",
                identityUrl, oauthProvider.getName(), e.getMessage());
       return null;
@@ -567,9 +567,9 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
           .build();
       OAuthHttpClient.Response response = oauthHttpClient.execute(request, getAllowedHosts(), false);
       return response.getResponseCode() == HttpURLConnection.HTTP_OK;
-    } catch (Exception e) {
-      LOG.warn("Failed to validate access token via identity URL {}: {}",
-          identityUrl, e.getMessage());
+    } catch (IOException | IllegalArgumentException | OAuthServiceException e) {
+      LOG.warn("Failed to validate access token via identity URL {} for provider {}",
+          identityUrl, oauthProvider.getName(), e);
       return false;
     }
   }

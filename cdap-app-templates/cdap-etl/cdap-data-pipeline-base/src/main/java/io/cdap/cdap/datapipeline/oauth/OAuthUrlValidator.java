@@ -17,7 +17,10 @@
 package io.cdap.cdap.datapipeline.oauth;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -26,14 +29,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -45,6 +44,7 @@ public final class OAuthUrlValidator {
   private static final int HTTP_DEFAULT_PORT = 80;
   private static final int HTTPS_DEFAULT_PORT = 443;
   private static final Pattern HOST_LABEL_PATTERN = Pattern.compile("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$");
+  private static final Splitter COMMA_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
 
   private final boolean requireHttps;
   private final boolean allowLoopback;
@@ -96,36 +96,35 @@ public final class OAuthUrlValidator {
   public static final class ValidatedUrl {
     private final URL url;
     private final String normalizedHost;
-    private final String connectHost;
     private final int effectivePort;
-    private final List<InetAddress> resolvedAddresses;
+    private final ImmutableList<InetAddress> resolvedAddresses;
 
-    private ValidatedUrl(URL url, String normalizedHost, String connectHost, int effectivePort,
-                         List<InetAddress> resolvedAddresses) {
+    private ValidatedUrl(URL url, String normalizedHost, int effectivePort, List<InetAddress> resolvedAddresses) {
       this.url = url;
       this.normalizedHost = normalizedHost;
-      this.connectHost = connectHost;
       this.effectivePort = effectivePort;
-      this.resolvedAddresses = Collections.unmodifiableList(new ArrayList<>(resolvedAddresses));
+      this.resolvedAddresses = ImmutableList.copyOf(resolvedAddresses);
     }
 
     public URL getUrl() {
       return url;
     }
 
+    /**
+     * Returns the lowercase host without a trailing dot. IP literals are returned in canonical form.
+     */
     public String getNormalizedHost() {
       return normalizedHost;
-    }
-
-    public String getConnectHost() {
-      return connectHost;
     }
 
     public int getEffectivePort() {
       return effectivePort;
     }
 
-    public List<InetAddress> getResolvedAddresses() {
+    /**
+     * Returns the validated addresses to connect to. Empty only when DNS resolution was not required.
+     */
+    public ImmutableList<InetAddress> getResolvedAddresses() {
       return resolvedAddresses;
     }
   }
@@ -135,14 +134,15 @@ public final class OAuthUrlValidator {
    * When empty, all public HTTPS hosts are permitted (subject to IP and redirect checks).
    */
   public static final class AllowedHosts {
-    private static final AllowedHosts ALLOW_ALL =
-        new AllowedHosts(Collections.emptySet(), Collections.emptyList(), false);
+    private static final AllowedHosts ALLOW_ALL = new AllowedHosts(ImmutableSet.<String>of(),
+                                                                   ImmutableSet.<String>of(), false);
 
-    private final Set<String> exactHosts;
-    private final List<String> wildcardSuffixes;
+    private final ImmutableSet<String> exactHosts;
+    private final ImmutableSet<String> wildcardSuffixes;
     private final boolean restricted;
 
-    private AllowedHosts(Set<String> exactHosts, List<String> wildcardSuffixes, boolean restricted) {
+    private AllowedHosts(ImmutableSet<String> exactHosts, ImmutableSet<String> wildcardSuffixes,
+                         boolean restricted) {
       this.exactHosts = exactHosts;
       this.wildcardSuffixes = wildcardSuffixes;
       this.restricted = restricted;
@@ -156,58 +156,39 @@ public final class OAuthUrlValidator {
     }
 
     /**
-     * Parses a comma-separated list of exact hostnames or wildcard subdomains (e.g. {@code *.salesforce.com}).
+     * Parses a comma-separated list of exact hostnames, IPv4 addresses, bracketed IPv6 addresses, or
+     * wildcard subdomains (for example {@code *.salesforce.com}). Ports are not allowed.
      *
      * @throws IllegalArgumentException if any configured pattern is malformed or overly broad
      */
     public static AllowedHosts parse(@Nullable String rawConfig) {
-      if (rawConfig == null || rawConfig.trim().isEmpty()) {
+      if (Strings.nullToEmpty(rawConfig).trim().isEmpty()) {
         return ALLOW_ALL;
       }
-      Set<String> exact = new HashSet<>();
-      List<String> wildcards = new ArrayList<>();
-      for (String rawToken : rawConfig.split(",")) {
-        String token = rawToken.trim();
-        if (token.isEmpty()) {
-          continue;
-        }
-        String normalized = normalizeConfiguredPattern(token);
-        if (normalized.startsWith("*.")) {
-          String suffix = normalized.substring(2);
-          if (!suffix.contains(".") || !isValidDnsHostname(suffix)) {
-            throw new IllegalArgumentException(
-                "Invalid wildcard host pattern in OAuth allowlist: '" + token
-                    + "'. Expected '*.domain.tld' with at least two domain labels.");
-          }
-          wildcards.add("." + suffix);
-        } else {
-          if (normalized.contains("*")) {
-            throw new IllegalArgumentException(
-                "Invalid wildcard host pattern in OAuth allowlist: '" + token
-                    + "'. Wildcards are only supported as a leading '*.' prefix.");
-          }
-          if (!isValidExactHostPattern(normalized)) {
-            throw new IllegalArgumentException(
-                "Invalid host pattern in OAuth allowlist: '" + token + "'");
-          }
-          exact.add(normalized);
-        }
+      ImmutableSet.Builder<String> exact = ImmutableSet.builder();
+      ImmutableSet.Builder<String> wildcards = ImmutableSet.builder();
+      for (String token : COMMA_SPLITTER.split(rawConfig)) {
+        addHostPattern(token, exact, wildcards);
       }
-      if (exact.isEmpty() && wildcards.isEmpty()) {
+      ImmutableSet<String> exactHosts = exact.build();
+      ImmutableSet<String> wildcardSuffixes = wildcards.build();
+      if (exactHosts.isEmpty() && wildcardSuffixes.isEmpty()) {
         throw new IllegalArgumentException("OAuth allowed hosts configuration contains no valid host patterns");
       }
-      return new AllowedHosts(Collections.unmodifiableSet(exact), Collections.unmodifiableList(wildcards), true);
+      return new AllowedHosts(exactHosts, wildcardSuffixes, true);
     }
 
     public boolean isRestricted() {
       return restricted;
     }
 
+    /**
+     * Returns whether {@code normalizedHost} is permitted by this allowlist.
+     *
+     * @param normalizedHost host as returned by {@link ValidatedUrl#getNormalizedHost()}
+     */
     public boolean isAllowed(String normalizedHost) {
-      if (!restricted) {
-        return true;
-      }
-      if (exactHosts.contains(normalizedHost)) {
+      if (!restricted || exactHosts.contains(normalizedHost)) {
         return true;
       }
       for (String suffix : wildcardSuffixes) {
@@ -218,95 +199,80 @@ public final class OAuthUrlValidator {
       return false;
     }
 
-    private static String normalizeConfiguredPattern(String token) {
-      if (token.contains("://") || token.contains("/") || token.contains("@")
-          || token.contains("?") || token.contains("#") || token.contains("%")
-          || containsWhitespace(token)) {
-        throw new IllegalArgumentException(
-            "Invalid host pattern in OAuth allowlist (must be a bare hostname, not a URL): '" + token + "'");
+    private static void addHostPattern(String token, ImmutableSet.Builder<String> exact,
+                                       ImmutableSet.Builder<String> wildcards) {
+      String lower = token.toLowerCase(Locale.ROOT);
+      if (lower.contains("/") || lower.contains("@") || lower.contains("?") || lower.contains("#")
+          || lower.contains("%") || containsWhitespace(lower)) {
+        throw invalidPattern(token, "must be a bare hostname, not a URL");
       }
-      String unbracketed = stripIpv6Brackets(token);
-      if (token.startsWith("[") || token.endsWith("]")) {
-        if (!(token.startsWith("[") && token.endsWith("]")) || unbracketed.isEmpty()) {
-          throw new IllegalArgumentException("Invalid IPv6 host pattern in OAuth allowlist: '" + token + "'");
+      if (lower.startsWith("[")) {
+        if (!lower.endsWith("]") || lower.length() <= 2) {
+          throw invalidPattern(token, "malformed IPv6 address");
         }
+        exact.add(parseIpv6Literal(lower.substring(1, lower.length() - 1)).getHostAddress());
+        return;
       }
-      String lower = unbracketed.toLowerCase(Locale.ROOT);
-      if (lower.endsWith(".")) {
-        lower = lower.substring(0, lower.length() - 1);
+      if (lower.contains("]") || lower.contains(":")) {
+        throw invalidPattern(token, "ports are not allowed and IPv6 addresses must use [brackets]");
       }
-      if (lower.isEmpty() || lower.endsWith(".")) {
-        throw new IllegalArgumentException("Invalid host pattern in OAuth allowlist: '" + token + "'");
+      String host = lower.endsWith(".") ? lower.substring(0, lower.length() - 1) : lower;
+      if (host.startsWith("*.")) {
+        String suffix = host.substring(2);
+        if (!suffix.contains(".") || !isValidDnsHostname(suffix) || looksLikeIpv4(suffix)) {
+          throw invalidPattern(token, "expected '*.domain.tld' with at least two domain labels");
+        }
+        wildcards.add("." + suffix);
+        return;
       }
-      return lower;
+      if (host.contains("*")) {
+        throw invalidPattern(token, "wildcards are only supported as a leading '*.' prefix");
+      }
+      if (looksLikeIpv4(host)) {
+        byte[] ipv4 = tryParseStrictIpv4(host);
+        if (ipv4 == null) {
+          throw invalidPattern(token, "IPv4 addresses must use four decimal parts without leading zeros");
+        }
+        exact.add(host);
+        return;
+      }
+      if (!isValidDnsHostname(host)) {
+        throw invalidPattern(token, "not a valid hostname");
+      }
+      exact.add(host);
     }
 
-    private static boolean isValidExactHostPattern(String host) {
-      if (host.contains(":")) {
-        // IPv6 literal: allow hex digits, colons, and dots (for embedded IPv4 form)
-        for (int i = 0; i < host.length(); i++) {
-          char c = host.charAt(i);
-          boolean ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || c == ':' || c == '.';
-          if (!ok) {
-            return false;
-          }
-        }
-        return true;
-      }
-      return isValidDnsHostname(host);
-    }
-
-    private static boolean isValidDnsHostname(String host) {
-      if (host.isEmpty() || host.length() > 253 || host.startsWith(".") || host.endsWith(".")) {
-        return false;
-      }
-      String[] labels = host.split("\\.", -1);
-      for (String label : labels) {
-        if (!HOST_LABEL_PATTERN.matcher(label).matches()) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    private static boolean containsWhitespace(String value) {
-      for (int i = 0; i < value.length(); i++) {
-        if (Character.isWhitespace(value.charAt(i))) {
-          return true;
-        }
-      }
-      return false;
+    private static IllegalArgumentException invalidPattern(String token, String reason) {
+      return new IllegalArgumentException("Invalid host pattern in OAuth allowlist: '" + token + "' (" + reason + ")");
     }
   }
 
   /**
    * Validates the given URL against scheme, syntax, optional host allowlist, and resolved-IP rules.
    *
+   * <p>IP literals are always validated without DNS. Hostnames are resolved, and every resolved address
+   * must pass the IP rules.
+   *
    * @throws MalformedURLException if the URL cannot be parsed
+   * @throws UnknownHostException if {@code resolution} is {@link HostResolution#REQUIRE_RESOLVABLE} and the
+   *     hostname does not resolve. This is a transient infrastructure error, not invalid input.
    * @throws IllegalArgumentException if the URL violates security or allowlist policy
    */
   public ValidatedUrl validate(String rawUrl, HostResolution resolution, AllowedHosts allowedHosts)
-      throws MalformedURLException {
+      throws MalformedURLException, UnknownHostException {
     if (Strings.isNullOrEmpty(rawUrl)) {
       throw new IllegalArgumentException("OAuth URL must not be empty");
     }
     URL url = new URL(rawUrl);
-    URI uri;
-    try {
-      uri = url.toURI();
-    } catch (URISyntaxException e) {
-      throw new IllegalArgumentException("Invalid OAuth URL: " + rawUrl, e);
-    }
+    URI uri = toUri(url, rawUrl);
 
     String scheme = url.getProtocol().toLowerCase(Locale.ROOT);
-    if (requireHttps) {
-      if (!"https".equals(scheme)) {
-        throw new IllegalArgumentException("OAuth URL must use https scheme: " + scheme);
-      }
-    } else if (!"https".equals(scheme) && !"http".equals(scheme)) {
+    if (requireHttps && !"https".equals(scheme)) {
+      throw new IllegalArgumentException("OAuth URL must use https scheme: " + scheme);
+    }
+    if (!"https".equals(scheme) && !"http".equals(scheme)) {
       throw new IllegalArgumentException("Invalid OAuth URL scheme: " + scheme);
     }
-
     if (url.getUserInfo() != null || uri.getRawUserInfo() != null) {
       throw new IllegalArgumentException("OAuth URL must not contain userinfo");
     }
@@ -316,10 +282,8 @@ public final class OAuthUrlValidator {
         || rawHost.contains("%") || rawHost.contains("\\")) {
       throw new IllegalArgumentException("Invalid OAuth URL host: " + rawHost);
     }
-
-    String connectHost = stripIpv6Brackets(rawHost);
-    String normalizedHost = normalizeHost(connectHost);
-    if (normalizedHost == null) {
+    String host = normalizeHost(stripIpv6Brackets(rawHost));
+    if (host == null) {
       throw new IllegalArgumentException("Invalid OAuth URL host: " + rawHost);
     }
 
@@ -329,44 +293,27 @@ public final class OAuthUrlValidator {
     }
     int effectivePort = port != -1 ? port : ("https".equals(scheme) ? HTTPS_DEFAULT_PORT : HTTP_DEFAULT_PORT);
 
+    InetAddress literal = parseIpLiteral(host);
+    String normalizedHost = literal != null ? literal.getHostAddress() : host;
     if (!allowedHosts.isAllowed(normalizedHost)) {
       throw new IllegalArgumentException("OAuth URL host is not in the configured allowlist: " + normalizedHost);
     }
-
-    InetAddress[] resolved;
-    try {
-      resolved = dnsResolver.resolve(normalizedHost);
-    } catch (UnknownHostException e) {
-      if (resolution == HostResolution.REQUIRE_RESOLVABLE) {
-        throw new IllegalArgumentException("Unresolvable OAuth URL host: " + rawHost, e);
-      }
-      return new ValidatedUrl(url, normalizedHost, normalizedHost, effectivePort, Collections.emptyList());
+    if (literal != null) {
+      validateInetAddress(literal, allowLoopback);
+      return new ValidatedUrl(url, normalizedHost, effectivePort, ImmutableList.of(literal));
     }
-
-    if (resolved == null || resolved.length == 0) {
-      if (resolution == HostResolution.REQUIRE_RESOLVABLE) {
-        throw new IllegalArgumentException("Unresolvable OAuth URL host: " + rawHost);
-      }
-      return new ValidatedUrl(url, normalizedHost, normalizedHost, effectivePort, Collections.emptyList());
+    if (!allowLoopback && ("localhost".equals(host) || host.endsWith(".localhost"))) {
+      throw new IllegalArgumentException("Loopback OAuth URL host is not allowed: " + host);
     }
-
-    for (InetAddress address : resolved) {
-      validateInetAddress(address, allowLoopback);
-    }
-    return new ValidatedUrl(url, normalizedHost, normalizedHost, effectivePort, Arrays.asList(resolved));
+    return new ValidatedUrl(url, normalizedHost, effectivePort, resolveAndValidate(host, rawHost, resolution));
   }
 
   /**
-   * Checks whether two URLs share the same origin (scheme, normalized host stripping a single trailing dot,
-   * and effective port, with no userinfo).
+   * Checks whether two URLs share the same origin (scheme, normalized host, and effective port, with no
+   * userinfo). Delegates to {@link UrlOrigin} so credential reuse and identity URL checks share one rule.
    */
   public static boolean hasSameOrigin(@Nullable String firstUrl, @Nullable String secondUrl) {
-    if (Strings.isNullOrEmpty(firstUrl) || Strings.isNullOrEmpty(secondUrl)) {
-      return false;
-    }
-    String firstOrigin = extractNormalizedOrigin(firstUrl);
-    String secondOrigin = extractNormalizedOrigin(secondUrl);
-    return firstOrigin != null && firstOrigin.equals(secondOrigin);
+    return UrlOrigin.hasSameOrigin(firstUrl, secondUrl);
   }
 
   /**
@@ -402,37 +349,180 @@ public final class OAuthUrlValidator {
     }
   }
 
-  private static void validateEmbeddedIpv4Addresses(InetAddress address, byte[] b, boolean allowLoopback) {
+  private List<InetAddress> resolveAndValidate(String host, String rawHost, HostResolution resolution)
+      throws UnknownHostException {
+    InetAddress[] resolved;
+    try {
+      resolved = dnsResolver.resolve(host);
+    } catch (UnknownHostException e) {
+      if (resolution == HostResolution.REQUIRE_RESOLVABLE) {
+        throw e;
+      }
+      return ImmutableList.of();
+    }
+    if (resolved == null || resolved.length == 0) {
+      if (resolution == HostResolution.REQUIRE_RESOLVABLE) {
+        throw new UnknownHostException("Unresolvable OAuth URL host: " + rawHost);
+      }
+      return ImmutableList.of();
+    }
+    for (InetAddress address : resolved) {
+      validateInetAddress(address, allowLoopback);
+    }
+    return Arrays.asList(resolved);
+  }
+
+  private static URI toUri(URL url, String rawUrl) {
+    try {
+      return url.toURI();
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException("Invalid OAuth URL: " + rawUrl, e);
+    }
+  }
+
+  /**
+   * Returns the address for an IP literal host, or {@code null} for a DNS hostname.
+   *
+   * <p>A host whose last label is numeric is treated as IPv4, the same way browsers do. It must then be
+   * four decimal parts without leading zeros. Otherwise the JDK (decimal) and browsers (octal or hex) read
+   * forms such as {@code 0177.0.0.1} or {@code 2130706433} as different addresses.
+   */
+  @Nullable
+  private static InetAddress parseIpLiteral(String host) {
+    if (host.indexOf(':') >= 0) {
+      return parseIpv6Literal(host);
+    }
+    if (!looksLikeIpv4(host)) {
+      return null;
+    }
+    byte[] ipv4 = tryParseStrictIpv4(host);
+    if (ipv4 == null) {
+      throw new IllegalArgumentException(
+          "OAuth URL IPv4 host must use four decimal parts without leading zeros: " + host);
+    }
+    try {
+      return InetAddress.getByAddress(ipv4);
+    } catch (UnknownHostException e) {
+      throw new IllegalArgumentException("Invalid OAuth URL IPv4 host: " + host, e);
+    }
+  }
+
+  /**
+   * Parses an unbracketed IPv6 literal without DNS. An embedded dotted IPv4 suffix must be strict decimal.
+   */
+  private static InetAddress parseIpv6Literal(String host) {
+    int lastColon = host.lastIndexOf(':');
+    if (host.indexOf('.', lastColon + 1) >= 0 && tryParseStrictIpv4(host.substring(lastColon + 1)) == null) {
+      throw new IllegalArgumentException("Invalid IPv6 address: " + host);
+    }
+    try {
+      // Brackets make the JDK parse the text as an IPv6 literal and never fall back to DNS.
+      return InetAddress.getByName("[" + host + "]");
+    } catch (UnknownHostException e) {
+      throw new IllegalArgumentException("Invalid IPv6 address: " + host, e);
+    }
+  }
+
+  /**
+   * Returns whether the last label of {@code host} is a number (decimal digits or 0x hex), which makes
+   * browsers parse the whole host as an IPv4 address.
+   */
+  private static boolean looksLikeIpv4(String host) {
+    String last = host.substring(host.lastIndexOf('.') + 1);
+    if (last.isEmpty()) {
+      return false;
+    }
+    if (last.startsWith("0x")) {
+      return true;
+    }
+    for (int i = 0; i < last.length(); i++) {
+      if (last.charAt(i) < '0' || last.charAt(i) > '9') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Nullable
+  private static byte[] tryParseStrictIpv4(String host) {
+    String[] parts = host.split("\\.", -1);
+    if (parts.length != 4) {
+      return null;
+    }
+    byte[] bytes = new byte[4];
+    for (int i = 0; i < 4; i++) {
+      String part = parts[i];
+      if (part.isEmpty() || part.length() > 3 || (part.length() > 1 && part.charAt(0) == '0')) {
+        return null;
+      }
+      int value = 0;
+      for (int j = 0; j < part.length(); j++) {
+        char c = part.charAt(j);
+        if (c < '0' || c > '9') {
+          return null;
+        }
+        value = value * 10 + (c - '0');
+      }
+      if (value > 255) {
+        return null;
+      }
+      bytes[i] = (byte) value;
+    }
+    return bytes;
+  }
+
+  private static boolean isValidDnsHostname(String host) {
+    if (host.isEmpty() || host.length() > 253 || host.startsWith(".") || host.endsWith(".")) {
+      return false;
+    }
+    for (String label : host.split("\\.", -1)) {
+      if (!HOST_LABEL_PATTERN.matcher(label).matches()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean containsWhitespace(String value) {
+    for (int i = 0; i < value.length(); i++) {
+      if (Character.isWhitespace(value.charAt(i))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static void validateEmbeddedIpv4Addresses(InetAddress address, byte[] bytes, boolean allowLoopback) {
     // IPv4-mapped (::ffff:0:0/96), IPv4-translated / SIIT (::ffff:0:0:0/96),
     // well-known NAT64 (64:ff9b::/96), or IPv4-compatible (::x.x.x.x/96, excluding :: and ::1)
-    boolean isMapped = isZeroRange(b, 0, 10) && b[10] == (byte) 0xFF && b[11] == (byte) 0xFF;
-    boolean isTranslated = isZeroRange(b, 0, 8) && b[8] == (byte) 0xFF && b[9] == (byte) 0xFF
-        && b[10] == 0 && b[11] == 0;
-    boolean isWellKnownNat64 = b[0] == 0 && b[1] == 0x64 && b[2] == (byte) 0xFF && b[3] == (byte) 0x9B
-        && isZeroRange(b, 4, 12);
-    boolean isIpv4Compatible = isZeroRange(b, 0, 12)
+    boolean isMapped = isZeroRange(bytes, 0, 10) && bytes[10] == (byte) 0xFF && bytes[11] == (byte) 0xFF;
+    boolean isTranslated = isZeroRange(bytes, 0, 8) && bytes[8] == (byte) 0xFF && bytes[9] == (byte) 0xFF
+        && bytes[10] == 0 && bytes[11] == 0;
+    boolean isWellKnownNat64 = bytes[0] == 0 && bytes[1] == 0x64 && bytes[2] == (byte) 0xFF
+        && bytes[3] == (byte) 0x9B && isZeroRange(bytes, 4, 12);
+    boolean isIpv4Compatible = isZeroRange(bytes, 0, 12)
         && !address.isLoopbackAddress() && !address.isAnyLocalAddress();
     if (isMapped || isTranslated || isWellKnownNat64 || isIpv4Compatible) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(b, 12, 16), allowLoopback);
+      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 12, 16), allowLoopback);
     }
 
     // 6to4 (2002::/16): embedded IPv4 in bytes 2..5
-    if (b[0] == 0x20 && b[1] == 0x02) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(b, 2, 6), allowLoopback);
+    if (bytes[0] == 0x20 && bytes[1] == 0x02) {
+      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 2, 6), allowLoopback);
     }
 
     // Teredo (2001:0000::/32): server IPv4 in bytes 4..7 and bitwise-inverted client IPv4 in bytes 12..15
-    if (b[0] == 0x20 && b[1] == 0x01 && b[2] == 0 && b[3] == 0) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(b, 4, 8), allowLoopback);
+    if (bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0 && bytes[3] == 0) {
+      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 4, 8), allowLoopback);
       byte[] clientIpv4 = new byte[] {
-          (byte) ~b[12], (byte) ~b[13], (byte) ~b[14], (byte) ~b[15]
+          (byte) ~bytes[12], (byte) ~bytes[13], (byte) ~bytes[14], (byte) ~bytes[15]
       };
       validateEmbeddedIpv4Bytes(clientIpv4, allowLoopback);
     }
 
     // ISATAP (RFC 5214): interface identifier 0000:5efe:w.x.y.z or 0200:5efe:w.x.y.z
-    if ((b[8] & 0xFC) == 0 && b[9] == 0 && b[10] == 0x5E && b[11] == (byte) 0xFE) {
-      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(b, 12, 16), allowLoopback);
+    if ((bytes[8] & 0xFC) == 0 && bytes[9] == 0 && bytes[10] == 0x5E && bytes[11] == (byte) 0xFE) {
+      validateEmbeddedIpv4Bytes(Arrays.copyOfRange(bytes, 12, 16), allowLoopback);
     }
   }
 
@@ -470,37 +560,5 @@ public final class OAuthUrlValidator {
       return null;
     }
     return normalized.toLowerCase(Locale.ROOT);
-  }
-
-  @Nullable
-  private static String extractNormalizedOrigin(String rawUrl) {
-    URI uri;
-    try {
-      uri = URI.create(rawUrl);
-    } catch (IllegalArgumentException e) {
-      return null;
-    }
-    if (uri.getRawUserInfo() != null) {
-      return null;
-    }
-    String rawScheme = uri.getScheme();
-    String rawHost = uri.getHost();
-    if (rawScheme == null || rawHost == null || rawHost.contains("%")) {
-      return null;
-    }
-    String scheme = rawScheme.toLowerCase(Locale.ROOT);
-    String host = normalizeHost(stripIpv6Brackets(rawHost));
-    if (host == null) {
-      return null;
-    }
-    int port = uri.getPort();
-    if (port == -1) {
-      if ("http".equals(scheme)) {
-        port = HTTP_DEFAULT_PORT;
-      } else if ("https".equals(scheme)) {
-        port = HTTPS_DEFAULT_PORT;
-      }
-    }
-    return scheme + "://" + host + ":" + port;
   }
 }
