@@ -71,14 +71,17 @@ import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -144,7 +147,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
       contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, new NamespaceId(namespace),
                                             StandardPermission.LIST);
-      responder.sendJson(store.listConnections(namespaceSummary));
+      List<Connection> connections = store.listConnections(namespaceSummary).stream()
+        .map(conn -> redactPropertiesIfUnauthorizedToUse(namespace, conn))
+        .collect(Collectors.toList());
+      responder.sendJson(connections);
     });
   }
 
@@ -172,7 +178,7 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                                     Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
                                                     conn.getConnectionType()));
       child.count(Constants.Metrics.Connection.CONNECTION_GET_COUNT, 1);
-      responder.sendJson(conn);
+      responder.sendJson(redactPropertiesIfUnauthorizedToUse(namespace, conn));
     });
   }
 
@@ -526,6 +532,24 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                  .setFunctionWhitelist(evaluators.keySet())
                                  .build();
     return ConnectionUtils.getConnector(configurer, pluginInfo, pluginSelector, macroEvaluator, options);
+  }
+
+  private Connection redactPropertiesIfUnauthorizedToUse(String namespace, Connection conn) {
+    try {
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, conn.getConnectionId()),
+                                    StandardPermission.USE);
+      return conn;
+    } catch (UnauthorizedException e) {
+      PluginInfo plugin = conn.getPlugin();
+      if (plugin == null || plugin.getProperties() == null || plugin.getProperties().isEmpty()) {
+        return conn;
+      }
+      PluginInfo redactedPlugin = new PluginInfo(plugin.getName(), plugin.getType(), plugin.getCategory(),
+                                                 Collections.emptyMap(), plugin.getArtifact());
+      return new Connection(conn.getName(), conn.getConnectionId(), conn.getConnectionType(),
+                            conn.getDescription(), conn.isPreConfigured(), conn.isDefault(),
+                            conn.getCreatedTimeMillis(), conn.getUpdatedTimeMillis(), redactedPlugin);
+    }
   }
 
   private void checkPutConnectionPermissions(ConnectionId connectionId) {
