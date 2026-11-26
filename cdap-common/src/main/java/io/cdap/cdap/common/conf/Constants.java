@@ -574,6 +574,9 @@ public final class Constants {
     public static final String PORT = "task.worker.manager.bind.port";
     public static final String BOSS_THREADS = "task.worker.manager.boss.threads";
     public static final String WORKER_THREADS = "task.worker.manager.worker.threads";
+    // Upper bound on the connect timeout of App Fabric's calls to the manager.
+    public static final String CLIENT_CONNECT_TIMEOUT_MS =
+        "task.worker.manager.client.connect.timeout.ms";
 
     // Answered by the manager itself; the launcher uses it as the readiness probe.
     public static final String PING_PATH = "/ping";

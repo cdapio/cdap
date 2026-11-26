@@ -5694,6 +5694,15 @@
   </property>
 
   <property>
+    <name>task.worker.manager.client.connect.timeout.ms</name>
+    <value>5000</value>
+    <description>
+      The maximum time in milliseconds a client waits to connect to the task worker manager
+      before retrying. Applies only when the task worker manager is enabled.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.internal.router.enabled</name>
     <value>false</value>
     <description>
