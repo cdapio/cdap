@@ -37,6 +37,7 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
+import io.kubernetes.client.openapi.models.RbacV1SubjectBuilder;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBindingBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
@@ -55,7 +56,6 @@ import io.kubernetes.client.openapi.models.V1RoleRefBuilder;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1StatefulSet;
-import io.kubernetes.client.openapi.models.V1SubjectBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -374,7 +374,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    */
   private void findOrCreateKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     try {
-      V1Namespace existingNamespace = coreV1Api.readNamespace(namespace, null);
+      V1Namespace existingNamespace = coreV1Api.readNamespace(namespace).execute();
       if (existingNamespace.getMetadata() == null) {
         throw new IOException(
             String.format("Kubernetes namespace %s exists but was not created by CDAP", namespace));
@@ -400,7 +400,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     namespaceObject.setMetadata(
         new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     try {
-      coreV1Api.createNamespace(namespaceObject, null, null, null, null);
+      coreV1Api.createNamespace(namespaceObject).execute();
       LOG.debug("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
     } catch (ApiException e) {
       try {
@@ -442,8 +442,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
     try {
       V1ResourceQuota existingResourceQuota = coreV1Api.readNamespacedResourceQuota(
-          RESOURCE_QUOTA_NAME, namespace,
-          null);
+          RESOURCE_QUOTA_NAME, namespace).execute();
       if (existingResourceQuota.getMetadata() == null) {
         throw new IOException(
             String.format("%s exists but was not created by CDAP", RESOURCE_QUOTA_NAME));
@@ -454,8 +453,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
             RESOURCE_QUOTA_NAME, cdapNamespace));
       }
       if (!hardLimitMap.equals(existingResourceQuota.getSpec().getHard())) {
-        coreV1Api.replaceNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace, resourceQuota,
-            null, null, null, null);
+        coreV1Api.replaceNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace, resourceQuota)
+            .execute();
       }
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
@@ -470,7 +469,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private void createKubeResourceQuota(String namespace, V1ResourceQuota resourceQuota)
       throws Exception {
     try {
-      coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null, null);
+      coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota).execute();
       LOG.debug("Created resource quota for Kubernetes namespace {}", namespace);
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
@@ -487,15 +486,14 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       for (V1Volume volume : podInfo.getVolumes()) {
         if (volume.getSecret() != null) {
           String secretName = volume.getSecret().getSecretName();
-          V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName,
-              podInfo.getNamespace(),
-              null);
+          V1Secret existingSecret = coreV1Api.readNamespacedSecret(
+              secretName, podInfo.getNamespace()).execute();
           V1Secret secret = new V1Secret().data(existingSecret.getData())
               .type(existingSecret.getType())
               .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL,
                   cdapNamespace));
           try {
-            coreV1Api.createNamespacedSecret(namespace, secret, null, null, null, null);
+            coreV1Api.createNamespacedSecret(namespace, secret).execute();
           } catch (ApiException e) {
             if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
               throw e;
@@ -551,7 +549,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         .metadata(new V1ObjectMeta().name(serviceAccountName)
             .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     try {
-      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null, null);
+      coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount).execute();
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
@@ -577,13 +575,12 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
             .withApiGroup(RBAC_V1_API_GROUP)
             .withKind(roleKind)
             .withName(roleName).build())
-        .withSubjects(new V1SubjectBuilder()
+        .withSubjects(new RbacV1SubjectBuilder()
             .withKind(SERVICE_ACCOUNT_KIND)
             .withName(serviceAccountName).build())
         .build();
     try {
-      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null,
-          null, null);
+      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding).execute();
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
@@ -610,13 +607,13 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
             .withApiGroup(RBAC_V1_API_GROUP)
             .withKind(CLUSTER_ROLE_KIND)
             .withName(roleName).build())
-        .withSubjects(new V1SubjectBuilder()
+        .withSubjects(new RbacV1SubjectBuilder()
             .withKind(SERVICE_ACCOUNT_KIND)
             .withNamespace(serviceAccountNamespace)
             .withName(serviceAccountName).build())
         .build();
     try {
-      rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding, null, null, null, null);
+      rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding).execute();
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
@@ -636,14 +633,17 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    */
   private void deleteKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     try {
-      V1Namespace namespaceObject = coreV1Api.readNamespace(namespace, null);
+      V1Namespace namespaceObject = coreV1Api.readNamespace(namespace).execute();
       if (namespaceObject.getMetadata() != null) {
         Map<String, String> namespaceLabels = namespaceObject.getMetadata().getLabels();
-        if (namespaceLabels != null && namespaceLabels.get(CDAP_NAMESPACE_LABEL)
-            .equals(cdapNamespace)) {
+        if (namespaceLabels != null
+            && cdapNamespace.equals(namespaceLabels.get(CDAP_NAMESPACE_LABEL))) {
           // PropagationPolicy is set to background cascading deletion. Kubernetes deletes the owner object immediately
           // and the controller cleans up the dependent objects in the background.
-          coreV1Api.deleteNamespace(namespace, null, null, 0, null, "Background", null);
+          coreV1Api.deleteNamespace(namespace)
+              .gracePeriodSeconds(0)
+              .propagationPolicy("Background")
+              .execute();
           LOG.info("Deleted Kubernetes namespace and associated resources for {}", namespace);
           return;
         }
@@ -890,9 +890,9 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
         // Make sure at least one pod launched from the job is in active state.
         // https://github.com/kubernetes-client/java/blob/master/kubernetes/docs/V1JobStatus.md
-        V1PodList podList = coreV1Api.listNamespacedPod(job.getMetadata().getNamespace(), null,
-            null, null, null,
-            labelSelector, null, null, null, null, null);
+        V1PodList podList = coreV1Api.listNamespacedPod(job.getMetadata().getNamespace())
+            .labelSelector(labelSelector)
+            .execute();
 
         for (V1Pod pod : podList.getItems()) {
           if (pod.getStatus() != null && pod.getStatus().getPhase() != null

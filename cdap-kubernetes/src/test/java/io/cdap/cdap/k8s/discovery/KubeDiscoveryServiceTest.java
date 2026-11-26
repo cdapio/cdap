@@ -18,8 +18,10 @@ package io.cdap.cdap.k8s.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.sun.net.httpserver.HttpServer;
 import io.cdap.cdap.master.environment.k8s.ApiClientFactory;
 import io.cdap.cdap.master.environment.k8s.DefaultApiClientFactory;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1LoadBalancerIngressBuilder;
@@ -35,6 +37,7 @@ import io.kubernetes.client.openapi.models.V1ServiceSpec;
 import io.kubernetes.client.openapi.models.V1ServiceSpecBuilder;
 import io.kubernetes.client.openapi.models.V1ServiceStatus;
 import io.kubernetes.client.openapi.models.V1ServiceStatusBuilder;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -46,8 +49,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.twill.discovery.Discoverable;
@@ -209,10 +214,12 @@ public class KubeDiscoveryServiceTest {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-test-service", namespace, null,
-          null, null, null, null, deleteOptions);
-      api.deleteNamespacedService("cdap-test-test-service2", namespace, null,
-          null, null, null, null, deleteOptions);
+      api.deleteNamespacedService("cdap-test-test-service", namespace)
+          .body(deleteOptions)
+          .execute();
+      api.deleteNamespacedService("cdap-test-test-service2", namespace)
+          .body(deleteOptions)
+          .execute();
     }
   }
 
@@ -257,10 +264,12 @@ public class KubeDiscoveryServiceTest {
     } finally {
       CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService(prefix + "test1", namespace, null, null, null,
-          null, null, deleteOptions);
-      api.deleteNamespacedService(prefix + "test2", namespace, null, null, null,
-          null, null, deleteOptions);
+      api.deleteNamespacedService(prefix + "test1", namespace)
+          .body(deleteOptions)
+          .execute();
+      api.deleteNamespacedService(prefix + "test2", namespace)
+          .body(deleteOptions)
+          .execute();
     }
   }
 
@@ -306,10 +315,12 @@ public class KubeDiscoveryServiceTest {
     } finally {
       CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService(prefix + "test1", namespace, null, null, null,
-          null, null, deleteOptions);
-      api.deleteNamespacedService(prefix + "test2", namespace, null, null, null,
-          null, null, deleteOptions);
+      api.deleteNamespacedService(prefix + "test1", namespace)
+          .body(deleteOptions)
+          .execute();
+      api.deleteNamespacedService(prefix + "test2", namespace)
+          .body(deleteOptions)
+          .execute();
     }
   }
 
@@ -587,5 +598,64 @@ public class KubeDiscoveryServiceTest {
         .withMetadata(metadata)
         .withSpec(spec)
         .build();
+  }
+
+  @Test
+  public void testRegisterCreatesUpdatesAndChecksTerminatingPod() throws Exception {
+    List<String> requests = new CopyOnWriteArrayList<>();
+    AtomicInteger listCount = new AtomicInteger();
+    AtomicInteger podCount = new AtomicInteger();
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    try {
+      server.createContext("/", exchange -> {
+        String method = exchange.getRequestMethod();
+        String path = exchange.getRequestURI().getPath();
+        requests.add(method + " " + path);
+        String json = "{}";
+        if ("GET".equals(method) && path.endsWith("/services")) {
+          if (listCount.incrementAndGet() == 2) {
+            json = "{\"items\":[{\"metadata\":{\"name\":\"cdap-my-service\","
+                + "\"labels\":{\"cdap.service\":\"cdap-my-service\"}},"
+                + "\"spec\":{\"type\":\"ClusterIP\",\"ports\":[{\"port\":80}]}}]}";
+          } else {
+            json = "{\"items\":[]}";
+          }
+        } else if ("GET".equals(method) && path.endsWith("/pods/test-pod")) {
+          if (podCount.incrementAndGet() >= 3) {
+            json = "{\"metadata\":{\"name\":\"test-pod\",\"deletionTimestamp\":\"2026-01-01T00:00:00Z\"}}";
+          } else {
+            json = "{\"metadata\":{\"name\":\"test-pod\"}}";
+          }
+        }
+        byte[] body = json.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(200, body.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+          os.write(body);
+        }
+      });
+      server.start();
+
+      ApiClient client = new ApiClient()
+          .setBasePath("http://127.0.0.1:" + server.getAddress().getPort());
+      KubeDiscoveryService service = new KubeDiscoveryService(
+          "cdap-namespace", NAME_PREFIX, "test-pod", POD_LABELS,
+          Collections.singletonList(OWNER_REFERENCE), () -> client,
+          Collections.emptyList(), Collections.emptyMap());
+
+      service.register(new Discoverable(CLUSTER_IP_SERVICE_NAME,
+          InetSocketAddress.createUnresolved("127.0.0.1", 80)));
+      service.register(new Discoverable(CLUSTER_IP_SERVICE_NAME,
+          InetSocketAddress.createUnresolved("127.0.0.1", 81)));
+      service.register(new Discoverable(CLUSTER_IP_SERVICE_NAME,
+          InetSocketAddress.createUnresolved("127.0.0.1", 82)));
+
+      Assert.assertTrue(requests.contains("GET /api/v1/namespaces/cdap-namespace/services"));
+      Assert.assertTrue(requests.contains("POST /api/v1/namespaces/cdap-namespace/services"));
+      Assert.assertTrue(requests.contains("PUT /api/v1/namespaces/cdap-namespace/services/cdap-my-service"));
+      Assert.assertTrue(requests.contains("GET /api/v1/namespaces/cdap-namespace/pods/test-pod"));
+    } finally {
+      server.stop(0);
+    }
   }
 }

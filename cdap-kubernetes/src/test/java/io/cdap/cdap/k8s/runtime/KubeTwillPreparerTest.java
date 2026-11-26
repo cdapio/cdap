@@ -17,11 +17,16 @@
 package io.cdap.cdap.k8s.runtime;
 
 import static io.cdap.cdap.k8s.runtime.KubeTwillPreparer.filterAndRemoveKeyPrefix;
+import static org.mockito.Mockito.mock;
 
+import com.sun.net.httpserver.HttpServer;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.Completable;
+import io.cdap.cdap.master.spi.twill.StatefulDisk;
+import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
@@ -29,11 +34,18 @@ import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1Volume;
+import java.io.File;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import org.apache.twill.api.AbstractTwillRunnable;
 import org.apache.twill.api.Configs;
@@ -42,17 +54,23 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.DefaultResourceSpecification;
 import org.apache.twill.internal.DefaultRuntimeSpecification;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Tests for {@link KubeTwillPreparer}.
  */
 public class KubeTwillPreparerTest {
+
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private MasterEnvironmentContext createMasterEnvironmentContext() {
     return new MasterEnvironmentContext() {
@@ -210,7 +228,7 @@ public class KubeTwillPreparerTest {
     preparer.withConfiguration(config);
 
     V1ObjectMeta objectMeta = preparer.createResourceMetadata(V1Job.class, "runnable", 0, true);
-    Assert.assertNull(objectMeta.getOwnerReferences());
+    Assert.assertTrue(objectMeta.getOwnerReferences().isEmpty());
   }
 
   @Test
@@ -448,6 +466,98 @@ public class KubeTwillPreparerTest {
     @Override
     public void run() {
 
+    }
+  }
+
+  @Completable
+  public static class CompletableJobRunnable extends AbstractTwillRunnable {
+    @Override
+    public void run() {
+
+    }
+  }
+
+  @Test
+  public void testStartCreatesJobDeploymentStatefulSetAndConfigMap() throws Exception {
+    File confFile = temporaryFolder.newFile("cConf.xml");
+    Files.write(confFile.toPath(), "<configuration/>".getBytes(StandardCharsets.UTF_8));
+    List<String> requests = new CopyOnWriteArrayList<>();
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    try {
+      server.createContext("/", exchange -> {
+        String path = exchange.getRequestURI().getPath();
+        requests.add(exchange.getRequestMethod() + " " + path);
+        byte[] reqBytes = exchange.getRequestBody().readAllBytes();
+        byte[] body;
+        if (path.endsWith("/jobs")) {
+          body = ("{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\","
+              + "\"metadata\":{\"name\":\"res-name\",\"uid\":\"uid-1\",\"namespace\":\"default\"}}")
+              .getBytes(StandardCharsets.UTF_8);
+        } else if (path.endsWith("/configmaps")) {
+          body = "{}".getBytes(StandardCharsets.UTF_8);
+        } else {
+          body = reqBytes.length > 0 ? reqBytes : "{}".getBytes(StandardCharsets.UTF_8);
+        }
+        exchange.getResponseHeaders().add("Content-Type", "application/json");
+        exchange.sendResponseHeaders(200, body.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+          os.write(body);
+        }
+      });
+      server.start();
+
+      ApiClient apiClient = new ApiClient()
+          .setBasePath("http://127.0.0.1:" + server.getAddress().getPort());
+      LocationFactory locFactory = new LocalLocationFactory(temporaryFolder.newFolder("locs"));
+      KubeTwillControllerFactory ctrlFactory = (t, m, timeout, unit) -> mock(KubeTwillController.class);
+
+      // 1. Job + ConfigMap
+      TwillSpecification jobSpec = TwillSpecification.Builder.with()
+          .setName("jobapp")
+          .withRunnable()
+          .add(new CompletableJobRunnable(), createResourceSpecification())
+          .withLocalFiles().add("cConf.xml", confFile.toURI()).apply()
+          .anyOrder().build();
+      Location jobLoc = locFactory.create("job");
+      jobLoc.mkdirs();
+      KubeTwillPreparer jobPreparer = new KubeTwillPreparer(
+          createMasterEnvironmentContext(), apiClient, "default", createPodInfo(), jobSpec,
+          createRunId("run-1"), jobLoc, "cdap-", Collections.emptyMap(), ctrlFactory);
+      jobPreparer.withConfiguration(
+          Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+      jobPreparer.setShouldLocalizeConfigurationAsConfigmap(true);
+      jobPreparer.start();
+
+      // 2. Deployment
+      TwillSpecification depSpec = TwillSpecification.Builder.with()
+          .setName("depapp")
+          .withRunnable()
+          .add(new MainRunnable(), createResourceSpecification())
+          .noLocalFiles()
+          .anyOrder().build();
+      Location depLoc = locFactory.create("dep");
+      depLoc.mkdirs();
+      KubeTwillPreparer depPreparer = new KubeTwillPreparer(
+          createMasterEnvironmentContext(), apiClient, "default", createPodInfo(), depSpec,
+          createRunId("run-2"), depLoc, "cdap-", Collections.emptyMap(), ctrlFactory);
+      depPreparer.start();
+
+      // 3. StatefulSet with StatefulDisk (exercises V1VolumeResourceRequirements)
+      Location stsLoc = locFactory.create("sts");
+      stsLoc.mkdirs();
+      KubeTwillPreparer stsPreparer = new KubeTwillPreparer(
+          createMasterEnvironmentContext(), apiClient, "default", createPodInfo(), depSpec,
+          createRunId("run-3"), stsLoc, "cdap-", Collections.emptyMap(), ctrlFactory);
+      stsPreparer.withStatefulRunnable(MainRunnable.class.getSimpleName(), false,
+          new StatefulDisk("disk1", 10, "/data"));
+      stsPreparer.start();
+
+      Assert.assertTrue(requests.contains("POST /apis/batch/v1/namespaces/default/jobs"));
+      Assert.assertTrue(requests.contains("POST /api/v1/namespaces/default/configmaps"));
+      Assert.assertTrue(requests.contains("POST /apis/apps/v1/namespaces/default/deployments"));
+      Assert.assertTrue(requests.contains("POST /apis/apps/v1/namespaces/default/statefulsets"));
+    } finally {
+      server.stop(0);
     }
   }
 }

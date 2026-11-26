@@ -89,7 +89,7 @@ public class KubernetesNamespaceCreation implements CdfHelper {
   @Then("Verify Kubernetes namespace {string} exists")
   public static void verifyKubeNamespaceExists(String namespace) throws IOException {
     try {
-      coreV1Api.readNamespace(namespace, null);
+      coreV1Api.readNamespace(namespace).execute();
     } catch (ApiException e) {
       throw new IOException("Error occurred while checking for Kubernetes namespace. Error code = "
                               + e.getCode() + ", Body = " + e.getResponseBody(), e);
@@ -97,12 +97,13 @@ public class KubernetesNamespaceCreation implements CdfHelper {
   }
 
   @Then("Verify CPU limit {string} and memory limit {string} exists for {string}")
-  public static void verifyResourceLimits(String cpuLimit, String memLimit, String namespace) throws IOException {
-    Map<String, Quantity> hardLimitMap = ImmutableMap.of("limits.cpu", new Quantity(cpuLimit), "limits.memory",
-                                                         new Quantity(memLimit));
+  public static void verifyResourceLimits(String cpuLimit, String memLimit, String namespace)
+      throws IOException {
+    Map<String, Quantity> hardLimitMap = ImmutableMap.of(
+        "limits.cpu", new Quantity(cpuLimit), "limits.memory", new Quantity(memLimit));
     try {
-      V1ResourceQuota resourceQuota = coreV1Api.readNamespacedResourceQuota(KubeTwillRunnerService.RESOURCE_QUOTA_NAME,
-                                                                            namespace, null);
+      V1ResourceQuota resourceQuota = coreV1Api.readNamespacedResourceQuota(
+          KubeTwillRunnerService.RESOURCE_QUOTA_NAME, namespace).execute();
       if (resourceQuota.getSpec() == null) {
         throw new IOException("Resource quota not created");
       } else if (!hardLimitMap.equals(resourceQuota.getSpec().getHard())) {

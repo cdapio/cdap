@@ -53,6 +53,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.SystemReader;
 import org.junit.Assert;
 import org.junit.Before;
@@ -296,6 +297,15 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       Assert.assertEquals(manager.getFileHash(path, commit.getName()),
           getGitStyleHash(contents));
     }
+  }
+
+  @Test
+  public void testXdgConfigDirectoryHidden() throws IOException {
+    FS fs = FS.DETECTED.newInstance();
+    fs.setUserHome(baseTempFolder.newFolder("home"));
+    SecureSystemReader secureSystemReader = (SecureSystemReader) SystemReader.getInstance();
+    Assert.assertNotNull(secureSystemReader.getDelegate().getXdgConfigDirectory(fs));
+    Assert.assertNull(secureSystemReader.getXdgConfigDirectory(fs));
   }
 
   @Test

@@ -85,8 +85,9 @@ public class AbstractWatcherThreadTest {
 
   @After
   public void cleanup() throws ApiException {
-    new CoreV1Api(apiClient).deleteCollectionNamespacedConfigMap(namespace, null, null, null, null, null, LABEL_KEY,
-                                                                 null, null, null, null, null, null, null);
+    new CoreV1Api(apiClient).deleteCollectionNamespacedConfigMap(namespace)
+        .labelSelector(LABEL_KEY)
+        .execute();
   }
 
   @Test
@@ -120,7 +121,8 @@ public class AbstractWatcherThreadTest {
     CoreV1Api coreV1Api = new CoreV1Api(apiClient);
 
     // Create a config before starting the thread
-    coreV1Api.createNamespacedConfigMap(namespace, createConfigMap("test", "key", "value"), null, null, null, null);
+    coreV1Api.createNamespacedConfigMap(
+        namespace, createConfigMap("test", "key", "value")).execute();
 
     // Start the thread.
     watcherThread.start();
@@ -131,13 +133,12 @@ public class AbstractWatcherThreadTest {
 
     // Update the configmap and should see the changes
     configMap.data(ImmutableMap.of("key", "newvalue"));
-    coreV1Api.replaceNamespacedConfigMap(name, namespace, configMap, null, null, null, null);
+    coreV1Api.replaceNamespacedConfigMap(name, namespace, configMap).execute();
 
     waitFor(() -> configMapNames.get(name), c -> "newvalue".equals(c.getData().get("key")), 5, TimeUnit.SECONDS);
 
     // Delete the configmap. A deletion should be notified
-    coreV1Api.deleteNamespacedConfigMap(name,
-                                        namespace, null, null, null, null, null, null);
+    coreV1Api.deleteNamespacedConfigMap(name, namespace).execute();
 
     waitFor(() -> !configMapNames.containsKey(name), Boolean::booleanValue, 5, TimeUnit.SECONDS);
   }
@@ -179,11 +180,12 @@ public class AbstractWatcherThreadTest {
     // Create and delete configmap multiple times with a watch reset in between.
     // This is to make sure during the watch reset, we are not losing any deletion events.
     for (int i = 0; i < 50; i++) {
-      coreV1Api.createNamespacedConfigMap(namespace, createConfigMap("test", "key", "value"), null, null, null, null);
+      coreV1Api.createNamespacedConfigMap(
+          namespace, createConfigMap("test", "key", "value")).execute();
       V1ConfigMap configMap = waitFor(() -> configMapNames.get("test"), Objects::nonNull, 5, TimeUnit.SECONDS);
       String name = configMap.getMetadata().getName();
       watcherThread.closeWatch();
-      coreV1Api.deleteNamespacedConfigMap(name, namespace, null, null, null, null, null, null);
+      coreV1Api.deleteNamespacedConfigMap(name, namespace).execute();
       waitFor(() -> !configMapNames.containsKey(name), Boolean::booleanValue, 5, TimeUnit.SECONDS);
     }
   }
