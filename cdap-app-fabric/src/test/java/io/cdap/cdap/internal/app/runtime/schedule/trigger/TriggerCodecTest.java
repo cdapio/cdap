@@ -24,6 +24,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ProtoTrigger;
 import io.cdap.cdap.proto.ProtoTriggerCodec;
@@ -51,8 +52,9 @@ public class TriggerCodecTest {
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ?"), "Cron entry must contain 5 or 6 fields.");
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * * 1 ? *"), "Cron entry must contain 5 or 6 fields.");
     // Quartz doesn't support '?' in both day-of-the-month and day-of-the-week
+    // Quartz 2.3 fixed the "specfied" typo in this message, so match only the stable part.
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ? 1 ?"),
-                          "'?' can only be specfied for Day-of-Month -OR- Day-of-Week.");
+                          "for Day-of-Month -OR- Day-of-Week.");
     // Quartz doesn't support '0' in day-of-the-week
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("2 6 ? * 0,1,4,5"),
                           "Day-of-Week values must be between 1 and 7");
@@ -177,5 +179,38 @@ public class TriggerCodecTest {
                                                  ImmutableList.of());
 
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(proto1), ProgramSchedule.class));
+  }
+
+  @Test
+  public void testLegacyOversizedCronIncrements() {
+    // Legacy Quartz 2.2 expressions with step > field upper bound should normalize and remain valid in Quartz 2.3+.
+    Assert.assertEquals("0 0 * * * ?", Schedulers.getQuartzCronExpression("0/60 * * * *"));
+    Assert.assertEquals("0 0 * * * ?", Schedulers.getQuartzCronExpression("*/60 * * * *"));
+    Assert.assertEquals("0 0 0 * * ?", Schedulers.getQuartzCronExpression("0 0/24 * * *"));
+    Assert.assertEquals("0 0 0 * * ?", Schedulers.getQuartzCronExpression("0 */24 * * *"));
+    Assert.assertEquals("0 5 * * * ?", Schedulers.getQuartzCronExpression("0 5/60 * * * ?"));
+    Assert.assertEquals("0 10-50/60 * * * ?", Schedulers.getQuartzCronExpression("0 10-50/60 * * * ?"));
+    Assert.assertEquals("0 0,30 * * * ?", Schedulers.getQuartzCronExpression("0 0/60,30 * * * ?"));
+    Assert.assertEquals("0 0 0 1 * ?", Schedulers.getQuartzCronExpression("0 0 0 1/32 * ?"));
+    Assert.assertEquals("0 0 0 1 1 ?", Schedulers.getQuartzCronExpression("0 0 0 1 1/13 ?"));
+    Assert.assertEquals("0 0 0 ? * 1", Schedulers.getQuartzCronExpression("0 0 0 ? * 1/8"));
+
+    // Valid expressions within bounds must stay untouched.
+    Assert.assertEquals("0 0/59 * * * ?", Schedulers.getQuartzCronExpression("0 0/59 * * * ?"));
+    Assert.assertEquals("0 0 0/23 * * ?", Schedulers.getQuartzCronExpression("0 0 0/23 * * ?"));
+    Assert.assertEquals("0 0 0 1/31 * ?", Schedulers.getQuartzCronExpression("0 0 0 1/31 * ?"));
+
+    // Existing apps with legacy cron expressions must still deserialize through TriggerCodec.
+    testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("0/60 * * * *"),
+                              new TimeTrigger("0/60 * * * *"));
+    testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("0 0/24 * * *"),
+                              new TimeTrigger("0 0/24 * * *"));
+    testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("0 5/60 * * * ?"),
+                              new TimeTrigger("0 5/60 * * * ?"));
+
+    // Truly invalid expressions must still be rejected.
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 60/60 * * * ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 10-99/60 * * * ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 0 24 * * ?"));
   }
 }

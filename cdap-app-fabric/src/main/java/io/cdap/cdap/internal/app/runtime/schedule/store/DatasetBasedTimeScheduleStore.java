@@ -38,6 +38,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,12 +47,14 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.SerializationUtils;
+import org.quartz.CronExpression;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
 import org.quartz.ObjectAlreadyExistsException;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
+import org.quartz.impl.triggers.CronTriggerImpl;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.OperableTrigger;
@@ -258,9 +261,40 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   TriggerStatusV2 readTrigger(StructuredTable table, TriggerKey key) throws IOException {
     byte[] result = get(table, TRIGGER_KEY, key.getName());
     if (result != null) {
-      return (TriggerStatusV2) SerializationUtils.deserialize(result);
+      TriggerStatusV2 triggerStatus = (TriggerStatusV2) SerializationUtils.deserialize(result);
+      repairLegacyCronTrigger(triggerStatus.trigger);
+      return triggerStatus;
     } else {
       return null;
+    }
+  }
+
+  /**
+   * Repairs triggers persisted under Quartz 2.2 that contain cron increments exceeding a field's
+   * upper bound (e.g. {@code 0/60}, {@code 0/24}), which Quartz 2.3+ rejects when cloning or
+   * evaluating the trigger.
+   */
+  @VisibleForTesting
+  static void repairLegacyCronTrigger(OperableTrigger trigger) {
+    if (!(trigger instanceof CronTriggerImpl)) {
+      return;
+    }
+    CronTriggerImpl cronTrigger = (CronTriggerImpl) trigger;
+    String storedCron = cronTrigger.getCronExpression();
+    if (storedCron == null || CronExpression.isValidExpression(storedCron)) {
+      return;
+    }
+    String normalized = Schedulers.normalizeQuartzCronExpression(storedCron);
+    if (normalized.equals(storedCron) || !CronExpression.isValidExpression(normalized)) {
+      return;
+    }
+    try {
+      LOG.warn("Normalizing legacy cron expression '{}' to '{}' for trigger {}",
+          storedCron, normalized, cronTrigger.getKey());
+      cronTrigger.setCronExpression(normalized);
+    } catch (ParseException e) {
+      LOG.warn("Failed to normalize legacy cron expression '{}' for trigger {}",
+          storedCron, cronTrigger.getKey(), e);
     }
   }
 
@@ -330,6 +364,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         triggersWithNoJob.add(trigger.trigger.getKey());
         continue;
       }
+      repairLegacyCronTrigger(trigger.trigger);
       super.storeTrigger(trigger.trigger, true);
       // if the trigger was paused then pause it back. This is needed because the state of the trigger is not a
       // property associated with the trigger.

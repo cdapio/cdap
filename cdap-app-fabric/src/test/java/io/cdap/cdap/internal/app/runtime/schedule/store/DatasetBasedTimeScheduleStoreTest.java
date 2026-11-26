@@ -52,6 +52,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.test.SlowTests;
+import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +68,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -76,6 +79,7 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
+import org.quartz.impl.triggers.CronTriggerImpl;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
@@ -426,6 +430,41 @@ public class DatasetBasedTimeScheduleStoreTest {
         .withIdentity(identity, jobGroup)
         .storeDurably()
         .build();
+  }
+
+  @Test
+  public void testRepairLegacyCronTrigger() throws Exception {
+    // Simulate a CronTriggerImpl deserialized from Quartz 2.2 with a legacy oversized increment.
+    CronTriggerImpl trigger = new CronTriggerImpl();
+    trigger.setName("legacy-trigger");
+    trigger.setGroup("default");
+    trigger.setStartTime(new Date(0L));
+    CronExpression cronEx = new CronExpression("0 0 * * * ?");
+    Field exprField = CronExpression.class.getDeclaredField("cronExpression");
+    exprField.setAccessible(true);
+    exprField.set(cronEx, "0 0/60 * * * ?");
+    trigger.setCronExpression(cronEx);
+
+    Assert.assertEquals("0 0/60 * * * ?", trigger.getCronExpression());
+    DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(trigger);
+    Assert.assertEquals("0 0 * * * ?", trigger.getCronExpression());
+    Assert.assertNotNull(trigger.clone());
+    Assert.assertEquals(new Date(TimeUnit.HOURS.toMillis(1)),
+        trigger.getFireTimeAfter(new Date(0L)));
+
+    // Valid cron expressions and non-cron triggers are left untouched.
+    CronTriggerImpl validTrigger = new CronTriggerImpl();
+    validTrigger.setName("valid-trigger");
+    validTrigger.setGroup("default");
+    validTrigger.setCronExpression("0 0/15 * * * ?");
+    DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(validTrigger);
+    Assert.assertEquals("0 0/15 * * * ?", validTrigger.getCronExpression());
+
+    org.quartz.spi.OperableTrigger simpleTrigger =
+        (org.quartz.spi.OperableTrigger) TriggerBuilder.newTrigger()
+            .withIdentity("simple", "default").build();
+    DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(simpleTrigger);
+    Assert.assertEquals("simple", simpleTrigger.getKey().getName());
   }
 
   @AfterClass

@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.quartz.CronExpression;
 
 /**
@@ -58,6 +60,11 @@ public class Schedulers {
   public static final int SUBSCRIBER_TX_TIMEOUT_SECONDS = 30;
   public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS =
       1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
+
+  // Maximum valid increment per Quartz cron field: sec, min, hour, day-of-month, month, day-of-week.
+  private static final int[] CRON_FIELD_LIMITS = {59, 59, 23, 31, 12, 7};
+  private static final String[] CRON_FIELD_MIN_VALUES = {"0", "0", "0", "1", "1", "1"};
+  private static final Pattern CRON_STEP_PATTERN = Pattern.compile("^(\\*|\\d+)/(\\d+)$");
 
   /**
    * Returns the metrics tags for schedule job metrics emitted while checking and launching jobs.
@@ -121,6 +128,8 @@ public class Schedulers {
   // 1. Quartz doesn't support specifying both day-of-the-month and day-of-the-week,
   //    one of them must be '?' if the other is specified with anything other than '?'
   // 2. Quartz resolution is in seconds which cron entry doesn't support.
+  // 3. Quartz 2.3+ rejects step increments larger than a field's range (e.g. 0/60, 0/24) that
+  //    Quartz 2.2 accepted; normalize those to their equivalent single value.
   public static String getQuartzCronExpression(String cronEntry) {
     // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
     // CronExpression will directly be used for tests.
@@ -128,6 +137,7 @@ public class Schedulers {
     Preconditions.checkArgument(parts.length == 5 || parts.length == 6,
         "Invalid cron entry format in '%s'. "
             + "Cron entry must contain 5 or 6 fields.", cronEntry);
+    String quartzCron;
     if (parts.length == 5) {
       // Convert cron entry format to Quartz format by replacing wild-card character "*"
       // if day-of-the-month is not "?" and day-of-the-week is wild-card, replace day-of-the-week with "?"
@@ -141,10 +151,63 @@ public class Schedulers {
       List<String> partsList = new ArrayList<>(Arrays.asList(parts));
       // add "0" to seconds in Quartz format without changing the meaning of the original cron expression
       partsList.add(0, "0");
-      return Joiner.on(" ").join(partsList);
+      quartzCron = Joiner.on(" ").join(partsList);
     } else {
-      //Use the given cronExpression
-      return cronEntry;
+      // Use the given cronExpression
+      quartzCron = cronEntry;
+    }
+    return normalizeQuartzCronExpression(quartzCron);
+  }
+
+  /**
+   * Normalizes legacy Quartz 2.2 cron expressions whose step increment exceeds the field's upper
+   * bound (for example {@code 0/60} in minutes or {@code 0/24} in hours). Quartz 2.2 accepted these
+   * and fired once per cycle at the starting value; Quartz 2.3+ rejects them with a
+   * {@link ParseException}. Rewriting {@code a/n} (and {@code *&#47;n}) with {@code n > fieldMax}
+   * to {@code a} (or the field's minimum value for {@code *}) preserves identical fire times while
+   * keeping expressions valid under Quartz 2.3+.
+   */
+  public static String normalizeQuartzCronExpression(String quartzCron) {
+    String[] fields = quartzCron.trim().split("\\s+");
+    boolean changed = false;
+    for (int i = 0; i < fields.length && i < CRON_FIELD_LIMITS.length; i++) {
+      String normalizedField = normalizeCronField(fields[i], i);
+      if (!normalizedField.equals(fields[i])) {
+        fields[i] = normalizedField;
+        changed = true;
+      }
+    }
+    return changed ? String.join(" ", fields) : quartzCron;
+  }
+
+  private static String normalizeCronField(String field, int fieldIndex) {
+    String[] items = field.split(",", -1);
+    boolean fieldChanged = false;
+    for (int j = 0; j < items.length; j++) {
+      String normalizedItem = normalizeCronItem(items[j], fieldIndex);
+      if (!normalizedItem.equals(items[j])) {
+        items[j] = normalizedItem;
+        fieldChanged = true;
+      }
+    }
+    return fieldChanged ? String.join(",", items) : field;
+  }
+
+  private static String normalizeCronItem(String item, int fieldIndex) {
+    Matcher matcher = CRON_STEP_PATTERN.matcher(item);
+    if (!matcher.matches()) {
+      return item;
+    }
+    try {
+      long step = Long.parseLong(matcher.group(2));
+      if (step <= CRON_FIELD_LIMITS[fieldIndex]) {
+        return item;
+      }
+      String start = matcher.group(1);
+      return "*".equals(start) ? CRON_FIELD_MIN_VALUES[fieldIndex] : start;
+    } catch (NumberFormatException ignored) {
+      // Leave out-of-range numbers untouched so Quartz validation reports the error.
+      return item;
     }
   }
 }
