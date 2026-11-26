@@ -84,16 +84,21 @@ public class MacroParser {
    * @return the parsed string
    */
   private String parse(String str, int depth) throws InvalidMacroException {
+    boolean substituted = depth > 0;
     if (depth > MAX_SUBSTITUTION_DEPTH) {
+      // Omit str because depth > 0 implies macro values have already been substituted into it.
       throw new InvalidMacroException(
-          String.format("Failed substituting macro '%s', expansion exceeded %d levels.",
-              str, MAX_SUBSTITUTION_DEPTH));
+          String.format("Failed substituting macro, expansion exceeded %d levels.",
+              MAX_SUBSTITUTION_DEPTH));
     }
 
-    MacroMetadata macroPosition = findRightmostMacro(str, str.length());
+    MacroMetadata macroPosition = findRightmostMacro(str, str.length(), substituted);
     while (macroPosition != null) {
       // in the case that the MacroEvaluator does not internally handle unspecified macros
       if (macroPosition.substitution == null) {
+        if (substituted) {
+          throw new InvalidMacroException("Unable to substitute macro.");
+        }
         throw new InvalidMacroException(
             String.format("Unable to substitute macro in string %s.", str));
       }
@@ -101,6 +106,7 @@ public class MacroParser {
       String right = str.substring(macroPosition.endIndex + 1);
       String middle = macroPosition.substitution;
       if (macroPosition.evaluateRecursively) {
+        substituted = true;
         middle = parse(macroPosition.substitution, depth + 1);
       }
       str = left + middle + right;
@@ -108,7 +114,7 @@ public class MacroParser {
       // otherwise, we only need to start searching from where the previous macro began
       int startPos =
           macroPosition.evaluateRecursively ? str.length() : macroPosition.startIndex - 1;
-      macroPosition = findRightmostMacro(str, startPos);
+      macroPosition = findRightmostMacro(str, startPos, substituted);
     }
     return str;
   }
@@ -120,11 +126,13 @@ public class MacroParser {
    *
    * @param str the string to find a macro in
    * @param pos the position in the string to begin search for a macro.
+   * @param substituted whether any macro substitution has already been applied to {@code str}
    * @return the rightmost macro and its position in the string
    * @throws InvalidMacroException if invalid macro syntax was found.
    */
   @Nullable
-  private MacroMetadata findRightmostMacro(String str, int pos) throws InvalidMacroException {
+  private MacroMetadata findRightmostMacro(String str, int pos, boolean substituted)
+      throws InvalidMacroException {
     // find opening "${" skipping escaped syntax "\${" and allowing doubly-escaping "\\${"
     int startIndex = getStartIndex(str, pos);
     if (startIndex < 0) {
@@ -134,6 +142,9 @@ public class MacroParser {
     // found "${", now look for enclosing "}" and allow escaping "\}" and doubly-escaping "\\}"
     int endIndex = getFirstUnescapedTokenIndex('}', str, startIndex);
     if (endIndex < 0) {
+      if (substituted) {
+        throw new InvalidMacroException("Could not find enclosing '}' for macro.");
+      }
       throw new InvalidMacroException(String.format("Could not find enclosing '}' for macro '%s'.",
           str.substring(startIndex)));
     } else if (endIndex == startIndex + 2) {
@@ -148,7 +159,8 @@ public class MacroParser {
 
     // determine whether to use a macro function or a property lookup
     if (argsStartIndex >= 0) {
-      return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex, str);
+      return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex, str,
+          substituted);
     } else {
       macroStr = replaceEscapedSyntax(macroStr);
       if (lookupsEnabled) {
@@ -156,6 +168,10 @@ public class MacroParser {
           return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex, true);
         } catch (InvalidMacroException e) {
           if (!skipInvalid) {
+            if (substituted) {
+              // Avoid reflecting resolved inner macro values in lookup errors.
+              throw new InvalidMacroException("Failed to resolve macro argument.");
+            }
             throw e;
           }
         }
@@ -176,10 +192,12 @@ public class MacroParser {
    * @param macroStr the macro string to evaluate, without bracelet
    * @param argsStartIndex the index of start parenthesis
    * @param originalString the original string
+   * @param substituted whether any macro substitution has already been applied
    */
   private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr,
       int argsStartIndex,
-      String originalString) {
+      String originalString,
+      boolean substituted) {
     // check for closing ")" and allow escaping "\)" and doubly-escaping "\\)"
     int closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
 
@@ -204,10 +222,16 @@ public class MacroParser {
     }
 
     if (closingParenIndex < 0 || !macroStr.endsWith(")")) {
+      if (substituted) {
+        throw new InvalidMacroException("Could not find enclosing ')' for macro arguments.");
+      }
       throw new InvalidMacroException(
           String.format("Could not find enclosing ')' for macro arguments in '%s'.",
               macroStr));
     } else if (closingParenIndex != macroStr.length() - 1) {
+      if (substituted) {
+        throw new InvalidMacroException("Macro arguments have extra invalid trailing ')'.");
+      }
       throw new InvalidMacroException(
           String.format("Macro arguments in '%s' have extra invalid trailing ')'.",
               macroStr));
@@ -245,6 +269,10 @@ public class MacroParser {
 
       } catch (InvalidMacroException e) {
         if (!skipInvalid || doNotSkipInvalidMacroForFunctions.contains(macroFunction)) {
+          if (substituted) {
+            // Avoid reflecting resolved inner macro values in outer function errors.
+            throw new InvalidMacroException("Failed to resolve nested macro.");
+          }
           throw e;
         }
       }

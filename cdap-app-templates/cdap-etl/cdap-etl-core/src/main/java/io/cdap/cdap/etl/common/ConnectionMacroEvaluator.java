@@ -78,7 +78,7 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
         Constants.PIPELINEID,
         Constants.STUDIO_SERVICE_NAME,
-        String.format("v1/contexts/%s/connections/%s",
+        String.format("v1/contexts/%s/connections/%s?requireUse=true",
             namespace, connName));
     Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn),
         Connection.class);

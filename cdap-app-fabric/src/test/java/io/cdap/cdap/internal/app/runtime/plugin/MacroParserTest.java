@@ -586,4 +586,30 @@ public class MacroParserTest {
     }
     Assert.assertTrue(exceptionThrown);
   }
+
+  @Test
+  public void testNestedMacroErrorsDoNotReflectSubstitutedValues() {
+    String secret = "MY_TOP_SECRET_VALUE";
+    MacroEvaluator evaluator = new TestMacroEvaluator(
+      Collections.emptyMap(), Collections.singletonMap("secret-key", secret));
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().setEscaping(false).build());
+
+    String[] payloads = new String[]{
+      "${${test(secret-key)}}",
+      "${test(${test(secret-key)})}",
+      "${${test(secret-key)}",
+      "${test(${test(secret-key)}}",
+      "${test(${test(secret-key)}))}"
+    };
+    for (String payload : payloads) {
+      try {
+        parser.parse(payload);
+        Assert.fail("Expected InvalidMacroException for payload: " + payload);
+      } catch (InvalidMacroException e) {
+        Assert.assertFalse("Message leaked secret for payload " + payload + ": " + e.getMessage(),
+                           e.getMessage().contains(secret));
+        Assert.assertNull("Cause should be null for payload " + payload, e.getCause());
+      }
+    }
+  }
 }
