@@ -147,7 +147,7 @@
     <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.10.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
-    <logback.version>1.2.13</logback.version>
+    <logback.version>1.6.8</logback.version>
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>3.9.0</mockito.version>
     <mysql.version>5.1.21</mysql.version>
@@ -160,7 +160,7 @@
     <!-- Please keep consistent with the one in Spark 3 -->
     <scala2.12.version>2.12.15</scala2.12.version>
     <servlet.api.version>3.1.0</servlet.api.version>
-    <slf4j.version>1.7.15</slf4j.version>
+    <slf4j.version>2.0.20</slf4j.version>
     <snappy.version>1.1.1.7</snappy.version>
     <snakeyaml.version>2.5</snakeyaml.version>
     <spark3.artifacts.dir>spark3_2.12</spark3.artifacts.dir>
@@ -1405,6 +1405,14 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
           <exclusion>
             <groupId>log4j</groupId>

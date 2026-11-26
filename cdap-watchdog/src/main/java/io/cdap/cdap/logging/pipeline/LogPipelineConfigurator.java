@@ -18,23 +18,29 @@ package io.cdap.cdap.logging.pipeline;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.classic.joran.action.ContextNameAction;
+import ch.qos.logback.classic.model.ContextNameModel;
+import ch.qos.logback.classic.model.processor.ContextNameModelHandler;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.util.LogbackMDCAdapter;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.Context;
 import ch.qos.logback.core.LogbackException;
-import ch.qos.logback.core.joran.action.Action;
-import ch.qos.logback.core.joran.action.ActionConst;
-import ch.qos.logback.core.joran.spi.ActionException;
-import ch.qos.logback.core.joran.spi.ElementSelector;
-import ch.qos.logback.core.joran.spi.InterpretationContext;
-import ch.qos.logback.core.joran.spi.RuleStore;
+import ch.qos.logback.core.joran.JoranConstants;
+import ch.qos.logback.core.model.AppenderModel;
+import ch.qos.logback.core.model.Model;
+import ch.qos.logback.core.model.processor.AppenderModelHandler;
+import ch.qos.logback.core.model.processor.DefaultProcessor;
+import ch.qos.logback.core.model.processor.DependencyDefinition;
+import ch.qos.logback.core.model.processor.ModelHandlerException;
+import ch.qos.logback.core.model.processor.ModelInterpretationContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Syncable;
 import io.cdap.cdap.logging.appender.ForwardingAppender;
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.Map;
-import org.xml.sax.Attributes;
+import org.slf4j.MDC;
+import org.slf4j.spi.MDCAdapter;
 
 /**
  * A {@link JoranConfigurator} for parsing logback xml configuration for log processing pipeline.
@@ -49,29 +55,50 @@ public class LogPipelineConfigurator extends JoranConfigurator {
   }
 
   @Override
-  protected void buildInterpreter() {
-    super.buildInterpreter();
-    RuleStore ruleStore = interpreter.getRuleStore();
-    ruleStore.addRule(new ElementSelector("configuration/contextName"),
-        new ContextConfigAction(cConf));
-    ruleStore.addRule(new ElementSelector("configuration/appender"),
-        new WrapAppenderAction<ILoggingEvent>());
+  public void setContext(Context context) {
+    super.setContext(context);
+    if (context instanceof LoggerContext) {
+      LoggerContext loggerContext = (LoggerContext) context;
+      if (loggerContext.getMDCAdapter() == null) {
+        MDCAdapter adapter = MDC.getMDCAdapter();
+        loggerContext.setMDCAdapter(
+            adapter instanceof LogbackMDCAdapter ? adapter : new LogbackMDCAdapter());
+      }
+    }
+  }
+
+  @Override
+  protected JoranConfigurator makeAnotherInstance() {
+    LogPipelineConfigurator configurator = new LogPipelineConfigurator(cConf);
+    configurator.setContext(context);
+    return configurator;
+  }
+
+  @Override
+  protected void addModelHandlerAssociations(DefaultProcessor defaultProcessor) {
+    super.addModelHandlerAssociations(defaultProcessor);
+    defaultProcessor.addHandler(ContextNameModel.class,
+        (handlerContext, mic) -> new ContextConfigModelHandler(handlerContext, cConf));
+    defaultProcessor.addHandler(AppenderModel.class,
+        (handlerContext, mic) -> new WrapAppenderModelHandler<ILoggingEvent>(handlerContext));
   }
 
   /**
-   * An action that copies properties from {@link CConfiguration} to the {@link LoggerContext} based
-   * on the context name.
+   * A model handler that sets the context name and copies properties from {@link CConfiguration} to
+   * the {@link LoggerContext} based on that context name.
    */
-  private static final class ContextConfigAction extends ContextNameAction {
+  private static final class ContextConfigModelHandler extends ContextNameModelHandler {
 
     private final CConfiguration cConf;
 
-    ContextConfigAction(CConfiguration cConf) {
+    ContextConfigModelHandler(Context context, CConfiguration cConf) {
+      super(context);
       this.cConf = cConf;
     }
 
     @Override
-    public void body(InterpretationContext ec, String body) {
+    public void handle(ModelInterpretationContext mic, Model model) throws ModelHandlerException {
+      super.handle(mic, model);
       String name = context.getName();
       if (name == null) {
         return;
@@ -88,30 +115,56 @@ public class LogPipelineConfigurator extends JoranConfigurator {
   }
 
   /**
-   * An {@link Action} that wraps {@link Appender} with {@link WrappedAppender} for flushing and
-   * syncing.
+   * An {@link AppenderModelHandler} that wraps created {@link Appender} instances with
+   * {@link WrappedAppender} for flushing and syncing.
    *
    * @param <E> type of the event used by the appender
    */
-  private static final class WrapAppenderAction<E> extends Action {
+  private static final class WrapAppenderModelHandler<E> extends AppenderModelHandler<E> {
 
-    @Override
-    public void begin(InterpretationContext ec, String name, Attributes attributes)
-        throws ActionException {
-      String appenderName = ec.subst(attributes.getValue(NAME_ATTRIBUTE));
-
-      // The execution context contains a bag which contains the appenders created thus far.
-      @SuppressWarnings("unchecked")
-      Map<String, Appender<E>> appenderBag = (Map<String, Appender<E>>) ec.getObjectMap()
-          .get(ActionConst.APPENDER_BAG);
-
-      Appender<E> appender = appenderBag.get(appenderName);
-      appenderBag.put(appenderName, new WrappedAppender<>(appender));
+    WrapAppenderModelHandler(Context context) {
+      super(context);
     }
 
     @Override
-    public void end(InterpretationContext ec, String name) throws ActionException {
-      // no-op
+    public void handle(ModelInterpretationContext mic, Model model) throws ModelHandlerException {
+      // Logback 1.3+ skips appenders that are not referenced, while Logback 1.2 created and
+      // started every declared appender, so errors in unused appenders failed validation.
+      // Mark every appender as referenced to keep that behavior.
+      String appenderName = mic.subst(((AppenderModel) model).getName());
+      if (!mic.hasDependers(appenderName)) {
+        mic.addDependencyDefinition(new DependencyDefinition(new Model(), appenderName));
+      }
+      super.handle(mic, model);
+    }
+
+    @Override
+    public void postHandle(ModelInterpretationContext mic, Model model)
+        throws ModelHandlerException {
+      AppenderModel appenderModel = (AppenderModel) model;
+      try {
+        super.postHandle(mic, model);
+      } catch (RuntimeException e) {
+        addError("Failed to configure appender " + appenderModel.getName(), e);
+        return;
+      }
+      if (appenderModel.isSkipped()) {
+        return;
+      }
+
+      String appenderName = mic.subst(appenderModel.getName());
+      // Safe by specification: Logback populates APPENDER_BAG as Map<String, Appender<E>>.
+      @SuppressWarnings("unchecked")
+      Map<String, Appender<E>> appenderBag =
+          (Map<String, Appender<E>>) mic.getObjectMap().get(JoranConstants.APPENDER_BAG);
+      if (appenderBag == null) {
+        return;
+      }
+
+      Appender<E> created = appenderBag.get(appenderName);
+      if (created != null && !(created instanceof WrappedAppender)) {
+        appenderBag.put(appenderName, new WrappedAppender<>(created));
+      }
     }
   }
 

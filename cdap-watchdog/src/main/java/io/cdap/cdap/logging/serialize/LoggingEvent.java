@@ -23,11 +23,13 @@ import ch.qos.logback.classic.spi.LoggerContextVO;
 import io.cdap.cdap.logging.LoggingUtil;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Marker;
+import org.slf4j.event.KeyValuePair;
 
 /**
  * Class used to serialize/de-serialize ILoggingEvent.
@@ -208,6 +210,11 @@ public final class LoggingEvent implements ILoggingEvent {
   }
 
   @Override
+  public List<Marker> getMarkerList() {
+    return null;
+  }
+
+  @Override
   public Map<String, String> getMDCPropertyMap() {
     if (!mdcPreserved) {
       mdc = LoggingUtil.decodeMDC((Map<?, ?>) record.get("mdc"));
@@ -228,6 +235,21 @@ public final class LoggingEvent implements ILoggingEvent {
       timestampPreserved = true;
     }
     return timestamp;
+  }
+
+  @Override
+  public int getNanoseconds() {
+    return Math.floorMod(getTimeStamp(), 1000) * 1_000_000;
+  }
+
+  @Override
+  public long getSequenceNumber() {
+    return 0L;
+  }
+
+  @Override
+  public List<KeyValuePair> getKeyValuePairs() {
+    return null;
   }
 
   @Override

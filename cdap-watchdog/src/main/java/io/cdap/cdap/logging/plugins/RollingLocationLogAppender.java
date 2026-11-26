@@ -103,7 +103,7 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
               + " but got " + context.getClass().getName());
     }
 
-    started = true;
+    super.start();
   }
 
   @Override
