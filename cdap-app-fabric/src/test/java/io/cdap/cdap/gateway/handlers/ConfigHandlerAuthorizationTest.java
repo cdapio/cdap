@@ -42,6 +42,7 @@ public class ConfigHandlerAuthorizationTest {
   private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
   private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
                                                                         Principal.PrincipalType.USER);
+  private static final Principal ACCESSOR_PRINCIPAL = new Principal("accessor", Principal.PrincipalType.USER);
 
   private static ConfigHandler configHandler;
 
@@ -51,11 +52,13 @@ public class ConfigHandlerAuthorizationTest {
 
   @BeforeClass
   public static void setup() {
-    StandardPermission[] requiredPermissions = new StandardPermission[] {StandardPermission.GET};
+    StandardPermission[] requiredPermissions = new StandardPermission[] {StandardPermission.UPDATE};
 
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
                                    Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), ACCESSOR_PRINCIPAL,
+                                   Collections.singleton(StandardPermission.GET));
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
     DefaultContextAccessEnforcer contextAccessEnforcer = new DefaultContextAccessEnforcer(authenticationContext,
                                                                                           inMemoryAccessController);
@@ -114,5 +117,12 @@ public class ConfigHandlerAuthorizationTest {
       exceptionThrown = e;
     }
     Assert.assertNull(exceptionThrown);
+  }
+
+  @Test
+  public void testInstanceGetIsNotEnough() {
+    AuthenticationTestContext.actAsPrincipal(ACCESSOR_PRINCIPAL);
+    Assert.assertThrows(UnauthorizedException.class, () -> configHandler.configCDAP(request, responder, "json"));
+    Assert.assertThrows(UnauthorizedException.class, () -> configHandler.configHadoop(request, responder, "json"));
   }
 }

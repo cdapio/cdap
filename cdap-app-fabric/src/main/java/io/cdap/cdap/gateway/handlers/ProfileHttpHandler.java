@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -23,8 +26,10 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -33,8 +38,10 @@ import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
@@ -50,6 +57,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -68,32 +77,45 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder().create();
 
+  // Credential properties of the built-in provisioners, redacted for callers who cannot update.
+  private static final Set<String> CREDENTIAL_PROPERTIES =
+      ImmutableSet.of("accountKey", "sshKey", "accessKey", "secretKey");
+
+  @VisibleForTesting
+  static final String REDACTED_VALUE = "********";
+
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ProfileService profileService;
   private final ProvisioningService provisioningService;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public ProfileHttpHandler(AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
       ProfileService profileService,
-      ProvisioningService provisioningService) {
+      ProvisioningService provisioningService,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.profileService = profileService;
     this.provisioningService = provisioningService;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @GET
   @Path("/profiles")
   public void getSystemProfiles(HttpRequest request, HttpResponder responder) throws Exception {
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+        authenticationContext);
     NamespaceId namespaceId = NamespaceId.SYSTEM;
     accessEnforcer.enforceOnParent(EntityType.PROFILE, namespaceId,
         authenticationContext.getPrincipal(),
         StandardPermission.LIST);
     List<Profile> profiles = verifyCpuLabelsProfiles(profileService.getProfiles(namespaceId, true),
         NamespaceId.SYSTEM);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(redactCredentials(profiles, NamespaceId.SYSTEM)));
   }
 
   @GET
@@ -101,9 +123,11 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
       @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+        authenticationContext);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-        verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId)));
+    Profile profile = verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(redactCredentials(profile, profileId)));
   }
 
   @PUT
@@ -170,7 +194,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     }
     List<Profile> profiles = verifyCpuLabelsProfiles(profileService.getProfiles(namespace, include),
         namespace);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profiles));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(redactCredentials(profiles, namespace)));
   }
 
   /**
@@ -183,8 +207,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-        verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId)));
+    Profile profile = verifyCpuLabelsProfile(profileService.getProfile(profileId), profileId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(redactCredentials(profile, profileId)));
   }
 
   /**
@@ -380,6 +404,58 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
       }
     }
     return properties;
+  }
+
+  private List<Profile> redactCredentials(List<Profile> profiles, NamespaceId namespaceId)
+      throws BadRequestException {
+    List<Profile> result = new ArrayList<>(profiles.size());
+    for (Profile profile : profiles) {
+      NamespaceId owner = profile.getScope() == EntityScope.SYSTEM ? NamespaceId.SYSTEM : namespaceId;
+      result.add(redactCredentials(profile, getValidatedProfile(owner, profile.getName())));
+    }
+    return result;
+  }
+
+  /**
+   * Returns a copy of the profile with plaintext credential values replaced, unless the caller
+   * holds UPDATE on it. The stored profile is never modified.
+   */
+  private Profile redactCredentials(Profile profile, ProfileId profileId) {
+    ProvisionerInfo provisioner = profile.getProvisioner();
+    if (provisioner.getProperties().stream().noneMatch(ProfileHttpHandler::isPlaintextCredential)
+        || canUpdate(profileId)) {
+      return profile;
+    }
+    List<ProvisionerPropertyValue> properties = provisioner.getProperties().stream()
+        .map(property -> isPlaintextCredential(property)
+            ? new ProvisionerPropertyValue(property.getName(), REDACTED_VALUE,
+            property.isEditable())
+            : property)
+        .collect(Collectors.toList());
+    ProvisionerInfo redacted = new ProvisionerInfo(provisioner.getName(),
+        provisioner.getTotalProcessingCpusLabel(), properties);
+    return new Profile(profile.getName(), profile.getLabel(), profile.getDescription(),
+        profile.getScope(), profile.getStatus(), redacted, profile.getCreatedTsSeconds());
+  }
+
+  // A value that is a single macro, such as ${secure(key)}, is a reference and stays visible.
+  private static boolean isPlaintextCredential(ProvisionerPropertyValue property) {
+    if (!CREDENTIAL_PROPERTIES.contains(property.getName())
+        || Strings.isNullOrEmpty(property.getValue())) {
+      return false;
+    }
+    String value = property.getValue().trim();
+    return !(value.startsWith("${") && value.endsWith("}"));
+  }
+
+  private boolean canUpdate(ProfileId profileId) {
+    try {
+      accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(),
+          StandardPermission.UPDATE);
+      return true;
+    } catch (UnauthorizedException e) {
+      return false;
+    }
   }
 
   private void checkPutProfilePermissions(ProfileId profileId) {

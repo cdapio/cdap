@@ -26,6 +26,7 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.Principal;
@@ -60,7 +61,8 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
 
   /**
    * Lists all the secure keys in the given namespace that the user has access to. Returns an empty
-   * list if the user does not have access to any of the keys in the namespace.
+   * list if the user does not have access to any of the keys in the namespace. Listing keys in the
+   * {@code system} namespace requires {@link StandardPermission#UPDATE} on {@link InstanceId#SELF}.
    *
    * @return A map of key names accessible by the user and their descriptions.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
@@ -68,8 +70,13 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
    */
   @Override
   public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
-    accessEnforcer.enforceOnParent(EntityType.SECUREKEY, new NamespaceId(namespace),
-        authenticationContext.getPrincipal(), StandardPermission.LIST);
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      accessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
+          StandardPermission.UPDATE);
+    } else {
+      accessEnforcer.enforceOnParent(EntityType.SECUREKEY, new NamespaceId(namespace),
+          authenticationContext.getPrincipal(), StandardPermission.LIST);
+    }
     Principal principal = authenticationContext.getPrincipal();
     return secureStoreService.list(namespace);
   }

@@ -22,9 +22,11 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.gateway.handlers.MonitorHandler;
 import io.cdap.cdap.proto.Instances;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.SystemServiceId;
@@ -53,6 +55,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -67,6 +70,11 @@ public class MonitorHandlerAuthorizationTest {
   private static final Gson GSON = new Gson();
 
   private static MonitorHandler createMonitorHandler(Authorizable authorizable, List<Permission> requiredPermissions) {
+    return createMonitorHandler(authorizable, requiredPermissions, mock(NamespaceQueryAdmin.class));
+  }
+
+  private static MonitorHandler createMonitorHandler(Authorizable authorizable, List<Permission> requiredPermissions,
+                                                     NamespaceQueryAdmin namespaceQueryAdmin) {
     Map<String, MasterServiceManager> masterServiceManagerMap = new HashMap<>();
     MasterServiceManager mockMasterServiceManager = mock(MasterServiceManager.class);
     when(mockMasterServiceManager.getInstances()).thenReturn(1);
@@ -82,14 +90,13 @@ public class MonitorHandlerAuthorizationTest {
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
     DefaultContextAccessEnforcer contextAccessEnforcer = new DefaultContextAccessEnforcer(authenticationContext,
                                                                                           inMemoryAccessController);
-    return new MonitorHandler(masterServiceManagerMap, mockServiceStore, contextAccessEnforcer);
+    return new MonitorHandler(masterServiceManagerMap, mockServiceStore, contextAccessEnforcer, namespaceQueryAdmin);
   }
 
   @Test
   public void testGetSystemServiceLiveInfoAuthorization() throws Exception {
-    SystemServiceId systemServiceId = new SystemServiceId(SERVICE_NAME);
-    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(systemServiceId),
-                                                  Arrays.asList(StandardPermission.GET));
+    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(InstanceId.SELF),
+                                                  Arrays.asList(StandardPermission.UPDATE));
     HttpRequest request = mock(HttpRequest.class);
     HttpResponder responder = mock(HttpResponder.class);
 
@@ -102,6 +109,7 @@ public class MonitorHandlerAuthorizationTest {
 
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
     handler.getServiceLiveInfo(request, responder, SERVICE_NAME);
+    handler.getServiceInstance(request, responder, SERVICE_NAME);
   }
 
   @Test
@@ -130,7 +138,7 @@ public class MonitorHandlerAuthorizationTest {
   @Test
   public void testGetBootStatusAuthorization() throws Exception {
     InstanceId instanceId = InstanceId.SELF;
-    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(instanceId, EntityType.SYSTEM_SERVICE),
+    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(instanceId, EntityType.NAMESPACE),
                                                   Arrays.asList(StandardPermission.LIST));
     HttpRequest request = mock(HttpRequest.class);
     HttpResponder responder = mock(HttpResponder.class);
@@ -138,6 +146,7 @@ public class MonitorHandlerAuthorizationTest {
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
     try {
       handler.getBootStatus(request, responder);
+      Assert.fail("Expected UnauthorizedException");
     } catch (UnauthorizedException e) {
       // expected
     }
@@ -149,7 +158,7 @@ public class MonitorHandlerAuthorizationTest {
   @Test
   public void testGetServiceSpecAuthorization() throws Exception {
     InstanceId instanceId = InstanceId.SELF;
-    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(instanceId, EntityType.SYSTEM_SERVICE),
+    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(instanceId, EntityType.NAMESPACE),
                                                   Arrays.asList(StandardPermission.LIST));
     HttpRequest request = mock(HttpRequest.class);
     HttpResponder responder = mock(HttpResponder.class);
@@ -157,6 +166,7 @@ public class MonitorHandlerAuthorizationTest {
     AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
     try {
       handler.getServiceSpec(request, responder);
+      Assert.fail("Expected UnauthorizedException");
     } catch (UnauthorizedException e) {
       // expected
     }
@@ -205,9 +215,8 @@ public class MonitorHandlerAuthorizationTest {
 
   @Test
   public void testGetLatestRestartServiceInstanceStatusAuthorization() throws Exception {
-    SystemServiceId systemServiceId = new SystemServiceId(SERVICE_NAME);
-    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(systemServiceId),
-                                                  Arrays.asList(StandardPermission.GET));
+    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(InstanceId.SELF),
+                                                  Arrays.asList(StandardPermission.UPDATE));
     HttpRequest request = mock(HttpRequest.class);
     HttpResponder responder = mock(HttpResponder.class);
 
@@ -266,6 +275,26 @@ public class MonitorHandlerAuthorizationTest {
 
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
     handler.resetServiceLogLevels(request, responder, SERVICE_NAME);
+  }
+
+  @Test
+  public void testVisibleNamespaceAllowsServiceStatusButNotAdminRoutes() throws Exception {
+    NamespaceQueryAdmin oneNamespace = mock(NamespaceQueryAdmin.class);
+    when(oneNamespace.list()).thenReturn(Collections.singletonList(NamespaceMeta.DEFAULT));
+    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(InstanceId.SELF),
+                                                  Arrays.asList(StandardPermission.UPDATE), oneNamespace);
+    HttpRequest request = mock(HttpRequest.class);
+    HttpResponder responder = mock(HttpResponder.class);
+
+    AuthenticationTestContext.actAsPrincipal(UNPRIVILEGED_PRINCIPAL);
+    handler.getBootStatus(request, responder);
+    handler.getServiceSpec(request, responder);
+    Assert.assertThrows(UnauthorizedException.class,
+                        () -> handler.getServiceLiveInfo(request, responder, SERVICE_NAME));
+    Assert.assertThrows(UnauthorizedException.class,
+                        () -> handler.getServiceInstance(request, responder, SERVICE_NAME));
+    Assert.assertThrows(UnauthorizedException.class,
+                        () -> handler.getLatestRestartServiceInstanceStatus(request, responder, SERVICE_NAME));
   }
 
 }

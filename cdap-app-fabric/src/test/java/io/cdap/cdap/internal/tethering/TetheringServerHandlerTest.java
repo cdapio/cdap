@@ -75,6 +75,7 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
@@ -200,7 +201,7 @@ public class TetheringServerHandlerTest {
     cConf.setBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED, true);
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 1);
 
-    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER);
+    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(
         Authorizable.fromEntityId(InstanceId.SELF),
@@ -224,7 +225,8 @@ public class TetheringServerHandlerTest {
                     messagingService,
                     contextAccessEnforcer,
                     messagingProgramStatePublisher),
-                new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
+                new TetheringHandler(cConf, tetheringStore, messagingService, profileService,
+                    contextAccessEnforcer))
             .build();
     service.start();
     config =

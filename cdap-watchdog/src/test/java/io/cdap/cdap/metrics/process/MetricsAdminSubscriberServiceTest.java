@@ -33,6 +33,7 @@ import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
+import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -43,6 +44,7 @@ import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,6 +84,8 @@ public class MetricsAdminSubscriberServiceTest {
       new ConfigModule(cConf),
       new IOModule(),
       new InMemoryDiscoveryModule(),
+      RemoteAuthenticatorModules.getNoOpModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),

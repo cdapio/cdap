@@ -32,6 +32,7 @@ import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Permission;
@@ -42,10 +43,12 @@ import io.cdap.cdap.security.authorization.InMemoryAccessController;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipOutputStream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -53,12 +56,13 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Authorization tests for {@link ApplicationLifecycleService#getPlugins}.
+ * Authorization tests for {@link ApplicationLifecycleService}.
  */
 public class ApplicationLifecycleServiceAuthorizationTest {
 
   private static final Principal BOB = new Principal("als-bob", Principal.PrincipalType.USER);
   private static final Principal CAROL = new Principal("als-carol", Principal.PrincipalType.USER);
+  private static final Principal ADMIN = new Principal("als-admin", Principal.PrincipalType.USER);
 
   private static final NamespaceId NAMESPACE = new NamespaceId("alsns");
   private static final String APP1 = "app1";
@@ -77,6 +81,8 @@ public class ApplicationLifecycleServiceAuthorizationTest {
     grant(NAMESPACE.app(APP1), CAROL, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE.app(APP2), BOB, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE.app(MISSING_APP), BOB, EnumSet.of(StandardPermission.GET));
+    grant(InstanceId.SELF, BOB, EnumSet.of(StandardPermission.GET));
+    grant(InstanceId.SELF, ADMIN, EnumSet.of(StandardPermission.UPDATE));
   }
 
   @After
@@ -127,6 +133,25 @@ public class ApplicationLifecycleServiceAuthorizationTest {
 
     Assert.assertThrows(ApplicationNotFoundException.class,
         () -> service.getPlugins(missingAppRef));
+  }
+
+  @Test
+  public void testCreateAppDetailsArchiveRequiresInstanceUpdate() throws Exception {
+    Store store = Mockito.mock(Store.class);
+    ApplicationLifecycleService service = new ApplicationLifecycleService(
+        CConfiguration.create(), store, null, null, null, null, null, null, null, null,
+        accessController, authenticationContext, null, null, null,
+        new NoOpMetricsCollectionService());
+    ZipOutputStream zipOut = new ZipOutputStream(new ByteArrayOutputStream());
+
+    // Instance GET is not enough to export the details of all applications.
+    AuthenticationTestContext.actAsPrincipal(BOB);
+    Assert.assertThrows(UnauthorizedException.class, () -> service.createAppDetailsArchive(zipOut));
+    Mockito.verifyNoInteractions(store);
+
+    AuthenticationTestContext.actAsPrincipal(ADMIN);
+    service.createAppDetailsArchive(zipOut);
+    Mockito.verify(store).scanApplications(Mockito.anyInt(), Mockito.any());
   }
 
   private static void grant(EntityId entity, Principal principal,

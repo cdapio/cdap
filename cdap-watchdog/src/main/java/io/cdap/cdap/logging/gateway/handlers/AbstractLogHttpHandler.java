@@ -28,6 +28,14 @@ import io.cdap.cdap.logging.read.LogEvent;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.read.ReadRange;
+import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -49,6 +57,18 @@ public abstract class AbstractLogHttpHandler extends AbstractHttpHandler {
   protected AbstractLogHttpHandler(CConfiguration cConfig) {
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN,
         LoggingConfiguration.DEFAULT_LOG_PATTERN);
+  }
+
+  protected void ensureVisibilityOnProgram(AccessEnforcer accessEnforcer, Principal principal,
+      String namespace, String application, String programType, String program) {
+    if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)) {
+      accessEnforcer.enforce(InstanceId.SELF, principal, StandardPermission.UPDATE);
+      return;
+    }
+    ApplicationId appId = new ApplicationId(namespace, application);
+    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
+        program);
+    accessEnforcer.enforce(programId, principal, StandardPermission.GET);
   }
 
   protected void doGetLogs(LogReader logReader, HttpResponder responder,

@@ -22,16 +22,21 @@ import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.AuthorizationResponse;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -95,6 +100,32 @@ public final class AuthorizationUtil {
   public static boolean isSecurityAuthorizationEnabled(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(
         Constants.Security.Authorization.ENABLED);
+  }
+
+  /**
+   * Enforces that the principal can see at least one namespace, or holds namespace LIST on the
+   * instance when there are no visible namespaces.
+   */
+  public static void enforceAnyNamespaceAccess(NamespaceQueryAdmin namespaceQueryAdmin,
+      ContextAccessEnforcer contextAccessEnforcer) throws Exception {
+    if (!namespaceQueryAdmin.list().isEmpty()) {
+      return;
+    }
+    contextAccessEnforcer.enforceOnParent(
+        EntityType.NAMESPACE, InstanceId.SELF, StandardPermission.LIST);
+  }
+
+  /**
+   * Same as {@link #enforceAnyNamespaceAccess(NamespaceQueryAdmin, ContextAccessEnforcer)}.
+   */
+  public static void enforceAnyNamespaceAccess(NamespaceQueryAdmin namespaceQueryAdmin,
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) throws Exception {
+    if (!namespaceQueryAdmin.list().isEmpty()) {
+      return;
+    }
+    accessEnforcer.enforceOnParent(
+        EntityType.NAMESPACE, InstanceId.SELF, authenticationContext.getPrincipal(),
+        StandardPermission.LIST);
   }
 
   /**

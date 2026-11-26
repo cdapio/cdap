@@ -34,10 +34,7 @@ import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.read.ReadRange;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
-import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -97,10 +94,8 @@ public class ErrorClassificationHttpHandler extends AbstractLogHttpHandler {
 
   private void ensureVisibilityOnProgram(String namespace, String application, String programType,
       String program) {
-    ApplicationId appId = new ApplicationId(namespace, application);
-    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
-        program);
-    accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    ensureVisibilityOnProgram(accessEnforcer, authenticationContext.getPrincipal(), namespace,
+        application, programType, program);
   }
 
   /**
