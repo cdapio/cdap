@@ -110,6 +110,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   public static final String DISABLE_POD_DELETION = "disablePodDeletion";
   public static final String NAMESPACE_PROPERTY = "k8s.namespace";
+  /**
+   * {@code TwillPreparer#withConfiguration} option that sets the strategy type of the main
+   * runnable's Deployment: {@code Recreate} or {@code RollingUpdate}. When unset, Kubernetes uses
+   * its default, {@code RollingUpdate}. StatefulSet and Job runnables ignore it.
+   */
+  public static final String K8S_DEPLOYMENT_STRATEGY = "k8s.deployment.strategy";
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
   public static final String SECURITY_CONFIG_NAME = "cdap-security";
