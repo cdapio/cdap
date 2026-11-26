@@ -70,7 +70,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedTimeScheduleStore.class);
   private static final String JOB_KEY = "job";
-  private static final String TRIGGER_KEY = "trigger";
+  @VisibleForTesting
+  static final String TRIGGER_KEY = "trigger";
 
   private final TransactionRunner transactionRunner;
 
@@ -270,32 +271,36 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   /**
-   * Repairs triggers persisted under Quartz 2.2 that contain cron increments exceeding a field's
-   * upper bound (e.g. {@code 0/60}, {@code 0/24}), which Quartz 2.3+ rejects when cloning or
-   * evaluating the trigger.
+   * Repairs a trigger persisted under Quartz 2.2 whose cron expression contains a step increment
+   * exceeding the field's upper bound (e.g. {@code 0/60}, {@code 0/24}). Quartz 2.3+ fails to parse
+   * such an expression when the trigger is deserialized, and then throws an {@link AssertionError}
+   * when the trigger is cloned or evaluated.
+   *
+   * @return {@code true} if the trigger is usable, because it was already valid or has been
+   *     repaired; {@code false} if its cron expression is invalid and cannot be repaired
    */
   @VisibleForTesting
-  static void repairLegacyCronTrigger(OperableTrigger trigger) {
+  static boolean repairLegacyCronTrigger(OperableTrigger trigger) {
     if (!(trigger instanceof CronTriggerImpl)) {
-      return;
+      return true;
     }
     CronTriggerImpl cronTrigger = (CronTriggerImpl) trigger;
     String storedCron = cronTrigger.getCronExpression();
     if (storedCron == null || CronExpression.isValidExpression(storedCron)) {
-      return;
+      return true;
     }
     String normalized = Schedulers.normalizeQuartzCronExpression(storedCron);
-    if (normalized.equals(storedCron) || !CronExpression.isValidExpression(normalized)) {
-      return;
-    }
     try {
-      LOG.warn("Normalizing legacy cron expression '{}' to '{}' for trigger {}",
-          storedCron, normalized, cronTrigger.getKey());
+      // Keeps the trigger's time zone, and leaves the trigger unchanged if parsing fails.
       cronTrigger.setCronExpression(normalized);
-    } catch (ParseException e) {
-      LOG.warn("Failed to normalize legacy cron expression '{}' for trigger {}",
-          storedCron, cronTrigger.getKey(), e);
+    } catch (ParseException | RuntimeException e) {
+      LOG.error("Trigger {} has an invalid cron expression '{}' that cannot be repaired.",
+          cronTrigger.getKey(), storedCron, e);
+      return false;
     }
+    LOG.warn("Normalized legacy cron expression '{}' to '{}' for trigger {}",
+        storedCron, normalized, cronTrigger.getKey());
+    return true;
   }
 
   private void upsert(StructuredTable table, String type, String name, byte[] data)
@@ -364,7 +369,14 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         triggersWithNoJob.add(trigger.trigger.getKey());
         continue;
       }
-      repairLegacyCronTrigger(trigger.trigger);
+      if (!repairLegacyCronTrigger(trigger.trigger)) {
+        // Quartz throws an AssertionError when it clones such a trigger, which would fail the
+        // scheduler startup for every schedule. Skip only this trigger and keep its entry in the
+        // store.
+        LOG.error("Skipping trigger {} of job {} because it cannot be loaded.",
+            trigger.trigger.getKey(), trigger.trigger.getJobKey());
+        continue;
+      }
       super.storeTrigger(trigger.trigger, true);
       // if the trigger was paused then pause it back. This is needed because the state of the trigger is not a
       // property associated with the trigger.

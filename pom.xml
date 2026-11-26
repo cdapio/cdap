@@ -154,7 +154,7 @@
     <netty.http.version>1.8.0</netty.http.version>
     <netty.version>4.1.141.Final</netty.version>
     <powermock.version>2.0.9</powermock.version>
-    <quartz.version>2.3.2</quartz.version>
+    <quartz.version>2.4.1</quartz.version>
     <resteasy.version>3.0.26.Final</resteasy.version>
     <rs-api.version>2.0</rs-api.version>
     <!-- Please keep consistent with the one in Spark 3 -->
@@ -1144,39 +1144,6 @@
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>${quartz.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.mchange</groupId>
-            <artifactId>c3p0</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.mchange</groupId>
-            <artifactId>mchange-commons-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP-java7</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.quartz-scheduler</groupId>
-        <artifactId>quartz-jobs</artifactId>
-        <version>${quartz.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.mchange</groupId>
-            <artifactId>c3p0</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.mchange</groupId>
-            <artifactId>mchange-commons-java</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP-java7</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.ning</groupId>

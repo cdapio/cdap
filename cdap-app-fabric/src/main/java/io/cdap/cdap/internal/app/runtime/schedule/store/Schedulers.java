@@ -121,15 +121,16 @@ public class Schedulers {
 
   // Maximum valid increment per Quartz cron field: sec, min, hour, day-of-month, month, day-of-week.
   private static final int[] CRON_FIELD_LIMITS = {59, 59, 23, 31, 12, 7};
-  private static final String[] CRON_FIELD_MIN_VALUES = {"0", "0", "0", "1", "1", "1"};
-  private static final Pattern CRON_STEP_PATTERN = Pattern.compile("^(\\*|\\d+)(?:-\\d+)?/(\\d+)$");
+  // Matches only the "start/step" form. Quartz 2.2 rejected an oversized step in the "*/step" form
+  // and Quartz 2.3+ still accepts it in the "start-end/step" form, so neither is normalized.
+  private static final Pattern CRON_STEP_PATTERN = Pattern.compile("^(\\d+)/(\\d+)$");
 
   // Helper function to adapt cron entry to a cronExpression that is usable by Quartz with the following rules:
   // 1. Quartz doesn't support specifying both day-of-the-month and day-of-the-week,
   //    one of them must be '?' if the other is specified with anything other than '?'
   // 2. Quartz resolution is in seconds which cron entry doesn't support.
-  // 3. Quartz 2.3+ rejects step increments larger than a field's range (e.g. 0/60, 0/24) that
-  //    Quartz 2.2 accepted; normalize those to their equivalent single value.
+  // 3. Quartz 2.3+ rejects "start/step" increments larger than a field's range (e.g. 0/60, 0/24)
+  //    that Quartz 2.2 accepted; normalize those to their equivalent single value.
   public static String getQuartzCronExpression(String cronEntry) {
     // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
     // CronExpression will directly be used for tests.
@@ -160,12 +161,15 @@ public class Schedulers {
   }
 
   /**
-   * Normalizes legacy Quartz 2.2 cron expressions whose step increment exceeds the field's upper
-   * bound (for example {@code 0/60} in minutes or {@code 0/24} in hours). Quartz 2.2 accepted these
-   * and fired once per cycle at the starting value; Quartz 2.3+ rejects them with a
-   * {@link ParseException}. Rewriting {@code a/n} or {@code a-b/n} (and {@code *&#47;n}) with
-   * {@code n > fieldMax} to {@code a} (or the field's minimum value for {@code *}) preserves
-   * identical fire times while keeping expressions valid under Quartz 2.3+.
+   * Normalizes legacy Quartz 2.2 cron expressions of the form {@code start/step} whose step exceeds
+   * the field's upper bound (for example {@code 0/60} in minutes or {@code 0/24} in hours). Quartz
+   * 2.2 accepted these and fired once per cycle at the start value; Quartz 2.3+ rejects them with a
+   * {@link ParseException}. Rewriting {@code start/step} to {@code start} preserves identical fire
+   * times while keeping the expression valid under Quartz 2.3+.
+   *
+   * <p>This is the only syntax on which Quartz 2.2 and 2.3+ disagree. Everything else, including
+   * {@code *&#47;step} and {@code start-end/step}, is left untouched so that Quartz validates it
+   * exactly as before and an expression accepted here is also accepted by Quartz 2.2.
    */
   public static String normalizeQuartzCronExpression(String quartzCron) {
     String[] fields = quartzCron.trim().split("\\s+");
@@ -177,10 +181,10 @@ public class Schedulers {
         Matcher matcher = CRON_STEP_PATTERN.matcher(items[j]);
         if (matcher.matches()) {
           try {
-            long step = Long.parseLong(matcher.group(2));
+            // Quartz parses the step as an int, so a larger value stays untouched and is rejected.
+            int step = Integer.parseInt(matcher.group(2));
             if (step > CRON_FIELD_LIMITS[i]) {
-              String start = matcher.group(1);
-              items[j] = "*".equals(start) ? CRON_FIELD_MIN_VALUES[i] : start;
+              items[j] = matcher.group(1);
               fieldChanged = true;
             }
           } catch (NumberFormatException ignored) {

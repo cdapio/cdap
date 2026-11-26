@@ -183,13 +183,11 @@ public class TriggerCodecTest {
 
   @Test
   public void testLegacyOversizedCronIncrements() {
-    // Legacy Quartz 2.2 expressions with step > field upper bound should normalize and remain valid in Quartz 2.3+.
+    // Legacy Quartz 2.2 "start/step" expressions with step > field upper bound should normalize
+    // and remain valid in Quartz 2.3+.
     Assert.assertEquals("0 0 * * * ?", Schedulers.getQuartzCronExpression("0/60 * * * *"));
-    Assert.assertEquals("0 0 * * * ?", Schedulers.getQuartzCronExpression("*/60 * * * *"));
     Assert.assertEquals("0 0 0 * * ?", Schedulers.getQuartzCronExpression("0 0/24 * * *"));
-    Assert.assertEquals("0 0 0 * * ?", Schedulers.getQuartzCronExpression("0 */24 * * *"));
     Assert.assertEquals("0 5 * * * ?", Schedulers.getQuartzCronExpression("0 5/60 * * * ?"));
-    Assert.assertEquals("0 10 * * * ?", Schedulers.getQuartzCronExpression("0 10-50/60 * * * ?"));
     Assert.assertEquals("0 0,30 * * * ?", Schedulers.getQuartzCronExpression("0 0/60,30 * * * ?"));
     Assert.assertEquals("0 0 0 1 * ?", Schedulers.getQuartzCronExpression("0 0 0 1/32 * ?"));
     Assert.assertEquals("0 0 0 1 1 ?", Schedulers.getQuartzCronExpression("0 0 0 1 1/13 ?"));
@@ -200,6 +198,17 @@ public class TriggerCodecTest {
     Assert.assertEquals("0 0 0/23 * * ?", Schedulers.getQuartzCronExpression("0 0 0/23 * * ?"));
     Assert.assertEquals("0 0 0 1/31 * ?", Schedulers.getQuartzCronExpression("0 0 0 1/31 * ?"));
 
+    // Only "start/step" is normalized. Quartz 2.2 already rejected an oversized "*/step", and
+    // Quartz 2.3+ still accepts an oversized step on a range, so both must stay untouched.
+    Assert.assertEquals("0 */60 * * * ?", Schedulers.getQuartzCronExpression("*/60 * * * *"));
+    Assert.assertEquals("0 0 */24 * * ?", Schedulers.getQuartzCronExpression("0 */24 * * *"));
+    Assert.assertEquals("0 10-50/60 * * * ?",
+                        Schedulers.getQuartzCronExpression("0 10-50/60 * * * ?"));
+    Assert.assertEquals("0 10-99/60 * * * ?",
+                        Schedulers.getQuartzCronExpression("0 10-99/60 * * * ?"));
+    Assert.assertEquals("0 0/2147483648 * * * ?",
+                        Schedulers.getQuartzCronExpression("0 0/2147483648 * * * ?"));
+
     // Existing apps with legacy cron expressions must still deserialize through TriggerCodec.
     testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("0/60 * * * *"),
                               new TimeTrigger("0/60 * * * *"));
@@ -207,9 +216,23 @@ public class TriggerCodecTest {
                               new TimeTrigger("0 0/24 * * *"));
     testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("0 5/60 * * * ?"),
                               new TimeTrigger("0 5/60 * * * ?"));
+    // A range with an oversized step is valid in every Quartz version without normalization.
+    testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("0 10-50/60 * * * ?"),
+                              new TimeTrigger("0 10-50/60 * * * ?"));
 
     // Truly invalid expressions must still be rejected.
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 60/60 * * * ?"));
     assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 0 24 * * ?"));
+
+    // Expressions that Quartz 2.2 rejected must not become valid through normalization.
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("*/60 * * * *"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("*/90 * * * *"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 */24 * * *"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 */48 * * *"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 10-99/60 * * * ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 0 1-99/24 * * ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 0 0 1-45/32 * ?"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 0 0 ? * 1-9/8"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("0 0/2147483648 * * * ?"));
   }
 }
