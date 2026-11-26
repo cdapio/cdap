@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.logging;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -84,6 +86,22 @@ public final class LoggingUtil {
    */
   public static String stringOrNull(@Nullable Object obj) {
     return obj == null ? null : obj.toString();
+  }
+
+  /**
+   * Returns the MDC property map for the given {@link ILoggingEvent}, returning an empty map if the
+   * event is detached from a {@link ch.qos.logback.classic.LoggerContext}.
+   */
+  public static Map<String, String> getMDCPropertyMap(ILoggingEvent event) {
+    try {
+      Map<String, String> mdc = event.getMDCPropertyMap();
+      return mdc != null ? mdc : Collections.emptyMap();
+    } catch (NullPointerException e) {
+      if (event instanceof LoggingEvent) {
+        ((LoggingEvent) event).setMDCPropertyMap(Collections.emptyMap());
+      }
+      return Collections.emptyMap();
+    }
   }
 
   /**

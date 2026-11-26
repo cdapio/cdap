@@ -19,6 +19,7 @@ package io.cdap.cdap.common.logging;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.util.LogbackMDCAdapter;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AppenderBase;
 import java.io.StringReader;
@@ -90,6 +91,7 @@ public class SamplingLoggerTest {
     transformer.transform(new DOMSource(doc), new StreamResult(writer));
 
     LoggerContext context = new LoggerContext();
+    context.setMDCAdapter(new LogbackMDCAdapter());
     JoranConfigurator configurator = new JoranConfigurator();
     configurator.setContext(context);
     configurator.doConfigure(new InputSource(new StringReader(writer.toString())));

@@ -28,10 +28,13 @@ import io.cdap.cdap.common.logging.ComponentLoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.logging.logback.TestLoggingContext;
+import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -39,6 +42,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+import org.slf4j.event.KeyValuePair;
 
 /**
  * Test cases for LoggingEventSerializer.
@@ -93,6 +99,7 @@ public class LoggingEventSerializerTest {
     Exception e1 = new Exception(null, null);
     Exception e2 = new Exception("Test Exception2", e1);
     iLoggingEvent.setThrowableProxy(new ThrowableProxy(e2));
+    iLoggingEvent.setMDCPropertyMap(mdcMap);
     iLoggingEvent.prepareForDeferredProcessing();
     ((ThrowableProxy) iLoggingEvent.getThrowableProxy()).calculatePackagingData();
 
@@ -104,8 +111,6 @@ public class LoggingEventSerializerTest {
       null
     });
 
-    iLoggingEvent.setMarker(null);
-    iLoggingEvent.getMDCPropertyMap().putAll(mdcMap);
     iLoggingEvent.setTimeStamp(1234567890L);
 
     // Serialize
@@ -149,7 +154,6 @@ public class LoggingEventSerializerTest {
     iLoggingEvent.setLoggerContextRemoteView(null);
     iLoggingEvent.setThrowableProxy(null);
     iLoggingEvent.setCallerData(null);
-    iLoggingEvent.setMarker(null);
     iLoggingEvent.setMDCPropertyMap(null);
     iLoggingEvent.setTimeStamp(10000000L);
 
@@ -182,8 +186,65 @@ public class LoggingEventSerializerTest {
     Assert.assertEquals(timestamp, serializer.decodeEventTimestamp(ByteBuffer.wrap(bytes)));
   }
 
+  @Test
+  public void testSlf4j2EventFieldsAndNegativeTimestamp() throws Exception {
+    LoggingEventSerializer serializer = new LoggingEventSerializer();
+    ch.qos.logback.classic.spi.LoggingEvent negEvent = new ch.qos.logback.classic.spi.LoggingEvent();
+    negEvent.setLevel(Level.INFO);
+    negEvent.setLoggerName("test.logger");
+    negEvent.setMessage("negative epoch");
+    negEvent.setTimeStamp(-1L);
+
+    LogMessage negLogMessage = new LogMessage(negEvent, LoggingContextAccessor.getLoggingContext());
+    negLogMessage.prepareForDeferredProcessing();
+    ILoggingEvent decodedNeg = serializer.fromBytes(ByteBuffer.wrap(serializer.toBytes(negLogMessage)));
+    Assert.assertEquals(-1L, decodedNeg.getTimeStamp());
+    Assert.assertEquals(999_000_000, decodedNeg.getNanoseconds());
+    Assert.assertEquals(0L, decodedNeg.getSequenceNumber());
+    Assert.assertNull(decodedNeg.getMarkerList());
+    Assert.assertNull(decodedNeg.getKeyValuePairs());
+
+    Marker marker = MarkerFactory.getMarker("AUDIT");
+    KeyValuePair kvp = new KeyValuePair("k1", "v1");
+    ch.qos.logback.classic.spi.LoggingEvent rich = new ch.qos.logback.classic.spi.LoggingEvent();
+    rich.setLevel(Level.WARN);
+    rich.setLoggerName("test.rich");
+    rich.setInstant(Instant.ofEpochSecond(10L, 123_456_789L));
+    rich.setSequenceNumber(42L);
+    rich.addMarker(marker);
+    rich.addKeyValuePair(kvp);
+
+    DelegatingLoggingEvent delegating = new DelegatingLoggingEvent(rich, Collections.singletonMap("m", "v"));
+    LogMessage wrapped = new LogMessage(delegating, LoggingContextAccessor.getLoggingContext());
+    Assert.assertEquals(Collections.singletonList(marker), wrapped.getMarkerList());
+    Assert.assertEquals(Collections.singletonList(kvp), wrapped.getKeyValuePairs());
+    Assert.assertEquals(42L, wrapped.getSequenceNumber());
+    Assert.assertEquals(123_456_789, wrapped.getNanoseconds());
+
+    // Cover LoggingUtil.getMDCPropertyMap branches: detached LoggingEvent NPE, null map, non-LoggingEvent NPE
+    ch.qos.logback.classic.spi.LoggingEvent detached = new ch.qos.logback.classic.spi.LoggingEvent();
+    Assert.assertTrue(LoggingUtil.getMDCPropertyMap(detached).isEmpty());
+
+    ILoggingEvent nullMdcEvent = new DelegatingLoggingEvent(rich, Collections.emptyMap()) {
+      @Override
+      public Map<String, String> getMDCPropertyMap() {
+        return null;
+      }
+    };
+    Assert.assertTrue(LoggingUtil.getMDCPropertyMap(nullMdcEvent).isEmpty());
+
+    ILoggingEvent throwingMdcEvent = new DelegatingLoggingEvent(rich, Collections.emptyMap()) {
+      @Override
+      public Map<String, String> getMDCPropertyMap() {
+        throw new NullPointerException("detached");
+      }
+    };
+    Assert.assertTrue(LoggingUtil.getMDCPropertyMap(throwingMdcEvent).isEmpty());
+  }
+
   static void assertLoggingEventEquals(ILoggingEvent expected, ILoggingEvent actual) {
-    expected.getMDCPropertyMap().putAll(
+    Map<String, String> expectedMdc = new HashMap<>(expected.getMDCPropertyMap());
+    expectedMdc.putAll(
       ImmutableMap.of(".namespaceId", "TEST_ACCT_ID1", ".applicationId", "TEST_APP_ID1", ".runId", "RUN1",
                       ".instanceId", "INSTANCE1"));
 
@@ -203,7 +264,8 @@ public class LoggingEventSerializerTest {
 
     Assert.assertEquals(expected.getMarker(), actual.getMarker());
     Assert.assertEquals(expected.getTimeStamp(), actual.getTimeStamp());
-    Assert.assertEquals(expected.getMDCPropertyMap(), actual.getMDCPropertyMap());
+    Assert.assertEquals(Math.floorMod(expected.getTimeStamp(), 1000) * 1_000_000, actual.getNanoseconds());
+    Assert.assertEquals(expectedMdc, actual.getMDCPropertyMap());
 
     assertThrowableProxyEquals(expected.getThrowableProxy(), actual.getThrowableProxy());
   }
@@ -217,6 +279,7 @@ public class LoggingEventSerializerTest {
     Assert.assertEquals(expected.getClassName(), actual.getClassName());
     Assert.assertEquals(expected.getCommonFrames(), actual.getCommonFrames());
     Assert.assertEquals(expected.getMessage(), actual.getMessage());
+    Assert.assertFalse(actual.isCyclic());
 
     assertStackTraceElementProxyArrayEquals(expected.getStackTraceElementProxyArray(),
                                             actual.getStackTraceElementProxyArray());

@@ -31,6 +31,7 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.error.api.ErrorTagProvider;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
+import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.context.ApplicationLoggingContext;
 import io.cdap.cdap.logging.serialize.DelegatingLoggingEvent;
 import java.util.Collections;
@@ -75,7 +76,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       }
       //Creating a modifiable MDC to pass it to Delegating LoggingEvent
       Map<String, String> modifiableMDC = new HashMap<>(loggingContext.getSystemTagsAsString());
-      modifiableMDC.putAll(eventObject.getMDCPropertyMap());
+      modifiableMDC.putAll(LoggingUtil.getMDCPropertyMap(eventObject));
       eventObject = addExtraTags(eventObject, loggingContext, modifiableMDC);
     }
 

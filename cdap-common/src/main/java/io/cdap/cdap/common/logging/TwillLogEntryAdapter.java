@@ -21,9 +21,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.apache.twill.api.logging.LogEntry;
 import org.slf4j.Marker;
+import org.slf4j.event.KeyValuePair;
 
 /**
  * Adapter from {@link org.apache.twill.api.logging.LogEntry} to {@link
@@ -121,6 +123,11 @@ final class TwillLogEntryAdapter implements ILoggingEvent {
   }
 
   @Override
+  public List<Marker> getMarkerList() {
+    return null;
+  }
+
+  @Override
   public Map<String, String> getMDCPropertyMap() {
     return Collections.emptyMap();
   }
@@ -133,6 +140,21 @@ final class TwillLogEntryAdapter implements ILoggingEvent {
   @Override
   public long getTimeStamp() {
     return entry.getTimestamp();
+  }
+
+  @Override
+  public int getNanoseconds() {
+    return Math.floorMod(entry.getTimestamp(), 1000) * 1_000_000;
+  }
+
+  @Override
+  public long getSequenceNumber() {
+    return 0L;
+  }
+
+  @Override
+  public List<KeyValuePair> getKeyValuePairs() {
+    return null;
   }
 
   @Override
