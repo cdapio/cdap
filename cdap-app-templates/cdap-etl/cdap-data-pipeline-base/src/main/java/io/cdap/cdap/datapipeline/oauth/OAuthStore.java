@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -147,21 +146,30 @@ public class OAuthStore {
   public void writeProvider(OAuthProvider oauthProvider, boolean reuseClientCredentials) throws OAuthStoreException {
     String namespace = NamespaceId.SYSTEM.getNamespace();
     String key = getClientCredsKey(oauthProvider.getName());
+    Map<String, String> origin = ImmutableMap.of(
+        LOGIN_URL_COL, oauthProvider.getLoginURL(),
+        TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL());
 
-    boolean validateTableOrigin = false;
-    SecureStoreMetadata existingMetadata = null;
-    if (reuseClientCredentials) {
-      existingMetadata = getRequiredClientCredentialsMetadata(namespace, key);
-      validateTableOrigin = !validateMetadataOrigin(existingMetadata, oauthProvider);
-    } else {
+    if (!reuseClientCredentials) {
       validateProviderOrigins(oauthProvider);
-      writeClientCredentials(namespace, key, oauthProvider);
+      putClientCredentials(namespace, key, GSON.toJson(oauthProvider.getClientCredentials()),
+          CLIENT_CREDS_DESCRIPTION, origin);
+    } else {
+      SecureStoreMetadata metadata = getRequiredClientCredentialsMetadata(namespace, key);
+      Map<String, String> stored = metadata.getProperties();
+      if (stored.containsKey(LOGIN_URL_COL) || stored.containsKey(TOKEN_REFRESH_URL_COL)) {
+        validateSameOrigin(stored.get(LOGIN_URL_COL), stored.get(TOKEN_REFRESH_URL_COL), oauthProvider);
+      } else {
+        // Secret created before origin binding, or provisioned outside CDAP: check the existing provider row,
+        // then store the origin on the secret so it survives a delete with preserve_client_credentials=true.
+        validateAgainstProviderRows(key, oauthProvider);
+        String description = metadata.getDescription() == null ? CLIENT_CREDS_DESCRIPTION : metadata.getDescription();
+        putClientCredentials(namespace, key, readClientCredentials(namespace, key), description,
+            ImmutableMap.<String, String>builder().putAll(stored).putAll(origin).build());
+      }
     }
 
-    upsertProviderRow(oauthProvider, key, validateTableOrigin);
-    if (validateTableOrigin) {
-      bindOriginToClientCredentials(namespace, key, existingMetadata, oauthProvider);
-    }
+    upsertProviderRow(oauthProvider);
   }
 
   /**
@@ -351,35 +359,14 @@ public class OAuthStore {
     return metadata;
   }
 
-  private void writeClientCredentials(String namespace, String key, OAuthProvider oauthProvider)
-      throws OAuthStoreException {
-    putClientCredentials(namespace, key, GSON.toJson(oauthProvider.getClientCredentials()),
-        CLIENT_CREDS_DESCRIPTION, getOriginProperties(oauthProvider));
-  }
-
-  /**
-   * Stores the validated provider origin on an existing client credential secret that has none, such
-   * as a secret written before origin binding existed or provisioned outside CDAP. Without this, deleting
-   * the provider row with {@code preserve_client_credentials=true} would drop the only record of the origin.
-   */
-  private void bindOriginToClientCredentials(String namespace, String key, SecureStoreMetadata metadata,
-                                             OAuthProvider oauthProvider) throws OAuthStoreException {
-    byte[] clientCredsJson;
+  private String readClientCredentials(String namespace, String key) throws OAuthStoreException {
     try {
-      clientCredsJson = secureStore.getData(namespace, key);
+      return new String(secureStore.getData(namespace, key), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new OAuthStoreException("Failed to read client credential from secure storage", e);
     } catch (Exception e) {
       throw new OAuthStoreException("Namespace \"" + namespace + "\" or name \"" + key + "\" does not exist", e);
     }
-    Map<String, String> properties = new HashMap<>();
-    if (metadata.getProperties() != null) {
-      properties.putAll(metadata.getProperties());
-    }
-    properties.putAll(getOriginProperties(oauthProvider));
-    String description = metadata.getDescription() == null ? CLIENT_CREDS_DESCRIPTION : metadata.getDescription();
-    putClientCredentials(namespace, key, new String(clientCredsJson, StandardCharsets.UTF_8), description,
-        properties);
   }
 
   private void putClientCredentials(String namespace, String key, String clientCredsJson, String description,
@@ -393,37 +380,41 @@ public class OAuthStore {
     }
   }
 
-  private static Map<String, String> getOriginProperties(OAuthProvider oauthProvider) {
-    return ImmutableMap.of(
-        LOGIN_URL_COL, oauthProvider.getLoginURL(),
-        TOKEN_REFRESH_URL_COL, oauthProvider.getTokenRefreshURL());
-  }
-
-  private void upsertProviderRow(OAuthProvider oauthProvider, String credsKey, boolean validateExistingRowOrigin)
+  /**
+   * Checks the new URLs against every provider row that shares this secret. Provider names are
+   * case-sensitive in the table but not in the Secure Store, so "Corp" and "corp" share one secret.
+   * If no row exists yet, only checks that the URLs are valid.
+   */
+  private void validateAgainstProviderRows(String credsKey, OAuthProvider oauthProvider)
       throws OAuthStoreException {
     try {
       TransactionRunners.run(transactionRunner, context -> {
-        StructuredTable table = context.getTable(TABLE_ID);
-        if (validateExistingRowOrigin) {
-          boolean matchedExistingRow = false;
-          try (CloseableIterator<StructuredRow> rows = table.scan(Range.all(), Integer.MAX_VALUE)) {
-            while (rows.hasNext()) {
-              StructuredRow row = rows.next();
-              String existingName = row.getString(OAUTH_PROVIDER_COL);
-              if (existingName != null && getClientCredsKey(existingName).equals(credsKey)) {
-                matchedExistingRow = true;
-                validateSameOrigin(
-                    row.getString(LOGIN_URL_COL),
-                    row.getString(TOKEN_REFRESH_URL_COL),
-                    oauthProvider);
-              }
+        boolean matchedRow = false;
+        try (CloseableIterator<StructuredRow> rows = context.getTable(TABLE_ID).scan(Range.all(), Integer.MAX_VALUE)) {
+          while (rows.hasNext()) {
+            StructuredRow row = rows.next();
+            String name = row.getString(OAUTH_PROVIDER_COL);
+            if (name != null && getClientCredsKey(name).equals(credsKey)) {
+              matchedRow = true;
+              validateSameOrigin(row.getString(LOGIN_URL_COL), row.getString(TOKEN_REFRESH_URL_COL), oauthProvider);
             }
           }
-          if (!matchedExistingRow) {
-            validateProviderOrigins(oauthProvider);
-          }
         }
-        table.upsert(getRow(oauthProvider));
+        if (!matchedRow) {
+          validateProviderOrigins(oauthProvider);
+        }
+      }, TableNotFoundException.class, IOException.class);
+    } catch (TableNotFoundException e) {
+      throw new OAuthStoreException("OAuth provider table not found", e);
+    } catch (IOException e) {
+      throw new OAuthStoreException("Failed to read OAuth providers from table", e);
+    }
+  }
+
+  private void upsertProviderRow(OAuthProvider oauthProvider) throws OAuthStoreException {
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        context.getTable(TABLE_ID).upsert(getRow(oauthProvider));
       }, TableNotFoundException.class, InvalidFieldException.class, IOException.class);
     } catch (TableNotFoundException e) {
       throw new OAuthStoreException("OAuth provider table not found", e);
@@ -432,16 +423,6 @@ public class OAuthStore {
     } catch (IOException e) {
       throw new OAuthStoreException("Failed to write OAuth provider to table", e);
     }
-  }
-
-  private static boolean validateMetadataOrigin(SecureStoreMetadata metadata, OAuthProvider oauthProvider) {
-    Map<String, String> properties = metadata.getProperties();
-    if (properties != null
-        && (properties.containsKey(LOGIN_URL_COL) || properties.containsKey(TOKEN_REFRESH_URL_COL))) {
-      validateSameOrigin(properties.get(LOGIN_URL_COL), properties.get(TOKEN_REFRESH_URL_COL), oauthProvider);
-      return true;
-    }
-    return false;
   }
 
   private static void validateProviderOrigins(OAuthProvider oauthProvider) {
