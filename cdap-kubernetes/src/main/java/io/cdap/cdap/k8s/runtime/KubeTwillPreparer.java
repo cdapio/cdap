@@ -51,6 +51,7 @@ import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerBuilder;
 import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1DeploymentBuilder;
+import io.kubernetes.client.openapi.models.V1DeploymentStrategy;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.openapi.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.openapi.models.V1EmptyDirVolumeSource;
@@ -174,6 +175,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private static final String CONFIGMAP_MOUNTPATH = "/config";
   public static final String CONFIGMAP_NAME_PREFIX = "cdap-config-";
   public static final String GCE_METADATA_HOST_ENV_VAR = "GCE_METADATA_HOST";
+  // Deployment strategy types accepted for KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY
+  private static final String DEPLOYMENT_STRATEGY_RECREATE = "Recreate";
+  private static final String DEPLOYMENT_STRATEGY_ROLLING_UPDATE = "RollingUpdate";
 
   private final MasterEnvironmentContext masterEnvContext;
   private final ApiClient apiClient;
@@ -216,6 +220,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private StringBuilder globalJvmOptions;
   private final V1EmptyDirVolumeSource workDirVolumeSource;
   private boolean shouldLocalizeConfigurationAsConfigmap;
+  private String deploymentStrategy;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -437,6 +442,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     if (config.containsKey(MasterOptionConstants.RUNTIME_NAMESPACE)) {
       cdapRuntimeNamespace = config.get(MasterOptionConstants.RUNTIME_NAMESPACE);
     }
+    deploymentStrategy = parseDeploymentStrategy(config);
     for (String runnableName : runnables) {
       withEnv(runnableName, config);
     }
@@ -454,6 +460,27 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       configMap.putAll(config);
     }
     return this;
+  }
+
+  /**
+   * Returns the Deployment strategy type from {@link KubeMasterEnvironment#K8S_DEPLOYMENT_STRATEGY}
+   * in the given configuration, or the current one if the configuration doesn't set it. A
+   * {@code null} result leaves the Kubernetes default, RollingUpdate.
+   */
+  @Nullable
+  private String parseDeploymentStrategy(Map<String, String> config) {
+    String value = config.get(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY);
+    if (value == null) {
+      return deploymentStrategy;
+    }
+    if (DEPLOYMENT_STRATEGY_RECREATE.equals(value)
+        || DEPLOYMENT_STRATEGY_ROLLING_UPDATE.equals(value)) {
+      return value;
+    }
+    throw new IllegalArgumentException(String.format(
+        "Invalid value '%s' for %s. It must be either %s or %s.", value,
+        KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY, DEPLOYMENT_STRATEGY_RECREATE,
+        DEPLOYMENT_STRATEGY_ROLLING_UPDATE));
   }
 
   @Override
@@ -952,15 +979,21 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Return a {@link V1Deployment} object for the {@link TwillRunnable} represented by the
    * given {@link RuntimeSpecification}.
    */
-  private V1Deployment buildDeployment(V1ObjectMeta metadata,
+  @VisibleForTesting
+  V1Deployment buildDeployment(V1ObjectMeta metadata,
       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
     int replicas = getMainRuntimeSpecification(runtimeSpecs).getResourceSpecification()
         .getInstances();
+    // Null keeps the Kubernetes default, RollingUpdate, which starts the new pod before it deletes
+    // the old one, even at one replica. Recreate deletes the old pod first.
+    V1DeploymentStrategy strategy =
+        deploymentStrategy == null ? null : new V1DeploymentStrategy().type(deploymentStrategy);
     return new V1DeploymentBuilder()
         .withMetadata(metadata)
         .withNewSpec()
         .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
         .withReplicas(replicas)
+        .withStrategy(strategy)
         .withNewTemplate()
         .withMetadata(metadata)
         .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpecs))
