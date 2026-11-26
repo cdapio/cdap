@@ -62,9 +62,12 @@ class KubeJobCleaner implements MasterEnvironmentTask {
         // for jobs. https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/batch/v1/conversion.go
         // so instead, list all the jobs in all k8s namespace and delete completed (successful + failed) jobs one
         // by one.
-        V1JobList jobs = batchV1Api.listJobForAllNamespaces(null, continuationToken, null, selector,
-            batchSize, null,
-            null, null, (int) TimeUnit.MINUTES.toSeconds(10), null);
+        V1JobList jobs = batchV1Api.listJobForAllNamespaces()
+            ._continue(continuationToken)
+            .labelSelector(selector)
+            .limit(batchSize)
+            .timeoutSeconds((int) TimeUnit.MINUTES.toSeconds(10))
+            .execute();
         for (V1Job job : jobs.getItems()) {
           V1JobStatus jobStatus = job.getStatus();
           // Only attempt to delete completed jobs.
@@ -78,8 +81,9 @@ class KubeJobCleaner implements MasterEnvironmentTask {
               // Rely on k8s garbage collector to delete dependent pods in background while job resource is deleted
               // immediately - https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection
               LOG.debug("Cleaning up job {} in kubernetes environment", jobName);
-              batchV1Api.deleteNamespacedJob(jobName, kubeNamespace, null, null, null, null, null,
-                  v1DeleteOptions);
+              batchV1Api.deleteNamespacedJob(jobName, kubeNamespace)
+                  .body(v1DeleteOptions)
+                  .execute();
               jobDeletionCount++;
             } catch (ApiException e) {
               if (e.getCode() == 404) {

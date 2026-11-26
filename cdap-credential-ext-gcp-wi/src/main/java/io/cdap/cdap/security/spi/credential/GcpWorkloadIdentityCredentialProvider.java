@@ -326,9 +326,8 @@ public class GcpWorkloadIdentityCredentialProvider implements CredentialProvider
     authenticationV1TokenRequest.setMetadata(serviceAccountMetadata);
 
     CoreV1Api coreV1Api = new CoreV1Api(getApiClient());
-    authenticationV1TokenRequest = coreV1Api.createNamespacedServiceAccountToken(serviceAccountName,
-        namespace, authenticationV1TokenRequest, null, null,
-        null, null);
+    authenticationV1TokenRequest = coreV1Api.createNamespacedServiceAccountToken(
+        serviceAccountName, namespace, authenticationV1TokenRequest).execute();
 
     return authenticationV1TokenRequest.getStatus().getToken();
   }
