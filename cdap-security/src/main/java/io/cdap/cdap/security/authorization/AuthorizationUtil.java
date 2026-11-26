@@ -103,9 +103,8 @@ public final class AuthorizationUtil {
   }
 
   /**
-   * Enforces that the current principal has visibility on at least one user namespace, or holds
-   * {@link StandardPermission#LIST} on {@link EntityType#NAMESPACE} under {@link InstanceId#SELF}
-   * when no user namespaces are visible.
+   * Enforces that the principal can see at least one namespace, or holds namespace LIST on the
+   * instance when there are no visible namespaces.
    */
   public static void enforceAnyNamespaceAccess(NamespaceQueryAdmin namespaceQueryAdmin,
       ContextAccessEnforcer contextAccessEnforcer) throws Exception {
@@ -117,9 +116,7 @@ public final class AuthorizationUtil {
   }
 
   /**
-   * Enforces that the current principal in {@code authenticationContext} has visibility on at least
-   * one user namespace, or holds {@link StandardPermission#LIST} on {@link EntityType#NAMESPACE}
-   * under {@link InstanceId#SELF} when no user namespaces are visible.
+   * Same as {@link #enforceAnyNamespaceAccess(NamespaceQueryAdmin, ContextAccessEnforcer)}.
    */
   public static void enforceAnyNamespaceAccess(NamespaceQueryAdmin namespaceQueryAdmin,
       AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) throws Exception {

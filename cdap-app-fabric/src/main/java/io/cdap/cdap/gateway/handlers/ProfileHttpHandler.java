@@ -77,11 +77,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder().create();
 
-  /**
-   * Provisioner properties that hold credentials in the built-in provisioners (all rendered with
-   * the {@code securekey-textarea} widget). Plaintext values are only returned to callers that can
-   * update the profile.
-   */
+  // Credential properties of the built-in provisioners, redacted for callers who cannot update.
   private static final Set<String> CREDENTIAL_PROPERTIES =
       ImmutableSet.of("accountKey", "sshKey", "accessKey", "secretKey");
 
@@ -410,10 +406,6 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     return properties;
   }
 
-  /**
-   * Redacts plaintext credential properties of each profile for callers that cannot update it.
-   * System-scoped profiles in a namespace listing are checked against the system namespace.
-   */
   private List<Profile> redactCredentials(List<Profile> profiles, NamespaceId namespaceId)
       throws BadRequestException {
     List<Profile> result = new ArrayList<>(profiles.size());
@@ -425,10 +417,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Returns a copy of {@code profile} with plaintext credential property values replaced by
-   * {@link #REDACTED_VALUE} unless the caller holds {@link StandardPermission#UPDATE} on the
-   * profile. Callers that can update the profile get it unchanged, so the edit flow round-trips.
-   * The stored profile is never modified.
+   * Returns a copy of the profile with plaintext credential values replaced, unless the caller
+   * holds UPDATE on it. The stored profile is never modified.
    */
   private Profile redactCredentials(Profile profile, ProfileId profileId) {
     ProvisionerInfo provisioner = profile.getProvisioner();
@@ -448,10 +438,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
         profile.getScope(), profile.getStatus(), redacted, profile.getCreatedTsSeconds());
   }
 
-  /**
-   * Returns whether {@code property} is a credential property holding a literal value. A value
-   * that is a single macro, such as {@code ${secure(key)}}, is a reference and is left visible.
-   */
+  // A value that is a single macro, such as ${secure(key)}, is a reference and stays visible.
   private static boolean isPlaintextCredential(ProvisionerPropertyValue property) {
     if (!CREDENTIAL_PROPERTIES.contains(property.getName())
         || Strings.isNullOrEmpty(property.getValue())) {

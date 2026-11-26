@@ -60,16 +60,13 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   }
 
   /**
-   * Lists metadata for all secure keys in the given namespace. Listing keys in the {@code system}
-   * namespace requires {@link StandardPermission#UPDATE} on {@link InstanceId#SELF}. Listing keys
-   * in a user namespace requires {@link StandardPermission#LIST} on {@link EntityType#SECUREKEY}
-   * in that namespace.
+   * Lists all the secure keys in the given namespace that the user has access to. Returns an empty
+   * list if the user does not have access to any of the keys in the namespace. Listing keys in the
+   * {@code system} namespace requires {@link StandardPermission#UPDATE} on {@link InstanceId#SELF}.
    *
-   * @param namespace the namespace whose secure keys are listed
-   * @return a list of {@link SecureStoreMetadata} in the namespace
-   * @throws UnauthorizedException if the principal lacks the required permission
-   * @throws NamespaceNotFoundException if the specified namespace does not exist
-   * @throws IOException if there was a problem reading from the store
+   * @return A map of key names accessible by the user and their descriptions.
+   * @throws NamespaceNotFoundException If the specified namespace does not exist.
+   * @throws IOException If there was a problem reading from the store.
    */
   @Override
   public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
@@ -80,6 +77,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
       accessEnforcer.enforceOnParent(EntityType.SECUREKEY, new NamespaceId(namespace),
           authenticationContext.getPrincipal(), StandardPermission.LIST);
     }
+    Principal principal = authenticationContext.getPrincipal();
     return secureStoreService.list(namespace);
   }
 

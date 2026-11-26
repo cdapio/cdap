@@ -674,9 +674,8 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
 
-    NamespaceId namespaceId = validateNamespace(namespace);
     enforceSystemNamespaceReadAccess(namespace);
-    List<ApplicationId> appIds = decodeAndValidateBatchApplication(namespaceId,
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace),
         request);
     Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.getAppDetails(
         appIds);

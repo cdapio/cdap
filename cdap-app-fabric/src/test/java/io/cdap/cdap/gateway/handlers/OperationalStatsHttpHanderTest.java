@@ -17,9 +17,7 @@
 package io.cdap.cdap.gateway.handlers;
 
 import io.cdap.cdap.operations.OperationalStatsUtils;
-import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
-import io.cdap.cdap.security.authorization.DefaultContextAccessEnforcer;
-import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -29,15 +27,15 @@ import javax.management.ObjectName;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * Tests for {@link OperationalStatsHttpHandler}.
  */
 public class OperationalStatsHttpHanderTest {
 
-  private final OperationalStatsHttpHandler handler = new OperationalStatsHttpHandler(
-      new DefaultContextAccessEnforcer(new AuthenticationTestContext(),
-          new NoOpAccessController()));
+  private final OperationalStatsHttpHandler handler =
+      new OperationalStatsHttpHandler(Mockito.mock(ContextAccessEnforcer.class));
 
   @BeforeClass
   public static void setup() throws Exception {

@@ -201,8 +201,7 @@ public class TetheringServerHandlerTest {
     cConf.setBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED, true);
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 1);
 
-    List<Permission> tetheringPermissions =
-        Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
+    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(
         Authorizable.fromEntityId(InstanceId.SELF),
@@ -226,8 +225,7 @@ public class TetheringServerHandlerTest {
                     messagingService,
                     contextAccessEnforcer,
                     messagingProgramStatePublisher),
-                new TetheringHandler(
-                    cConf, tetheringStore, messagingService, profileService,
+                new TetheringHandler(cConf, tetheringStore, messagingService, profileService,
                     contextAccessEnforcer))
             .build();
     service.start();

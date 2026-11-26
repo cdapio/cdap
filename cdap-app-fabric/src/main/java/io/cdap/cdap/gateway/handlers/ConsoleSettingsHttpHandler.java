@@ -110,7 +110,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void set(FullHttpRequest request, HttpResponder responder) throws Exception {
-    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.UPDATE);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, contextAccessEnforcer);
     String data = request.content().toString(StandardCharsets.UTF_8);
     if (!isValidJSON(data)) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid JSON in body");

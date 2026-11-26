@@ -232,8 +232,7 @@ public class TetheringClientHandlerTest {
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 5);
     cConf.set(Constants.INSTANCE_NAME, CLIENT_INSTANCE);
 
-    List<Permission> tetheringPermissions =
-        Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
+    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
                                    Collections.unmodifiableSet(new HashSet<>(tetheringPermissions)));

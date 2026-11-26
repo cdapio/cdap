@@ -40,7 +40,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.authorization.InMemoryAccessController;
-import io.cdap.cdap.security.authorization.InMemoryPrivilegeHolder;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -51,7 +50,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -62,9 +60,9 @@ import org.mockito.Mockito;
  */
 public class ApplicationLifecycleServiceAuthorizationTest {
 
-  private static final Principal ADMIN = new Principal("als-admin", Principal.PrincipalType.USER);
   private static final Principal BOB = new Principal("als-bob", Principal.PrincipalType.USER);
   private static final Principal CAROL = new Principal("als-carol", Principal.PrincipalType.USER);
+  private static final Principal ADMIN = new Principal("als-admin", Principal.PrincipalType.USER);
 
   private static final NamespaceId NAMESPACE = new NamespaceId("alsns");
   private static final String APP1 = "app1";
@@ -76,29 +74,20 @@ public class ApplicationLifecycleServiceAuthorizationTest {
 
   @BeforeClass
   public static void setup() {
-    InMemoryPrivilegeHolder.getPrivileges().clear();
-    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
-
     accessController = new InMemoryAccessController();
     authenticationContext = new AuthenticationTestContext();
-    grant(InstanceId.SELF, BOB, EnumSet.of(StandardPermission.GET));
-    grant(InstanceId.SELF, ADMIN, EnumSet.of(StandardPermission.UPDATE));
     grant(NAMESPACE, BOB, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE, CAROL, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE.app(APP1), CAROL, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE.app(APP2), BOB, EnumSet.of(StandardPermission.GET));
     grant(NAMESPACE.app(MISSING_APP), BOB, EnumSet.of(StandardPermission.GET));
+    grant(InstanceId.SELF, BOB, EnumSet.of(StandardPermission.GET));
+    grant(InstanceId.SELF, ADMIN, EnumSet.of(StandardPermission.UPDATE));
   }
 
   @After
   public void tearDown() {
     SecurityRequestContext.reset();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    InMemoryPrivilegeHolder.getPrivileges().clear();
-    InMemoryPrivilegeHolder.getRoleToPrincipals().clear();
   }
 
   @Test
@@ -153,19 +142,15 @@ public class ApplicationLifecycleServiceAuthorizationTest {
         CConfiguration.create(), store, null, null, null, null, null, null, null, null,
         accessController, authenticationContext, null, null, null,
         new NoOpMetricsCollectionService());
+    ZipOutputStream zipOut = new ZipOutputStream(new ByteArrayOutputStream());
 
+    // Instance GET is not enough to export the details of all applications.
     AuthenticationTestContext.actAsPrincipal(BOB);
-    Assert.assertThrows(UnauthorizedException.class, () -> {
-      try (ZipOutputStream zipOut = new ZipOutputStream(new ByteArrayOutputStream())) {
-        service.createAppDetailsArchive(zipOut);
-      }
-    });
+    Assert.assertThrows(UnauthorizedException.class, () -> service.createAppDetailsArchive(zipOut));
     Mockito.verifyNoInteractions(store);
 
     AuthenticationTestContext.actAsPrincipal(ADMIN);
-    try (ZipOutputStream zipOut = new ZipOutputStream(new ByteArrayOutputStream())) {
-      service.createAppDetailsArchive(zipOut);
-    }
+    service.createAppDetailsArchive(zipOut);
     Mockito.verify(store).scanApplications(Mockito.anyInt(), Mockito.any());
   }
 

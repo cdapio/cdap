@@ -125,14 +125,11 @@ public class MetricsHandler extends AbstractHttpHandler {
             GSON.toJson(metricsQueryHelper.executeTagQuery(tags, metrics, groupBy, queryParams)));
         return;
       }
-      if (HttpUtil.getContentLength(request) <= 0) {
-        responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
-        return;
-      }
       Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
-          GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-              new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
-              }.getType());
+          HttpUtil.getContentLength(request) <= 0 ? null
+              : GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+                  new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
+                  }.getType());
       if (queries == null) {
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
         return;
@@ -199,11 +196,7 @@ public class MetricsHandler extends AbstractHttpHandler {
     return Constants.Metrics.Tag.NAMESPACE.equals(MetricsQueryHelper.humanToTagName(tagName));
   }
 
-  /**
-   * Enforces {@link StandardPermission#GET} on each queried user namespace. Queries with no
-   * namespace, a wildcard namespace, or the {@code system} namespace require {@link
-   * StandardPermission#UPDATE} on {@link InstanceId#SELF}.
-   */
+  // Unscoped, wildcard and system namespace queries need instance UPDATE; others need GET on each.
   private void enforceOnNamespaces(Set<String> namespaces) {
     if (namespaces.isEmpty() || namespaces.contains(null)
         || namespaces.contains(MetricsQueryHelper.ANY_TAG_VALUE)) {
