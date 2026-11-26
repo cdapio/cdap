@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -31,8 +33,6 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
-import java.net.Authenticator;
-import java.net.ProxySelector;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -94,39 +94,56 @@ public final class RuntimeMonitors {
   }
 
   /**
-   * Setups the monitoring routes and proxy for runtime monitoring.
+   * Validates that URL runtime monitoring is enabled and configured, and returns the trimmed
+   * monitor URL.
+   *
+   * @throws IllegalArgumentException if the configured runtime monitor type is invalid
+   * @throws UnsupportedOperationException if a non-{@link RuntimeMonitorType#URL} monitor type is
+   *     configured
+   * @throws IllegalStateException if {@link Constants.RuntimeMonitor#MONITOR_URL} is missing or
+   *     blank
    */
-  public static void setupMonitoring(Injector injector, ProgramOptions programOpts)
-      throws Exception {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    RuntimeMonitorType monitorType = injector.getInstance(RuntimeMonitorType.class);
-    if (monitorType == RuntimeMonitorType.URL) {
-      // This shouldn't be null, otherwise the type won't be URL.
-      String monitorURL = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
-      monitorURL = monitorURL.endsWith("/") ? monitorURL : monitorURL + "/";
-
-      ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);
-      WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(programOpts.getArguments());
-      if (workflowInfo != null) {
-        // If the program is launched by Workflow, use the Workflow run id to make service request.
-        programRunId = new ProgramRunId(programRunId.getNamespace(), programRunId.getApplication(),
-            ProgramType.WORKFLOW, workflowInfo.getName(), workflowInfo.getRunId().getId());
-      }
-
-      URI runtimeServiceBaseURI = URI.create(monitorURL).resolve(
-          String.format(
-              "v3Internal/runtime/namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s/services/",
-              programRunId.getNamespace(), programRunId.getApplication(), programRunId.getVersion(),
-              programRunId.getType().getCategoryName(), programRunId.getProgram(),
-              programRunId.getRun()));
-      System.setProperty(RemoteClient.RUNTIME_SERVICE_ROUTING_BASE_URI,
-          runtimeServiceBaseURI.toString());
-
-      LOG.debug("Setting runtime service routing base URI to {}", runtimeServiceBaseURI);
-    } else {
-      Authenticator.setDefault(injector.getInstance(Authenticator.class));
-      ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
+  public static String requireMonitorUrl(CConfiguration cConf, ProgramOptions programOpts) {
+    RuntimeMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    if (monitorType != RuntimeMonitorType.URL) {
+      throw new UnsupportedOperationException(
+          "Unsupported runtime monitor type " + monitorType
+              + ". Only URL runtime monitoring is supported.");
     }
+    String monitorUrl = cConf.getTrimmed(Constants.RuntimeMonitor.MONITOR_URL);
+    if (Strings.isNullOrEmpty(monitorUrl)) {
+      throw new IllegalStateException(
+          "Missing configuration " + Constants.RuntimeMonitor.MONITOR_URL);
+    }
+    return monitorUrl;
+  }
+
+  /**
+   * Sets up the monitoring routes for runtime monitoring.
+   */
+  public static void setupMonitoring(Injector injector, ProgramOptions programOpts) {
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    String monitorUrl = requireMonitorUrl(cConf, programOpts);
+    monitorUrl = monitorUrl.endsWith("/") ? monitorUrl : monitorUrl + "/";
+
+    ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);
+    WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(programOpts.getArguments());
+    if (workflowInfo != null) {
+      // If the program is launched by Workflow, use the Workflow run id to make service request.
+      programRunId = new ProgramRunId(programRunId.getNamespace(), programRunId.getApplication(),
+          ProgramType.WORKFLOW, workflowInfo.getName(), workflowInfo.getRunId().getId());
+    }
+
+    URI runtimeServiceBaseURI = URI.create(monitorUrl).resolve(
+        String.format(
+            "v3Internal/runtime/namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s/services/",
+            programRunId.getNamespace(), programRunId.getApplication(), programRunId.getVersion(),
+            programRunId.getType().getCategoryName(), programRunId.getProgram(),
+            programRunId.getRun()));
+    System.setProperty(RemoteClient.RUNTIME_SERVICE_ROUTING_BASE_URI,
+        runtimeServiceBaseURI.toString());
+
+    LOG.debug("Setting runtime service routing base URI to {}", runtimeServiceBaseURI);
   }
 
   /**
@@ -150,19 +167,21 @@ public final class RuntimeMonitors {
   }
 
   /**
-   * Returns a module which defines remote authenticator override bindings if runtime monitoring
-   * type is URL, otherwise returns a null provider.
+   * Returns a module which defines remote authenticator override bindings for isolated runtime
+   * monitoring, otherwise uses the default remote authenticator configuration.
    */
-  public static Module getRemoteAuthenticatorModule(RuntimeMonitorType runtimeMonitorType,
+  public static Module getRemoteAuthenticatorModule(ClusterMode clusterMode,
       ProgramOptions programOpts) {
-    // Module for remote authenticator from overridden config if using URL runtime monitoring.
+    // Module for remote authenticator from overridden config if using isolated runtime monitoring.
     String remoteAuthenticatorNameKey = Constants.RemoteAuthenticator.REMOTE_AUTHENTICATOR_NAME;
-    if (runtimeMonitorType == RuntimeMonitorType.URL) {
+    if (clusterMode == ClusterMode.ISOLATED) {
       String provisioner = SystemArguments.getProfileProvisioner(
           programOpts.getArguments().asMap());
-      remoteAuthenticatorNameKey = String.format("%s%s",
-          Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_NAME_PREFIX,
-          provisioner);
+      if (provisioner != null) {
+        remoteAuthenticatorNameKey = String.format("%s%s",
+            Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_NAME_PREFIX,
+            provisioner);
+      }
     }
     return RemoteAuthenticatorModules.getDefaultModule(remoteAuthenticatorNameKey);
   }

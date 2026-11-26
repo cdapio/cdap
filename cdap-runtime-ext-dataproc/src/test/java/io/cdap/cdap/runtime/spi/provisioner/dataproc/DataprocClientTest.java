@@ -39,6 +39,7 @@ import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.services.compute.Compute;
 import com.google.cloud.dataproc.v1.Cluster;
+import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.dataproc.v1.ClusterStatus;
@@ -55,6 +56,7 @@ import com.google.protobuf.Empty;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.grpc.Status;
 import java.io.IOException;
@@ -98,7 +100,7 @@ public class DataprocClientTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
-  private DataprocClientFactory sshDataprocClientFactory;
+  private DataprocClientFactory dataprocClientFactory;
   private DataprocClientFactory mockDataprocClientFactory;
 
   private Compute.Networks.List listMock;
@@ -113,9 +115,9 @@ public class DataprocClientTest {
     properties.put("zone", "us-test1-c");
     dataprocConf = DataprocConf.create(properties);
 
-    sshDataprocClientFactory = (conf, requireSsh, errorCategory) ->
-      new SshDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock, errorCategory);
-    mockDataprocClientFactory = (conf, requireSsh, errorCategory) ->
+    dataprocClientFactory = (conf, errorCategory) ->
+      new DataprocClient(conf, clusterControllerClientMock, dconf -> computeMock, errorCategory);
+    mockDataprocClientFactory = (conf, errorCategory) ->
       new MockDataprocClient(conf, clusterControllerClientMock, dconf -> computeMock,
           errorCategory);
 
@@ -128,10 +130,10 @@ public class DataprocClientTest {
   @Test
   public void testReadTimeOutThrowsRetryableException() throws Exception {
     Mockito.when(listMock.execute()).thenThrow(SocketTimeoutException.class);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
     try {
-      client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+      client.createCluster("name", "2.0", Collections.emptyMap(), true);
     } catch (Exception e) {
       assertTrue(String.format("Got exception: %s, expected: %s", e.getClass().getName(),
           RetryableProvisionException.class.getName()), e instanceof RetryableProvisionException);
@@ -157,10 +159,10 @@ public class DataprocClientTest {
     GoogleJsonResponseException gError = new GoogleJsonResponseException(builder, googleJsonError);
 
     Mockito.when(listMock.execute()).thenThrow(gError);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
     try {
-    client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+      client.createCluster("name", "2.0", Collections.emptyMap(), true);
     } catch (Exception e) {
       assertTrue(String.format("Got exception: %s, expected: %s", e.getClass().getName(),
           RetryableProvisionException.class.getName()), e instanceof RetryableProvisionException);
@@ -185,10 +187,10 @@ public class DataprocClientTest {
     GoogleJsonResponseException gError = new GoogleJsonResponseException(builder, googleJsonError);
 
     Mockito.when(listMock.execute()).thenThrow(gError);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
     try {
-      client.createCluster("name", "2.0", Collections.emptyMap(), true, null);
+      client.createCluster("name", "2.0", Collections.emptyMap(), true);
     } catch (Exception e) {
       assertTrue(String.format("Got exception: %s, expected: %s", e.getClass().getName(),
           DataprocRuntimeException.class.getName()), e instanceof DataprocRuntimeException);
@@ -205,7 +207,7 @@ public class DataprocClientTest {
     PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(RetryableProvisionException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf,
+    dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).getClusters(new HashMap<>());
   }
 
@@ -217,7 +219,7 @@ public class DataprocClientTest {
     PowerMockito.when(clusterControllerClientMock.listClusters(Mockito.any())).thenThrow(e);
     thrown.expect(DataprocRuntimeException.class);
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
-    sshDataprocClientFactory.create(dataprocConf,
+    dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).getClusters(new HashMap<>());
   }
 
@@ -243,7 +245,7 @@ public class DataprocClientTest {
     thrown.expectCause(IsInstanceOf.instanceOf(ApiException.class));
     mockDataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).createCluster("name", "2.0",
-        Collections.emptyMap(), true, null);
+        Collections.emptyMap(), true);
   }
 
   @Test
@@ -271,7 +273,7 @@ public class DataprocClientTest {
     try {
       mockDataprocClientFactory.create(dataprocConf,
           new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).createCluster("name", "2.0",
-          Collections.emptyMap(), true, null);
+          Collections.emptyMap(), true);
     } catch (Exception e) {
       assertTrue(e instanceof DataprocRuntimeException);
       assertTrue(e.getCause() instanceof ApiException);
@@ -311,7 +313,7 @@ public class DataprocClientTest {
                                        HttpJsonStatusCode.of(404), false));
     try {
       mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-        .createCluster("name", "2.0", Collections.emptyMap(), true, null);
+        .createCluster("name", "2.0", Collections.emptyMap(), true);
       fail("Exception not thrown by createCluster().");
     } catch (DataprocRuntimeException e) {
       assertEquals("Thrown exception doesn't contain user error.", e.getErrorType(),
@@ -329,7 +331,7 @@ public class DataprocClientTest {
     thrown.expectMessage(not(containsString("refer to")));
     mockDataprocClientFactory.create(conf,
         new ErrorCategory(ErrorCategoryEnum.PROVISIONING)).createCluster("name", "2.0",
-        Collections.emptyMap(), true, null);
+        Collections.emptyMap(), true);
   }
 
   @Test
@@ -361,7 +363,7 @@ public class DataprocClientTest {
 
     ClusterOperationMetadata result = mockDataprocClientFactory.create(
         conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false);
 
     Assert.assertEquals(metadata, result);
     Cluster createdCluster = clusterCaptor.getValue();
@@ -420,7 +422,7 @@ public class DataprocClientTest {
     when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
 
     mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("mixed-cluster", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("mixed-cluster", "2.0", Collections.emptyMap(), false);
 
     Cluster createdCluster = clusterCaptor.getValue();
     InstanceGroupConfig masterConfig = createdCluster.getConfig().getMasterConfig();
@@ -492,7 +494,7 @@ public class DataprocClientTest {
     when(operationFuture.getMetadata()).thenReturn(apiFuture);
 
     mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("ranked-cluster", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("ranked-cluster", "2.0", Collections.emptyMap(), false);
 
     InstanceFlexibilityPolicy policy =
         clusterCaptor.getValue().getConfig().getWorkerConfig().getInstanceFlexibilityPolicy();
@@ -534,7 +536,7 @@ public class DataprocClientTest {
     when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
 
     mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("flex-cluster", "2.0", Collections.emptyMap(), false);
 
     InstanceGroupConfig workerConfig = clusterCaptor.getValue().getConfig().getWorkerConfig();
 
@@ -571,7 +573,7 @@ public class DataprocClientTest {
 
     ClusterOperationMetadata result = mockDataprocClientFactory.create(
         conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("noflex-cluster", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("noflex-cluster", "2.0", Collections.emptyMap(), false);
 
     Assert.assertEquals(metadata, result);
     Cluster createdCluster = clusterCaptor.getValue();
@@ -608,7 +610,7 @@ public class DataprocClientTest {
     when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
 
     mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("worker-flex", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("worker-flex", "2.0", Collections.emptyMap(), false);
 
     Cluster createdCluster = clusterCaptor.getValue();
     Assert.assertFalse(createdCluster.getConfig().getMasterConfig().hasInstanceFlexibilityPolicy());
@@ -645,7 +647,7 @@ public class DataprocClientTest {
     when(operationFuture.getName()).thenReturn("projects/dummy-project/regions/us-test1/operations/myop");
 
     mockDataprocClientFactory.create(conf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING))
-      .createCluster("master-flex", "2.0", Collections.emptyMap(), false, null);
+      .createCluster("master-flex", "2.0", Collections.emptyMap(), false);
 
     Cluster createdCluster = clusterCaptor.getValue();
     Assert.assertTrue(createdCluster.getConfig().getMasterConfig().hasInstanceFlexibilityPolicy());
@@ -687,7 +689,7 @@ public class DataprocClientTest {
     Cluster cluster = Cluster.newBuilder().setStatus(ClusterStatus.newBuilder()
         .setState(ClusterStatus.State.ERROR)).build();
     // PowerMockito.when(clusterControllerClientMock.getCluster(Mockito.any())).thenReturn(cluster);
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
@@ -719,7 +721,7 @@ public class DataprocClientTest {
 
   @Test
   public void testGetLatestOperation() throws Exception {
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
                                                             new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
@@ -746,7 +748,7 @@ public class DataprocClientTest {
 
   @Test
   public void testGetLatestOperationReturnsEmpty() throws Exception {
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
                                                             new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
@@ -771,7 +773,7 @@ public class DataprocClientTest {
 
   @Test
   public void testGetLatestOperationThrowsException() throws Exception {
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
                                                             new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
@@ -799,7 +801,7 @@ public class DataprocClientTest {
 
   @Test
   public void testGetLatestOperationReturnsMultiple() throws Exception {
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
                                                             new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
@@ -829,7 +831,7 @@ public class DataprocClientTest {
 
   @Test
   public void testGetLatestOperationForDelete() throws Exception {
-    DataprocClient client = sshDataprocClientFactory.create(dataprocConf,
+    DataprocClient client = dataprocClientFactory.create(dataprocConf,
         new ErrorCategory(ErrorCategoryEnum.OTHERS));
 
     OperationsClient operationsClient = PowerMockito.mock(OperationsClient.class);
@@ -855,5 +857,72 @@ public class DataprocClientTest {
 
     assertTrue(result.isPresent());
     assertEquals("target-delete-op", result.get().getName());
+  }
+
+  @Test
+  public void testGetClusterConvertsNodesWithoutComputeLookup() throws Exception {
+    Cluster dataprocCluster = Cluster.newBuilder()
+        .setClusterName("c1")
+        .setStatus(ClusterStatus.newBuilder().setState(ClusterStatus.State.RUNNING).build())
+        .setConfig(ClusterConfig.newBuilder()
+            .setMasterConfig(InstanceGroupConfig.newBuilder()
+                .addInstanceNames("m-0")
+                .build())
+            .setWorkerConfig(InstanceGroupConfig.newBuilder()
+                .addInstanceNames("w-0")
+                .build())
+            .build())
+        .build();
+    Mockito.when(clusterControllerClientMock.getCluster(Mockito.any(GetClusterRequest.class)))
+        .thenReturn(dataprocCluster);
+
+    DataprocClient client = dataprocClientFactory.create(
+        dataprocConf, new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> result = client.getCluster("c1");
+
+    Assert.assertTrue(result.isPresent());
+    Assert.assertEquals(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING,
+        result.get().getStatus());
+    Assert.assertEquals(
+        Arrays.asList(
+            new Node("m-0", Node.Type.MASTER, null, 0, Collections.emptyMap()),
+            new Node("w-0", Node.Type.WORKER, null, 0, Collections.emptyMap())),
+        new ArrayList<>(result.get().getNodes()));
+    Mockito.verifyZeroInteractions(computeMock);
+  }
+
+  @Test
+  public void testCreateClusterIncludesConfiguredMetadataWithoutSshKeys() throws Exception {
+    Map<String, String> props = new HashMap<>();
+    props.put("accountKey", "{ \"type\": \"test\"}");
+    props.put("region", "us-test1");
+    props.put("zone", "us-test1-a");
+    props.put("projectId", "dummy-project");
+    props.put("network", "dummy-network");
+    props.put(DataprocConf.CLUSTER_META_DATA, "k1|v1");
+    DataprocConf confWithMeta = DataprocConf.create(props);
+
+    OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        Mockito.mock(OperationFuture.class, Mockito.withSettings().withoutAnnotations());
+    ApiFuture<ClusterOperationMetadata> apiFuture = Mockito.mock(ApiFuture.class);
+    ClusterOperationMetadata expectedMetadata = ClusterOperationMetadata.getDefaultInstance();
+    Mockito.when(apiFuture.get()).thenReturn(expectedMetadata);
+    Mockito.when(operationFuture.getMetadata()).thenReturn(apiFuture);
+
+    ArgumentCaptor<Cluster> clusterCaptor = ArgumentCaptor.forClass(Cluster.class);
+    Mockito.when(clusterControllerClientMock.createClusterAsync(
+            Matchers.eq(confWithMeta.getProjectId()),
+            Matchers.eq(confWithMeta.getRegion()),
+            clusterCaptor.capture()))
+        .thenReturn(operationFuture);
+
+    DataprocClient client = mockDataprocClientFactory.create(
+        confWithMeta, new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
+    ClusterOperationMetadata metadata = client.createCluster(
+        "meta-cluster", "2.3", Collections.emptyMap(), true);
+
+    Assert.assertEquals(expectedMetadata, metadata);
+    Assert.assertEquals(Collections.singletonMap("k1", "v1"),
+        clusterCaptor.getValue().getConfig().getGceClusterConfig().getMetadataMap());
   }
 }

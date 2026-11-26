@@ -24,10 +24,15 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.api.exception.ProgramFailureException;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -38,6 +43,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
@@ -70,12 +76,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.apache.tephra.TransactionManager;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 /**
  * Test for Provisioning Service.
@@ -86,6 +95,7 @@ public class ProvisioningServiceTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   public static final String APP_CDAP_VERSION = "6.4.4";
 
+  private static Injector injector;
   private static ProvisioningService provisioningService;
   private static TransactionManager txManager;
   private static DatasetService datasetService;
@@ -98,7 +108,7 @@ public class ProvisioningServiceTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
     Services.startAndWait(txManager);
 
@@ -130,32 +140,6 @@ public class ProvisioningServiceTest {
   }
 
   @Test
-  public void testGetClusterStatus() throws Exception {
-    TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
-                                             .setFirstClusterStatus(ClusterStatus.RUNNING)
-                                             .failRetryablyEveryN(2)
-                                             .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
-                                             .build());
-
-    Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
-    Assert.assertEquals(ClusterStatus.RUNNING,
-                        provisioningService.getClusterStatus(taskFields.programRunId, taskFields.programOptions,
-                                                             cluster, "cdap"));
-  }
-
-  @Test(expected = Exception.class)
-  public void testGetClusterStatusFailure() throws Exception {
-    TaskFields taskFields = createTaskInfo(new MockProvisioner.PropertyBuilder()
-                                             .setFirstClusterStatus(ClusterStatus.RUNNING)
-                                             .failGet()
-                                             .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
-                                             .build());
-
-    Cluster cluster = new Cluster("test", ClusterStatus.NOT_EXISTS, Collections.emptyList(), Collections.emptyMap());
-    provisioningService.getClusterStatus(taskFields.programRunId, taskFields.programOptions, cluster, "cdap");
-  }
-
-  @Test
   public void testGetSpecs() {
     Collection<ProvisionerDetail> specs = provisioningService.getProvisionerDetails();
     Assert.assertEquals(2, specs.size());
@@ -175,6 +159,99 @@ public class ProvisioningServiceTest {
       .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
       .build();
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
+    ProvisioningTaskInfo taskInfo = provisionerStore.getTaskInfo(
+        new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION));
+    Assert.assertNotNull(taskInfo);
+    Assert.assertNotNull(taskInfo.getCluster());
+    Assert.assertFalse(taskInfo.getCluster().getProperties().containsKey("ssh.user"));
+    testDeprovision(taskFields.programRunId, ProvisioningOp.Status.DELETED);
+  }
+
+  @Test
+  public void testGetRuntimeJobManagerReturnsEmptyForUnknownProvisioner() {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("wf").run(RunIds.generate());
+    ProgramOptions opts = new SimpleProgramOptions(
+        programRunId.getParent(),
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.PROFILE_PROVISIONER, "unknown-provisioner")),
+        new BasicArguments());
+    Assert.assertFalse(provisioningService.getRuntimeJobManager(programRunId, opts).isPresent());
+  }
+
+  @Test
+  public void testProvisionWithInvalidMonitorTypeFailsFastAndNotifies() throws Exception {
+    assertProvisionFailsFast(
+        "https://monitor.example.com",
+        Collections.emptyMap(),
+        Collections.singletonMap(SystemArguments.RUNTIME_MONITOR_TYPE, "invalid-type"),
+        ErrorType.USER,
+        "Invalid runtime monitor type 'invalid-type'");
+  }
+
+  @Test
+  public void testIsolatedProvisionRejectsMissingMonitorUrlPreClusterCreate() throws Exception {
+    assertProvisionFailsFast(
+        null,
+        Collections.singletonMap(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name()),
+        Collections.emptyMap(),
+        ErrorType.SYSTEM,
+        Constants.RuntimeMonitor.MONITOR_URL);
+  }
+
+  @Test
+  public void testIsolatedProvisionRejectsSshPreClusterCreate() throws Exception {
+    assertProvisionFailsFast(
+        "https://monitor.example.com",
+        Collections.singletonMap(ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name()),
+        Collections.singletonMap(SystemArguments.RUNTIME_MONITOR_TYPE, "ssh"),
+        ErrorType.USER,
+        "Only URL runtime monitoring is supported");
+  }
+
+  @Test
+  public void testTetheredClientIsolatedProvisionSucceedsWithoutLocalMonitorUrl() throws Exception {
+    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder()
+        .setExpectedAppCDAPVersion(APP_CDAP_VERSION)
+        .build();
+    Map<String, String> tetheredSysArgs = ImmutableMap.of(
+        ProgramOptionConstants.CLUSTER_MODE, ClusterMode.ISOLATED.name(),
+        ProgramOptionConstants.PEER_NAME, "tether-server");
+    TaskFields taskFields = createTaskInfo(
+        provisionerInfo, tetheredSysArgs, Collections.emptyMap());
+    ProvisionRequest request = new ProvisionRequest(taskFields.programRunId,
+        taskFields.programOptions, taskFields.programDescriptor, "Bob");
+
+    Runnable task = TransactionRunners.run(transactionRunner, context -> {
+      return provisioningService.provision(request, context);
+    });
+    task.run();
+    waitForExpectedProvisioningState(
+        new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION),
+        ProvisioningOp.Status.CREATED);
+    testDeprovision(taskFields.programRunId, ProvisioningOp.Status.DELETED);
+  }
+
+  @Test
+  public void testDeprovisionWithInvalidMonitorTypeStillDeletesCluster() throws Exception {
+    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().build();
+    TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
+    ProvisioningTaskKey provisionKey = new ProvisioningTaskKey(
+        taskFields.programRunId, ProvisioningOp.Type.PROVISION);
+    ProvisioningTaskInfo existing = provisionerStore.getTaskInfo(provisionKey);
+    Assert.assertNotNull(existing);
+
+    // Corrupt stored programOptions with an invalid monitor type and verify deprovision succeeds.
+    ProgramOptions invalidMonitorOpts = new SimpleProgramOptions(
+        taskFields.programRunId.getParent(),
+        existing.getProgramOptions().getArguments(),
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.RUNTIME_MONITOR_TYPE, "invalid-type")));
+    ProvisioningTaskInfo updated = new ProvisioningTaskInfo(
+        existing.getProgramRunId(), existing.getProgramDescriptor(), invalidMonitorOpts,
+        existing.getProvisionerProperties(), existing.getProvisionerName(), existing.getUser(),
+        existing.getProvisioningOp(), existing.getSecureKeysDir(), existing.getCluster());
+    provisionerStore.putTaskInfo(updated);
+
     testDeprovision(taskFields.programRunId, ProvisioningOp.Status.DELETED);
   }
 
@@ -337,9 +414,14 @@ public class ProvisioningServiceTest {
   }
 
   private TaskFields createTaskInfo(ProvisionerInfo provisionerInfo) {
+    return createTaskInfo(provisionerInfo, Collections.emptyMap(), Collections.emptyMap());
+  }
+
+  private TaskFields createTaskInfo(ProvisionerInfo provisionerInfo,
+      Map<String, String> extraSystemArgs, Map<String, String> extraUserArgs) {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("wf").run(RunIds.generate());
-    Map<String, String> systemArgs = new HashMap<>();
-    Map<String, String> userArgs = new HashMap<>();
+    Map<String, String> systemArgs = new HashMap<>(extraSystemArgs);
+    Map<String, String> userArgs = new HashMap<>(extraUserArgs);
 
     Profile profile = new Profile(ProfileId.NATIVE.getProfile(), "label", "desc", provisionerInfo);
     SystemArguments.addProfileArgs(systemArgs, profile);
@@ -475,6 +557,66 @@ public class ProvisioningServiceTest {
     String implementedLabel = provisioningService.getTotalProcessingCpusLabel(MockProvisionerWithCpus.NAME,
                                                                               new HashMap<>());
     Assert.assertEquals(MockProvisionerWithCpus.TEST_LABEL, implementedLabel);
+  }
+
+  private void assertProvisionFailsFast(String monitorUrl, Map<String, String> extraSystemArgs,
+      Map<String, String> extraUserArgs, ErrorType expectedErrorType,
+      String expectedMessageSubstring) throws Exception {
+    ProgramStateWriter stateWriter = Mockito.mock(ProgramStateWriter.class);
+    ProvisionerNotifier notifier = Mockito.mock(ProvisionerNotifier.class);
+    CConfiguration conf = CConfiguration.copy(injector.getInstance(CConfiguration.class));
+    if (monitorUrl == null) {
+      conf.unset(Constants.RuntimeMonitor.MONITOR_URL);
+    } else {
+      conf.set(Constants.RuntimeMonitor.MONITOR_URL, monitorUrl);
+    }
+    ProvisioningService service = createProvisioningService(conf, stateWriter, notifier);
+    ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().failCreate().build();
+    TaskFields taskFields = createTaskInfo(provisionerInfo, extraSystemArgs, extraUserArgs);
+    try {
+      Services.startAndWait(service);
+      ProvisionRequest request = new ProvisionRequest(taskFields.programRunId,
+          taskFields.programOptions, taskFields.programDescriptor, "Bob");
+
+      Runnable task = TransactionRunners.run(transactionRunner, context -> {
+        return service.provision(request, context);
+      });
+      task.run();
+
+      // ProvisionTask was not executed (failed fast before createCluster without throwing out of TMS)
+      ProvisioningTaskInfo taskInfo = provisionerStore.getTaskInfo(
+          new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION));
+      Assert.assertNotNull(taskInfo);
+      Assert.assertEquals(ProvisioningOp.Status.REQUESTING_CREATE,
+          taskInfo.getProvisioningOp().getStatus());
+      Assert.assertNull(taskInfo.getCluster());
+
+      ArgumentCaptor<Throwable> errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+      Mockito.verify(stateWriter).error(Mockito.eq(taskFields.programRunId), errorCaptor.capture());
+      Assert.assertTrue(errorCaptor.getValue() instanceof ProgramFailureException);
+      ProgramFailureException failure = (ProgramFailureException) errorCaptor.getValue();
+      Assert.assertEquals(expectedErrorType, failure.getErrorType());
+      Assert.assertTrue(failure.getMessage().contains(expectedMessageSubstring));
+      Mockito.verify(notifier).deprovisioning(taskFields.programRunId);
+    } finally {
+      Services.stopAndWait(service);
+      provisionerStore.deleteTaskInfo(taskFields.programRunId);
+    }
+  }
+
+  private static ProvisioningService createProvisioningService(CConfiguration conf,
+      ProgramStateWriter stateWriter, ProvisionerNotifier notifier) {
+    return new ProvisioningService(
+        conf,
+        injector.getInstance(ProvisionerProvider.class),
+        injector.getInstance(ProvisionerConfigProvider.class),
+        notifier,
+        injector.getInstance(LocationFactory.class),
+        injector.getInstance(SecureStore.class),
+        stateWriter,
+        provisionerStore,
+        transactionRunner,
+        injector.getInstance(MetricsCollectionService.class));
   }
 
   /**

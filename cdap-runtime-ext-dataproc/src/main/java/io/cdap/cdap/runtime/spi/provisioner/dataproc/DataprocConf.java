@@ -62,7 +62,6 @@ final class DataprocConf {
   static final String IMAGE_VERSION = "imageVersion";
   static final String CUSTOM_IMAGE_URI = "customImageUri";
   static final String ENCRYPTION_KEY_NAME = "encryptionKeyName";
-  static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
   // The property name for the GCE cluster meta data
   // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
   static final String CLUSTER_META_DATA = "clusterMetaData";
@@ -185,8 +184,6 @@ final class DataprocConf {
   private final boolean vTpmEnabled;
   private final boolean integrityMonitoringEnabled;
 
-  private final boolean runtimeJobManagerEnabled;
-
   private final String tokenEndpoint;
   private final int computeCredentialsMaxRetries;
 
@@ -221,7 +218,7 @@ final class DataprocConf {
       @Nullable String customImageUri,
       @Nullable Map<String, String> clusterMetaData,
       @Nullable Map<String, String> clusterLabels, List<String> networkTags,
-      List<String> scopes, @Nullable String initActions, boolean runtimeJobManagerEnabled,
+      List<String> scopes, @Nullable String initActions,
       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy, int idleTtlMinutes,
       @Nullable String tokenEndpoint, int computeCredentialsMaxRetries, boolean secureBootEnabled,
       boolean vTpmEnabled, boolean integrityMonitoringEnabled, boolean clusterReuseEnabled,
@@ -278,7 +275,6 @@ final class DataprocConf {
     this.clusterLabels = clusterLabels;
     this.networkTags = networkTags;
     this.initActions = initActions;
-    this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.clusterProperties = clusterProperties;
     this.autoScalingPolicy = autoScalingPolicy;
     this.idleTtlMinutes = idleTtlMinutes;
@@ -476,10 +472,6 @@ final class DataprocConf {
     }
     return Arrays.stream(initActions.split(","))
         .map(String::trim).collect(Collectors.toList());
-  }
-
-  boolean isRuntimeJobManagerEnabled() {
-    return runtimeJobManagerEnabled;
   }
 
   Map<String, String> getClusterProperties() {
@@ -769,8 +761,6 @@ final class DataprocConf {
     }
 
     final String initActions = getString(properties, "initActions");
-    final boolean runtimeJobManagerEnabled = Boolean.parseBoolean(
-        properties.get(RUNTIME_JOB_MANAGER));
     final int idleTtl = getInt(properties,
         CLUSTER_IDLE_TTL_MINUTES, CLUSTER_IDLE_TTL_MINUTES_DEFAULT);
 
@@ -839,7 +829,7 @@ final class DataprocConf {
         stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
         componentGatewayEnabled, skipDelete,
         imageVersion, customImageUri, clusterMetaData, clusterLabels, networkTags,
-        scopes, initActions, runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTtl,
+        scopes, initActions, clusterProps, autoScalingPolicy, idleTtl,
         tokenEndpoint, computeCredentialsMaxRetries, secureBootEnabled, vTpmEnabled, integrityMonitoringEnabled,
         clusterReuseEnabled, clusterReuseThresholdMinutes, clusterReuseRetryDelayMs,
         clusterReuseRetryMaxMs, clusterReuseUpdateMaxMs, clusterReuseKey,

@@ -31,12 +31,15 @@ import io.cdap.cdap.api.exception.ErrorCategory.ErrorCategoryEnum;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.MockVersionInfo;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -89,7 +92,7 @@ public class DataprocProvisionerTest {
 
   @Before
   public void init() {
-    provisioner = new DataprocProvisioner((conf, requireSsh, errorCategory) -> dataprocClient);
+    provisioner = new DataprocProvisioner((conf, errorCategory) -> dataprocClient);
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
 
     // default system properties defined by DataprocProvisioner
@@ -103,8 +106,6 @@ public class DataprocProvisionerTest {
     // default system properties defined by AbstractDataprocProvisioner
     provisionerSystemContext
         .addProperty(RESOURCE_MAX_PERCENT_KEY, RESOURCE_MAX_PERCENT_VAL);
-    provisionerSystemContext
-        .addProperty(DataprocConf.RUNTIME_JOB_MANAGER, "job_manager");
     provisionerSystemContext
         .addProperty("labels", "system-prop=value,user=system");
     // non-default system properties
@@ -256,8 +257,6 @@ public class DataprocProvisionerTest {
         properties.get(DataprocConf.SERVICE_ACCOUNT));
     Assert.assertEquals(TOKEN_ENDPOINT,
         properties.get(DataprocConf.TOKEN_ENDPOINT_KEY));
-    Assert.assertEquals("job_manager",
-        properties.get(DataprocConf.RUNTIME_JOB_MANAGER));
     Assert.assertNull(properties.get("non-system-default-key"));
   }
 
@@ -324,14 +323,14 @@ public class DataprocProvisionerTest {
       .build();
     context.setProgramRunInfo(programRunInfo);
     context.setSparkCompat(SparkCompat.SPARK3_2_12);
+    context.setRuntimeMonitorType(RuntimeMonitorType.URL);
     context.addProperty(DataprocConf.CLUSTER_REUSE_ENABLED, "false");
     context.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.PROVISIONING));
 
     Mockito.when(dataprocClient.getCluster("cdap-app-runId"))
         .thenReturn(Optional.empty());
     Mockito.when(dataprocClient.createCluster(Mockito.eq("cdap-app-runId"),
-            Mockito.eq("2.3"), addedLabelsCaptor.capture(), Mockito.eq(false),
-            Mockito.any()))
+            Mockito.eq("2.3"), addedLabelsCaptor.capture(), Mockito.eq(false)))
       .thenReturn(ClusterOperationMetadata.getDefaultInstance());
     Cluster expectedCluster = new Cluster(
       "cdap-app-runId", ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
@@ -948,7 +947,7 @@ public class DataprocProvisionerTest {
   @Test
   public void testCreateContextPropertiesIgnoresTokenEndpointWithoutSystemValue() {
     DataprocProvisioner noEndpointProvisioner =
-        new DataprocProvisioner((conf, requireSsh, errorCategory) -> dataprocClient);
+        new DataprocProvisioner((conf, errorCategory) -> dataprocClient);
     noEndpointProvisioner.initialize(new MockProvisionerSystemContext());
     context.addProperty(DataprocConf.TOKEN_ENDPOINT_KEY, "http://example.com/token");
 
@@ -1158,6 +1157,63 @@ public class DataprocProvisionerTest {
       DataprocConf.CLOUD_PLATFORM_SCOPE
     );
     Assert.assertEquals(expectedScopes, conf.getScopes());
+  }
+
+  @Test
+  public void testDataprocProvisionerRejectsSshMonitorType() {
+    context.setRuntimeMonitorType(RuntimeMonitorType.SSH);
+    context.setErrorCategory(new ErrorCategory(ErrorCategoryEnum.OTHERS));
+    DataprocRuntimeException e = Assert.assertThrows(DataprocRuntimeException.class,
+        () -> provisioner.createCluster(context));
+    Assert.assertEquals(ErrorType.USER, e.getErrorType());
+    Assert.assertEquals(new ErrorCategory(ErrorCategoryEnum.OTHERS, "Configuration"),
+        e.getErrorCategory());
+    Assert.assertTrue(e.getMessage().contains("SSH runtime monitoring is no longer supported"));
+    Mockito.verifyZeroInteractions(dataprocClient);
+  }
+
+  @Test
+  public void testExistingDataprocProvisionerRejectsSshMonitorType() {
+    ExistingDataprocProvisioner existingProvisioner = new ExistingDataprocProvisioner();
+    existingProvisioner.initialize(new MockProvisionerSystemContext());
+    context.setRuntimeMonitorType(RuntimeMonitorType.SSH);
+    DataprocRuntimeException e = Assert.assertThrows(DataprocRuntimeException.class,
+        () -> existingProvisioner.createCluster(context));
+    Assert.assertEquals(ErrorType.USER, e.getErrorType());
+    Assert.assertEquals(DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION,
+        e.getErrorCategory());
+    Assert.assertTrue(e.getMessage().contains("SSH runtime monitoring is no longer supported"));
+  }
+
+  @Test
+  public void testGetRuntimeJobManagerAlwaysPresent() {
+    String dummyCreds = "{\"type\":\"authorized_user\",\"client_id\":\"id\","
+        + "\"client_secret\":\"secret\",\"refresh_token\":\"token\"}";
+    context.addProperty("accountKey", dummyCreds);
+    context.addProperty(DataprocConf.PROJECT_ID_KEY, "testProject");
+    context.addProperty("region", "us-central1");
+    context.addProperty("runtime.job.manager", "false");
+    context.setProgramRunInfo(new ProgramRunInfo.Builder()
+        .setNamespace("ns").setApplication("app").setVersion("1.0")
+        .setProgramType("workflow").setProgram("program").setRun("runId").build());
+
+    Optional<RuntimeJobManager> managerOpt = provisioner.getRuntimeJobManager(context);
+    Assert.assertTrue(managerOpt.isPresent());
+    try (RuntimeJobManager manager = managerOpt.get()) {
+      Assert.assertTrue(manager instanceof DataprocRuntimeJobManager);
+    }
+
+    ExistingDataprocProvisioner existingProvisioner = new ExistingDataprocProvisioner();
+    MockProvisionerSystemContext existingSystemContext = new MockProvisionerSystemContext();
+    existingSystemContext.setCDAPVersion("6.4");
+    existingProvisioner.initialize(existingSystemContext);
+    context.addProperty("clusterName", "existing-cluster");
+    Optional<RuntimeJobManager> existingManagerOpt =
+        existingProvisioner.getRuntimeJobManager(context);
+    Assert.assertTrue(existingManagerOpt.isPresent());
+    try (RuntimeJobManager existingManager = existingManagerOpt.get()) {
+      Assert.assertTrue(existingManager instanceof DataprocRuntimeJobManager);
+    }
   }
 
   private Operation createOperationWithTimestamps(String operationName,

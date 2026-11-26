@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.ssh;
 
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +29,11 @@ import javax.annotation.Nullable;
 
 /**
  * This interface represents an SSH session, which allow performing remote ssh commands and scp.
+ *
+ * @deprecated SSH-based runtime execution and monitoring are no longer supported; use
+ *     {@link RuntimeJobManager} and {@link RuntimeMonitorType#URL} instead.
  */
+@Deprecated
 public interface SSHSession extends Closeable {
 
   /**

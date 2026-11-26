@@ -211,14 +211,6 @@
       <artifactId>common-io</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.sshd</groupId>
-      <artifactId>sshd-core</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
       <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->

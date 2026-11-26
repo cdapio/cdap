@@ -86,11 +86,6 @@ public final class Constants {
   if they don't exist. */
   public static final String REQUIREMENTS_DATASET_TYPE_EXCLUDE = "requirements.datasetTypes.exclude.list";
 
-
-  // Configurations for external proxy support for out going connections.
-  // Configuration key for the monitor proxy in the format of "host:port"
-  public static final String NETWORK_PROXY_ADDRESS = "network.proxy.address";
-
   /**
    * Option to pass CDAP version when application was created / upgraded.
    */
@@ -1500,7 +1495,6 @@ public final class Constants {
     public static final String COMPRESSION_ENABLED = "app.program.runtime.monitor.compression.enabled";
 
     // Configuration key for specifying the base URL for sending monitoring messages.
-    // If it is missing from the configuration, SSH tunnel will be used.
     public static final String MONITOR_URL = "app.program.runtime.monitor.url";
     public static final String MONITOR_TYPE_PREFIX = "app.program.runtime.monitor.type.";
     public static final String MONITOR_URL_AUTHENTICATOR_NAME_PREFIX =
@@ -1511,20 +1505,6 @@ public final class Constants {
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
 
-    // Constants for secure connections
-    public static final String SSH_USER = "ssh.user";
-    public static final String PUBLIC_KEY = "id_rsa.pub";
-    public static final String PRIVATE_KEY = "id_rsa";
-
-    // Configurations related to the Service Proxy that runs in the remote runtime for proxying traffic from
-    // remote cluster back into calling CDAP services.
-    // File name that stores the service proxy information
-    public static final String SERVICE_PROXY_FILE = "cdap.service.proxy.json";
-    // Configuration key for the service proxy in the format of "host:port"
-    public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
-    // Configuration key for the service proxy password. It is only used within a runtime cluster.
-    public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
-    public static final String SERVICE_PROXY_PASSWORD_FILE = "cdap.service.proxy.secret";
     public static final String METRICS_AGGREGATION_ENABLED = "app.program.runtime.monitor.metrics.aggregation.enabled";
     public static final String METRICS_AGGREGATION_WINDOW_SECONDS =
         "app.program.runtime.monitor.metrics.aggregation.window.secs";

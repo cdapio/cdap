@@ -16,14 +16,10 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
-import com.google.common.hash.Hashing;
-import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.guice.ClusterMode;
-import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -37,33 +33,25 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.common.service.Services;
-import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
-import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
-import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenticator;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.services.ProgramCompletionNotifier;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
-import io.cdap.cdap.runtime.spi.provisioner.Cluster;
-import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobStatus;
-import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
 import io.cdap.cdap.security.auth.TokenManager;
@@ -72,23 +60,16 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,6 +83,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.hadoop.conf.Configuration;
@@ -117,10 +99,8 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.security.SecureStoreRenewer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.SingleRunnableApplication;
 import org.apache.twill.internal.io.BasicLocationCache;
 import org.apache.twill.internal.io.LocationCache;
@@ -128,8 +108,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link TwillRunnerService} implementations that uses ssh to launch and monitor {@link
- * TwillApplication} with a single {@link TwillRunnable}.
+ * A {@link TwillRunnerService} implementation that uses a {@link RuntimeJobManager} and URL
+ * runtime monitoring to launch and monitor a {@link TwillApplication} with a single
+ * {@link TwillRunnable}.
  */
 public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
     ProgramCompletionNotifier {
@@ -146,8 +127,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
   private final TransactionRunner txRunner;
-  private final ServiceSocksProxy serviceSocksProxy;
-  private final RuntimeServiceSocksProxyAuthenticator serviceSocksProxyAuthenticator;
   private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
   private final Lock controllersLock;
   private final AccessTokenCodec accessTokenCodec;
@@ -159,7 +138,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
   @Inject
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
-      DiscoveryServiceClient discoveryServiceClient,
       LocationFactory locationFactory,
       ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter,
@@ -176,9 +154,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
     this.tokenManager = tokenManager;
     this.controllers = new ConcurrentHashMap<>();
     this.controllersLock = new ReentrantLock();
-    this.serviceSocksProxyAuthenticator = new RuntimeServiceSocksProxyAuthenticator();
-    this.serviceSocksProxy = new ServiceSocksProxy(discoveryServiceClient,
-        serviceSocksProxyAuthenticator);
   }
 
   @Override
@@ -215,14 +190,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
 
   @Override
   public void stop() {
-    try {
-      if (EnumSet.of(Service.State.STARTING, Service.State.RUNNING)
-          .contains(serviceSocksProxy.state())) {
-        Services.stopAndWait(serviceSocksProxy);
-      }
-    } catch (Exception e) {
-      LOG.warn("Exception raised when stopping runtime monitor socks proxy", e);
-    }
     // Release the resource. This won't terminate the controllers.
     controllers.values().forEach(RemoteExecutionTwillController::release);
 
@@ -350,49 +317,29 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       ProgramRunId programRunId,
       ProgramOptions programOpts, TwillSpecification twillSpec,
       LocationCache locationCache, TwillControllerFactory controllerFactory) {
+    RuntimeMonitors.requireMonitorUrl(cConf, programOpts);
 
-    Location keysDirLocation = getKeysDirLocation(programOpts, locationFactory);
     Map<String, Location> secretFiles = new HashMap<>();
-    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RuntimeMonitorType.SSH) {
-      secretFiles.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
-          generateAndSaveServiceProxySecret(programRunId, keysDirLocation));
-    }
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
+      Location keysDirLocation = getKeysDirLocation(programOpts, locationFactory);
       secretFiles.put(Constants.Security.Authentication.RUNTIME_TOKEN_FILE,
           generateAndSaveRuntimeToken(programRunId, keysDirLocation));
     }
 
-    RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId,
-        programOpts).orElse(null);
-    // Use RuntimeJobManager to launch the remote process if it is supported
-    if (jobManager != null) {
-      return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
-          secretFiles,
-          locationCache, locationFactory,
-          controllerFactory,
-          () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
-              .orElseThrow(IllegalStateException::new));
-    }
-
-    // Use SSH if there is no RuntimeJobManager
-    ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
-    return new RemoteExecutionTwillPreparer(cConf, hConf, clusterKeyInfo.getCluster(),
-        clusterKeyInfo.getSSHConfig(),
+    return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
         secretFiles,
-        twillSpec, programRunId, programOpts,
-        locationCache, locationFactory, controllerFactory);
+        locationCache, locationFactory,
+        controllerFactory,
+        getRuntimeJobManagerSupplier(programRunId, programOpts));
   }
 
-  /**
-   * Returns the port that the service socks proxy is listening on. It will start the socks proxy if
-   * it is not running.
-   */
-  private int getServiceSocksProxyPort() {
-    if (serviceSocksProxy.state() == Service.State.NEW) {
-      // It's ok to have multiple threads calling start if the proxy is not running.
-      Services.startAndWait(serviceSocksProxy);
-    }
-    return serviceSocksProxy.getBindAddress().getPort();
+  private Supplier<RuntimeJobManager> getRuntimeJobManagerSupplier(ProgramRunId programRunId,
+      ProgramOptions programOpts) {
+    String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
+    return () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
+        .orElseThrow(() -> new UnsupportedOperationException(
+            String.format("Provisioner '%s' does not support RuntimeJobManager for %s",
+                provisioner, programRunId)));
   }
 
   /**
@@ -414,31 +361,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       return location;
     } catch (IOException e) {
       throw new RuntimeException("Failed to generate runtime token for " + programRunId, e);
-    }
-  }
-
-  /**
-   * Generates a secret for the remote runtime to use to authenticate itself to the service socks
-   * proxy.
-   */
-  private Location generateAndSaveServiceProxySecret(ProgramRunId programRunId, Location keysDir) {
-    try {
-      SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-      byte[] salt = new byte[20];   // Same size as a SHA1 hash
-      secureRandom.nextBytes(salt);
-
-      String secret = Hashing.sha1().newHasher()
-          .putBytes(salt)
-          .putUnencodedChars(programRunId.getRun())
-          .hash().toString();
-
-      Location location = keysDir.append(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
-      try (OutputStream os = location.getOutputStream()) {
-        os.write(secret.getBytes(StandardCharsets.UTF_8));
-      }
-      return location;
-    } catch (NoSuchAlgorithmException | IOException e) {
-      throw new RuntimeException("Failed to generate service proxy secret for " + programRunId, e);
     }
   }
 
@@ -484,8 +406,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
                 count.incrementAndGet();
               }
             } catch (Exception e) {
-              // This can happen if the key files are gone. We won't be able to monitor it any more,
-              // hence treat it as failed.
+              // This can happen if runtime monitor configuration is missing or unsupported.
+              // We won't be able to monitor the run any more, hence treat it as failed.
               ProgramRunId programRunId = runRecordDetail.getProgramRunId();
               LOG.warn(
                   "Failed to create controller from run record for {}. Marking program as failed.",
@@ -591,14 +513,10 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
         }
 
         CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
-        RemoteProcessController processController = createRemoteProcessController(programRunId,
-            programOpts);
-        try {
-          controller = createController(programRunId, programOpts, processController,
-              startupTaskCompletion);
-        } catch (Exception e) {
-          throw new RuntimeException("Failed to create controller for " + programRunId, e);
-        }
+        RuntimeJobRemoteProcessController processController = createRemoteProcessController(
+            programRunId, programOpts);
+        controller = createController(programRunId, programOpts, processController,
+            startupTaskCompletion);
 
         // Execute the startup task if provided
         if (startupTask != null) {
@@ -678,17 +596,16 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
      */
     private RemoteExecutionTwillController createController(ProgramRunId programRunId,
         ProgramOptions programOpts,
-        RemoteProcessController processController,
-        CompletableFuture<Void> startupTaskCompletion)
-        throws Exception {
+        RuntimeJobRemoteProcessController processController,
+        CompletableFuture<Void> startupTaskCompletion) {
       RemoteExecutionService remoteExecutionService = createRemoteExecutionService(programRunId,
           programOpts,
           processController);
 
       // TODO: (CDAP-19047) rework the contract here to be cleaner instead of implementation specific
-      // If this is a tethered run, the RemoteProcessController needs to be used to gracefully stop the run
+      // If this is a tethered run, the RuntimeJobRemoteProcessController needs to be used to gracefully stop the run
       // Otherwise, stopping is handled by the RuntimeClient to have the program shut itself down,
-      // so the RemoteProcessController doesn't need to explicit stop anything
+      // so the RuntimeJobRemoteProcessController doesn't need to explicitly stop anything
       Map<String, String> systemArguments = programOpts.getArguments().asMap();
       String provisionerName = SystemArguments.getProfileProvisioner(systemArguments);
       String peerName = systemArguments.get(ProgramOptionConstants.PEER_NAME);
@@ -706,178 +623,20 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       return controller;
     }
 
-    private RemoteProcessController createRemoteProcessController(ProgramRunId programRunId,
-        ProgramOptions programOpts) {
-      RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId,
-          programOpts).orElse(null);
-      // Use RuntimeJobManager to control the remote process if it is supported
-      if (jobManager != null) {
-        LOG.debug("Creating controller for program run {} with runtime job manager", programRunId);
-        return new RuntimeJobRemoteProcessController(
-            programRunId,
-            () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
-                .orElseThrow(IllegalStateException::new));
-      }
-
-      // Otherwise, default to SSH
-      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
-      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      LOG.debug("Creating controller for program run {} with SSH config {}", programRunId,
-          sshConfig);
-
-      return new SSHRemoteProcessController(programRunId, programOpts, sshConfig,
-          provisioningService);
+    private RuntimeJobRemoteProcessController createRemoteProcessController(
+        ProgramRunId programRunId, ProgramOptions programOpts) {
+      LOG.debug("Creating controller for program run {} with runtime job manager", programRunId);
+      return new RuntimeJobRemoteProcessController(
+          programRunId, getRuntimeJobManagerSupplier(programRunId, programOpts));
     }
 
     private RemoteExecutionService createRemoteExecutionService(ProgramRunId programRunId,
         ProgramOptions programOpts,
-        RemoteProcessController processController)
-        throws IOException {
-      // If monitor via URL directly, no need to run service socks proxy
-      RuntimeMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
-      if (monitorType == RuntimeMonitorType.URL) {
-        LOG.debug("Monitor program run {} with direct url", programRunId);
-        return new RemoteExecutionService(cConf, programRunId, scheduler, processController,
-            programStateWriter);
-      }
-
-      // SSH monitor. The remote execution service will starts the service proxy
-      ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
-      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      RemoteExecutionService remoteExecutionService = new SSHRemoteExecutionService(cConf,
-          programRunId,
-          sshConfig,
-          getServiceSocksProxyPort(),
-          processController,
-          programStateWriter, scheduler);
-      LOG.debug("Monitor program run {} with SSH config {}", programRunId, sshConfig);
-      String proxySecret = clusterKeyInfo.getServerProxySecret();
-      remoteExecutionService.addListener(new ServiceListenerAdapter() {
-        @Override
-        public void running() {
-          serviceSocksProxyAuthenticator.add(proxySecret);
-        }
-
-        @Override
-        public void terminated(Service.State from) {
-          serviceSocksProxyAuthenticator.remove(proxySecret);
-        }
-
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          serviceSocksProxyAuthenticator.remove(proxySecret);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-      return remoteExecutionService;
-    }
-  }
-
-  /**
-   * A private class to hold secure key information for a program runtime.
-   */
-  private static final class ClusterKeyInfo {
-
-    private final CConfiguration cConf;
-    private final Cluster cluster;
-    private final Location keysDir;
-    private final SSHConfig sshConfig;
-    private volatile String serverProxySecret;
-
-    ClusterKeyInfo(CConfiguration cConf, ProgramOptions programOptions,
-        LocationFactory locationFactory) {
-      Arguments systemArgs = programOptions.getArguments();
-
-      this.cConf = cConf;
-      this.keysDir = getKeysDirLocation(programOptions, locationFactory);
-
-      this.cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER),
-          Cluster.class);
-      this.sshConfig = createSSHConfig(cluster, keysDir);
-    }
-
-    Cluster getCluster() {
-      return cluster;
-    }
-
-    SSHConfig getSSHConfig() {
-      return sshConfig;
-    }
-
-    String getServerProxySecret() throws IOException {
-      String secret = serverProxySecret;
-      if (secret != null) {
-        return secret;
-      }
-      try (InputStream is = keysDir.append(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE)
-          .getInputStream()) {
-        serverProxySecret = secret = new String(ByteStreams.toByteArray(is),
-            StandardCharsets.UTF_8);
-      }
-      return secret;
-    }
-
-    /**
-     * Creates a {@link SSHKeyPair} by loading keys from the given location and {@link Cluster}
-     * properties.
-     */
-    private SSHKeyPair createSSHKeyPair(Location keysDir, Cluster cluster) {
-      String sshUser = cluster.getProperties().get(Constants.RuntimeMonitor.SSH_USER);
-      if (sshUser == null) {
-        throw new IllegalStateException("Missing SSH user");
-      }
-      try {
-        return new LocationBasedSSHKeyPair(keysDir, sshUser);
-      } catch (IOException e) {
-        throw new RuntimeException("Failed to create SSHKeyPair from location " + keysDir, e);
-      }
-    }
-
-    /**
-     * Creates a {@link SSHConfig} for ssh to the master node of the given {@link Cluster}.
-     *
-     * @param cluster the cluster information
-     * @param keysDir the {@link Location} that contains the ssh keys
-     * @return a {@link SSHConfig}
-     */
-    private SSHConfig createSSHConfig(Cluster cluster, Location keysDir) {
-      // Loads the SSH keys
-      SSHKeyPair sshKeyPair = createSSHKeyPair(keysDir, cluster);
-
-      Node masterNode = cluster.getNodes().stream()
-          .filter(node -> node.getType() == Node.Type.MASTER)
-          .findFirst().orElseThrow(
-              () -> new IllegalArgumentException(
-                  "Missing master node information for the cluster " + cluster.getName()));
-
-      // Creates and return the twill preparer
-      return SSHConfig.builder(masterNode.getIpAddress())
-          .setProxyAddress(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS))
-          .setUser(sshKeyPair.getPublicKey().getUser())
-          .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
-          .build();
-    }
-  }
-
-  /**
-   * A {@link ServiceSocksProxyAuthenticator} that authenticates based on a known set of usernames
-   * and passwords.
-   */
-  private static final class RuntimeServiceSocksProxyAuthenticator implements
-      ServiceSocksProxyAuthenticator {
-
-    private final Set<String> allowed = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-    void add(String password) {
-      allowed.add(password);
-    }
-
-    void remove(String password) {
-      allowed.remove(password);
-    }
-
-    @Override
-    public boolean authenticate(String username, String password) {
-      return Objects.equals(username, password) && allowed.contains(password);
+        RuntimeJobRemoteProcessController processController) {
+      RuntimeMonitors.requireMonitorUrl(cConf, programOpts);
+      LOG.debug("Monitor program run {} with direct url", programRunId);
+      return new RemoteExecutionService(cConf, programRunId, scheduler, processController,
+          programStateWriter);
     }
   }
 }

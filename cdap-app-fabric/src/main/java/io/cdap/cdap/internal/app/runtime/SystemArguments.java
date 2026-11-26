@@ -37,6 +37,7 @@ import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.http.NettyHttpService;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -97,7 +98,7 @@ public final class SystemArguments {
   public static final String RUNTIME_KEYTAB_PATH = "system.runtime.keytab.path";
   public static final String RUNTIME_PRINCIPAL_NAME = "system.runtime.principal.name";
 
-  // Runtime arguments for remote execution monitor type. Can be "ssh" or "url".
+  // Runtime argument for remote execution monitor type (only "url" is supported).
   public static final String RUNTIME_MONITOR_TYPE = "system.runtime.monitor.type";
 
   public static final String NAMESPACE_CONFIG_PREFIX = "system.namespace.config.";
@@ -506,30 +507,36 @@ public final class SystemArguments {
   }
 
   /**
-   * Gets the {@link RuntimeMonitorType} from the given arguments.
+   * Gets the {@link RuntimeMonitorType} from the given arguments, defaulting to
+   * {@link RuntimeMonitorType#URL} when unset or blank.
+   *
+   * @throws IllegalArgumentException if a non-empty value does not match a known
+   *     {@link RuntimeMonitorType}
    */
   public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf,
       ProgramOptions programOptions) {
-    if (cConf.get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
-      return RuntimeMonitorType.SSH;
-    }
-
     String type = programOptions.getUserArguments().getOption(RUNTIME_MONITOR_TYPE);
-    if (type == null) {
+    if (type != null) {
+      type = type.trim();
+    }
+    if (type == null || type.isEmpty()) {
       // If not in the arguments, read it from cConf based on the provisioner name
       String provisioner = getProfileProvisioner(programOptions.getArguments().asMap());
-      type = cConf.get(
-          String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
+      if (provisioner != null) {
+        type = cConf.getTrimmed(
+            String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
+      }
     }
-    if (type == null) {
-      return RuntimeMonitorType.SSH;
+    if (type == null || type.isEmpty()) {
+      return RuntimeMonitorType.URL;
     }
 
     try {
-      return RuntimeMonitorType.valueOf(type.toUpperCase());
-    } catch (Exception e) {
-      LOG.warn("Unsupported runtime monitor type {}. Default to SSH", type, e);
-      return RuntimeMonitorType.SSH;
+      return RuntimeMonitorType.valueOf(type.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Invalid runtime monitor type '" + type + "'. Only URL runtime monitoring is supported.",
+          e);
     }
   }
 

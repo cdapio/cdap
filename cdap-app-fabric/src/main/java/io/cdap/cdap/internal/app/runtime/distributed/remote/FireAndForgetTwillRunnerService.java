@@ -31,7 +31,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
@@ -42,11 +41,11 @@ public class FireAndForgetTwillRunnerService extends RemoteExecutionTwillRunnerS
 
   @Inject
   FireAndForgetTwillRunnerService(CConfiguration cConf, Configuration hConf,
-      DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory,
+      LocationFactory locationFactory,
       ProvisioningService provisioningService, ProgramStateWriter programStateWriter,
       TransactionRunner transactionRunner, AccessTokenCodec accessTokenCodec,
       TokenManager tokenManager) {
-    super(cConf, hConf, discoveryServiceClient, locationFactory, provisioningService,
+    super(cConf, hConf, locationFactory, provisioningService,
         programStateWriter,
         transactionRunner, accessTokenCodec, tokenManager);
   }

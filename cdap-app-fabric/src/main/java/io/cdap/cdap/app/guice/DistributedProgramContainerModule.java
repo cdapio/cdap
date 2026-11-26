@@ -59,7 +59,6 @@ import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.program.ProgramStatePublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
-import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
@@ -79,7 +78,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.CoreSecurityModule;
@@ -140,10 +138,9 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    List<Module> modules = getCoreModules();
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
-        programOpts);
-    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
+    ClusterMode clusterMode = ProgramRunners.getClusterMode(programOpts);
+    List<Module> modules = getCoreModules(clusterMode);
+    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(clusterMode, programOpts));
 
     install(Modules.override(modules).with(new AbstractModule() {
       @Override
@@ -156,13 +153,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
       }
     }));
-
-    bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
   }
 
-  private List<Module> getCoreModules() {
+  private List<Module> getCoreModules(ClusterMode clusterMode) {
     Arguments systemArgs = programOpts.getArguments();
-    ClusterMode clusterMode = ProgramRunners.getClusterMode(programOpts);
 
     List<Module> modules = new ArrayList<>();
 

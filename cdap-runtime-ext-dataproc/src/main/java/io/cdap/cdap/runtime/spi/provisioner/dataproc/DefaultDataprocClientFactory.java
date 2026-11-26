@@ -44,7 +44,7 @@ public class DefaultDataprocClientFactory implements DataprocClientFactory {
   }
 
   @Override
-  public DataprocClient create(DataprocConf conf, boolean requireSSH, ErrorCategory errorCategory)
+  public DataprocClient create(DataprocConf conf, ErrorCategory errorCategory)
       throws IOException, GeneralSecurityException, RetryableProvisionException {
     ClusterControllerClient clusterControllerClient;
     try {
@@ -62,9 +62,7 @@ public class DefaultDataprocClientFactory implements DataprocClientFactory {
               e.getMessage()))
           .build();
     }
-    return requireSSH ? new SshDataprocClient(conf, clusterControllerClient, computeFactory,
-        errorCategory) : new RuntimeMonitorDataprocClient(conf, clusterControllerClient,
-        computeFactory, errorCategory);
+    return new DataprocClient(conf, clusterControllerClient, computeFactory, errorCategory);
   }
 
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf)

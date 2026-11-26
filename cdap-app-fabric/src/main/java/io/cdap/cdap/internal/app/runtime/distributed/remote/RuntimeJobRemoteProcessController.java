@@ -26,9 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link RemoteProcessController} implmentation using {@link RuntimeJobManager}.
+ * Controls a remote process using {@link RuntimeJobManager}.
  */
-class RuntimeJobRemoteProcessController implements RemoteProcessController {
+class RuntimeJobRemoteProcessController {
 
   private static final Logger LOG = LoggerFactory.getLogger(
       RuntimeJobRemoteProcessController.class);
@@ -51,7 +51,6 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
         .build();
   }
 
-  @Override
   public boolean isRunning() throws Exception {
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       return !runtimeJobManager.getDetail(programRunInfo)
@@ -61,7 +60,6 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
     }
   }
 
-  @Override
   public RuntimeJobStatus getStatus() throws Exception {
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       return runtimeJobManager.getDetail(programRunInfo)
@@ -70,7 +68,6 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
     }
   }
 
-  @Override
   public void terminate() throws Exception {
     LOG.debug("Stopping program run {}", programRunId);
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
@@ -78,7 +75,6 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
     }
   }
 
-  @Override
   public void kill(RuntimeJobStatus status) throws Exception {
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       runtimeJobManager.kill(new RuntimeJobDetail(programRunInfo, status));

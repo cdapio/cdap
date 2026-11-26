@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime;
 import ch.qos.logback.classic.Level;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -28,6 +29,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -214,5 +216,59 @@ public class SystemArgumentsTest {
     expected = NamespaceId.DEFAULT.profile("MyProfile");
     args.put("system.profile.name", expected.getScopedName());
     Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
+  }
+
+  @Test
+  public void testGetRuntimeMonitorType() {
+    ProgramId programId = NamespaceId.DEFAULT.app("a").workflow("wf");
+    CConfiguration cConf = CConfiguration.create();
+
+    // Defaults to URL even when MONITOR_URL is not set
+    ProgramOptions defaultOpts = new SimpleProgramOptions(programId,
+        new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_PROVISIONER, "gcp-dataproc")),
+        new BasicArguments(Collections.emptyMap()));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(cConf, defaultOpts));
+
+    // Missing provisioner skips cConf lookup (does not read "...null") and defaults to URL
+    cConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "null", "ssh");
+    ProgramOptions noProvisionerOpts = new SimpleProgramOptions(programId,
+        new BasicArguments(Collections.emptyMap()),
+        new BasicArguments(Collections.emptyMap()));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(cConf, noProvisionerOpts));
+
+    // Provisioner-specific config is honored (including explicit SSH so callers can reject it)
+    cConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "gcp-dataproc", " ssh ");
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(cConf, defaultOpts));
+
+    // Blank user argument falls back to cConf rather than throwing IllegalArgumentException
+    ProgramOptions blankUserArgOpts = new SimpleProgramOptions(programId,
+        new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_PROVISIONER, "gcp-dataproc")),
+        new BasicArguments(Collections.singletonMap(SystemArguments.RUNTIME_MONITOR_TYPE, "   ")));
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(cConf, blankUserArgOpts));
+
+    // User argument overrides cConf (both URL over SSH and SSH over URL)
+    ProgramOptions userOverrideOpts = new SimpleProgramOptions(programId,
+        new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_PROVISIONER, "gcp-dataproc")),
+        new BasicArguments(Collections.singletonMap(SystemArguments.RUNTIME_MONITOR_TYPE, " url ")));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(cConf, userOverrideOpts));
+
+    cConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "gcp-dataproc", "url");
+    ProgramOptions userSshOpts = new SimpleProgramOptions(programId,
+        new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_PROVISIONER, "gcp-dataproc")),
+        new BasicArguments(Collections.singletonMap(SystemArguments.RUNTIME_MONITOR_TYPE, "ssh")));
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(cConf, userSshOpts));
+
+    // Invalid monitor type throws IllegalArgumentException instead of falling back to SSH
+    ProgramOptions invalidOpts = new SimpleProgramOptions(programId,
+        new BasicArguments(Collections.emptyMap()),
+        new BasicArguments(Collections.singletonMap(SystemArguments.RUNTIME_MONITOR_TYPE, "invalid")));
+    Assert.assertThrows(IllegalArgumentException.class,
+        () -> SystemArguments.getRuntimeMonitorType(cConf, invalidOpts));
   }
 }

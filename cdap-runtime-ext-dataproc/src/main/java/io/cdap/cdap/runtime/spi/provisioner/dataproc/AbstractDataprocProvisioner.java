@@ -22,6 +22,9 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.cdap.api.exception.ErrorCategory;
+import io.cdap.cdap.api.exception.ErrorType;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -118,42 +121,36 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       throws Exception {
     Map<String, String> properties = createContextProperties(context);
     DataprocConf conf = DataprocConf.create(properties);
-    RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
 
-    // If there is job manager, check to make sure the job is completed.
-    // Also cleanup files created by the job run.
-    if (jobManager != null) {
-      try {
-        RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
-        if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
-          return ClusterStatus.RUNNING;
-        }
-
-        if (jobDetail != null
-            && jobDetail.getStatus() != RuntimeJobStatus.COMPLETED
-            && (jobDetail instanceof DataprocRuntimeJobDetail)) {
-          // Status details is specific to dataproc jobs, so it was not added to RuntimeJobDetail spi.
-          String statusDetails = ((DataprocRuntimeJobDetail) jobDetail).getJobStatusDetails();
-          if (statusDetails != null) {
-            ProgramRunFailureException e = new ProgramRunFailureException(
-                String.format("Dataproc job '%s' status details: %s",
-                    ((DataprocRuntimeJobDetail) jobDetail).getJobId(), statusDetails));
-            LOG.error("Dataproc Job {}", jobDetail.getStatus(), e);
-          }
-        }
-      } finally {
-        jobManager.close();
+    // Check to make sure the runtime job is completed before deleting the cluster.
+    try (RuntimeJobManager jobManager = createRuntimeJobManager(context, properties, conf)) {
+      RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
+      if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
+        return ClusterStatus.RUNNING;
       }
 
-      // Due to historical reasons bucket is used if conf.getGcsBucket is not provided
-      String bucket =
-          conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
-      Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
-          .setCredentials(conf.getDataprocCredentials()).build().getService();
-      String runId = context.getProgramRunInfo().getRun();
-      String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
-      DataprocUtils.deleteGcsPath(storageClient, bucket, runRootPath);
+      if (jobDetail != null
+          && jobDetail.getStatus() != RuntimeJobStatus.COMPLETED
+          && (jobDetail instanceof DataprocRuntimeJobDetail)) {
+        // Status details is specific to dataproc jobs, so it was not added to RuntimeJobDetail spi.
+        String statusDetails = ((DataprocRuntimeJobDetail) jobDetail).getJobStatusDetails();
+        if (statusDetails != null) {
+          ProgramRunFailureException e = new ProgramRunFailureException(
+              String.format("Dataproc job '%s' status details: %s",
+                  ((DataprocRuntimeJobDetail) jobDetail).getJobId(), statusDetails));
+          LOG.error("Dataproc Job {}", jobDetail.getStatus(), e);
+        }
+      }
     }
+
+    // Due to historical reasons bucket is used if conf.getGcsBucket is not provided
+    String bucket =
+        conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
+    Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
+        .setCredentials(conf.getDataprocCredentials()).build().getService();
+    String runId = context.getProgramRunInfo().getRun();
+    String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
+    DataprocUtils.deleteGcsPath(storageClient, bucket, runRootPath);
 
     doDeleteCluster(context, cluster, conf);
     return ClusterStatus.DELETING;
@@ -204,27 +201,48 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     Map<String, String> properties = createContextProperties(context);
     DataprocConf conf = DataprocConf.create(properties);
+    return Optional.of(createRuntimeJobManager(context, properties, conf));
+  }
 
-    // if this system property is not provided, we will assume that ssh should be used instead of
-    // runtime job manager for job launch.
-    if (!conf.isRuntimeJobManagerEnabled()) {
-      return Optional.empty();
-    }
+  private RuntimeJobManager createRuntimeJobManager(ProvisionerContext context,
+      Map<String, String> properties, DataprocConf conf) {
     try {
       String clusterName = getClusterName(context);
       String projectId = conf.getProjectId();
       String region = conf.getRegion();
       String bucket =
           conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
-      return Optional.of(
-          new DataprocRuntimeJobManager(
-              new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
-                  getRootUrl(conf), projectId,
-                  region, bucket, getCommonDataprocLabels(context)),
-              Collections.unmodifiableMap(properties), context.getCDAPVersionInfo()));
+      return new DataprocRuntimeJobManager(
+          new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
+              getRootUrl(conf), projectId,
+              region, bucket, getCommonDataprocLabels(context)),
+          Collections.unmodifiableMap(properties), context.getCDAPVersionInfo());
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
+  }
+
+  /**
+   * Rejects {@link RuntimeMonitorType#SSH}, which is no longer supported by Dataproc provisioners.
+   */
+  @SuppressWarnings("deprecation") // Rejects legacy SSH monitor configurations.
+  protected void rejectSshMonitorType(ProvisionerContext context) {
+    if (context.getRuntimeMonitorType() != RuntimeMonitorType.SSH) {
+      return;
+    }
+    String errorMessage = "SSH runtime monitoring is no longer supported for Dataproc clusters. "
+        + "Use URL runtime monitoring instead.";
+    ErrorCategory errorCategory = DataprocRuntimeException.ERROR_CATEGORY_PROVISIONING_CONFIGURATION;
+    if (context.getErrorCategory() != null) {
+      errorCategory = new ErrorCategory(
+          context.getErrorCategory().getParentCategory(), "Configuration");
+    }
+    throw new DataprocRuntimeException.Builder()
+        .withErrorCategory(errorCategory)
+        .withErrorReason(errorMessage)
+        .withErrorMessage(errorMessage)
+        .withErrorType(ErrorType.USER)
+        .build();
   }
 
   protected String getRootUrl(DataprocConf conf) {
@@ -247,7 +265,7 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         || SYSTEM_ONLY_PROPERTIES.contains(property)) {
       return true;
     }
-    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, DataprocUtils.BUCKET,
+    return ImmutableSet.of(DataprocUtils.BUCKET,
         DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
         DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
         DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);

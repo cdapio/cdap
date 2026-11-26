@@ -35,8 +35,6 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
-import java.net.Authenticator;
-import java.net.ProxySelector;
 import java.util.Deque;
 import java.util.LinkedList;
 import org.apache.hadoop.conf.Configuration;
@@ -55,7 +53,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private final Deque<Service> coreServices;
   private final MapReduceContextConfig mapReduceContextConfig;
   private final LogAppenderInitializer logAppenderInitializer;
-  private ProxySelector oldProxySelector;
 
   public DistributedMapReduceTaskContextProvider(CConfiguration cConf, Configuration hConf,
       MapReduceClassLoader mapReduceClassLoader) {
@@ -86,7 +83,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
       logAppenderInitializer.initialize();
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
-      oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
         RuntimeMonitors.setupMonitoring(getInjector(), programOptions);
       }
@@ -122,9 +118,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
         }
       }
     }
-
-    Authenticator.setDefault(null);
-    ProxySelector.setDefault(oldProxySelector);
 
     if (failure != null) {
       throw failure;

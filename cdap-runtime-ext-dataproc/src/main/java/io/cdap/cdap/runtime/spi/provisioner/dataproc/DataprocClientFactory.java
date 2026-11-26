@@ -27,28 +27,13 @@ import java.security.GeneralSecurityException;
 public interface DataprocClientFactory {
 
   /**
-   * Create a {@link DataprocClient} for clusters that do not need SSH access.
-   *
-   * @param conf configuration about the dataproc clusters to operate on
-   * @param errorCategory error category
-   * @return a DataprocClient
-   * @throws IOException if there was an exception reading the credentials
-   */
-  default DataprocClient create(DataprocConf conf, ErrorCategory errorCategory)
-      throws GeneralSecurityException, IOException, RetryableProvisionException {
-    return create(conf, false, errorCategory);
-  }
-
-  /**
    * Create a {@link DataprocClient} that can be used to perform dataproc operations.
    *
    * @param conf configuration about the dataproc clusters to operate on
-   * @param requireSSH whether the cluster should be open to SSH connections. When false, the
-   *     client can avoid making various Compute calls to fetch additional information.
    * @param errorCategory error category
    * @return a DataprocClient
    * @throws IOException if there was an exception reading the credentials
    */
-  DataprocClient create(DataprocConf conf, boolean requireSSH, ErrorCategory errorCategory)
+  DataprocClient create(DataprocConf conf, ErrorCategory errorCategory)
       throws IOException, GeneralSecurityException, RetryableProvisionException;
 }

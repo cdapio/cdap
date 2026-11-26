@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.ssh;
 
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import java.io.Flushable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,7 +25,11 @@ import java.nio.channels.WritableByteChannel;
 
 /**
  * Represents a SSH port forwarding channel.
+ *
+ * @deprecated SSH-based runtime execution and monitoring are no longer supported; use
+ *     {@link RuntimeJobManager} and {@link RuntimeMonitorType#URL} instead.
  */
+@Deprecated
 public interface PortForwarding extends WritableByteChannel, Flushable {
 
   @Override

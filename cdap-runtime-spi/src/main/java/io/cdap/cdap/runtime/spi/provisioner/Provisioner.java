@@ -182,12 +182,11 @@ public interface Provisioner {
   Capabilities getCapabilities();
 
   /**
-   * Returns {@link RuntimeJobManager} to launch and manage runtime job. If the optional is empty,
-   * default implementation will use ssh to launch and manage jobs.
+   * Returns {@link RuntimeJobManager} to launch and manage runtime jobs. Remote execution requires
+   * provisioners to return a {@link RuntimeJobManager}; returning an empty optional is unsupported.
    *
    * @param context provisioner context
-   * @return optional runtime job manager, if it is empty, ssh will be used to launch and manage
-   *     jobs.
+   * @return optional runtime job manager used to launch and manage jobs
    */
   default Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     return Optional.empty();

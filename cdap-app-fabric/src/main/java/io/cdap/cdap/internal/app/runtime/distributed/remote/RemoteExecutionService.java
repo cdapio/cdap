@@ -48,52 +48,34 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
 
   private final ProgramRunId programRunId;
   private final ScheduledExecutorService scheduler;
-  private final RemoteProcessController processController;
+  private final RuntimeJobRemoteProcessController processController;
   private final ProgramStateWriter programStateWriter;
-  private final long pollTimeMillis;
-  private long nextCheckRunningMillis;
+  private final long checkIntervalMillis;
   private int notRunningCount;
 
   RemoteExecutionService(CConfiguration cConf, ProgramRunId programRunId,
       ScheduledExecutorService scheduler,
-      RemoteProcessController processController, ProgramStateWriter programStateWriter) {
+      RuntimeJobRemoteProcessController processController, ProgramStateWriter programStateWriter) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.programRunId = programRunId;
     this.scheduler = scheduler;
     this.processController = processController;
     this.programStateWriter = programStateWriter;
-    this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
-  }
-
-  /**
-   * Performs periodic task. By default is a no-op
-   */
-  void doRunTask() throws Exception {
-    // no-op
-  }
-
-  final ProgramRunId getProgramRunId() {
-    return programRunId;
+    this.checkIntervalMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS) * 10;
   }
 
   @Override
-  protected final long runTask() throws Exception {
-    doRunTask();
-
-    long now = System.currentTimeMillis();
-    if (now >= nextCheckRunningMillis) {
-      // Periodically check the liveness. We allow one non-running to pass to accommodate for the delay
-      // of TMS messages relay from the remote runtime back to CDAP.
-      if (!processController.isRunning() && ++notRunningCount > 1) {
-        LOG.debug("Program {} is not running", programRunId);
-        programStateWriter.error(programRunId,
-            new IllegalStateException("Program terminated " + programRunId));
-        stopAsync();
-        return 0;
-      }
-      nextCheckRunningMillis = now + pollTimeMillis * 10;
+  protected long runTask() throws Exception {
+    // Periodically check the liveness. We allow one non-running to pass to accommodate for the delay
+    // of TMS messages relay from the remote runtime back to CDAP.
+    if (!processController.isRunning() && ++notRunningCount > 1) {
+      LOG.debug("Program {} is not running", programRunId);
+      programStateWriter.error(programRunId,
+          new IllegalStateException("Program terminated " + programRunId));
+      stopAsync();
+      return 0;
     }
-    return pollTimeMillis;
+    return checkIntervalMillis;
   }
 
   @Override
@@ -108,6 +90,10 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
     Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
       OUTAGE_LOGGER.warn("Exception raised when monitoring program run {}", programRunId, ex);
+      if (ex instanceof UnsupportedOperationException) {
+        programStateWriter.error(programRunId, ex);
+        return false;
+      }
       try {
         // If the program is not running, abort retry
         if (!processController.isRunning()) {

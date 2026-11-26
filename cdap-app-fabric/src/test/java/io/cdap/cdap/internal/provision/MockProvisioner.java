@@ -190,6 +190,7 @@ public class MockProvisioner implements Provisioner {
   }
 
   private void validateContext(ProvisionerContext context) {
+    Assert.assertNull(context.getSSHContext());
     String expectedAppCDAPVersion = context.getProperties().get(EXPECTED_APP_CDAP_VERSION);
     if (expectedAppCDAPVersion != null) {
       Assert.assertEquals(expectedAppCDAPVersion, context.getAppCDAPVersionInfo().toString());
