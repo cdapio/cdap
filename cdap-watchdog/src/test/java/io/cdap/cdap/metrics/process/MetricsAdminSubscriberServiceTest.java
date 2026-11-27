@@ -43,6 +43,7 @@ import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
 import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,6 +83,7 @@ public class MetricsAdminSubscriberServiceTest {
       new ConfigModule(cConf),
       new IOModule(),
       new InMemoryDiscoveryModule(),
+      new AuthenticationContextModules().getNoOpModule(),
       new AuthorizationEnforcementModule().getNoOpModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),

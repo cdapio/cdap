@@ -31,8 +31,8 @@ import io.cdap.cdap.messaging.DefaultMessageFetchRequest;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.RawMessage;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpResponder;
@@ -71,6 +71,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A netty http handler for handling message fetching REST API for the messaging system.
+ *
+ * <p>Requests are authorized by {@link MessagingHandlerAuthorizer}.
  */
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class FetchHandler extends AbstractHttpHandler {
@@ -85,11 +87,14 @@ public final class FetchHandler extends AbstractHttpHandler {
   );
 
   private final MessagingService messagingService;
+  private final MessagingHandlerAuthorizer authorizer;
   private int messageChunkSize;
 
   @Inject
-  FetchHandler(CConfiguration cConf, MessagingService messagingService) {
+  FetchHandler(CConfiguration cConf, MessagingService messagingService,
+      MessagingHandlerAuthorizer authorizer) {
     this.messagingService = messagingService;
+    this.authorizer = authorizer;
     this.messageChunkSize = cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE);
   }
 
@@ -99,7 +104,7 @@ public final class FetchHandler extends AbstractHttpHandler {
       @PathParam("namespace") String namespace,
       @PathParam("topic") String topic) throws Exception {
 
-    TopicId topicId = new NamespaceId(namespace).topic(topic);
+    TopicId topicId = authorizer.authorize(namespace, StandardPermission.GET).topic(topic);
 
     // Currently only support avro
     if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {

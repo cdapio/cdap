@@ -57,7 +57,11 @@ public class AuthenticationChannelHandler extends ChannelDuplexHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
   private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
-  private static final Credential EMPTY_USER_CREDENTIAL = new Credential(
+  /**
+   * Placeholder credential set on requests without authentication headers when internal
+   * authentication is enabled.
+   */
+  public static final Credential EMPTY_USER_CREDENTIAL = new Credential(
       "CDAP-empty-user-credential",
       Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";

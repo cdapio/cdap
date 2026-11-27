@@ -32,6 +32,7 @@ import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
@@ -43,6 +44,8 @@ import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -124,7 +127,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
 
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createTopicPath(topicId))
         .withBody(GSON.toJson(topicMetadata.getProperties())).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new TopicAlreadyExistsException(topicId.getNamespace(), topicId.getTopic());
@@ -140,7 +143,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT,
             createTopicPath(topicId) + "/properties")
         .withBody(GSON.toJson(topicMetadata.getProperties())).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -153,7 +156,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
       throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, createTopicPath(topicId))
         .build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -166,7 +169,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
       throws TopicNotFoundException, IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createTopicPath(topicId))
         .build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -183,7 +186,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
       throws IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
         namespaceId.getNamespace() + "/topics").build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = execute(request);
 
     handleError(response, "Failed to list topics in namespace " + namespaceId);
     List<String> topics = GSON.fromJson(response.getResponseBodyAsString(), TOPIC_LIST_TYPE);
@@ -228,7 +231,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
             createTopicPath(topicId) + "/rollback").addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
         .withBody(requestBody).build();
 
-    HttpResponse response = remoteClient.execute(httpRequest);
+    HttpResponse response = execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -281,7 +284,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
         .withBody(os.toByteBuffer())
         .build();
 
-    HttpResponse response = remoteClient.execute(httpRequest);
+    HttpResponse response = execute(httpRequest);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TopicNotFoundException(topicId.getNamespace(), topicId.getTopic());
@@ -415,7 +418,7 @@ public abstract class AbstractClientMessagingService implements MessagingService
     // messages
     // in memory, hence we use the HttpURLConnection directly instead.
     HttpURLConnection urlConn =
-        remoteClient.openConnection(
+        openConnection(
             HttpMethod.POST, createTopicPath(messageFetchRequest.getTopicId()) + "/poll");
     urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
     if (compressPayload) {
@@ -504,6 +507,45 @@ public abstract class AbstractClientMessagingService implements MessagingService
         urlConn.disconnect();
       }
     };
+  }
+
+  private HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    return executeWithoutUserDetails(() -> remoteClient.execute(request));
+  }
+
+  private HttpURLConnection openConnection(HttpMethod method, String resource)
+      throws IOException {
+    return executeWithoutUserDetails(() -> remoteClient.openConnection(method, resource));
+  }
+
+  /**
+   * Runs a call to the messaging service as this service rather than as the user on the current
+   * thread, and restores the user details afterwards.
+   *
+   * <p>On a thread serving a user request, {@link SecurityRequestContext} holds the user's
+   * credential, and the authentication context would send that credential with this call. The
+   * messaging service only accepts internal credentials for system topics, so internal publishes
+   * made while serving a user request, such as program status events, would be rejected.
+   */
+  private static <T> T executeWithoutUserDetails(Retries.Callable<T, IOException> callable)
+      throws IOException {
+    String oldUserId = SecurityRequestContext.getUserId();
+    Credential oldUserCredential = SecurityRequestContext.getUserCredential();
+    String oldUserIp = SecurityRequestContext.getUserIp();
+    SecurityRequestContext.resetUserDetails();
+    try {
+      return callable.call();
+    } finally {
+      if (oldUserId != null) {
+        SecurityRequestContext.setUserId(oldUserId);
+      }
+      if (oldUserCredential != null) {
+        SecurityRequestContext.setUserCredential(oldUserCredential);
+      }
+      if (oldUserIp != null) {
+        SecurityRequestContext.setUserIp(oldUserIp);
+      }
+    }
   }
 
   /**
