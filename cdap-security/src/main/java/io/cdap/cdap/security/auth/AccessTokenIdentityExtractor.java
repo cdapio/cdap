@@ -89,6 +89,10 @@ public class AccessTokenIdentityExtractor implements UserIdentityExtractor {
     try {
       AccessToken accessTokenObj = accessTokenCodec.decode(decodedAccessToken);
       UserIdentity userIdentityObj = accessTokenObj.getIdentifier();
+      if (userIdentityObj.getIdentifierType() == UserIdentity.IdentifierType.RUNTIME) {
+        return new UserIdentityExtractionResponse(UserIdentityExtractionState.ERROR_INVALID_TOKEN,
+            "Runtime access tokens cannot be used for user authentication");
+      }
       byte[] encodedAccessTokenIdentifier = userIdentityCodec.encode(userIdentityObj);
       UserIdentityPair pair = new UserIdentityPair(accessToken, userIdentityObj);
       return new UserIdentityExtractionResponse(pair);
