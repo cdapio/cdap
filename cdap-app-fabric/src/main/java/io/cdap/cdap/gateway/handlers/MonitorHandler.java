@@ -26,6 +26,7 @@ import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.common.twill.MasterServiceManager;
@@ -36,6 +37,7 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.SystemServiceId;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -72,13 +74,15 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private final Map<String, MasterServiceManager> serviceManagementMap;
   private final ServiceStore serviceStore;
   private final ContextAccessEnforcer contextAccessEnforcer;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public MonitorHandler(Map<String, MasterServiceManager> serviceMap, ServiceStore serviceStore,
-      ContextAccessEnforcer contextAccessEnforcer) {
+      ContextAccessEnforcer contextAccessEnforcer, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
     this.contextAccessEnforcer = contextAccessEnforcer;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -94,6 +98,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     SystemServiceId systemServiceId = new SystemServiceId(serviceName);
     contextAccessEnforcer.enforce(systemServiceId, StandardPermission.GET);
+    AuthorizationUtil.enforceInstanceLevelRead(contextAccessEnforcer);
 
     MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
     if (serviceManager.isServiceEnabled()) {
@@ -117,6 +122,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     }
     SystemServiceId systemServiceId = new SystemServiceId(serviceName);
     contextAccessEnforcer.enforce(systemServiceId, StandardPermission.GET);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, contextAccessEnforcer);
     MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
     if (serviceManager.isServiceEnabled()) {
       int actualInstance = serviceManagementMap.get(serviceName).getInstances();
@@ -172,9 +178,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   // Return the status of CDAP services in JSON format
   @Path("/system/services/status")
   @GET
-  public void getBootStatus(HttpRequest request, HttpResponder responder) {
+  public void getBootStatus(HttpRequest request, HttpResponder responder) throws Exception {
     contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_SERVICE, InstanceId.SELF,
         StandardPermission.LIST);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, contextAccessEnforcer);
     Map<String, String> result = new HashMap<>();
     for (String service : serviceManagementMap.keySet()) {
       MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
@@ -188,9 +195,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/system/services")
   @GET
-  public void getServiceSpec(HttpRequest request, HttpResponder responder) {
+  public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
     contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_SERVICE, InstanceId.SELF,
         StandardPermission.LIST);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, contextAccessEnforcer);
     List<SystemServiceMeta> response = new ArrayList<>();
     SortedSet<String> services = new TreeSet<>(serviceManagementMap.keySet());
     List<String> serviceList = new ArrayList<>(services);
@@ -243,6 +251,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     SystemServiceId systemServiceId = new SystemServiceId(serviceName);
     contextAccessEnforcer.enforce(systemServiceId, StandardPermission.GET);
+    AuthorizationUtil.enforceInstanceLevelRead(contextAccessEnforcer);
 
     try {
       responder.sendJson(HttpResponseStatus.OK,

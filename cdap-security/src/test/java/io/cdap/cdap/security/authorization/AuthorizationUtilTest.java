@@ -15,17 +15,30 @@
  */
 package io.cdap.cdap.security.authorization;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import java.net.InetAddress;
+import java.util.Collections;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -88,5 +101,46 @@ public class AuthorizationUtilTest {
 
   private OwnerAdmin getOwnerAdmin() {
     return new DefaultOwnerAdmin(cConf, new InMemoryOwnerStore(), namespaceClient);
+  }
+
+  @Test
+  public void testEnforceAnyNamespaceAccess() throws Exception {
+    Principal instanceReader = new Principal("any-ns-instance-reader", Principal.PrincipalType.USER);
+    final Principal namespaceUser = new Principal("any-ns-namespace-user", Principal.PrincipalType.USER);
+    final Principal instanceAccessOnly = new Principal("any-ns-instance-access-only", Principal.PrincipalType.USER);
+    InMemoryAccessController accessController = new InMemoryAccessController();
+    accessController.grant(Authorizable.fromEntityId(InstanceId.SELF, EntityType.NAMESPACE), instanceReader,
+                           Collections.singleton(StandardPermission.LIST));
+    DefaultContextAccessEnforcer enforcer = new DefaultContextAccessEnforcer(authenticationContext,
+                                                                             accessController);
+
+    // An instance-level reader passes without listing namespaces.
+    NamespaceQueryAdmin noNamespaces = mock(NamespaceQueryAdmin.class);
+    when(noNamespaces.list()).thenReturn(Collections.emptyList());
+    AuthenticationTestContext.actAsPrincipal(instanceReader);
+    AuthorizationUtil.enforceAnyNamespaceAccess(noNamespaces, enforcer);
+    AuthorizationUtil.enforceInstanceLevelRead(enforcer);
+    verify(noNamespaces, never()).list();
+
+    // A caller that can see a namespace passes the "any namespace" check, but not the instance check.
+    NamespaceQueryAdmin oneNamespace = mock(NamespaceQueryAdmin.class);
+    when(oneNamespace.list()).thenReturn(Collections.singletonList(NamespaceMeta.DEFAULT));
+    AuthenticationTestContext.actAsPrincipal(namespaceUser);
+    AuthorizationUtil.enforceAnyNamespaceAccess(oneNamespace, enforcer);
+    try {
+      AuthorizationUtil.enforceInstanceLevelRead(enforcer);
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+
+    // A caller that can only reach the instance fails both.
+    AuthenticationTestContext.actAsPrincipal(instanceAccessOnly);
+    try {
+      AuthorizationUtil.enforceAnyNamespaceAccess(noNamespaces, enforcer);
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
   }
 }

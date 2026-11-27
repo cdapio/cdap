@@ -22,9 +22,11 @@ import static org.mockito.Mockito.when;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.twill.MasterServiceManager;
 import io.cdap.cdap.gateway.handlers.MonitorHandler;
 import io.cdap.cdap.proto.Instances;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.SystemServiceId;
@@ -53,6 +55,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -63,10 +66,18 @@ public class MonitorHandlerAuthorizationTest {
   private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
   private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
                                                                        Principal.PrincipalType.USER);
+  private static final Principal INSTANCE_ACCESS_ONLY_PRINCIPAL = new Principal("instance-access-only",
+                                                                                Principal.PrincipalType.USER);
 
   private static final Gson GSON = new Gson();
 
-  private static MonitorHandler createMonitorHandler(Authorizable authorizable, List<Permission> requiredPermissions) {
+  private static MonitorHandler createMonitorHandler(Authorizable authorizable, List<Permission> requiredPermissions)
+    throws Exception {
+    return createMonitorHandler(authorizable, requiredPermissions, Collections.emptyList());
+  }
+
+  private static MonitorHandler createMonitorHandler(Authorizable authorizable, List<Permission> requiredPermissions,
+                                                     List<NamespaceMeta> visibleNamespaces) throws Exception {
     Map<String, MasterServiceManager> masterServiceManagerMap = new HashMap<>();
     MasterServiceManager mockMasterServiceManager = mock(MasterServiceManager.class);
     when(mockMasterServiceManager.getInstances()).thenReturn(1);
@@ -79,10 +90,19 @@ public class MonitorHandlerAuthorizationTest {
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(authorizable, MASTER_PRINCIPAL,
                                    Collections.unmodifiableSet(new HashSet<>(requiredPermissions)));
+    // Instance-level read access, which instance-level readers and admins hold.
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF, EntityType.NAMESPACE), MASTER_PRINCIPAL,
+                                   Collections.singleton(StandardPermission.LIST));
+    // A caller with the same permissions as the master principal but no instance-level read access.
+    inMemoryAccessController.grant(authorizable, INSTANCE_ACCESS_ONLY_PRINCIPAL,
+                                   Collections.unmodifiableSet(new HashSet<>(requiredPermissions)));
+    NamespaceQueryAdmin namespaceQueryAdmin = mock(NamespaceQueryAdmin.class);
+    when(namespaceQueryAdmin.list()).thenReturn(visibleNamespaces);
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
     DefaultContextAccessEnforcer contextAccessEnforcer = new DefaultContextAccessEnforcer(authenticationContext,
                                                                                           inMemoryAccessController);
-    return new MonitorHandler(masterServiceManagerMap, mockServiceStore, contextAccessEnforcer);
+    return new MonitorHandler(masterServiceManagerMap, mockServiceStore, contextAccessEnforcer,
+                              namespaceQueryAdmin);
   }
 
   @Test
@@ -268,4 +288,41 @@ public class MonitorHandlerAuthorizationTest {
     handler.resetServiceLogLevels(request, responder, SERVICE_NAME);
   }
 
+  @Test
+  public void testServiceSpecNeedsVisibleNamespace() throws Exception {
+    Authorizable systemServices = Authorizable.fromEntityId(InstanceId.SELF, EntityType.SYSTEM_SERVICE);
+    HttpRequest request = mock(HttpRequest.class);
+    HttpResponder responder = mock(HttpResponder.class);
+
+    // Can reach the instance but cannot see any namespace.
+    MonitorHandler handler = createMonitorHandler(systemServices, Arrays.asList(StandardPermission.LIST));
+    AuthenticationTestContext.actAsPrincipal(INSTANCE_ACCESS_ONLY_PRINCIPAL);
+    try {
+      handler.getServiceSpec(request, responder);
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+
+    // Can see a namespace, like a user granted a role on a single namespace.
+    handler = createMonitorHandler(systemServices, Arrays.asList(StandardPermission.LIST),
+                                   Collections.singletonList(NamespaceMeta.DEFAULT));
+    AuthenticationTestContext.actAsPrincipal(INSTANCE_ACCESS_ONLY_PRINCIPAL);
+    handler.getServiceSpec(request, responder);
+    handler.getBootStatus(request, responder);
+  }
+
+  @Test
+  public void testServiceLiveInfoNeedsInstanceLevelRead() throws Exception {
+    MonitorHandler handler = createMonitorHandler(Authorizable.fromEntityId(new SystemServiceId(SERVICE_NAME)),
+                                                  Arrays.asList(StandardPermission.GET),
+                                                  Collections.singletonList(NamespaceMeta.DEFAULT));
+    AuthenticationTestContext.actAsPrincipal(INSTANCE_ACCESS_ONLY_PRINCIPAL);
+    try {
+      handler.getServiceLiveInfo(mock(HttpRequest.class), mock(HttpResponder.class), SERVICE_NAME);
+      Assert.fail("Expected UnauthorizedException");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+  }
 }

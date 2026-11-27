@@ -35,18 +35,21 @@ import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
+import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.ops.DashboardProgramRunRecord;
 import io.cdap.cdap.reporting.ProgramHeartbeatService;
 import io.cdap.cdap.scheduler.Scheduler;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -79,14 +82,17 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   private final ProgramHeartbeatService programHeartbeatService;
   private final Scheduler scheduler;
   private final TimeSchedulerService timeSchedulerService;
+  private final ContextAccessEnforcer contextAccessEnforcer;
 
 
   @Inject
   public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService,
-      Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
+      Scheduler scheduler, TimeSchedulerService timeSchedulerService,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.programHeartbeatService = programHeartbeatService;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
+    this.contextAccessEnforcer = contextAccessEnforcer;
   }
 
   @GET
@@ -105,6 +111,12 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       throw new BadRequestException(
           "'namespace' cannot be empty, please provide at least one namespace.");
     }
+    // Only return runs and schedules of namespaces the caller can see.
+    Set<String> visibleNamespaces = getVisibleNamespaces(namespaces);
+    if (visibleNamespaces.isEmpty()) {
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(Collections.emptyList()));
+      return;
+    }
     long endTimeSecs = startTimeSecs + durationTimeSecs;
 
     // Get current running timestamp.
@@ -113,11 +125,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     // Find tasks that have been running for up to 30 days before the start timestamp.
     // If there are updates for any of these programs in the selected window, we'll use the record from the window.
     Collection<RunRecordDetail> programsRunningAtStartTime =
-        programHeartbeatService.findRunningAtTimestamp(startTimeSecs, namespaces);
+        programHeartbeatService.findRunningAtTimestamp(startTimeSecs, visibleNamespaces);
 
     // end time is exclusive
     Collection<RunRecordDetail> programsInWindow =
-        programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
+        programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, visibleNamespaces);
 
     // Get all the ProgramRunId for records in the selected window.
     Set<ProgramRunId> inWindowRunIds = programsInWindow.stream()
@@ -147,7 +159,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       result.add(OperationsDashboardHttpHandler.runRecordToDashboardRecord(runRecordMeta));
     }
 
-    Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new)
+    Set<NamespaceId> namespaceIds = visibleNamespaces.stream().map(NamespaceId::new)
         .collect(Collectors.toSet());
     // if the end time is in the future, also add scheduled program runs to the result
     // if start time in query is earlier than current time, use currentTime as start when querying future schedules
@@ -158,6 +170,14 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       result.addAll(getAllScheduledRuns(namespaceIds, scheduleStartTimeSeconds, endTimeSecs + 1));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
+  private Set<String> getVisibleNamespaces(Set<String> namespaces) {
+    Set<NamespaceId> requested = namespaces.stream().map(NamespaceId::new)
+        .collect(Collectors.toSet());
+    Set<? extends EntityId> visible = contextAccessEnforcer.isVisible(requested);
+    return visible.stream().map(entityId -> ((NamespaceId) entityId).getNamespace())
+        .collect(Collectors.toSet());
   }
 
   /**

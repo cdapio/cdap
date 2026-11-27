@@ -38,6 +38,7 @@ import io.cdap.cdap.proto.credential.NamespaceWorkloadIdentity;
 import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.NamespacePermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -130,6 +131,11 @@ public class GcpWorkloadIdentityHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/workloadIdentity")
   public void getIdentity(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      // getNamespaceMeta() skips the namespace check for system, and some authorizers allow system
+      // reads for every caller. Require that the caller can see at least one namespace.
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer);
+    }
     NamespaceMeta namespaceMeta = getNamespaceMeta(namespace);
     CredentialIdentityId credentialIdentityId = createIdentityIdOrPropagate(
         NamespaceId.SYSTEM.getNamespace(),

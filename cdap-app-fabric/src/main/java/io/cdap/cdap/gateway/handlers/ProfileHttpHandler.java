@@ -23,6 +23,7 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.element.EntityType;
@@ -33,6 +34,7 @@ import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
@@ -72,21 +74,25 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   private final AuthenticationContext authenticationContext;
   private final ProfileService profileService;
   private final ProvisioningService provisioningService;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public ProfileHttpHandler(AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
       ProfileService profileService,
-      ProvisioningService provisioningService) {
+      ProvisioningService provisioningService,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.profileService = profileService;
     this.provisioningService = provisioningService;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @GET
   @Path("/profiles")
   public void getSystemProfiles(HttpRequest request, HttpResponder responder) throws Exception {
+    enforceSystemNamespaceRead(NamespaceId.SYSTEM.getNamespace());
     NamespaceId namespaceId = NamespaceId.SYSTEM;
     accessEnforcer.enforceOnParent(EntityType.PROFILE, namespaceId,
         authenticationContext.getPrincipal(),
@@ -100,6 +106,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
       @PathParam("profile-name") String profileName) throws Exception {
+    enforceSystemNamespaceRead(NamespaceId.SYSTEM.getNamespace());
     ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
@@ -158,6 +165,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfiles(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     NamespaceId namespace = getValidatedNamespace(namespaceId);
     accessEnforcer.enforceOnParent(EntityType.PROFILE, namespace,
         authenticationContext.getPrincipal(),
@@ -181,6 +189,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfile(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("profile-name") String profileName) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
@@ -223,6 +232,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("profile-name") String profileName) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(), StandardPermission.GET);
     responder.sendJson(HttpResponseStatus.OK,
@@ -396,6 +406,17 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     } else {
       accessEnforcer.enforce(profileId, authenticationContext.getPrincipal(),
           StandardPermission.CREATE);
+    }
+  }
+
+  /**
+   * Reads in the system namespace are allowed for every caller by some authorizers. Also require
+   * that the caller can see at least one namespace.
+   */
+  private void enforceSystemNamespaceRead(String namespace) throws Exception {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+          authenticationContext);
     }
   }
 }

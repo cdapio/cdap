@@ -42,6 +42,7 @@ import io.cdap.cdap.proto.id.CredentialIdentityId;
 import io.cdap.cdap.proto.id.CredentialProfileId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpHandler;
@@ -157,6 +158,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/profiles")
   public void listProfiles(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws IOException, NotFoundException {
+    enforceSystemNamespaceRead(namespace);
     accessEnforcer.enforceOnParent(EntityType.CREDENTIAL_PROFILE,
         new NamespaceId(namespace), StandardPermission.LIST);
     canCreateInNamespace(namespace);
@@ -180,6 +182,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   public void getProfile(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("profile-name") String profileName)
       throws BadRequestException, IOException, NotFoundException {
+    enforceSystemNamespaceRead(namespace);
     final CredentialProfileId profileId = createProfileIdOrPropagate(namespace, profileName);
     accessEnforcer.enforce(profileId, StandardPermission.GET);
     canCreateInNamespace(namespace);
@@ -282,6 +285,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/credentials/identities")
   public void listIdentities(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws IOException, NotFoundException {
+    enforceSystemNamespaceRead(namespace);
     accessEnforcer.enforceOnParent(EntityType.CREDENTIAL_IDENTITY, new NamespaceId(namespace),
         StandardPermission.LIST);
     canCreateInNamespace(namespace);
@@ -306,6 +310,7 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespace,
       @PathParam("identity-name") String identityName)
       throws BadRequestException, IOException, NotFoundException {
+    enforceSystemNamespaceRead(namespace);
     final CredentialIdentityId identityId = createIdentityIdOrPropagate(namespace, identityName);
     accessEnforcer.enforce(new CredentialIdentityId(namespace, identityName),
         StandardPermission.GET);
@@ -467,6 +472,23 @@ public class CredentialProviderHttpHandler extends AbstractHttpHandler {
       return content;
     } catch (JsonSyntaxException | IOException e) {
       throw new BadRequestException("Unable to parse request: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Reads in the system namespace are allowed for every caller by some authorizers. Also require
+   * that the caller can see at least one namespace.
+   */
+  private void enforceSystemNamespaceRead(String namespace) throws IOException {
+    if (!NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      return;
+    }
+    try {
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer);
+    } catch (IOException | RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IOException("Failed to check namespace access", e);
     }
   }
 }
