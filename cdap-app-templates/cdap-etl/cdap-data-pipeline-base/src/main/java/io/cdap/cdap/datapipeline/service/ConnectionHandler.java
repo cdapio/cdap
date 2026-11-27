@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -71,21 +72,26 @@ import io.cdap.cdap.proto.id.ConnectionEntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Handler for all the connection operations
@@ -120,9 +126,16 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
   @Override
   public void initialize(SystemHttpServiceContext context) throws Exception {
+    initialize(context, new ConnectionStore(context), this.metrics);
+  }
+
+  @VisibleForTesting
+  void initialize(SystemHttpServiceContext context, ConnectionStore store,
+                  @Nullable Metrics metrics) throws Exception {
     super.initialize(context);
-    contextAccessEnforcer = context.getContextAccessEnforcer();
-    store = new ConnectionStore(context);
+    this.contextAccessEnforcer = context.getContextAccessEnforcer();
+    this.store = store;
+    this.metrics = metrics;
     String disabledTypesStr = context.getSpecification().getProperty(DISABLED_TYPES);
     this.disabledTypes = GSON.fromJson(disabledTypesStr, SET_STRING_TYPE);
   }
@@ -144,7 +157,10 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
 
       contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_APP_ENTITY, new NamespaceId(namespace),
                                             StandardPermission.LIST);
-      responder.sendJson(store.listConnections(namespaceSummary));
+      List<Connection> connections = store.listConnections(namespaceSummary).stream()
+        .map(conn -> redactPropertiesIfUnauthorizedToUse(namespace, conn))
+        .collect(Collectors.toList());
+      responder.sendJson(connections);
     });
   }
 
@@ -156,7 +172,8 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
   @Path(API_VERSION + "/contexts/{context}/connections/{connection}")
   public void getConnection(HttpServiceRequest request, HttpServiceResponder responder,
                             @PathParam("context") String namespace,
-                            @PathParam("connection") String connection) {
+                            @PathParam("connection") String connection,
+                            @QueryParam("requireUse") @DefaultValue("false") boolean requireUse) {
     respond(namespace, responder, namespaceSummary -> {
       if (namespaceSummary.getName().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())) {
         responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
@@ -164,15 +181,18 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
         return;
       }
 
-      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection)),
-                                    StandardPermission.GET);
+      ConnectionEntityId entityId = new ConnectionEntityId(namespace, ConnectionId.getConnectionId(connection));
+      contextAccessEnforcer.enforce(entityId, StandardPermission.GET);
+      if (requireUse) {
+        contextAccessEnforcer.enforce(entityId, StandardPermission.USE);
+      }
       Connection conn = store.getConnection(new ConnectionId(namespaceSummary, connection));
       Metrics child = metrics.child(ImmutableMap.of(Constants.Metrics.Tag.APP_ENTITY_TYPE,
                                                     Constants.CONNECTION_SERVICE_NAME,
                                                     Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME,
                                                     conn.getConnectionType()));
       child.count(Constants.Metrics.Connection.CONNECTION_GET_COUNT, 1);
-      responder.sendJson(conn);
+      responder.sendJson(requireUse ? conn : redactPropertiesIfUnauthorizedToUse(namespace, conn));
     });
   }
 
@@ -526,6 +546,26 @@ public class ConnectionHandler extends AbstractDataPipelineHandler {
                                  .setFunctionWhitelist(evaluators.keySet())
                                  .build();
     return ConnectionUtils.getConnector(configurer, pluginInfo, pluginSelector, macroEvaluator, options);
+  }
+
+  private Connection redactPropertiesIfUnauthorizedToUse(String namespace, Connection conn) {
+    PluginInfo plugin = conn.getPlugin();
+    if (plugin == null || plugin.getProperties() == null || plugin.getProperties().isEmpty()) {
+      return conn;
+    }
+    String connId = conn.getConnectionId() != null
+      ? conn.getConnectionId()
+      : ConnectionId.getConnectionId(conn.getName());
+    try {
+      contextAccessEnforcer.enforce(new ConnectionEntityId(namespace, connId), StandardPermission.USE);
+      return conn;
+    } catch (UnauthorizedException e) {
+      PluginInfo redactedPlugin = new PluginInfo(plugin.getName(), plugin.getType(), plugin.getCategory(),
+                                                 Collections.emptyMap(), plugin.getArtifact());
+      return new Connection(conn.getName(), conn.getConnectionId(), conn.getConnectionType(),
+                            conn.getDescription(), conn.isPreConfigured(), conn.isDefault(),
+                            conn.getCreatedTimeMillis(), conn.getUpdatedTimeMillis(), redactedPlugin);
+    }
   }
 
   private void checkPutConnectionPermissions(ConnectionId connectionId) {

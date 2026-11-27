@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroObjectType;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import java.util.Collections;
 import java.util.HashMap;
@@ -585,5 +586,135 @@ public class MacroParserTest {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);
+  }
+
+  @Test
+  public void testNestedMacroErrorsDoNotReflectSubstitutedValues() {
+    String secret = "MY_TOP_SECRET_VALUE";
+    MacroEvaluator evaluator = new TestMacroEvaluator(
+      Collections.emptyMap(), Collections.singletonMap("secret-key", secret));
+    MacroParser parser = new MacroParser(evaluator, MacroParserOptions.builder().setEscaping(false).build());
+
+    String[] payloads = new String[]{
+      "${${test(secret-key)}}",
+      "${test(${test(secret-key)})}",
+      "${${test(secret-key)}",
+      "${test(${test(secret-key)}}",
+      "${test(${test(secret-key)}))}"
+    };
+    for (String payload : payloads) {
+      try {
+        parser.parse(payload);
+        Assert.fail("Expected InvalidMacroException for payload: " + payload);
+      } catch (InvalidMacroException e) {
+        Assert.assertFalse("Message leaked secret for payload " + payload + ": " + e.getMessage(),
+                           e.getMessage().contains(secret));
+        Assert.assertNull("Cause should be null for payload " + payload, e.getCause());
+      }
+    }
+  }
+
+  @Test
+  public void testNestedSecureMacroRejectedBeforeEvaluation() {
+    String secret = "CANARY_SECRET_VALUE";
+    int[] secureEvalCalls = new int[]{0};
+    MacroEvaluator evaluator = new MacroEvaluator() {
+      @Override
+      public String lookup(String property) throws InvalidMacroException {
+        if ("key_arg".equals(property)) {
+          return "secret_key";
+        }
+        if ("indirect_secure".equals(property)) {
+          return "${secure(secret_key)}";
+        }
+        throw new InvalidMacroException("Unknown property " + property);
+      }
+
+      @Override
+      public String evaluate(String macroFunction, String... arguments)
+          throws InvalidMacroException {
+        if ("secure".equals(macroFunction)) {
+          secureEvalCalls[0]++;
+          if (arguments.length == 1 && "secret_key".equals(arguments[0])) {
+            return secret;
+          }
+          throw new InvalidMacroException("Failed to resolve macro 'secure'.");
+        }
+        throw new InvalidMacroException("Unsupported macro " + macroFunction);
+      }
+
+      @Override
+      public Map<String, String> evaluateMap(String macroFunction, String... arguments)
+          throws InvalidMacroException {
+        if ("conn".equals(macroFunction)) {
+          return ImmutableMap.of("pw", "${secure(secret_key)}", "plain", "ok");
+        }
+        throw new InvalidMacroException("Unsupported map macro " + macroFunction);
+      }
+
+      @Override
+      public MacroObjectType evaluateAs(String macroFunction) {
+        return "conn".equals(macroFunction) ? MacroObjectType.MAP : MacroObjectType.STRING;
+      }
+    };
+
+    // Studio-like options: escaping=false, skipInvalidMacros=true, whitelist={conn, secure}
+    MacroParser studioParser = new MacroParser(
+        evaluator,
+        MacroParserOptions.builder()
+            .setEscaping(false)
+            .skipInvalidMacros()
+            .setFunctionWhitelist("conn", "secure")
+            .build());
+    // Wrangler-like options: whitelist={secure}
+    MacroParser wranglerParser = new MacroParser(
+        evaluator,
+        MacroParserOptions.builder()
+            .setFunctionWhitelist("secure")
+            .build());
+
+    String[] nestedPayloads = new String[]{
+      "${${secure(secret_key)}}",
+      "${secure(${secure(secret_key)})}",
+      "${${secure(secret_key)}",
+      "${secure(${secure(secret_key)}}",
+      "${secure(${secure(secret_key)}))}",
+      "${unknownFunc(${secure(secret_key)})}",
+      "${outer({\"a\":1}, ${secure(secret_key)})}",
+      "${unknownFunc(${indirect_secure})}",
+      "${unknownFunc(${conn(my_conn)})}"
+    };
+
+    for (MacroParser parser : new MacroParser[]{studioParser, wranglerParser}) {
+      for (String payload : nestedPayloads) {
+        if (parser == wranglerParser && payload.contains("conn(")) {
+          continue;
+        }
+        secureEvalCalls[0] = 0;
+        try {
+          parser.parse(payload);
+          Assert.fail("Expected InvalidMacroException for payload: " + payload);
+        } catch (InvalidMacroException e) {
+          Assert.assertEquals("Macro 'secure' cannot be nested inside another macro.",
+                              e.getMessage());
+          Assert.assertEquals("secure evaluator must not be invoked for nested payload: " + payload,
+                              0, secureEvalCalls[0]);
+        }
+      }
+    }
+
+    // Valid non-nested uses of ${secure(...)} continue to work normally.
+    Assert.assertEquals(secret, studioParser.parse("${secure(secret_key)}"));
+    Assert.assertEquals("${logicalStartTime(yyyy-MM-dd)}/" + secret,
+                        studioParser.parse("${logicalStartTime(yyyy-MM-dd)}/${secure(secret_key)}"));
+    Assert.assertEquals("{\"pw\":\"" + secret + "\"}",
+                        studioParser.parse("{\"pw\":\"${secure(secret_key)}\"}"));
+    Assert.assertEquals(secret, studioParser.parse("${secure(${key_arg})}"));
+    Assert.assertTrue(studioParser.parse("${conn(my_conn)}").contains(secret));
+    // Non-evaluating whitelist (e.g., deploy-time conn-only) leaves nested secure untouched.
+    MacroParser connOnlyParser = new MacroParser(
+        evaluator, MacroParserOptions.builder().setFunctionWhitelist("conn").build());
+    Assert.assertEquals("${unknownFunc(${secure(secret_key)})}",
+                        connOnlyParser.parse("${unknownFunc(${secure(secret_key)})}"));
   }
 }

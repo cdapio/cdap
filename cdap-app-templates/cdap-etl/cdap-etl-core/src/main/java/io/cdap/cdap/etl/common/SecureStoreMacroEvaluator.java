@@ -38,8 +38,8 @@ public class SecureStoreMacroEvaluator implements MacroEvaluator {
 
   @Override
   public String lookup(String property) throws InvalidMacroException {
-    // this will get ignored by the parser
-    throw new InvalidMacroException("Unable to lookup the value for " + property);
+    // Omit property name so resolved nested secure macro values cannot leak in errors.
+    throw new InvalidMacroException("Failed to resolve macro argument.");
   }
 
   @Override
@@ -56,8 +56,8 @@ public class SecureStoreMacroEvaluator implements MacroEvaluator {
     try {
       return Bytes.toString(secureStore.getData(namespace, args[0]));
     } catch (Exception e) {
-      throw new InvalidMacroException(
-          "Failed to resolve macro '" + FUNCTION_NAME + "(" + args[0] + ")'", e);
+      // Omit the macro argument and cause so nested secure macro values cannot leak in errors.
+      throw new InvalidMacroException("Failed to resolve macro '" + FUNCTION_NAME + "'.");
     }
   }
 }
