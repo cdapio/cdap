@@ -52,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -93,6 +94,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final String metadataServiceEndpoint;
   private final MetricsCollectionService metricsCollectionService;
   private final CConfiguration cConf;
+  private final Predicate<FullHttpRequest> callerCheck;
 
   /**
    * If true, pod will restart once an operation finish its execution.
@@ -107,7 +109,22 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
       MetricsCollectionService metricsCollectionService) {
+    this(cConf, discoveryService, discoveryServiceClient, stopper, metricsCollectionService,
+        request -> true);
+  }
+
+  /**
+   * Constructs the {@link TaskWorkerHttpHandlerInternal}.
+   *
+   * @param callerCheck returns whether a request to run a task may run
+   */
+  public TaskWorkerHttpHandlerInternal(CConfiguration cConf,
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
+      MetricsCollectionService metricsCollectionService,
+      Predicate<FullHttpRequest> callerCheck) {
     this.cConf = cConf;
+    this.callerCheck = callerCheck;
     final int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf,
@@ -211,6 +228,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   @POST
   @Path("/run")
   public void run(FullHttpRequest request, HttpResponder responder) {
+    if (!callerCheck.test(request)) {
+      responder.sendString(HttpResponseStatus.FORBIDDEN,
+          "Only CDAP system services can run tasks on task workers");
+      return;
+    }
     if (mustRestart.get()) {
       responder.sendStatus(HttpResponseStatus.TOO_MANY_REQUESTS);
       return;

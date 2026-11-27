@@ -24,12 +24,14 @@ import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.ServiceException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.HttpCodes;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authenticator.RemoteAuthenticator;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpContentConsumer;
@@ -97,6 +99,29 @@ public class RemoteClient {
       String credentialType,
       String credentialValue) {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
+  }
+
+  /**
+   * Sets {@code header} to the internal credential of this process, not of the user that the
+   * current thread acts for.
+   */
+  void setSystemCredentialHeader(BiConsumer<String, String> headerSetter, String header) {
+    String userId = SecurityRequestContext.getUserId();
+    Credential userCredential = SecurityRequestContext.getUserCredential();
+    String userIp = SecurityRequestContext.getUserIp();
+    // Without user details, the internal authenticator signs a token for this process.
+    SecurityRequestContext.resetUserDetails();
+    try {
+      internalAuthenticator.applyInternalAuthenticationHeaders((name, value) -> {
+        if (Constants.Security.Headers.RUNTIME_TOKEN.equals(name)) {
+          headerSetter.accept(header, value);
+        }
+      });
+    } finally {
+      SecurityRequestContext.setUserId(userId);
+      SecurityRequestContext.setUserCredential(userCredential);
+      SecurityRequestContext.setUserIp(userIp);
+    }
   }
 
   /**

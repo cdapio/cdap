@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.worker;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
@@ -266,6 +267,19 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
                   .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(),
                       new SecretDisk(secretName, secretPath));
+            } else if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)
+                && Strings.isNullOrEmpty(cConf.get(Constants.Zookeeper.QUORUM))) {
+              // Task workers validate caller tokens, so mount only the token signing key.
+              String keyFilePath = cConf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH);
+              if (Strings.isNullOrEmpty(keyFilePath)) {
+                throw new IllegalStateException(
+                    Constants.Security.CFG_FILE_BASED_KEYFILE_PATH + " is not configured");
+              }
+              File keyFile = new File(keyFilePath);
+              twillPreparer = ((SecureTwillPreparer) twillPreparer)
+                  .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(),
+                      new SecretDisk(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME),
+                          keyFile.getPath(), keyFile.getName()));
             }
           }
 
