@@ -98,11 +98,14 @@ public class RuntimeClient {
    * @throws IOException if failed to send all the given messages
    * @throws BadRequestException if the server denial the request due to bad request
    * @throws GoneException if the run already finished
+   * @throws NotFoundException if the run is not found
+   * @throws RuntimeTokenRefusedException if the server terminally refused the runtime token
    * @throws ServiceUnavailableException if the server is not available
    */
   public void sendMessages(ProgramRunId programRunId,
       TopicId topicId, Iterator<Message> messages)
-      throws IOException, BadRequestException, GoneException, NotFoundException {
+      throws IOException, BadRequestException, GoneException, NotFoundException,
+      RuntimeTokenRefusedException {
 
     if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
       throw new IllegalArgumentException("Only topic in the system namespace is supported");
@@ -182,7 +185,8 @@ public class RuntimeClient {
       try (OutputStream os = urlConn.getOutputStream()) {
         Files.copy(eventFile.toPath(), os);
         throwIfError(programRunId, urlConn);
-      } catch (BadRequestException | GoneException | NotFoundException e) {
+      } catch (BadRequestException | GoneException | NotFoundException
+          | RuntimeTokenRefusedException e) {
         // Just treat bad request as IOException since it won't be retriable
         throw new IOException(e);
       }
@@ -227,7 +231,9 @@ public class RuntimeClient {
    * if it is not 200.
    */
   private void throwIfError(ProgramRunId programRunId,
-      HttpURLConnection urlConn) throws IOException, BadRequestException, GoneException, NotFoundException {
+      HttpURLConnection urlConn)
+      throws IOException, BadRequestException, GoneException, NotFoundException,
+      RuntimeTokenRefusedException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -240,12 +246,21 @@ public class RuntimeClient {
       switch (responseCode) {
         case HttpURLConnection.HTTP_BAD_REQUEST:
           throw new BadRequestException(errorMsg);
+        case HttpURLConnection.HTTP_FORBIDDEN:
+          String failureReason = urlConn.getHeaderField(
+              Constants.Security.Headers.RUNTIME_TOKEN_FAILURE);
+          if (failureReason != null && !failureReason.trim().isEmpty()) {
+            throw new RuntimeTokenRefusedException(failureReason.trim(), errorMsg);
+          }
+          break;
         case HttpURLConnection.HTTP_UNAVAILABLE:
           throw new ServiceUnavailableException(Constants.Service.RUNTIME, errorMsg);
         case HttpURLConnection.HTTP_GONE:
           throw new GoneException(errorMsg);
         case HttpURLConnection.HTTP_NOT_FOUND:
           throw new NotFoundException(errorMsg);
+        default:
+          break;
       }
 
       throw new IOException(

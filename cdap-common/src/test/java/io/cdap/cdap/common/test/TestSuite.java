@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.common.test;
 
-import io.cdap.cdap.common.app.MainClassLoader;
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import java.util.List;
 import org.junit.runner.Description;
@@ -47,12 +47,51 @@ public class TestSuite extends ParentRunner<Runner> {
 
   @SuppressWarnings("unused")
   public TestSuite(Class<?> suiteClass, RunnerBuilder builder) throws InitializationError {
-    this(builder, suiteClass, getAnnotatedClasses(suiteClass));
+    this(suiteClass, builder, TestRunner.TEST_CLASSLOADER);
   }
 
-  private TestSuite(RunnerBuilder builder, Class<?> suiteClass, Class<?>[] runnerClasses) throws InitializationError {
-    super(createClass(suiteClass));
-    this.runners = builder.runners(createClass(suiteClass), runnerClasses);
+  @VisibleForTesting
+  TestSuite(Class<?> suiteClass, RunnerBuilder builder, ClassLoader classLoader)
+      throws InitializationError {
+    this(builder,
+        loadClass(suiteClass, classLoader),
+        resolveRunnerClasses(getAnnotatedClasses(suiteClass), classLoader));
+  }
+
+  private TestSuite(RunnerBuilder builder, Class<?> loadedSuiteClass, Class<?>[] runnerClasses)
+      throws InitializationError {
+    super(loadedSuiteClass);
+    // Match run(RunNotifier): set TCCL during runner construction so class initialization and
+    // @Parameterized.Parameters on reloaded children resolve against the suite's classloader.
+    ClassLoader prevClassLoader =
+        ClassLoaders.setContextClassLoader(loadedSuiteClass.getClassLoader());
+    try {
+      this.runners = builder.runners(loadedSuiteClass, runnerClasses);
+    } finally {
+      ClassLoaders.setContextClassLoader(prevClassLoader);
+    }
+  }
+
+  /**
+   * Resolves suite child classes in the given {@link ClassLoader}, leaving classes whose
+   * {@link RunWith} runner is {@link TestRunner}, {@link TestSuite}, or a subclass thereof
+   * (including inherited annotations) on the caller's classloader so those runners reload their
+   * targets without instantiating a second {@code MainClassLoader}.
+   */
+  @VisibleForTesting
+  static Class<?>[] resolveRunnerClasses(Class<?>[] runnerClasses, ClassLoader classLoader)
+      throws InitializationError {
+    Class<?>[] resolved = new Class<?>[runnerClasses.length];
+    for (int i = 0; i < runnerClasses.length; i++) {
+      RunWith runWith = runnerClasses[i].getAnnotation(RunWith.class);
+      boolean managesSuiteClassLoader = runWith != null
+          && (TestRunner.class.isAssignableFrom(runWith.value())
+              || TestSuite.class.isAssignableFrom(runWith.value()));
+      resolved[i] = managesSuiteClassLoader
+          ? runnerClasses[i]
+          : loadClass(runnerClasses[i], classLoader);
+    }
+    return resolved;
   }
 
   @Override
@@ -70,7 +109,6 @@ public class TestSuite extends ParentRunner<Runner> {
     runner.run(notifier);
   }
 
-
   @Override
   public void run(RunNotifier notifier) {
     // Set the context classloader to the test class classloader before running test
@@ -83,11 +121,12 @@ public class TestSuite extends ParentRunner<Runner> {
   }
 
   /**
-   * Creates a new test class using the {@link MainClassLoader} by copying the original test class ClassLoader urls.
+   * Loads the given class using the specified {@link ClassLoader}.
    */
-  private static Class<?> createClass(Class<?> suiteClass) throws InitializationError {
+  private static Class<?> loadClass(Class<?> testClass, ClassLoader classLoader)
+      throws InitializationError {
     try {
-      return TestRunner.TEST_CLASSLOADER.loadClass(suiteClass.getName());
+      return classLoader.loadClass(testClass.getName());
     } catch (ClassNotFoundException e) {
       throw new InitializationError(e);
     }
