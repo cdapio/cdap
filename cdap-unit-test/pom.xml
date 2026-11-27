@@ -157,6 +157,16 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <!--
+      The embedded Kafka 0.10 server used by KafkaTester needs scala.util.parsing.json,
+      which was removed in scala-parser-combinators 2.x (pulled in by Spark 3.5).
+    -->
+    <dependency>
+      <groupId>org.scala-lang.modules</groupId>
+      <artifactId>scala-parser-combinators_2.12</artifactId>
+      <version>1.1.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

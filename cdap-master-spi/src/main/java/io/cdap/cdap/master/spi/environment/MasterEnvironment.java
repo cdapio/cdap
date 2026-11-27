@@ -89,6 +89,20 @@ public interface MasterEnvironment {
   Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier();
 
   /**
+   * Returns a {@link Supplier} of {@link DiscoveryServiceClient} that discovers the address of each
+   * running instance of a service, instead of one load-balanced address for the service.
+   *
+   * <p>The payload of each discovered {@link org.apache.twill.discovery.Discoverable} is defined by
+   * the environment (for Kubernetes, the pod's node name) and is not a URI scheme, so don't pass
+   * these discoverables to code that reads the payload as a scheme, such as a remote client.
+   *
+   * @throws UnsupportedOperationException if this environment can't discover instance addresses
+   */
+  default Supplier<DiscoveryServiceClient> getEndpointsDiscoveryServiceClientSupplier() {
+    throw new UnsupportedOperationException("Method not implemented");
+  }
+
+  /**
    * Returns a {@link Supplier} of {@link TwillRunnerService} for running programs.
    */
   Supplier<TwillRunnerService> getTwillRunnerSupplier();

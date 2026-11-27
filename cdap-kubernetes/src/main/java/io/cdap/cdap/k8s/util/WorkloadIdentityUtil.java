@@ -100,7 +100,7 @@ public class WorkloadIdentityUtil {
       throws ApiException, IOException {
     // Check if workload identity config map already exists
     try {
-      coreV1Api.readNamespacedConfigMap(k8sNamespace, WORKLOAD_IDENTITY_CONFIGMAP_NAME, null);
+      coreV1Api.readNamespacedConfigMap(k8sNamespace, WORKLOAD_IDENTITY_CONFIGMAP_NAME).execute();
       // Workload identity config map already exists, so return early
       LOG.debug("Workload identity config found, returning without creating it...");
       return;
@@ -134,7 +134,7 @@ public class WorkloadIdentityUtil {
         .metadata(new V1ObjectMeta().namespace(k8sNamespace)
             .name(WorkloadIdentityUtil.WORKLOAD_IDENTITY_CONFIGMAP_NAME))
         .data(workloadIdentityConfigMapData);
-    coreV1Api.createNamespacedConfigMap(k8sNamespace, configMap, null, null, null, null);
+    coreV1Api.createNamespacedConfigMap(k8sNamespace, configMap).execute();
   }
 
   /**

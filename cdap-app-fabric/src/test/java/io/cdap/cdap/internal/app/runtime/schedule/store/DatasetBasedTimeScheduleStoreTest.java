@@ -17,7 +17,9 @@
 package io.cdap.cdap.internal.app.runtime.schedule.store;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Bytes;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -47,17 +49,25 @@ import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
+import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.cdap.test.SlowTests;
+import java.nio.charset.StandardCharsets;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -66,7 +76,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
+import org.quartz.CronTrigger;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
@@ -74,8 +86,10 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
+import org.quartz.impl.triggers.CronTriggerImpl;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
@@ -91,6 +105,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final String DUMMY_SCHEDULER_NAME = "dummyScheduler";
+  private static final String LEGACY_TIME_ZONE = "Asia/Kolkata";
 
   private static Injector injector;
   private static Scheduler scheduler;
@@ -426,6 +441,187 @@ public class DatasetBasedTimeScheduleStoreTest {
         .withIdentity(identity, jobGroup)
         .storeDurably()
         .build();
+  }
+
+  @Test
+  public void testRepairLegacyCronTrigger() throws Exception {
+    TimeZone timeZone = TimeZone.getTimeZone(LEGACY_TIME_ZONE);
+
+    // A trigger persisted under Quartz 2.2 with a legacy oversized increment gets repaired.
+    CronTriggerImpl trigger = deserializeAsLegacyTrigger("0 0/50 * * * ?", "0 0/60 * * * ?");
+    Assert.assertEquals("0 0/60 * * * ?", trigger.getCronExpression());
+    Assert.assertTrue(DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(trigger));
+    Assert.assertEquals("0 0 * * * ?", trigger.getCronExpression());
+    Assert.assertEquals(timeZone, trigger.getTimeZone());
+    Assert.assertNotNull(trigger.clone());
+    Assert.assertNotNull(trigger.getFireTimeAfter(new Date(0L)));
+
+    // A trigger that cannot be repaired is reported and left unchanged.
+    trigger = deserializeAsLegacyTrigger("0 0/5,30 * * * ?", "0 0/60/1 * * * ?");
+    Assert.assertFalse(DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(trigger));
+    Assert.assertEquals("0 0/60/1 * * * ?", trigger.getCronExpression());
+
+    // A range with an oversized step is valid in Quartz 2.3+ and must stay untouched.
+    trigger = deserializeAsLegacyTrigger("0 10-50/50 * * * ?", "0 10-50/60 * * * ?");
+    Assert.assertTrue(DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(trigger));
+    Assert.assertEquals("0 10-50/60 * * * ?", trigger.getCronExpression());
+    Assert.assertNotNull(trigger.clone());
+
+    // A valid trigger stays untouched.
+    trigger = deserializeAsLegacyTrigger("0 0/50 * * * ?", "0 0/50 * * * ?");
+    Assert.assertTrue(DatasetBasedTimeScheduleStore.repairLegacyCronTrigger(trigger));
+    Assert.assertEquals("0 0/50 * * * ?", trigger.getCronExpression());
+  }
+
+  @Test
+  public void testLegacyCronTriggersAcrossRestarts() throws Exception {
+    final TimeZone timeZone = TimeZone.getTimeZone(LEGACY_TIME_ZONE);
+    final String legacyCron = "0 0/60 * * * ?";
+    final String repairedCron = "0 0 * * * ?";
+
+    schedulerSetup(true);
+    JobDetail job = getJobDetail("legacyCronJob");
+    Trigger normalTrigger = getCronTrigger("legacyNormal", "0 0/50 * * * ?", timeZone);
+    Trigger pausedTrigger = getCronTrigger("legacyPaused", "0 0/50 * * * ?", timeZone);
+    Trigger brokenTrigger = getCronTrigger("legacyBroken", "0 0/5,30 * * * ?", timeZone);
+    Trigger healthyTrigger = getCronTrigger("legacyHealthy", "0 0/5 * * * ?", timeZone);
+    try {
+      scheduler.scheduleJob(
+          job, Sets.newHashSet(normalTrigger, pausedTrigger, brokenTrigger, healthyTrigger), true);
+      scheduler.pauseTrigger(pausedTrigger.getKey());
+
+      // Rewrite the persisted triggers to what Quartz 2.2 would have stored.
+      rewritePersistedCron(normalTrigger.getKey(), "0 0/50 * * * ?", legacyCron);
+      rewritePersistedCron(pausedTrigger.getKey(), "0 0/50 * * * ?", legacyCron);
+      rewritePersistedCron(brokenTrigger.getKey(), "0 0/5,30 * * * ?", "0 0/60/1 * * * ?");
+
+      // The restart must succeed, repair the legacy triggers, and skip only the unrepairable one.
+      schedulerTearDown();
+      schedulerSetup(true);
+
+      verifyCronTrigger(normalTrigger.getKey(), repairedCron, timeZone,
+                        Trigger.TriggerState.NORMAL);
+      verifyCronTrigger(pausedTrigger.getKey(), repairedCron, timeZone,
+                        Trigger.TriggerState.PAUSED);
+      verifyCronTrigger(healthyTrigger.getKey(), "0 0/5 * * * ?", timeZone,
+                        Trigger.TriggerState.NORMAL);
+      Assert.assertNull(scheduler.getTrigger(brokenTrigger.getKey()));
+      // The unrepairable trigger is kept in the store.
+      Assert.assertTrue(persistedTriggerContains(brokenTrigger.getKey(), "0 0/60/1 * * * ?"));
+
+      // The repaired trigger fires at the start of every hour in its own time zone.
+      Date fireTime = scheduler.getTrigger(normalTrigger.getKey()).getFireTimeAfter(new Date());
+      Assert.assertNotNull(fireTime);
+      Calendar calendar = Calendar.getInstance(timeZone);
+      calendar.setTime(fireTime);
+      Assert.assertEquals(0, calendar.get(Calendar.MINUTE));
+      Assert.assertEquals(0, calendar.get(Calendar.SECOND));
+
+      // The restart only repairs the triggers in memory.
+      Assert.assertTrue(persistedTriggerContains(normalTrigger.getKey(), legacyCron));
+      Assert.assertTrue(persistedTriggerContains(pausedTrigger.getKey(), legacyCron));
+
+      // Pause and resume read the trigger back from the store and persist the repaired trigger.
+      scheduler.pauseTrigger(normalTrigger.getKey());
+      Assert.assertFalse(persistedTriggerContains(normalTrigger.getKey(), legacyCron));
+      Assert.assertTrue(persistedTriggerContains(normalTrigger.getKey(), repairedCron));
+      scheduler.resumeTrigger(pausedTrigger.getKey());
+      Assert.assertFalse(persistedTriggerContains(pausedTrigger.getKey(), legacyCron));
+      Assert.assertTrue(persistedTriggerContains(pausedTrigger.getKey(), repairedCron));
+
+      // The changed states survive another restart.
+      schedulerTearDown();
+      schedulerSetup(true);
+      verifyCronTrigger(normalTrigger.getKey(), repairedCron, timeZone,
+                        Trigger.TriggerState.PAUSED);
+      verifyCronTrigger(pausedTrigger.getKey(), repairedCron, timeZone,
+                        Trigger.TriggerState.NORMAL);
+      Assert.assertNull(scheduler.getTrigger(brokenTrigger.getKey()));
+    } finally {
+      scheduler.deleteJob(job.getKey());
+      // The unrepairable trigger is not loaded by the scheduler, so remove it from the store.
+      datasetBasedTimeScheduleStore.removeTrigger(brokenTrigger.getKey());
+      schedulerTearDown();
+    }
+  }
+
+  private Trigger getCronTrigger(String triggerName, String cron, TimeZone timeZone) {
+    return TriggerBuilder.newTrigger()
+      .withIdentity(triggerName)
+      .startNow()
+      .withSchedule(CronScheduleBuilder.cronSchedule(cron).inTimeZone(timeZone))
+      .build();
+  }
+
+  private void verifyCronTrigger(TriggerKey triggerKey, String expectedCron,
+                                 TimeZone expectedTimeZone,
+                                 Trigger.TriggerState expectedState) throws SchedulerException {
+    Trigger trigger = scheduler.getTrigger(triggerKey);
+    Assert.assertTrue(trigger instanceof CronTrigger);
+    Assert.assertEquals(expectedCron, ((CronTrigger) trigger).getCronExpression());
+    Assert.assertEquals(expectedTimeZone, ((CronTrigger) trigger).getTimeZone());
+    Assert.assertEquals(expectedState, scheduler.getTriggerState(triggerKey));
+  }
+
+  /**
+   * Replaces the cron expression in serialized bytes. Quartz serializes only the cron string of a
+   * cron expression and parses it again on deserialization, so this produces the same bytes as a
+   * trigger that an older Quartz version stored with {@code newCron}.
+   */
+  private static byte[] replaceCron(byte[] serialized, String currentCron, String newCron) {
+    byte[] target = currentCron.getBytes(StandardCharsets.UTF_8);
+    byte[] replacement = newCron.getBytes(StandardCharsets.UTF_8);
+    // The length of the string is part of the serialized form.
+    Assert.assertEquals(target.length, replacement.length);
+    int index = Bytes.indexOf(serialized, target);
+    Assert.assertTrue(index >= 0);
+    byte[] result = serialized.clone();
+    System.arraycopy(replacement, 0, result, index, replacement.length);
+    return result;
+  }
+
+  private CronTriggerImpl deserializeAsLegacyTrigger(String validCron,
+                                                     String legacyCron) throws Exception {
+    CronTriggerImpl trigger = new CronTriggerImpl();
+    trigger.setName("legacy-trigger");
+    trigger.setGroup("default");
+    trigger.setCronExpression(new CronExpression(validCron));
+    trigger.setTimeZone(TimeZone.getTimeZone(LEGACY_TIME_ZONE));
+    byte[] serialized = replaceCron(SerializationUtils.serialize(trigger), validCron, legacyCron);
+    return (CronTriggerImpl) SerializationUtils.deserialize(serialized);
+  }
+
+  private static List<Field<?>> getTriggerPrimaryKeys(TriggerKey triggerKey) {
+    return ImmutableList.of(
+      Fields.stringField(StoreDefinition.TimeScheduleStore.TYPE_FIELD,
+                         DatasetBasedTimeScheduleStore.TRIGGER_KEY),
+      Fields.stringField(StoreDefinition.TimeScheduleStore.NAME_FIELD, triggerKey.getName()));
+  }
+
+  private static byte[] readPersistedTrigger(StructuredTable table,
+                                             TriggerKey triggerKey) throws Exception {
+    return table.read(getTriggerPrimaryKeys(triggerKey))
+      .orElseThrow(() -> new AssertionError("No persisted trigger " + triggerKey))
+      .getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD);
+  }
+
+  private void rewritePersistedCron(TriggerKey triggerKey, String currentCron, String newCron) {
+    TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = DatasetBasedTimeScheduleStore.getTimeScheduleStructuredTable(context);
+      byte[] value = replaceCron(readPersistedTrigger(table, triggerKey), currentCron, newCron);
+      table.upsert(ImmutableList.<Field<?>>builder()
+                     .addAll(getTriggerPrimaryKeys(triggerKey))
+                     .add(Fields.bytesField(StoreDefinition.TimeScheduleStore.VALUE_FIELD, value))
+                     .build());
+    });
+  }
+
+  private boolean persistedTriggerContains(TriggerKey triggerKey, String cron) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = DatasetBasedTimeScheduleStore.getTimeScheduleStructuredTable(context);
+      return Bytes.indexOf(readPersistedTrigger(table, triggerKey),
+                           cron.getBytes(StandardCharsets.UTF_8)) >= 0;
+    });
   }
 
   @AfterClass

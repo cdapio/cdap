@@ -17,16 +17,24 @@
 package io.cdap.cdap.api.logging;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.util.LogbackMDCAdapter;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.Context;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.MDC;
+import org.slf4j.spi.MDCAdapter;
 
 /**
  * Context provided to {@link Appender} via the {@link Appender#setContext(Context)} method.
  */
 public abstract class AppenderContext extends LoggerContext {
+
+  protected AppenderContext() {
+    MDCAdapter adapter = MDC.getMDCAdapter();
+    setMDCAdapter(adapter instanceof LogbackMDCAdapter ? adapter : new LogbackMDCAdapter());
+  }
 
   /**
    * Returns the current instance id of the log framework.

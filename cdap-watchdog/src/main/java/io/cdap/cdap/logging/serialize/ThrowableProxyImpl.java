@@ -73,6 +73,11 @@ final class ThrowableProxyImpl implements IThrowableProxy {
   }
 
   @Override
+  public boolean isCyclic() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return "ThrowableProxyImpl{"
         + "cause=" + cause

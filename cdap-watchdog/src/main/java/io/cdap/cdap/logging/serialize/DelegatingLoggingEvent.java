@@ -22,8 +22,10 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Marker;
+import org.slf4j.event.KeyValuePair;
 
 public class DelegatingLoggingEvent implements ILoggingEvent {
 
@@ -91,6 +93,11 @@ public class DelegatingLoggingEvent implements ILoggingEvent {
   }
 
   @Override
+  public List<Marker> getMarkerList() {
+    return loggingEvent.getMarkerList();
+  }
+
+  @Override
   public Map<String, String> getMDCPropertyMap() {
     return this.mdc;
   }
@@ -103,6 +110,21 @@ public class DelegatingLoggingEvent implements ILoggingEvent {
   @Override
   public long getTimeStamp() {
     return loggingEvent.getTimeStamp();
+  }
+
+  @Override
+  public int getNanoseconds() {
+    return loggingEvent.getNanoseconds();
+  }
+
+  @Override
+  public long getSequenceNumber() {
+    return loggingEvent.getSequenceNumber();
+  }
+
+  @Override
+  public List<KeyValuePair> getKeyValuePairs() {
+    return loggingEvent.getKeyValuePairs();
   }
 
   @Override

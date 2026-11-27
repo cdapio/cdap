@@ -167,7 +167,7 @@ public final class LoggingEventSerializer {
     }
     datum.put("hasCallerData", event.hasCallerData());
     //datum.put("marker", marker);
-    datum.put("mdc", LoggingUtil.encodeMDC(event.getMDCPropertyMap()));
+    datum.put("mdc", LoggingUtil.encodeMDC(LoggingUtil.getMDCPropertyMap(event)));
     datum.put("timestamp", event.getTimeStamp());
     return datum;
   }

@@ -25,6 +25,7 @@ import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.k8s.common.DefaultLocalFileProvider;
 import io.cdap.cdap.k8s.common.LocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
+import io.cdap.cdap.k8s.discovery.KubeEndpointsDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.k8s.util.KubeUtil;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
@@ -97,6 +98,10 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.nodes.NodeTuple;
+import org.yaml.snakeyaml.nodes.Tag;
 
 /**
  * Implementation of {@link MasterEnvironment} to provide the environment for running in
@@ -106,6 +111,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   public static final String DISABLE_POD_DELETION = "disablePodDeletion";
   public static final String NAMESPACE_PROPERTY = "k8s.namespace";
+  /**
+   * {@code TwillPreparer#withConfiguration} option that sets the strategy type of the main
+   * runnable's Deployment: {@code Recreate} or {@code RollingUpdate}. When unset, Kubernetes uses
+   * its default, {@code RollingUpdate}. StatefulSet and Job runnables ignore it.
+   */
+  public static final String K8S_DEPLOYMENT_STRATEGY = "k8s.deployment.strategy";
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
   public static final String SECURITY_CONFIG_NAME = "cdap-security";
@@ -239,6 +250,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private final List<MasterEnvironmentTask> tasks;
   private KubeDiscoveryService discoveryService;
+  private KubeEndpointsDiscoveryService endpointsDiscoveryService;
   private KubeTwillRunnerService twillRunner;
   private PodInfo podInfo;
   private ApiClientFactory apiClientFactory;
@@ -346,10 +358,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       loadBalancerServiceList = Arrays.asList(
           conf.get(LOAD_BALANCER_SERVICES).split(","));
     }
-    discoveryService = new KubeDiscoveryService(cdapInstallNamespace, "cdap-" + instanceName + "-",
+    String servicePrefix = "cdap-" + instanceName + "-";
+    discoveryService = new KubeDiscoveryService(cdapInstallNamespace, servicePrefix,
         podInfo.getName(), podLabels, podInfo.getOwnerReferences(), apiClientFactory,
         loadBalancerServiceList,
         parseLoadBalancerAnnotations(conf.get(LOAD_BALANCER_SERVICE_ANNOTATIONS)));
+    endpointsDiscoveryService = new KubeEndpointsDiscoveryService(cdapInstallNamespace,
+        servicePrefix, apiClientFactory);
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
@@ -421,8 +436,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   public void destroy() {
     if (!Strings.isNullOrEmpty(configMapName)) {
       try {
-        coreV1Api.deleteNamespacedConfigMap(configMapName, podInfo.getNamespace(), null, null, null,
-            null, null, null);
+        coreV1Api.deleteNamespacedConfigMap(configMapName, podInfo.getNamespace()).execute();
       } catch (ApiException e) {
         LOG.warn("Error cleaning up configmap {}, it will be retried. {} ", configMapName,
             e.getResponseBody(), e);
@@ -430,6 +444,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     discoveryService.close();
+    endpointsDiscoveryService.close();
     LOG.info("Kubernetes environment destroyed");
   }
 
@@ -446,6 +461,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
+  }
+
+  @Override
+  public Supplier<DiscoveryServiceClient> getEndpointsDiscoveryServiceClientSupplier() {
+    return () -> endpointsDiscoveryService;
   }
 
   @Override
@@ -565,7 +585,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private void createK8sSaIfNotExists(String k8sNamespace, String serviceAccountName)
       throws ApiException {
     try {
-      coreV1Api.readNamespacedServiceAccount(serviceAccountName, k8sNamespace, null);
+      coreV1Api.readNamespacedServiceAccount(serviceAccountName, k8sNamespace).execute();
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
         throw e;
@@ -574,8 +594,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       serviceAccountMetadata.setName(serviceAccountName);
       V1ServiceAccount serviceAccount = new V1ServiceAccount();
       serviceAccount.setMetadata(serviceAccountMetadata);
-      coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount,
-          null, null, null, null);
+      coreV1Api.createNamespacedServiceAccount(k8sNamespace, serviceAccount).execute();
     }
   }
 
@@ -587,8 +606,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     LOG.info("Creating credential identity: {}", identity);
     try {
-      coreV1Api.deleteNamespacedServiceAccount(identity, k8sNamespace,
-          null, null, null, null, null, null);
+      coreV1Api.deleteNamespacedServiceAccount(identity, k8sNamespace).execute();
     } catch (ApiException e) {
       if (e.getCode() == 404) {
         // return if not found as it means that service account does not exist.
@@ -686,7 +704,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Query pod information.
     V1Pod pod;
     try {
-      pod = coreV1Api.readNamespacedPod(podName, namespace, null);
+      pod = coreV1Api.readNamespacedPod(podName, namespace).execute();
     } catch (ApiException e) {
       throw new IOException("Error occurred while getting pod. Error code = "
           + e.getCode() + ", Body = " + e.getResponseBody(), e);
@@ -800,8 +818,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                   .withName(configMapName)
                   .withLabels(podInfo.getLabels())
                   .withOwnerReferences(podInfo.getOwnerReferences())
-                  .build()).build(),
-          null, null, null, null);
+                  .build()).build())
+          .execute();
       this.configMapName = configMapName;
 
       // Add configmap and secrets as a volume to be added to the pod template
@@ -858,11 +876,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return serializePodTemplate(executorPod);
   }
 
-  private File serializePodTemplate(V1Pod v1Pod) throws IOException {
+  @VisibleForTesting
+  File serializePodTemplate(V1Pod v1Pod) throws IOException {
     // Uses a relative path to create the Spark driver and executor template files.
     File templateFile = localFileProvider.getWritableFileRef(
         POD_TEMPLATE_FILE_NAME + UUID.randomUUID());
-    String podTemplateYaml = Yaml.dump(v1Pod);
+    String podTemplateYaml = toPodTemplateYaml(v1Pod);
     try (FileWriter writer = new FileWriter(templateFile)) {
       writer.write(podTemplateYaml);
     } catch (IOException e) {
@@ -871,6 +890,30 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     LOG.trace("Pod template: {}", podTemplateYaml);
     return templateFile;
+  }
+
+  private static String toPodTemplateYaml(V1Pod v1Pod) {
+    // client-java models initialize map fields to empty maps, while Yaml.CustomRepresenter only
+    // omits nulls and empty lists. Subclass it so pod templates do not emit empty map fields, and
+    // mirror io.kubernetes.client.util.Yaml's DumperOptions because Yaml(Representer) is
+    // deprecated in SnakeYAML 2.
+    Yaml.CustomRepresenter representer = new Yaml.CustomRepresenter() {
+      @Override
+      protected NodeTuple representJavaBeanProperty(Object javaBean, Property property,
+          Object propertyValue, Tag customTag) {
+        if (propertyValue instanceof Map && ((Map<?, ?>) propertyValue).isEmpty()) {
+          return null;
+        }
+        return super.representJavaBeanProperty(javaBean, property, propertyValue, customTag);
+      }
+    };
+    DumperOptions dumperOptions = new DumperOptions();
+    dumperOptions.setDefaultFlowStyle(representer.getDefaultFlowStyle());
+    dumperOptions.setDefaultScalarStyle(representer.getDefaultScalarStyle());
+    dumperOptions.setAllowReadOnlyProperties(
+        representer.getPropertyUtils().isAllowReadOnlyProperties());
+    dumperOptions.setTimeZone(representer.getTimeZone());
+    return new org.yaml.snakeyaml.Yaml(representer, dumperOptions).dump(v1Pod);
   }
 
   /**

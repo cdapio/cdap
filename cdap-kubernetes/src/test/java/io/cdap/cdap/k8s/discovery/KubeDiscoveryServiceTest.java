@@ -209,10 +209,12 @@ public class KubeDiscoveryServiceTest {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-test-service", namespace, null,
-          null, null, null, null, deleteOptions);
-      api.deleteNamespacedService("cdap-test-test-service2", namespace, null,
-          null, null, null, null, deleteOptions);
+      api.deleteNamespacedService("cdap-test-test-service", namespace)
+          .body(deleteOptions)
+          .execute();
+      api.deleteNamespacedService("cdap-test-test-service2", namespace)
+          .body(deleteOptions)
+          .execute();
     }
   }
 
@@ -257,10 +259,12 @@ public class KubeDiscoveryServiceTest {
     } finally {
       CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService(prefix + "test1", namespace, null, null, null,
-          null, null, deleteOptions);
-      api.deleteNamespacedService(prefix + "test2", namespace, null, null, null,
-          null, null, deleteOptions);
+      api.deleteNamespacedService(prefix + "test1", namespace)
+          .body(deleteOptions)
+          .execute();
+      api.deleteNamespacedService(prefix + "test2", namespace)
+          .body(deleteOptions)
+          .execute();
     }
   }
 
@@ -306,10 +310,12 @@ public class KubeDiscoveryServiceTest {
     } finally {
       CoreV1Api api = new CoreV1Api(API_CLIENT_FACTORY.create());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService(prefix + "test1", namespace, null, null, null,
-          null, null, deleteOptions);
-      api.deleteNamespacedService(prefix + "test2", namespace, null, null, null,
-          null, null, deleteOptions);
+      api.deleteNamespacedService(prefix + "test1", namespace)
+          .body(deleteOptions)
+          .execute();
+      api.deleteNamespacedService(prefix + "test2", namespace)
+          .body(deleteOptions)
+          .execute();
     }
   }
 
