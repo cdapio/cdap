@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -49,6 +50,7 @@ import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.PluginValidationTransform;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.etl.proto.connection.Connection;
 import io.cdap.cdap.etl.proto.connection.ConnectionCreationRequest;
 import io.cdap.cdap.etl.proto.connection.ConnectionId;
 import io.cdap.cdap.etl.proto.connection.ConnectorDetail;
@@ -800,8 +802,9 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
 
     // Check Alice still can't create, delete and use connections
     String conn = "test_connection";
+    Map<String, String> connProperties = Collections.singletonMap("password", "secret-val");
     ConnectionCreationRequest creationRequest = new ConnectionCreationRequest("", new PluginInfo(
-      FileConnector.NAME, Connector.PLUGIN_TYPE, null, Collections.emptyMap(),
+      FileConnector.NAME, Connector.PLUGIN_TYPE, null, connProperties,
       // in set up we add "-mocks" as the suffix for the artifact id
       new ArtifactSelectorConfig("system", APP_ARTIFACT_ID.getArtifact() + "-mocks",
                                  APP_ARTIFACT_ID.getVersion())));
@@ -820,10 +823,22 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     expectedCode = HttpURLConnection.HTTP_OK;
     addConnection(conn, creationRequest);
 
-    // Grant Alice permission to use connection
+    // Without GET permission, getting the connection is forbidden
+    expectedCode = HttpURLConnection.HTTP_FORBIDDEN;
+    getConnection(conn);
+    expectedCode = HttpURLConnection.HTTP_OK;
+
+    // Grant Alice GET without USE: list and get return 200 with properties redacted
+    getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
+                                ALICE_PRINCIPAL,
+                                EnumSet.of(StandardPermission.GET));
+    assertConnectionProperties(conn, Collections.emptyMap());
+
+    // Grant Alice permission to use connection: properties are returned and operations succeed
     getPermissionManager().grant(Authorizable.fromEntityId(connectionEntityId),
                                 ALICE_PRINCIPAL,
                                 EnumSet.of(StandardPermission.USE));
+    assertConnectionProperties(conn, connProperties);
     browseConnection(conn, directory.getCanonicalPath(), 10);
     sampleConnection(conn, entities.get(1).getPath(), 100);
     getConnectionSpec(conn, directory.getCanonicalPath(), null, null);
@@ -861,7 +876,20 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     return HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
   }
 
-  private void listConnections(String namespace) throws IOException {
+  private void assertConnectionProperties(String conn, Map<String, String> expectedProperties) throws IOException {
+    Connection fetched = GSON.fromJson(getConnection(conn).getResponseBodyAsString(), Connection.class);
+    Assert.assertEquals(expectedProperties, fetched.getPlugin().getProperties());
+    List<Connection> listed = GSON.fromJson(
+      listConnections(NamespaceId.DEFAULT.getNamespace()).getResponseBodyAsString(),
+      new TypeToken<List<Connection>>() { }.getType());
+    Connection listEntry = listed.stream()
+      .filter(c -> conn.equals(c.getName()))
+      .findFirst()
+      .orElseThrow(() -> new AssertionError("Expected connection " + conn + " in list"));
+    Assert.assertEquals(expectedProperties, listEntry.getPlugin().getProperties());
+  }
+
+  private HttpResponse listConnections(String namespace) throws IOException {
     String url = URLEncoder.encode(
       String.format("v1/contexts/%s/connections/", namespace),
       StandardCharsets.UTF_8.name());
@@ -869,6 +897,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     HttpResponse response = executeRequest(validatePipelineURL, HttpMethod.GET);
     Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
                         expectedCode, response.getResponseCode());
+    return response;
   }
 
   private void addConnection(String connection, ConnectionCreationRequest creationRequest) throws IOException {
@@ -892,7 +921,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
                         expectedCode, response.getResponseCode());
   }
 
-  private void getConnection(String connection) throws IOException {
+  private HttpResponse getConnection(String connection) throws IOException {
     String url = URLEncoder.encode(
       String.format("v1/contexts/%s/connections/%s", NamespaceId.DEFAULT.getNamespace(),
                     connection), StandardCharsets.UTF_8.name());
@@ -900,6 +929,7 @@ public class DataPipelineConnectionTest extends HydratorTestBase {
     HttpResponse response = executeRequest(validatePipelineURL, HttpMethod.GET);
     Assert.assertEquals("Wrong answer: " + response.getResponseBodyAsString(),
                         expectedCode, response.getResponseCode());
+    return response;
   }
 
   private void deleteConnection(String connection) throws IOException {
