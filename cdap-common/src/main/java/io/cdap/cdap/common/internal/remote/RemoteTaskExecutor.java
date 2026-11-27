@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.internal.remote;
 
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
@@ -23,6 +24,7 @@ import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.retry.RetryCountProvider;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.ServiceException;
@@ -31,9 +33,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.Constants.Security.Encryption;
 import io.cdap.cdap.common.encryption.AeadCipher;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.http.HttpCodes;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.security.Credential;
@@ -54,25 +58,37 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for executing a {@link RunnableTaskRequest} on a remote worker.
  */
 public class RemoteTaskExecutor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteTaskExecutor.class);
   private static final Gson GSON = new Gson();
   private static final String TASK_WORKER_URL = "/worker/run";
   private static final String SYSTEM_WORKER_URL = "/system/run";
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_SYSTEM_WORKER = throwable ->
-      (throwable instanceof RetryableException) || (throwable instanceof ServiceException)
+      (throwable instanceof RetryableException)
+          || (throwable instanceof ServiceException
+              && HttpCodes.isRetryable(((ServiceException) throwable).getStatusCode()))
           || (throwable instanceof SocketTimeoutException);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE_TASK_WORKER = throwable ->
       (throwable instanceof RetryableException);
+  private static final String FEATURE_FLAG_KEY =
+      "feature." + Feature.TASK_WORKER_MANAGER.getFeatureFlagString();
+  /** Guards the unreachable manager warning so it is logged once per JVM rather than per task. */
+  private static final AtomicBoolean MANAGER_UNREACHABLE_WARNING_LOGGED = new AtomicBoolean();
   private final boolean compression;
   private final RemoteClient remoteClient;
   private final RetryStrategy retryStrategy;
@@ -81,6 +97,8 @@ public class RemoteTaskExecutor {
   private final AeadCipher userEncryptionAeadCipher;
   private final String workerUrl;
   private final boolean isWorkerEncryptionRequired;
+  private final String serviceName;
+  private final boolean taskWorkerManagerEnabled;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType, AeadCipher aeadCipher) {
@@ -88,30 +106,43 @@ public class RemoteTaskExecutor {
         new DefaultHttpRequestConfig(false), aeadCipher);
   }
 
+  /**
+   * Creates a {@link RemoteTaskExecutor} using {@code httpRequestConfig} for worker HTTP calls.
+   */
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType,
       HttpRequestConfig httpRequestConfig, AeadCipher aeadCipher) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
-    String serviceName = workerType == Type.TASK_WORKER
-        ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
-    this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
-        httpRequestConfig,
-        Constants.Gateway.INTERNAL_API_VERSION_3);
     this.metricsCollectionService = metricsCollectionService;
     this.userEncryptionAeadCipher = aeadCipher;
     if (workerType == Type.TASK_WORKER) {
+      // System worker traffic never goes through the manager.
+      this.taskWorkerManagerEnabled = TaskWorkerManagerUtil.isEnabled(cConf);
+      this.serviceName = taskWorkerManagerEnabled
+          ? Constants.Service.TASK_WORKER_MANAGER : Constants.Service.TASK_WORKER;
       this.workerUrl = TASK_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.TASK_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
       this.isWorkerEncryptionRequired = true;
     } else {
+      this.taskWorkerManagerEnabled = false;
+      this.serviceName = Constants.Service.SYSTEM_WORKER;
       this.workerUrl = SYSTEM_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.SYSTEM_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_SYSTEM_WORKER;
       this.isWorkerEncryptionRequired = false;
     }
+
+    // Cap connect timeout so a hung connect during a singleton manager restart retries quickly
+    // instead of burning the caller's full connect timeout.
+    HttpRequestConfig clientConfig = taskWorkerManagerEnabled
+        ? capConnectTimeout(httpRequestConfig,
+            cConf.getInt(Constants.TaskWorkerManager.CLIENT_CONNECT_TIMEOUT_MS))
+        : httpRequestConfig;
+    this.remoteClient = remoteClientFactory.createRemoteClient(serviceName, clientConfig,
+        Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**
@@ -126,6 +157,9 @@ public class RemoteTaskExecutor {
     //initialize start time for collecting latency metric
     long startTime = System.currentTimeMillis();
     ByteBuffer requestBody = encodeTaskRequest(runnableTaskRequest);
+    // Tells the task worker manager which namespace's leased pod the request belongs to.
+    String namespace =
+        taskWorkerManagerEnabled ? TaskDetails.extractNamespace(runnableTaskRequest) : null;
 
     try {
       return Retries.callWithRetries((retryContext) -> {
@@ -133,27 +167,49 @@ public class RemoteTaskExecutor {
           HttpRequest.Builder requestBuilder = remoteClient
               .requestBuilder(HttpMethod.POST, workerUrl)
               .withBody(requestBody.duplicate());
+          if (namespace != null) {
+            requestBuilder.addHeader(Constants.TaskWorkerManager.HEADER_CDAP_NAMESPACE, namespace);
+          }
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
           }
-
-          // Encrypting user credentials for task worker calls
-          Credential currentCredential = SecurityRequestContext.getUserCredential();
-          if (isWorkerEncryptionRequired && currentCredential != null) {
-            String encryptedValue = userEncryptionAeadCipher.encryptToBase64(currentCredential.getValue(),
-                Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
-            Credential encryptedCredential = new Credential(encryptedValue, currentCredential.getType());
-            SecurityRequestContext.setUserCredential(encryptedCredential);
-          }
-
           HttpRequest httpRequest = requestBuilder.build();
-          HttpResponse httpResponse = remoteClient.execute(httpRequest);
 
-          // Resetting user credentials for further execution of current request
-          if (isWorkerEncryptionRequired) {
-            SecurityRequestContext.setUserCredential(currentCredential);
+          long requestStartTime = System.currentTimeMillis();
+          Credential currentCredential = SecurityRequestContext.getUserCredential();
+          HttpResponse httpResponse;
+          try {
+            // Encrypting user credentials for task worker calls
+            if (isWorkerEncryptionRequired && currentCredential != null) {
+              String encryptedValue = userEncryptionAeadCipher.encryptToBase64(
+                  currentCredential.getValue(),
+                  Encryption.TASK_WORKER_ENCRYPTION_ASSOCIATED_DATA.getBytes());
+              SecurityRequestContext.setUserCredential(
+                  new Credential(encryptedValue, currentCredential.getType()));
+            }
+            httpResponse = remoteClient.execute(httpRequest);
+            if (taskWorkerManagerEnabled) {
+              MANAGER_UNREACHABLE_WARNING_LOGGED.set(false);
+            }
+          } catch (SocketTimeoutException e) {
+            // Not connected means not sent, so a retry can't run the task twice; treat it like a
+            // refused connection. A read timeout stays fatal: the worker may be running the task.
+            if (taskWorkerManagerEnabled && isConnectTimeout(e)) {
+              throw new ServiceUnavailableException(Constants.Service.TASK_WORKER_MANAGER, e);
+            }
+            throw e;
+          } finally {
+            // Restore even on failure, or the next retry would encrypt the ciphertext again and
+            // the worker would reject it.
+            if (isWorkerEncryptionRequired) {
+              SecurityRequestContext.setUserCredential(currentCredential);
+            }
           }
+          long executionDurationMs = System.currentTimeMillis() - requestStartTime;
+
+          LOG.trace("Received response from {} with status code {} in {} ms", serviceName,
+              httpResponse.getResponseCode(), executionDurationMs);
 
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
@@ -161,8 +217,25 @@ public class RemoteTaskExecutor {
                     runnableTaskRequest.getClassName()));
           }
           if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            BasicThrowable basicThrowable = GSON
-                .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
+            String responseBody = httpResponse.getResponseBodyAsString();
+            BasicThrowable basicThrowable = null;
+            try {
+              basicThrowable = GSON.fromJson(responseBody, BasicThrowable.class);
+            } catch (JsonSyntaxException ignored) {
+              // Non-JSON error body from a proxy or Netty; surface as ServiceException below.
+            }
+            if (basicThrowable == null || basicThrowable.getClassName() == null
+                || basicThrowable.getStackTraces() == null) {
+              String message = responseBody == null || responseBody.isEmpty()
+                  ? String.format("Request to %s for %s failed with status %d",
+                      serviceName, runnableTaskRequest.getClassName(),
+                      httpResponse.getResponseCode())
+                  : String.format("Request to %s for %s failed with status %d: %s",
+                      serviceName, runnableTaskRequest.getClassName(),
+                      httpResponse.getResponseCode(), responseBody);
+              throw new ServiceException(message, null,
+                  HttpResponseStatus.valueOf(httpResponse.getResponseCode()));
+            }
             throw RemoteExecutionException.fromBasicThrowable(basicThrowable);
           }
           byte[] result = httpResponse.getUncompressedResponseBody();
@@ -183,8 +256,67 @@ public class RemoteTaskExecutor {
     } catch (Exception e) {
       //emit metrics with failed result
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
+      if (taskWorkerManagerEnabled && e instanceof ServiceUnavailableException) {
+        throw managerUnreachableException((ServiceUnavailableException) e, startTime);
+      }
       throw e;
     }
+  }
+
+  /**
+   * Returns {@code config} with its connect timeout lowered to {@code maxConnectTimeoutMs}, keeping
+   * every other setting. A connect timeout of 0 means "wait forever", so it is capped too.
+   */
+  private static HttpRequestConfig capConnectTimeout(HttpRequestConfig config,
+      int maxConnectTimeoutMs) {
+    Preconditions.checkArgument(maxConnectTimeoutMs > 0, "%s must be positive, got %s",
+        Constants.TaskWorkerManager.CLIENT_CONNECT_TIMEOUT_MS, maxConnectTimeoutMs);
+    int connectTimeout = config.getConnectTimeout();
+    if (connectTimeout > 0 && connectTimeout <= maxConnectTimeoutMs) {
+      return config;
+    }
+    return new HttpRequestConfig(maxConnectTimeoutMs, config.getReadTimeout(),
+        config.isVerifySSLCert(), config.getFixedLengthStreamingThreshold());
+  }
+
+  /**
+   * Returns whether {@code e} was raised while connecting rather than while reading the response.
+   * {@code HttpURLConnection} tells the two apart only by the message.
+   */
+  private static boolean isConnectTimeout(SocketTimeoutException e) {
+    String message = e.getMessage();
+    return message != null && message.toLowerCase(Locale.ROOT).contains("connect timed out");
+  }
+
+  /**
+   * Builds the error for a task the manager path never ran: the manager answered that no task
+   * worker was reachable, or the manager itself was refused or not discovered.
+   */
+  private ServiceException managerUnreachableException(ServiceUnavailableException cause,
+      long startTime) {
+    long elapsedSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime);
+    if (Constants.TaskWorkerManager.WORKER_UNREACHABLE_BODY.equals(cause.getMessage())) {
+      return new ServiceException(
+          String.format("The %s service could not reach a task worker for %d seconds, so the task "
+                  + "was not run.", Constants.Service.TASK_WORKER_MANAGER, elapsedSeconds),
+          cause, HttpResponseStatus.SERVICE_UNAVAILABLE);
+    }
+    warnOnceAboutUnreachableManager();
+    return new ServiceException(
+        String.format("Could not reach the %s service after %d seconds, so the task was not run.",
+            Constants.Service.TASK_WORKER_MANAGER, elapsedSeconds),
+        cause, HttpResponseStatus.SERVICE_UNAVAILABLE);
+  }
+
+  /** Logs once per unreachable episode so repeated task failures do not flood the log. */
+  private static void warnOnceAboutUnreachableManager() {
+    if (Thread.currentThread().isInterrupted()
+        || !MANAGER_UNREACHABLE_WARNING_LOGGED.compareAndSet(false, true)) {
+      return;
+    }
+    LOG.warn("The {} service could not be reached and {} is enabled; task worker requests will "
+            + "fail until it is reachable.", Constants.Service.TASK_WORKER_MANAGER,
+        FEATURE_FLAG_KEY);
   }
 
   private Exception getTaskException(ServiceException e) {

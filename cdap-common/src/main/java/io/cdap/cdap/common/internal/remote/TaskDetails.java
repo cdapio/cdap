@@ -39,8 +39,7 @@ public class TaskDetails {
   private final boolean terminateOnComplete;
 
   public TaskDetails(MetricsCollectionService metricsCollectionService, long startTime,
-      boolean terminateOnComplete,
-      @Nullable RunnableTaskRequest request) {
+      boolean terminateOnComplete, @Nullable RunnableTaskRequest request) {
     this.metricsCollectionService = metricsCollectionService;
     this.startTime = startTime;
     this.terminateOnComplete = terminateOnComplete;
@@ -71,5 +70,31 @@ public class TaskDetails {
         .map(RunnableTaskParam::getEmbeddedTaskRequest)
         .map(RunnableTaskRequest::getClassName)
         .orElse(request.getClassName());
+  }
+
+  /** Returns the namespace this task runs as, or null if the request is unknown. */
+  @Nullable
+  public String getNamespace() {
+    return extractNamespace(request);
+  }
+
+  /**
+   * Extracts the namespace a task runs as. Shared by admission, release and the client's routing
+   * so they always agree.
+   *
+   * @param request the originating task request, may be null
+   * @return the namespace, or null if there is no request
+   */
+  @Nullable
+  static String extractNamespace(@Nullable RunnableTaskRequest request) {
+    if (request == null) {
+      return null;
+    }
+    RunnableTaskParam param = request.getParam();
+    if (param != null && param.getEmbeddedTaskRequest() != null) {
+      // System app tasks carry the real namespace on the embedded request.
+      return param.getEmbeddedTaskRequest().getNamespace();
+    }
+    return request.getNamespace();
   }
 }
