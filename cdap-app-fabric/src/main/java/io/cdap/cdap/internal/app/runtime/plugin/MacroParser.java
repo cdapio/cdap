@@ -44,12 +44,19 @@ public class MacroParser {
   private final boolean skipInvalid;
   private final Set<String> functionWhitelist;
   private final Set<String> doNotSkipInvalidMacroForFunctions;
+  @Nullable
+  private final EvaluationBudget budget;
 
   public MacroParser(MacroEvaluator macroEvaluator) {
     this(macroEvaluator, MacroParserOptions.DEFAULT);
   }
 
   public MacroParser(MacroEvaluator macroEvaluator, MacroParserOptions options) {
+    this(macroEvaluator, options, null);
+  }
+
+  MacroParser(MacroEvaluator macroEvaluator, MacroParserOptions options,
+      @Nullable EvaluationBudget budget) {
     this.macroEvaluator = macroEvaluator;
     this.escapingEnabled = options.isEscapingEnabled();
     this.lookupsEnabled = options.shouldEvaluateLookups();
@@ -57,6 +64,7 @@ public class MacroParser {
     this.functionWhitelist = options.getFunctionWhitelist();
     this.skipInvalid = options.shouldSkipInvalid();
     this.doNotSkipInvalidMacroForFunctions = options.getDoNotSkipInvalidMacroForFunctions();
+    this.budget = budget;
   }
 
   /**
@@ -72,7 +80,9 @@ public class MacroParser {
       return null;
     }
     // final string should have escapes that are not directly embedded in macro syntax replaced
-    return replaceEscapedSyntax(parse(str, 0));
+    long maxAllowedLength = budget == null
+        ? Long.MAX_VALUE : (long) str.length() + budget.maxExpandedGrowth;
+    return replaceEscapedSyntax(parse(str, 0, maxAllowedLength));
   }
 
   /**
@@ -81,9 +91,10 @@ public class MacroParser {
    *
    * @param str the raw string containing macro syntax
    * @param depth the current depth of expansion
+   * @param maxAllowedLength maximum permitted length of any expanded string
    * @return the parsed string
    */
-  private String parse(String str, int depth) throws InvalidMacroException {
+  private String parse(String str, int depth, long maxAllowedLength) throws InvalidMacroException {
     if (depth > MAX_SUBSTITUTION_DEPTH) {
       throw new InvalidMacroException(
           String.format("Failed substituting macro '%s', expansion exceeded %d levels.",
@@ -97,12 +108,28 @@ public class MacroParser {
         throw new InvalidMacroException(
             String.format("Unable to substitute macro in string %s.", str));
       }
-      String left = str.substring(0, macroPosition.startIndex);
-      String right = str.substring(macroPosition.endIndex + 1);
+      if (budget != null) {
+        budget.consumeSubstitution();
+        if (macroPosition.substitution.length() > maxAllowedLength) {
+          throw new BudgetExceededException(
+              "Macro substitution exceeded maximum allowed length of " + maxAllowedLength);
+        }
+      }
       String middle = macroPosition.substitution;
       if (macroPosition.evaluateRecursively) {
-        middle = parse(macroPosition.substitution, depth + 1);
+        middle = parse(macroPosition.substitution, depth + 1, maxAllowedLength);
       }
+      if (budget != null) {
+        long resultingLength = (long) macroPosition.startIndex + middle.length()
+            + (str.length() - macroPosition.endIndex - 1);
+        if (resultingLength > maxAllowedLength) {
+          throw new BudgetExceededException(
+              "Macro expansion exceeded maximum allowed length of " + maxAllowedLength);
+        }
+        budget.consumeCharsCopied(resultingLength);
+      }
+      String left = str.substring(0, macroPosition.startIndex);
+      String right = str.substring(macroPosition.endIndex + 1);
       str = left + middle + right;
       // if we need to evaluate recursively, we need to search from the end of the string
       // otherwise, we only need to start searching from where the previous macro began
@@ -267,7 +294,7 @@ public class MacroParser {
   private int getStartIndex(String str, int pos) {
     int startIndex = str.lastIndexOf("${", pos);
     while (isEscaped(startIndex, str)) {
-      startIndex = str.substring(0, startIndex - 1).lastIndexOf("${");
+      startIndex = startIndex < 3 ? -1 : str.lastIndexOf("${", startIndex - 3);
     }
     return startIndex;
   }
@@ -325,6 +352,43 @@ public class MacroParser {
       }
     }
     return syntaxRebuilder.toString();
+  }
+
+  static final class EvaluationBudget {
+
+    private final int maxSubstitutions;
+    private final int maxExpandedGrowth;
+    private final long maxTotalCharsCopied;
+    private int substitutions;
+    private long totalCharsCopied;
+
+    EvaluationBudget(int maxSubstitutions, int maxExpandedGrowth, long maxTotalCharsCopied) {
+      this.maxSubstitutions = maxSubstitutions;
+      this.maxExpandedGrowth = maxExpandedGrowth;
+      this.maxTotalCharsCopied = maxTotalCharsCopied;
+    }
+
+    void consumeSubstitution() {
+      if (++substitutions > maxSubstitutions) {
+        throw new BudgetExceededException(
+            "Macro evaluation exceeded maximum of " + maxSubstitutions + " substitutions");
+      }
+    }
+
+    void consumeCharsCopied(long chars) {
+      totalCharsCopied += chars;
+      if (totalCharsCopied > maxTotalCharsCopied) {
+        throw new BudgetExceededException(
+            "Macro evaluation exceeded maximum of " + maxTotalCharsCopied + " copied characters");
+      }
+    }
+  }
+
+  static final class BudgetExceededException extends RuntimeException {
+
+    BudgetExceededException(String message) {
+      super(message);
+    }
   }
 
   private static final class MacroMetadata {
