@@ -21,12 +21,24 @@ import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.internal.remote.MethodArgument;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.ConnectionEntityId;
+import io.cdap.cdap.proto.id.ServiceId;
+import io.cdap.cdap.proto.id.WorkerId;
+import io.cdap.cdap.proto.id.WorkflowId;
+import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.Role;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -37,6 +49,14 @@ class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
   private static final Type METHOD_ARGUMENT_LIST_TYPE = new TypeToken<List<MethodArgument>>() {
   }.getType();
+  // Every EntityType id class, plus the concrete entity id classes that EntityType does not list.
+  private static final Set<String> ALLOWED_TYPE_NAMES = Stream.concat(
+      Arrays.stream(EntityType.values()).map(e -> e.getIdClass().getName()),
+      Stream.of(
+          Principal.class, Role.class,
+          ServiceId.class, WorkerId.class, WorkflowId.class, ConnectionEntityId.class
+      ).map(Class::getName)
+  ).collect(Collectors.collectingAndThen(Collectors.toSet(), Collections::unmodifiableSet));
 
   // we don't share the same version as other handlers in app fabric, so we can upgrade/iterate faster
   protected static final String VERSION = "/v1";
@@ -71,6 +91,10 @@ class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
     if (typeOfT != null) {
       return GSON.fromJson(value, typeOfT);
     }
-    return GSON.<T>fromJson(value, Class.forName(argument.getType()));
+    String typeName = argument.getType();
+    if (!ALLOWED_TYPE_NAMES.contains(typeName)) {
+      throw new BadRequestException("Unsupported argument type " + typeName);
+    }
+    return GSON.<T>fromJson(value, Class.forName(typeName));
   }
 }
