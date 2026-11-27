@@ -20,14 +20,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Get;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import io.cdap.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.DatasetModuleMeta;
@@ -51,6 +50,7 @@ import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -76,24 +76,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(0, instances.size());
 
     try {
-      // create dataset instance with type that is not yet known to the system should fail
+      // create dataset instance with type that is not known to the system should fail
       DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
-      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props).getResponseCode());
-
-      // deploy modules
-      deployModule("module1", TestModule1.class);
-      deployModule("module2", TestModule2.class);
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "unknownType", props).getResponseCode());
 
       // create dataset instance
       String description = "test instance description";
       HttpResponse response = createInstance("dataset1", "datasetType2", description, props);
       Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
-
-      // verify module cannot be deleted which type is used for the dataset
-      int modulesBeforeDelete = getModules().getResponseObject().size();
-      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2").getResponseCode());
-      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules().getResponseCode());
-      Assert.assertEquals(modulesBeforeDelete, getModules().getResponseObject().size());
 
       // Verify that dataset instance can be retrieved using specified properties
       Map<String, String> properties = new HashMap<>(props.getProperties());
@@ -157,25 +147,15 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       // getInstances call should still return 0
       Assert.assertEquals(0, getInstances().getResponseObject().size());
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("localDSInstance").getResponseCode());
-
-      // delete dataset modules
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
-
     } finally {
       deleteInstance("dataset1");
       deleteInstance("nullPropertiesTable");
       deleteInstance("localDSInstance");
-      deleteModule("module2");
-      deleteModule("module1");
     }
   }
 
   @Test
   public void testOwner() throws Exception {
-    // deploy modules
-    deployModule("module1", TestModule1.class);
-
     // should not be able to create a dataset with invalid kerberos principal format
     HttpResponse response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
                                            DatasetProperties.EMPTY, "alice/bob/somehost.net@somekdc.net");
@@ -225,10 +205,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
         .add(TestModule2.NOT_RECONFIGURABLE, "this")
         .build();
 
-      // deploy modules
-      deployModule("module1", TestModule1.class);
-      deployModule("module2", TestModule2.class);
-
       // create dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props).getResponseCode());
 
@@ -269,19 +245,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       // delete dataset instance
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
       Assert.assertEquals(0, getInstances().getResponseObject().size());
-
-      // delete dataset modules
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
     }
   }
 
   @Test
   public void testCreateDelete() throws Exception {
     try {
-      deployModule("default-table", InMemoryTableModule.class);
-      deployModule("default-core", CoreDatasetsModule.class);
-
       // cannot create instance with same name again
       Assert.assertEquals(HttpStatus.SC_OK,
                           createInstance("myTable1", "table", DatasetProperties.EMPTY).getResponseCode());
@@ -345,8 +314,133 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     } finally {
       // cleanup
       deleteInstances();
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
     }
+  }
+
+  /**
+   * Tests the operations on existing datasets whose type is defined by a dataset module that is not
+   * available in the classpath.
+   */
+  @Test
+  public void testCustomTypeDataset() throws Exception {
+    Location moduleJar = createModuleJar("customModule");
+    DatasetModuleMeta customModule =
+      new DatasetModuleMeta("customModule", "io.cdap.cdap.test.NotInClasspathModule", moduleJar.toURI(),
+                            ImmutableList.of("customType"), Collections.emptyList());
+    DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
+    DatasetSpecification customSpec = DatasetSpecification.builder("customDataset", "customType")
+      .properties(props.getProperties()).build().setOriginalProperties(props);
+    try {
+      writeModule(NamespaceId.DEFAULT, customModule);
+      writeInstance(NamespaceId.DEFAULT, customSpec);
+
+      // the dataset is listed, and its meta and properties can be retrieved
+      List<DatasetSpecificationSummary> instances = getInstances().getResponseObject();
+      Assert.assertEquals(1, instances.size());
+      Assert.assertEquals(spec2Summary(customSpec), instances.get(0));
+      DatasetMeta datasetInfo = getInstanceObject("customDataset").getResponseObject();
+      Assert.assertEquals(customSpec, datasetInfo.getSpec());
+      Assert.assertEquals("customType", datasetInfo.getType().getName());
+      Assert.assertEquals(props.getProperties(), getInstanceProperties("customDataset").getResponseObject());
+
+      // the dataset cannot be updated, and no admin operation can be executed on it
+      assertCustomTypeNotSupported(updateInstance("customDataset", DatasetProperties.EMPTY), "customType");
+      assertCustomTypeNotSupported(executeAdmin("customDataset", "exists"), "customType");
+      assertCustomTypeNotSupported(executeAdmin("customDataset", "truncate"), "customType");
+      assertCustomTypeNotSupported(executeAdmin("customDataset", "upgrade"), "customType");
+      Assert.assertEquals(customSpec, getInstanceObject("customDataset").getResponseObject().getSpec());
+
+      // the dataset cannot be instantiated
+      try {
+        dsFramework.getDataset(NamespaceId.DEFAULT.dataset("customDataset"), DatasetDefinition.NO_ARGUMENTS, null);
+        Assert.fail("Should not be able to instantiate a dataset of a custom type");
+      } catch (DatasetManagementException e) {
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("custom dataset types are not supported"));
+      }
+      try {
+        dsFramework.getAdmin(NamespaceId.DEFAULT.dataset("customDataset"), null);
+        Assert.fail("Should not be able to instantiate the admin of a dataset of a custom type");
+      } catch (DatasetManagementException e) {
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("custom dataset types are not supported"));
+      }
+
+      // cannot create another dataset of that type
+      assertCustomTypeNotSupported(createInstance("customDataset2", "customType", props), "customType");
+      Assert.assertEquals(1, getInstances().getResponseObject().size());
+
+      // the dataset can be deleted, after that the module can be deleted
+      Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("customModule").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("customDataset").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("customDataset").getResponseCode());
+      Assert.assertEquals(0, getInstances().getResponseObject().size());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("customModule").getResponseCode());
+      Assert.assertFalse(moduleJar.exists());
+    } finally {
+      deleteInstance("customDataset");
+      deleteModule("customModule");
+    }
+  }
+
+  /**
+   * Tests that a dataset type of a namespace takes precedence over a system type of the same name for the
+   * existing datasets of that namespace.
+   */
+  @Test
+  public void testCustomTypeWithSystemTypeName() throws Exception {
+    Location moduleJar = createModuleJar("sameNameModule");
+    DatasetModuleMeta sameNameModule =
+      new DatasetModuleMeta("sameNameModule", TestModule1.class.getName(), moduleJar.toURI(),
+                            ImmutableList.of("datasetType1"), Collections.emptyList());
+    try {
+      // create a dataset of the system type
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType1").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK,
+                          updateInstance("dataset1", DatasetProperties.EMPTY).getResponseCode());
+
+      // after a module with a type of the same name exists in the namespace, the dataset can only be deleted
+      writeModule(NamespaceId.DEFAULT, sameNameModule);
+      Assert.assertEquals(HttpStatus.SC_OK, getInstance("dataset1").getResponseCode());
+      assertCustomTypeNotSupported(updateInstance("dataset1", DatasetProperties.EMPTY), "datasetType1");
+      assertCustomTypeNotSupported(executeAdmin("dataset1", "truncate"), "datasetType1");
+      assertCustomTypeNotSupported(createInstance("dataset2", "datasetType1"), "datasetType1");
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModule("sameNameModule").getResponseCode());
+
+      // the system type can be used again
+      Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType1").getResponseCode());
+    } finally {
+      deleteInstance("dataset1");
+      deleteModule("sameNameModule");
+    }
+  }
+
+  /**
+   * Tests that an existing dataset can be deleted if its type does not exist.
+   */
+  @Test
+  public void testDeleteDatasetOfMissingType() throws Exception {
+    writeInstance(NamespaceId.DEFAULT, DatasetSpecification.builder("orphanDataset", "missingType").build());
+    try {
+      Assert.assertEquals(1, getInstances().getResponseObject().size());
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("orphanDataset").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("orphanDataset").getResponseCode());
+      Assert.assertEquals(0, getInstances().getResponseObject().size());
+    } finally {
+      deleteInstance("orphanDataset");
+    }
+  }
+
+  private void assertCustomTypeNotSupported(HttpResponse response, String typeName) {
+    Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getResponseCode());
+    Assert.assertEquals(
+      String.format("Dataset type '%s' is a custom type; custom dataset types are not supported", typeName),
+      response.getResponseBodyAsString());
+  }
+
+  private HttpResponse executeAdmin(String instanceName, String method) throws IOException {
+    HttpRequest request = HttpRequest.post(
+      getUrl("/data/datasets/" + instanceName + "/admin/" + method)).build();
+    return HttpRequests.execute(request, REQUEST_CONFIG);
   }
 
   @Test
@@ -507,9 +601,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   @Test
   public void testErrorResponses() throws Exception {
     try {
-      // we need at least one valid type to test
-      deployModule("default-table", InMemoryTableModule.class);
-
       validateGet(getUrl("/data/datasets"), 200);
       validateGet(getUrl("nosuchnamespace", "/data/datasets"), 404);
       validateGet(getUrl("inval+d", "/data/datasets"), 400);
@@ -566,7 +657,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     } finally {
       // cleanup
       deleteInstance("x");
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
     }
   }
 

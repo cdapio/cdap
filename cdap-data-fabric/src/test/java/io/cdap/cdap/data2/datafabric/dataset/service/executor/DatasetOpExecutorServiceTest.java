@@ -19,12 +19,15 @@ package io.cdap.cdap.data2.datafabric.dataset.service.executor;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.table.Get;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
@@ -53,6 +56,8 @@ import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -71,7 +76,9 @@ import io.cdap.common.http.HttpResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.DefaultTransactionExecutor;
@@ -104,6 +111,7 @@ public class DatasetOpExecutorServiceTest {
   private DatasetService managerService;
   private DatasetFramework dsFramework;
   private EndpointStrategy endpointStrategy;
+  private EndpointStrategy executorEndpointStrategy;
   private TransactionManager txManager;
   private NamespaceAdmin namespaceAdmin;
 
@@ -164,6 +172,8 @@ public class DatasetOpExecutorServiceTest {
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     endpointStrategy = new RandomEndpointStrategy(
         () -> discoveryClient.discover(Constants.Service.DATASET_MANAGER));
+    executorEndpointStrategy = new RandomEndpointStrategy(
+        () -> discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
@@ -239,6 +249,80 @@ public class DatasetOpExecutorServiceTest {
     // drop and check non-existence
     dsFramework.deleteInstance(bob);
     testAdminOp(bob, "exists", 404, null);
+  }
+
+  /**
+   * Tests that the create, update and drop operations only accept dataset types that are defined by modules
+   * available in the classpath.
+   */
+  @Test
+  public void testCustomTypeNotSupported() throws Exception {
+    DatasetTypeMeta tableTypeMeta = dsFramework.getTypeInfo(NamespaceId.SYSTEM.datasetType("table"));
+    Assert.assertNotNull(tableTypeMeta);
+    DatasetSpecification spec = DatasetSpecification.builder(bob.getDataset(), "table").build();
+
+    // a type meta with system modules only is accepted
+    Assert.assertEquals(200, executeOp(bob, "create",
+        GSON.toJsonTree(new InternalDatasetCreationParams(tableTypeMeta, DatasetProperties.EMPTY))));
+    Assert.assertEquals(200, executeOp(bob, "drop",
+        GSON.toJsonTree(new InternalDatasetDropParams(tableTypeMeta, spec))));
+
+    // a module with a jar location is rejected, even if its class is a system module
+    DatasetModuleMeta systemModule = tableTypeMeta.getModules().get(0);
+    DatasetTypeMeta typeWithJar = new DatasetTypeMeta("table", ImmutableList.of(
+        new DatasetModuleMeta(systemModule.getName(), systemModule.getClassName(),
+            URI.create("file:/tmp/module.jar"), systemModule.getTypes(), systemModule.getUsesModules())));
+    Assert.assertNotNull(typeWithJar.getModules().get(0).getJarLocationPath());
+    assertCustomTypeRejected(typeWithJar, spec);
+
+    // the jar location can also be given in the 'jarLocation' field instead of the 'jarLocationPath' field
+    JsonObject createParams = GSON.toJsonTree(
+        new InternalDatasetCreationParams(typeWithJar, DatasetProperties.EMPTY)).getAsJsonObject();
+    JsonObject module = createParams.getAsJsonObject("typeMeta").getAsJsonArray("modules").get(0)
+        .getAsJsonObject();
+    Assert.assertNotNull(module.remove("jarLocationPath"));
+    module.addProperty("jarLocation", "file:/tmp/module.jar");
+    Assert.assertEquals(400, executeOp(bob, "create", createParams));
+
+    // a module without a jar location is rejected if its class is not a system module, without loading the class
+    DatasetTypeMeta typeWithUnknownClass = new DatasetTypeMeta("table", ImmutableList.of(
+        new DatasetModuleMeta("customModule", "io.cdap.cdap.test.NotInClasspathModule", null,
+            ImmutableList.of("table"), Collections.emptyList())));
+    assertCustomTypeRejected(typeWithUnknownClass, spec);
+
+    // a system module followed by a module that is not a system module is rejected as well
+    DatasetTypeMeta typeWithMixedModules = new DatasetTypeMeta("customType", ImmutableList.<DatasetModuleMeta>builder()
+        .addAll(tableTypeMeta.getModules())
+        .add(new DatasetModuleMeta("customModule", "io.cdap.cdap.test.NotInClasspathModule", null,
+            ImmutableList.of("customType"), Collections.emptyList()))
+        .build());
+    assertCustomTypeRejected(typeWithMixedModules, spec);
+
+    testAdminOp(bob, "exists", 404, null);
+  }
+
+  private void assertCustomTypeRejected(DatasetTypeMeta typeMeta, DatasetSpecification spec)
+      throws IOException {
+    Assert.assertEquals(400, executeOp(bob, "create",
+        GSON.toJsonTree(new InternalDatasetCreationParams(typeMeta, DatasetProperties.EMPTY))));
+    Assert.assertEquals(400, executeOp(bob, "update",
+        GSON.toJsonTree(new InternalDatasetUpdateParams(typeMeta, spec, DatasetProperties.EMPTY))));
+    Assert.assertEquals(400, executeOp(bob, "drop",
+        GSON.toJsonTree(new InternalDatasetDropParams(typeMeta, spec))));
+  }
+
+  /**
+   * Executes an operation directly on the dataset op executor service, and returns the response code.
+   */
+  private int executeOp(DatasetId datasetInstanceId, String opName, JsonElement body) throws IOException {
+    Discoverable discoverable = executorEndpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    URL url = URIScheme.createURI(discoverable, "%s/namespaces/%s/data/datasets/%s/admin/%s",
+        Constants.Gateway.API_VERSION_3_TOKEN, datasetInstanceId.getNamespace(),
+        datasetInstanceId.getEntityName(), opName).toURL();
+    HttpResponse response = HttpRequests.execute(HttpRequest.post(url).withBody(GSON.toJson(body)).build(),
+        new DefaultHttpRequestConfig(false));
+    return response.getResponseCode();
   }
 
   @SuppressWarnings("SameParameterValue")

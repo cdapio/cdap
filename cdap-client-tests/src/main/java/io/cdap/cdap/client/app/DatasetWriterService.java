@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.UseDataSet;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
@@ -29,14 +30,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * A service endpoint to write to the {@link FakeDataset}.
+ * A service endpoint to write to the dataset of the {@link FakeApp}.
  */
 public class DatasetWriterService extends AbstractHttpServiceHandler {
 
   public static final String NAME = DatasetWriterService.class.getSimpleName();
 
   @UseDataSet(FakeApp.DS_NAME)
-  private FakeDataset fakeDataset;
+  private KeyValueTable fakeDataset;
 
   @Path("/write")
   @POST
@@ -45,7 +46,7 @@ public class DatasetWriterService extends AbstractHttpServiceHandler {
         StandardCharsets.UTF_8.decode(request.getContent()).toString(),
         new TypeToken<Map<String, String>>() {
         }.getType());
-    req.forEach((k, v) -> fakeDataset.put(Bytes.toBytes(k), Bytes.toBytes(v)));
+    req.forEach((k, v) -> fakeDataset.write(Bytes.toBytes(k), Bytes.toBytes(v)));
     responder.sendStatus(200);
   }
 }

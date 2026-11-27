@@ -53,8 +53,9 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
   public void configure() {
     setName("dummy");
     setDescription("dummy app with a dataset that tracks open and close");
-    createDataset("foo", TrackingTable.class);
-    createDataset("bar", TrackingTable.class);
+    // the dataset type is defined by the TrackingTableModule, which the tests register in the dataset service
+    createDataset("foo", TrackingTableModule.getTypeName());
+    createDataset("bar", TrackingTableModule.getTypeName());
     addMapReduce(new DummyBatch());
     addService(new BasicService("DummyService", new DummyHandler()));
   }

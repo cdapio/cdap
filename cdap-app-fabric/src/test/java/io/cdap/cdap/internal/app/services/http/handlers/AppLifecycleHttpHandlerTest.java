@@ -24,10 +24,12 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import io.cdap.cdap.AllProgramsApp;
+import io.cdap.cdap.AppWithCustomDatasetModule;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.AppWithDatasetDuplicate;
 import io.cdap.cdap.AppWithNoServices;
 import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.AppsWithCustomDatasetType;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -835,6 +837,35 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDeployInvalid() throws Exception {
     deploy(String.class, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+  }
+
+  /**
+   * Tests that deploying an application that declares a dataset module or a dataset type that is not defined by
+   * the system fails with a bad request, when deploying the application jar as well as when deploying from an
+   * artifact.
+   */
+  @Test
+  public void testDeployCustomDatasetNotSupported() throws Exception {
+    List<Class<?>> appClasses = Arrays.asList(AppWithCustomDatasetModule.class,
+                                              AppsWithCustomDatasetType.AppWithDatasetType.class,
+                                              AppsWithCustomDatasetType.AppWithDatasetOfCustomClass.class,
+                                              AppsWithCustomDatasetType.AppWithLocalDatasetOfCustomClass.class);
+    for (Class<?> appClass : appClasses) {
+      HttpResponse response = deploy(appClass, 400, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+      Assert.assertTrue(response.getResponseBodyAsString(),
+                        response.getResponseBodyAsString().contains("Custom dataset module is not supported"));
+
+      Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, appClass.getSimpleName(), "1.0.0-SNAPSHOT");
+      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, appClass.getSimpleName());
+      Assert.assertEquals(200, addAppArtifact(artifactId, appClass).getResponseCode());
+      response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId())));
+      Assert.assertEquals(400, response.getResponseCode());
+      Assert.assertTrue(response.getResponseBodyAsString(),
+                        response.getResponseBodyAsString().contains("Custom dataset module is not supported"));
+      deleteArtifact(artifactId, 200);
+    }
+    Assert.assertEquals(0, getAppList(TEST_NAMESPACE1).size());
+    Assert.assertEquals(0, getAppList(Id.Namespace.DEFAULT.getId()).size());
   }
 
   /**

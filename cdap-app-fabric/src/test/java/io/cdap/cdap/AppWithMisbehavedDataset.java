@@ -23,10 +23,15 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.dataset.DataSetException;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Put;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.worker.AbstractWorker;
+import java.io.IOException;
+import java.util.Map;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionFailureException;
 
@@ -46,10 +51,10 @@ public class AppWithMisbehavedDataset extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
-    addDatasetType(MisbehavedDataset.class);
     addWorker(new TableWriter());
     createDataset(TABLE, Table.class.getName());
-    createDataset(MISBEHAVED, MisbehavedDataset.class.getName());
+    // the dataset type is defined by the MisbehavedDatasetModule, which the test registers in the dataset service
+    createDataset(MISBEHAVED, MisbehavedDatasetModule.getTypeName());
   }
 
   /**
@@ -89,6 +94,33 @@ public class AppWithMisbehavedDataset extends AbstractApplication {
         throw new DataSetException("misbehaving");
       }
       return super.getTransactionAwareName();
+    }
+  }
+
+  /**
+   * A dataset module that defines the {@link MisbehavedDataset} dataset type. Tests register it as an extension
+   * module of the dataset service through {@code dataset.extensions.modules}.
+   */
+  public static final class MisbehavedDatasetModule implements DatasetModule {
+
+    /**
+     * Returns the name of the dataset type defined by this module.
+     */
+    public static String getTypeName() {
+      return MisbehavedDataset.class.getName();
+    }
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      registry.add(new CompositeDatasetDefinition<MisbehavedDataset>(getTypeName(), "t", registry.get("table")) {
+        @Override
+        public MisbehavedDataset getDataset(io.cdap.cdap.api.dataset.DatasetContext datasetContext,
+                                 DatasetSpecification spec, Map<String, String> arguments,
+                                 ClassLoader classLoader) throws IOException {
+          Table table = getDataset(datasetContext, "t", spec, arguments, classLoader);
+          return new MisbehavedDataset(spec, table);
+        }
+      });
     }
   }
 

@@ -16,14 +16,10 @@
 
 package io.cdap.cdap.client;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
-import io.cdap.cdap.common.AlreadyExistsException;
-import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.DatasetModuleAlreadyExistsException;
 import io.cdap.cdap.common.DatasetModuleCannotBeDeletedException;
 import io.cdap.cdap.common.DatasetModuleNotFoundException;
 import io.cdap.cdap.proto.DatasetModuleMeta;
@@ -32,15 +28,12 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
-import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
-import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -77,35 +70,6 @@ public class DatasetModuleClient {
         restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
         new TypeToken<List<DatasetModuleMeta>>() {
         }).getResponseObject();
-  }
-
-  /**
-   * Adds a new dataset module.
-   *
-   * @param module the new dataset module
-   * @param className name of the dataset module class within the moduleJarFile
-   * @param moduleJarFile Jar file containing the dataset module class and dependencies
-   * @throws BadRequestException if the moduleJarFile does not exist
-   * @throws AlreadyExistsException if a dataset module with the same name already exists
-   * @throws IOException if a network error occurred
-   */
-  public void add(DatasetModuleId module, String className, File moduleJarFile)
-      throws BadRequestException, AlreadyExistsException, IOException, UnauthenticatedException {
-
-    URL url = config.resolveNamespacedURLV3(module.getParent(),
-        String.format("data/modules/%s", module.getModule()));
-    Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
-    HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
-
-    HttpResponse response = restClient.upload(request, config.getAccessToken(),
-        HttpURLConnection.HTTP_BAD_REQUEST,
-        HttpURLConnection.HTTP_CONFLICT);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(
-          String.format("Module jar file does not exist: %s", moduleJarFile));
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetModuleAlreadyExistsException(module);
-    }
   }
 
   /**

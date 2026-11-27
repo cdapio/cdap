@@ -34,17 +34,15 @@ import io.cdap.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.CreateSystemTablesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
-import io.cdap.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.DeploymentCleanupStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.MetadataWriterStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.deploy.pipeline.ValidateDatasetTypesStage;
 import io.cdap.cdap.internal.app.runtime.schedule.ScheduleManager;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
-import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -67,9 +65,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final DatasetFramework inMemoryDatasetFramework;
   private final MetricsSystemClient metricsSystemClient;
   private final UsageRegistry usageRegistry;
-  private final ArtifactRepository artifactRepository;
   private final MetadataServiceClient metadataServiceClient;
-  private final Impersonator impersonator;
   private final AuthenticationContext authenticationContext;
   private final ScheduleManager scheduleManager;
   private final AccessEnforcer accessEnforcer;
@@ -84,9 +80,9 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
       DatasetFramework datasetFramework,
       @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
       @Assisted ProgramTerminator programTerminator, MetricsSystemClient metricsSystemClient,
-      UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
+      UsageRegistry usageRegistry,
       MetadataServiceClient metadataServiceClient,
-      Impersonator impersonator, AuthenticationContext authenticationContext,
+      AuthenticationContext authenticationContext,
       ScheduleManager scheduleManager,
       AccessEnforcer accessEnforcer,
       StructuredTableAdmin structuredTableAdmin,
@@ -101,9 +97,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.metricsSystemClient = metricsSystemClient;
     this.usageRegistry = usageRegistry;
-    this.artifactRepository = artifactRepository;
     this.metadataServiceClient = metadataServiceClient;
-    this.impersonator = impersonator;
     this.authenticationContext = authenticationContext;
     this.scheduleManager = scheduleManager;
     this.accessEnforcer = accessEnforcer;
@@ -122,9 +116,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin,
         authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
-    pipeline.addLast(
-        new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
-            authenticationContext, artifactRepository, impersonator));
+    pipeline.addLast(new ValidateDatasetTypesStage(inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
         authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,

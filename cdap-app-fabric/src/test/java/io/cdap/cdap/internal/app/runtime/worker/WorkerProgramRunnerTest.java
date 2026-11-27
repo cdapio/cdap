@@ -109,6 +109,9 @@ public class WorkerProgramRunnerTest {
     CConfiguration conf = CConfiguration.create();
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
+    // the type of a dataset of the AppWithMisbehavedDataset is defined by an extension module
+    conf.set(Constants.Dataset.Extensions.MODULES,
+             AppWithMisbehavedDataset.MisbehavedDatasetModule.class.getName());
 
     Injector injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);

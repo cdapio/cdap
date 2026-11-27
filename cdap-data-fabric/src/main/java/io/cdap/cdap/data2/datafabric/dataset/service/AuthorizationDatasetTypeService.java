@@ -30,7 +30,6 @@ import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
-import io.cdap.http.BodyConsumer;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -81,15 +80,6 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
           StandardPermission.GET);
     }
     return delegate.getModule(datasetModuleId);
-  }
-
-  @Override
-  public BodyConsumer addModule(DatasetModuleId datasetModuleId, String className,
-      boolean forceUpdate) throws Exception {
-    final Principal principal = authenticationContext.getPrincipal();
-    // enforce that the principal has CREATE access on the dataset module
-    accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.CREATE);
-    return delegate.addModule(datasetModuleId, className, forceUpdate);
   }
 
   @Override

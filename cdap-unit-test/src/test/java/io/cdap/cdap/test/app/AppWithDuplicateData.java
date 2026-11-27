@@ -22,8 +22,6 @@ import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.worker.AbstractWorker;
-import io.cdap.cdap.data2.dataset2.lib.file.FileSetModule;
-import io.cdap.cdap.data2.dataset2.lib.table.CubeModule;
 
 /**
  * App with streams, datasets, plugins added multiple times that should result in an error.
@@ -33,18 +31,15 @@ public class AppWithDuplicateData extends AbstractApplication<AppWithDuplicateDa
   public static class ConfigClass extends Config {
     private boolean multiDatasets;
     private boolean multiPlugins;
-    private boolean multiModules;
 
     public ConfigClass() {
       multiDatasets = false;
       multiPlugins = false;
-      multiModules = false;
     }
 
-    public ConfigClass(boolean datasets, boolean plugins, boolean multiModules) {
+    public ConfigClass(boolean datasets, boolean plugins) {
       this.multiDatasets = datasets;
       this.multiPlugins = plugins;
-      this.multiModules = multiModules;
     }
   }
 
@@ -58,10 +53,6 @@ public class AppWithDuplicateData extends AbstractApplication<AppWithDuplicateDa
 
     if (config.multiPlugins) {
       usePlugin("t1", "n1", "plug", PluginProperties.builder().build());
-    }
-
-    if (config.multiModules) {
-      addDatasetModule("module", CubeModule.class);
     }
     addWorker(new DumbWorker());
   }
@@ -77,7 +68,6 @@ public class AppWithDuplicateData extends AbstractApplication<AppWithDuplicateDa
     protected void configure() {
       super.configure();
       createDataset("data1", KeyValueTable.class);
-      addDatasetModule("module", FileSetModule.class);
       usePlugin("t1", "n1", "plug", PluginProperties.builder().build());
     }
   }

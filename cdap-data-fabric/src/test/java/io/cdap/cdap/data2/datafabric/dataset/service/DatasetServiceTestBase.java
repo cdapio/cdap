@@ -27,6 +27,7 @@ import com.google.inject.Key;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -47,7 +48,6 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import io.cdap.cdap.data.runtime.StorageModule;
@@ -59,6 +59,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetAdminServic
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
+import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
@@ -83,8 +84,8 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
-import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
@@ -93,14 +94,15 @@ import io.cdap.common.http.ObjectResponse;
 import io.cdap.http.HttpHandler;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -140,6 +142,16 @@ public abstract class DatasetServiceTestBase {
   private static DatasetOpExecutorService opExecutorService;
   private static DatasetService service;
   protected static OwnerAdmin ownerAdmin;
+  private static DatasetInstanceManager instanceManager;
+  private static Supplier<DefaultDatasetTypeService> typeServiceSupplier;
+
+  /**
+   * Dataset modules used by the tests. They are registered in the system namespace, in the same
+   * way as the default dataset modules.
+   */
+  protected static final Map<String, DatasetModule> FIXTURE_MODULES = ImmutableMap.of(
+    "module1", new TestModule1(),
+    "module2", new TestModule2());
 
   private int port = -1;
 
@@ -192,12 +204,18 @@ public abstract class DatasetServiceTestBase {
     StoreDefinition.createAllTables(structuredTableAdmin);
 
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
-      new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
+      new SystemDatasetInstantiatorFactory(dsFramework);
+
+    // the fixture modules are registered as system modules, together with the default modules
+    Map<String, DatasetModule> defaultModules = new LinkedHashMap<>(
+      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
+                                   Constants.Dataset.Manager.DefaultDatasetModules.class)));
+    defaultModules.putAll(FIXTURE_MODULES);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
     Impersonator impersonator = new DefaultImpersonator(cConf, null);
     DatasetAdminService datasetAdminService =
-      new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
+      new DatasetAdminService(dsFramework, cConf, datasetInstantiatorFactory, impersonator, defaultModules);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.<HttpHandler>of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     CommonNettyHttpServiceFactory commonNettyHttpServiceFactory =
@@ -207,10 +225,6 @@ public abstract class DatasetServiceTestBase {
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
                                                      discoveryService, commonNettyHttpServiceFactory, handlers);
     opExecutorService.startAsync().awaitRunning();
-
-    Map<String, DatasetModule> defaultModules =
-      injector.getInstance(Key.get(new TypeLiteral<Map<String, DatasetModule>>() { },
-                                   Constants.Dataset.Manager.DefaultDatasetModules.class));
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
       .putAll(defaultModules)
@@ -223,10 +237,9 @@ public abstract class DatasetServiceTestBase {
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
-    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, impersonator, transactionRunner);
+    DatasetTypeManager typeManager = new DatasetTypeManager(locationFactory, impersonator, transactionRunner);
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
-    DatasetInstanceManager instanceManager =
-      new DatasetInstanceManager(transactionRunner);
+    instanceManager = new DatasetInstanceManager(transactionRunner);
 
     AccessEnforcer authEnforcer = injector.getInstance(AccessEnforcer.class);
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
@@ -236,8 +249,10 @@ public abstract class DatasetServiceTestBase {
       new DelegatingTransactionSystemClientService(txSystemClient);
 
     DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(
-      typeManager, namespaceAdmin, namespacePathLocator,
-      cConf, impersonator, txSystemClientService, transactionRunner, defaultModules);
+      typeManager, namespaceAdmin, cConf, txSystemClientService, transactionRunner, defaultModules);
+    typeServiceSupplier = () -> new DefaultDatasetTypeService(
+      typeManager, namespaceAdmin, cConf, new DelegatingTransactionSystemClientService(txSystemClient),
+      transactionRunner, defaultModules);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
                                                                          authenticationContext);
 
@@ -298,49 +313,40 @@ public abstract class DatasetServiceTestBase {
                                Constants.Gateway.API_VERSION_3_TOKEN, namespace, path).toURL();
   }
 
-  protected Location createModuleJar(Class moduleClass, Location...bundleEmbeddedJars) throws IOException {
-    LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    File[] embeddedJars = new File[bundleEmbeddedJars.length];
-    for (int i = 0; i < bundleEmbeddedJars.length; i++) {
-      File file = TMP_FOLDER.newFile();
-      Locations.linkOrCopyOverwrite(bundleEmbeddedJars[i], file);
-      embeddedJars[i] = file;
-    }
-
-    return AppJarHelper.createDeploymentJar(lf, moduleClass, embeddedJars);
+  /**
+   * Creates a new, not yet started, instance of the dataset type service that operates on the same store as
+   * the running dataset service.
+   */
+  protected static DefaultDatasetTypeService createTypeService() {
+    return typeServiceSupplier.get();
   }
 
-  protected HttpResponse deployModule(String moduleName, Class moduleClass) throws Exception {
-    return deployModule(NamespaceId.DEFAULT.datasetModule(moduleName), moduleClass);
+  /**
+   * Writes the given dataset module directly to the dataset type store of the given namespace,
+   * without going through the dataset service.
+   */
+  protected static void writeModule(NamespaceId namespaceId, DatasetModuleMeta moduleMeta) {
+    TransactionRunners.run(transactionRunner, context -> {
+      DatasetTypeTable.create(context).writeModule(namespaceId, moduleMeta);
+    });
   }
 
-  protected HttpResponse deployModule(DatasetModuleId module, Class moduleClass) throws Exception {
-    return deployModule(module, moduleClass, false);
+  /**
+   * Writes the given dataset specification directly to the dataset instance store of the given
+   * namespace, without going through the dataset service.
+   */
+  protected static void writeInstance(NamespaceId namespaceId, DatasetSpecification spec) {
+    instanceManager.add(namespaceId, spec);
   }
 
-  protected HttpResponse deployModule(String moduleName, Class moduleClass, boolean force) throws Exception {
-    return deployModule(NamespaceId.DEFAULT.datasetModule(moduleName), moduleClass, force);
-  }
-
-  protected HttpResponse deployModule(DatasetModuleId module, Class moduleClass, boolean force) throws Exception {
-    Location moduleJar = createModuleJar(moduleClass);
-    String urlPath = "/data/modules/" + module.getEntityName();
-    urlPath = force ? urlPath + "?force=true" : urlPath;
-    HttpRequest request = HttpRequest.put(getUrl(module.getNamespace(), urlPath))
-      .addHeader("X-Class-Name", moduleClass.getName())
-      .withBody((ContentProvider<? extends InputStream>) moduleJar::getInputStream).build();
-    return HttpRequests.execute(request, REQUEST_CONFIG);
-  }
-
-  // creates a bundled jar with moduleClass and list of bundleEmbeddedJar files, moduleName and moduleClassName are
-  // used to make request for deploying module.
-  protected int deployModuleBundled(String moduleName, String moduleClassName, Class moduleClass,
-                                    Location...bundleEmbeddedJars) throws IOException {
-    Location moduleJar = createModuleJar(moduleClass, bundleEmbeddedJars);
-    HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-      .addHeader("X-Class-Name", moduleClassName)
-      .withBody((ContentProvider<? extends InputStream>) moduleJar::getInputStream).build();
-    return HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode();
+  /**
+   * Creates an empty file to be used as the jar location of a dataset module.
+   */
+  protected static Location createModuleJar(String moduleName) throws IOException {
+    Location jar = locationFactory.create(moduleName).append(moduleName + ".jar");
+    Locations.mkdirsIfNotExists(Locations.getParent(jar));
+    Assert.assertTrue(jar.createNew());
+    return jar;
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {

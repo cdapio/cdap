@@ -21,9 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -36,10 +33,7 @@ import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
-import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -48,7 +42,6 @@ import io.cdap.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistries;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.data2.dataset2.module.lib.DatasetModules;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.DatasetModuleMeta;
@@ -61,20 +54,12 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
 import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +76,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
           || (t instanceof UncheckedExecutionException
           && t.getCause() instanceof RetryableException);
 
-  private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, DatasetServiceClient> clientCache;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final RetryStrategy retryStrategy;
@@ -101,7 +85,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
       DatasetDefinitionRegistryFactory registryFactory,
       final AuthenticationContext authenticationContext,
       RemoteClientFactory remoteClientFactory) {
-    this.cConf = cConf;
     this.clientCache = CacheBuilder.newBuilder()
         .build(new CacheLoader<NamespaceId, DatasetServiceClient>() {
           @Override
@@ -117,35 +100,17 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module)
       throws DatasetManagementException {
-    Class<?> moduleClass = DatasetModules.getDatasetModuleClass(module);
-    try {
-      Location deploymentJar = createDeploymentJar(moduleClass);
-      try {
-        clientCache.getUnchecked(moduleId.getParent())
-            .addModule(moduleId.getEntityName(), moduleClass.getName(), deploymentJar);
-      } finally {
-        try {
-          deploymentJar.delete();
-        } catch (IOException e) {
-          // Just log warning, since the add module operation can still proceed
-          LOG.warn("Failed to delete temporary deployment jar {}", deploymentJar, e);
-        }
-      }
-    } catch (IOException e) {
-      String msg = String.format(
-          "Could not create jar for deploying dataset module %s with main class %s",
-          moduleId, moduleClass.getName());
-      LOG.error(msg, e);
-      throw new DatasetManagementException(msg, e);
-    }
+    throw new UnsupportedOperationException(
+        String.format("Cannot add dataset module %s: custom dataset modules are not supported",
+            moduleId));
   }
 
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module,
       Location jarLocation) throws DatasetManagementException {
-    clientCache.getUnchecked(moduleId.getParent())
-        .addModule(moduleId.getEntityName(), DatasetModules.getDatasetModuleClass(module).getName(),
-            jarLocation);
+    throw new UnsupportedOperationException(
+        String.format("Cannot add dataset module %s: custom dataset modules are not supported",
+            moduleId));
   }
 
   @Override
@@ -279,61 +244,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
     // no-op. The RemoteDatasetFramework doesn't need to do anything. The lineage should be recorded before this point.
   }
 
-  private Location createDeploymentJar(Class<?> clz) throws IOException {
-    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    tempDir.mkdirs();
-    File tempFile = File.createTempFile(clz.getName(), ".jar", tempDir);
-    try {
-      // Create a bundle jar in a temp location
-      ClassLoader remembered = ClassLoaders.setContextClassLoader(clz.getClassLoader());
-      try {
-        ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("io.cdap.cdap.api",
-            "org.apache.hadoop",
-            "org.apache.hbase",
-            "org.apache.hive"));
-        bundler.createBundle(Locations.toLocation(tempFile), clz);
-      } finally {
-        ClassLoaders.setContextClassLoader(remembered);
-      }
-
-      // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
-      // by the ApplicationBundler inside Twill.
-      File destination = File.createTempFile(clz.getName(), ".jar", tempDir);
-      try (
-          JarOutputStream jarOutput = new JarOutputStream(new FileOutputStream(destination));
-          JarInputStream jarInput = new JarInputStream(new FileInputStream(tempFile))
-      ) {
-        Set<String> seen = Sets.newHashSet();
-        JarEntry jarEntry = jarInput.getNextJarEntry();
-        while (jarEntry != null) {
-          boolean isDir = jarEntry.isDirectory();
-          String entryName = jarEntry.getName();
-          if (!entryName.equals("classes/")) {
-            if (entryName.startsWith("classes/")) {
-              jarEntry = new JarEntry(entryName.substring("classes/".length()));
-            } else {
-              jarEntry = new JarEntry(entryName);
-            }
-            if (seen.add(jarEntry.getName())) {
-              jarOutput.putNextEntry(jarEntry);
-
-              if (!isDir) {
-                ByteStreams.copy(jarInput, jarOutput);
-              }
-            }
-          }
-
-          jarEntry = jarInput.getNextJarEntry();
-        }
-
-        return Locations.toLocation(destination);
-      }
-    } finally {
-      tempFile.delete();
-    }
-  }
-
   // can be used directly if DatasetTypeMeta is known, like in create dataset by dataset ops executor service
 
   /**
@@ -351,10 +261,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
    *     module
    * @param <T> the type of DatasetType
    * @return an instance of the DatasetType
+   * @throws DatasetManagementException if the dataset type is a custom type
    */
   public <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
       ClassLoader classLoader,
-      DatasetClassLoaderProvider classLoaderProvider) {
+      DatasetClassLoaderProvider classLoaderProvider) throws DatasetManagementException {
 
     return getType(implementationInfo, classLoader, classLoaderProvider);
   }
@@ -374,10 +285,21 @@ public class RemoteDatasetFramework implements DatasetFramework {
    *     module
    * @param <T> the type of DatasetType
    * @return an instance of the DatasetType
+   * @throws DatasetManagementException if the dataset type is a custom type, that is, one of
+   *     its modules is not available in the classpath
    */
   private <T extends DatasetType> T getType(DatasetTypeMeta datasetTypeMeta,
       @Nullable ClassLoader classLoader,
-      DatasetClassLoaderProvider classLoaderProvider) {
+      DatasetClassLoaderProvider classLoaderProvider) throws DatasetManagementException {
+
+    // Only dataset types whose modules are all available in the classpath are supported.
+    for (DatasetModuleMeta moduleMeta : datasetTypeMeta.getModules()) {
+      if (moduleMeta.getJarLocationPath() != null) {
+        throw new DatasetManagementException(String.format(
+            "Dataset type '%s' is a custom type; custom dataset types are not supported",
+            datasetTypeMeta.getName()));
+      }
+    }
 
     if (classLoader == null) {
       classLoader = MoreObjects.firstNonNull(Thread.currentThread().getContextClassLoader(),
@@ -386,7 +308,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
     DatasetDefinitionRegistry registry = registryFactory.create();
     for (DatasetModuleMeta moduleMeta : datasetTypeMeta.getModules()) {
-      // adding dataset module jar to classloader
       try {
         classLoader = classLoaderProvider.get(moduleMeta, classLoader);
       } catch (IOException e) {

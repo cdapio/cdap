@@ -23,8 +23,12 @@ import io.cdap.cdap.api.data.batch.BatchReadable;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.data.batch.SplitReader;
+import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetDefinition;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.api.mapreduce.AbstractMapReduce;
@@ -32,6 +36,7 @@ import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -46,7 +51,8 @@ public class AppWithTxAware extends AbstractApplication {
   public void configure() {
     setName("AppWithTxAware");
     setDescription("Application with MapReduce job that uses a TxAware dataset");
-    createDataset("pedanticTxAware", PedanticTxAware.class);
+    // the dataset type is defined by the PedanticTxAwareModule, which the test registers in the dataset service
+    createDataset("pedanticTxAware", PedanticTxAwareModule.getTypeName());
     addMapReduce(new PedanticMapReduce());
   }
 
@@ -71,6 +77,33 @@ public class AppWithTxAware extends AbstractApplication {
     @Override
     protected void map(Integer key, Integer value, Context context) throws IOException, InterruptedException {
       context.write(key, value);
+    }
+  }
+
+  /**
+   * A dataset module that defines the {@link PedanticTxAware} dataset type. Tests register it as an extension
+   * module of the dataset service through {@code dataset.extensions.modules}.
+   */
+  public static final class PedanticTxAwareModule implements DatasetModule {
+
+    /**
+     * Returns the name of the dataset type defined by this module.
+     */
+    public static String getTypeName() {
+      return PedanticTxAware.class.getName();
+    }
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      registry.add(new CompositeDatasetDefinition<PedanticTxAware>(getTypeName(), "t", registry.get("table")) {
+        @Override
+        public PedanticTxAware getDataset(DatasetContext datasetContext,
+                                 DatasetSpecification spec, Map<String, String> arguments,
+                                 ClassLoader classLoader) throws IOException {
+          Table table = getDataset(datasetContext, "t", spec, arguments, classLoader);
+          return new PedanticTxAware(spec, table);
+        }
+      });
     }
   }
 

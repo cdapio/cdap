@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.DatasetModuleMeta;
 import io.cdap.cdap.proto.DatasetTypeMeta;
@@ -32,7 +33,6 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,53 +53,8 @@ import org.junit.Test;
  */
 public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
-  private static final DatasetModuleMeta MODULE1X_UNUSED =
-    new DatasetModuleMeta("module1", TestModule1x.class.getName(), null,
-                          ImmutableList.of("datasetType1", "datasetType1x"),
-                          Collections.emptyList());
-
-  private static final DatasetModuleMeta MODULE1X_USED =
-    new DatasetModuleMeta("module1", TestModule1x.class.getName(), null,
-                          ImmutableList.of("datasetType1", "datasetType1x"),
-                          Collections.emptyList(), ImmutableList.of("module2"));
-
-  private static final DatasetModuleMeta MODULE1_UNUSED =
-    new DatasetModuleMeta("module1", TestModule1.class.getName(), null,
-                          ImmutableList.of("datasetType1"),
-                          Collections.emptyList());
-
-  private static final DatasetModuleMeta MODULE1_USED =
-    new DatasetModuleMeta("module1", TestModule1.class.getName(), null,
-                          ImmutableList.of("datasetType1"),
-                          Collections.emptyList(), ImmutableList.of("module2"));
-
-  private static final DatasetModuleMeta MODULE2 =
-    new DatasetModuleMeta("module2", TestModule2.class.getName(), null,
-                          ImmutableList.of("datasetType2"),
-                          ImmutableList.of("module1"));
-
-
-
   private static final Set<DatasetModuleMeta> NO_MODULES = Collections.emptySet();
-  private static final Set<DatasetModuleMeta> ONLY_MODULE1 = ImmutableSet.of(MODULE1_UNUSED);
-  private static final Set<DatasetModuleMeta> ONLY_MODULE1X = ImmutableSet.of(MODULE1X_UNUSED);
-  private static final Set<DatasetModuleMeta> MODULES_1_AND_2 = ImmutableSet.of(MODULE1_USED, MODULE2);
-  private static final Set<DatasetModuleMeta> MODULES_1X_AND_2 = ImmutableSet.of(MODULE1X_USED, MODULE2);
-
   private static final Map<String, List<String>> NO_DEPENDENCIES = Collections.emptyMap();
-  private static final Map<String, List<String>> ONLY_1_DEPENDENCIES =
-    ImmutableMap.of("datasetType1", ImmutableList.of("module1"));
-  private static final Map<String, List<String>> ONLY_1X_DEPENDENCIES =
-    ImmutableMap.of("datasetType1", ImmutableList.of("module1"),
-                    "datasetType1x", ImmutableList.of("module1"));
-  private static final Map<String, List<String>> BOTH_1_2_DEPENDENCIES =
-    ImmutableMap.of("datasetType1", ImmutableList.of("module1"),
-                    "datasetType2", ImmutableList.of("module1", "module2"));
-  private static final Map<String, List<String>> BOTH_1X_2_DEPENDENCIES =
-    ImmutableMap.of("datasetType1", ImmutableList.of("module1"),
-                    "datasetType1x", ImmutableList.of("module1"),
-                    "datasetType2", ImmutableList.of("module1", "module2"));
-
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -107,96 +62,166 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   }
 
   @Test
-  public void testBasics() throws Exception {
-    // nothing has been deployed, modules and types list is empty
+  public void testSystemModules() throws Exception {
+    // the modules that are available in the classpath are registered in the system namespace
+    Map<String, DatasetModuleMeta> systemModules = new HashMap<>();
+    for (DatasetModuleMeta moduleMeta : getModules(NamespaceId.SYSTEM).getResponseObject()) {
+      systemModules.put(moduleMeta.getName(), moduleMeta);
+    }
+    verify(systemModules.get("module1"), "module1", TestModule1.class,
+           ImmutableList.of("datasetType1"), Collections.emptyList(), ImmutableList.of("module2"));
+    verify(systemModules.get("module2"), "module2", TestModule2.class,
+           ImmutableList.of("datasetType2"), ImmutableList.of("module1"), Collections.emptyList());
+
+    // their types can be retrieved, with the modules in the order they have to be loaded
+    ObjectResponse<DatasetTypeMeta> typeResponse = getType(NamespaceId.SYSTEM.datasetType("datasetType2"));
+    Assert.assertEquals(HttpStatus.SC_OK, typeResponse.getResponseCode());
+    verify(typeResponse.getResponseObject(), "datasetType2", ImmutableList.of("module1", "module2"));
+
+    // system modules cannot be deleted
+    Assert.assertNotEquals(HttpStatus.SC_OK,
+                           deleteModule(NamespaceId.SYSTEM.datasetModule("module2")).getResponseCode());
+    Assert.assertNotEquals(HttpStatus.SC_OK, deleteModules(NamespaceId.SYSTEM).getResponseCode());
+    Assert.assertEquals(systemModules.size(), getModules(NamespaceId.SYSTEM).getResponseObject().size());
+
+    // no modules and types exist outside of the system namespace
+    verifyAll(NO_MODULES, NO_DEPENDENCIES);
+  }
+
+  /**
+   * Tests that on startup of the dataset type service, all existing modules of the system namespace are removed
+   * before the modules available in the classpath are added.
+   */
+  @Test
+  public void testSystemModulesReplacedOnStartup() throws Exception {
+    int numSystemModules = getModules(NamespaceId.SYSTEM).getResponseObject().size();
+
+    // write two modules with a jar location to the system namespace: one with a name that no system module has,
+    // and one that replaces a system module
+    Location leftoverJar = createModuleJar("leftover");
+    writeModule(NamespaceId.SYSTEM,
+                new DatasetModuleMeta("leftover", "io.cdap.cdap.test.NotInClasspathModule", leftoverJar.toURI(),
+                                      ImmutableList.of("leftoverType"), Collections.emptyList()));
+    writeModule(NamespaceId.SYSTEM,
+                new DatasetModuleMeta("module1", "io.cdap.cdap.test.NotInClasspathModule",
+                                      createModuleJar("module1").toURI(),
+                                      ImmutableList.of("datasetType1"), Collections.emptyList(),
+                                      ImmutableList.of("module2")));
+    Assert.assertEquals(numSystemModules + 1, getModules(NamespaceId.SYSTEM).getResponseObject().size());
+    Assert.assertEquals(HttpStatus.SC_OK,
+                        getType(NamespaceId.SYSTEM.datasetType("leftoverType")).getResponseCode());
+
+    // start another instance of the type service on the same store
+    DefaultDatasetTypeService typeService = createTypeService();
+    typeService.startAsync().awaitRunning();
+    try {
+      // the module that is not available in the classpath and its type are gone
+      Map<String, DatasetModuleMeta> systemModules = new HashMap<>();
+      for (DatasetModuleMeta moduleMeta : getModules(NamespaceId.SYSTEM).getResponseObject()) {
+        Assert.assertNull(moduleMeta.getName(), moduleMeta.getJarLocationPath());
+        systemModules.put(moduleMeta.getName(), moduleMeta);
+      }
+      Assert.assertEquals(numSystemModules, systemModules.size());
+      Assert.assertFalse(systemModules.containsKey("leftover"));
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND,
+                          makeTypeInfoRequest(NamespaceId.SYSTEM.datasetType("leftoverType")).getResponseCode());
+
+      // the system modules are the ones from the classpath again
+      verify(systemModules.get("module1"), "module1", TestModule1.class,
+             ImmutableList.of("datasetType1"), Collections.emptyList(), ImmutableList.of("module2"));
+      verify(systemModules.get("module2"), "module2", TestModule2.class,
+             ImmutableList.of("datasetType2"), ImmutableList.of("module1"), Collections.emptyList());
+      for (DatasetTypeMeta typeMeta : getTypes(NamespaceId.SYSTEM).getResponseObject()) {
+        for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
+          Assert.assertNull(typeMeta.getName(), moduleMeta.getJarLocationPath());
+        }
+      }
+
+      // and their types can be used
+      instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance2",
+                             new DatasetInstanceConfiguration("datasetType2", new HashMap<>()));
+      instanceService.drop(NamespaceId.DEFAULT.dataset("instance2"));
+    } finally {
+      typeService.stopAsync().awaitTerminated();
+    }
+  }
+
+  @Test
+  public void testAddModuleNotSupported() throws Exception {
+    // there is no endpoint to add a dataset module
+    HttpRequest request = HttpRequest.put(getUrl("/data/modules/module3"))
+      .addHeader("X-Class-Name", TestModule1x.class.getName())
+      .withBody("module content").build();
+    Assert.assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED,
+                        HttpRequests.execute(request, REQUEST_CONFIG).getResponseCode());
+    verifyAll(NO_MODULES, NO_DEPENDENCIES);
+  }
+
+  @Test
+  public void testListAndDeleteExistingModules() throws Exception {
+    // nothing has been added, modules and types list is empty
     verifyAll(NO_MODULES, NO_DEPENDENCIES);
 
-    // deploy module and verify that it can be retrieved in all ways
-    Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1x.class).getResponseCode());
-    verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
+    // write two modules to the store, where the second one depends on the first one, and an instance that
+    // uses a type of the second one
+    Location jar1 = createModuleJar("existing1");
+    Location jar2 = createModuleJar("existing2");
+    DatasetModuleMeta module1Used =
+      new DatasetModuleMeta("existing1", TestModule1x.class.getName(), jar1.toURI(),
+                            ImmutableList.of("existingType1", "existingType1x"),
+                            Collections.emptyList(), ImmutableList.of("existing2"));
+    DatasetModuleMeta module1Unused =
+      new DatasetModuleMeta("existing1", TestModule1x.class.getName(), jar1.toURI(),
+                            ImmutableList.of("existingType1", "existingType1x"),
+                            Collections.emptyList());
+    DatasetModuleMeta module2 =
+      new DatasetModuleMeta("existing2", TestModule2.class.getName(), jar2.toURI(),
+                            ImmutableList.of("existingType2"),
+                            ImmutableList.of("existing1"));
+    writeModule(NamespaceId.DEFAULT, module1Used);
+    writeModule(NamespaceId.DEFAULT, module2);
+    writeInstance(NamespaceId.DEFAULT, DatasetSpecification.builder("instance2", "existingType2").build());
 
-    // cannot deploy other module with same types
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("not-module1", TestModule1.class).getResponseCode());
-    verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
-
-    // can deploy same module again
-    Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1x.class).getResponseCode());
-    verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
-
-    // create a dataset instance, verify that we cannot redeploy the module with fewer types, even with force option
-    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
-                           new DatasetInstanceConfiguration("datasetType1x", new HashMap<>()));
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class).getResponseCode());
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class, true).getResponseCode());
-    verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
-
-    // drop the instance, now we should be able to redeploy, dropping type1x
-    instanceService.drop(NamespaceId.DEFAULT.dataset("instance1x"));
-    Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1.class).getResponseCode());
-    verifyAll(ONLY_MODULE1, ONLY_1_DEPENDENCIES);
-
-    // redeploy module with more types and validate
-    Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1x.class).getResponseCode());
-    verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
-
-    // deploy another module which depends on the first one
-    Assert.assertEquals(HttpStatus.SC_OK, deployModule("module2", TestModule2.class).getResponseCode());
-    verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
+    Set<DatasetModuleMeta> bothModules = ImmutableSet.of(module1Used, module2);
+    Map<String, List<String>> bothDependencies =
+      ImmutableMap.of("existingType1", ImmutableList.of("existing1"),
+                      "existingType1x", ImmutableList.of("existing1"),
+                      "existingType2", ImmutableList.of("existing1", "existing2"));
+    verifyAll(bothModules, bothDependencies);
 
     // cannot delete non-existent module
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("non-existing-module").getResponseCode());
 
-    // cannot delete module1 since module2 depends on it, verify that nothing has been deleted
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module1").getResponseCode());
-    verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
+    // cannot delete the first module since the second one depends on it, verify that nothing has been deleted
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("existing1").getResponseCode());
+    verifyAll(bothModules, bothDependencies);
 
-    // cannot deploy same module again with fewer types (because module2 depends on it)
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class).getResponseCode());
-    verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
-
-    // create dataset instances, try force deploy of same module again with fewer types - should fail
-    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1",
-                           new DatasetInstanceConfiguration("datasetType1", new HashMap<>()));
-    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
-                           new DatasetInstanceConfiguration("datasetType1x", new HashMap<>()));
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class, true).getResponseCode());
-    verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
-
-    // drop the instance of type1x, now forced deploy should work
-    instanceService.drop(NamespaceId.DEFAULT.dataset("instance1x"));
-    Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1.class, true).getResponseCode());
-    verifyAll(MODULES_1_AND_2, BOTH_1_2_DEPENDENCIES);
-
-    // delete module2, should be removed from usedBy list everywhere and all its types should no longer be available
-    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("datasetType2").getResponseCode());
-    verifyAll(ONLY_MODULE1, ONLY_1_DEPENDENCIES);
-
-    // cannot delete module2 again
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("module2").getResponseCode());
-
-    // cannot delete module 1 becuse there is an instance
+    // cannot delete the second module because there is an instance
+    Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("existing2").getResponseCode());
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules().getResponseCode());
-    verifyAll(ONLY_MODULE1, ONLY_1_DEPENDENCIES);
+    verifyAll(bothModules, bothDependencies);
+    Assert.assertTrue(jar1.exists());
+    Assert.assertTrue(jar2.exists());
 
-    // drop the instance of type1, now delete of module1 should work
-    instanceService.drop(NamespaceId.DEFAULT.dataset("instance1"));
+    // drop the instance, now delete of the second module should work. It should be removed from usedBy list
+    // everywhere and all its types should no longer be available
+    instanceService.drop(NamespaceId.DEFAULT.dataset("instance2"));
+    Assert.assertEquals(HttpStatus.SC_OK, deleteModule("existing2").getResponseCode());
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("existingType2").getResponseCode());
+    verifyAll(ImmutableSet.of(module1Unused),
+              ImmutableMap.of("existingType1", ImmutableList.of("existing1"),
+                              "existingType1x", ImmutableList.of("existing1")));
+    Assert.assertTrue(jar1.exists());
+    Assert.assertFalse(jar2.exists());
+
+    // cannot delete the second module again
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteModule("existing2").getResponseCode());
+
+    // delete all modules
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
-    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("datasetType1").getResponseCode());
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("existingType1").getResponseCode());
     verifyAll(NO_MODULES, NO_DEPENDENCIES);
-  }
-
-  // Tests that a module can be deployed from a jar that is embedded in a bundle jar. This verifies class loading.
-  @Test
-  public void testBundledJarModule() throws Exception {
-    // Get jar of TestModule1
-    Location module1Jar = createModuleJar(TestModule1.class);
-    // Create bundle jar with TestModule2 and TestModule1 inside it, request for deploy is made for Module1.
-    Assert.assertEquals(200, deployModuleBundled("module1", TestModule1.class.getName(),
-                                                 TestModule2.class, module1Jar));
-    Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
-    List<DatasetModuleMeta> modules = getModules().getResponseObject();
-    Assert.assertEquals(0, modules.size());
+    Assert.assertFalse(jar1.exists());
   }
 
   @Test
@@ -214,9 +239,6 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
     DatasetTypeId datasetType = nonExistent.datasetType("type");
     response = makeTypeInfoRequest(datasetType);
-    assertNamespaceNotFound(response, nonExistent);
-
-    response = deployModule(datasetModule, TestModule1.class);
     assertNamespaceNotFound(response, nonExistent);
 
     response = deleteModule(datasetModule);
@@ -266,9 +288,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     // using treeset just for sorting purposes
     Assert.assertArrayEquals(Sets.newTreeSet(usedByModules).toArray(),
                              Sets.newTreeSet(moduleMeta.getUsedByModules()).toArray());
-    // note: we know it is local
-    Assert.assertNotNull(moduleMeta.getJarLocationPath());
-    Assert.assertTrue(new File(moduleMeta.getJarLocationPath()).exists());
+    // note: the module is available in the classpath, hence it has no jar
+    Assert.assertNull(moduleMeta.getJarLocationPath());
   }
 
   private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {

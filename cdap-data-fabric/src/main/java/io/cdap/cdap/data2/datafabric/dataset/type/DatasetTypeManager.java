@@ -25,14 +25,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.DirectoryClassLoader;
-import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
-import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
 import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistries;
@@ -47,10 +40,6 @@ import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -73,43 +62,33 @@ public class DatasetTypeManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
-  private final CConfiguration cConf;
   private final LocationFactory locationFactory;
-  private final Path systemTempPath;
   private final Impersonator impersonator;
   private final TransactionRunner transactionRunner;
 
   @VisibleForTesting
   @Inject
-  public DatasetTypeManager(CConfiguration cConf,
-      LocationFactory locationFactory,
+  public DatasetTypeManager(LocationFactory locationFactory,
       Impersonator impersonator,
       TransactionRunner transactionRunner) {
-    this.cConf = cConf;
     this.locationFactory = locationFactory;
     this.impersonator = impersonator;
-
-    this.systemTempPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-        cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
     this.transactionRunner = transactionRunner;
   }
 
   /**
-   * Add datasets module in a namespace
+   * Add datasets module in a namespace. The module class must be available in the classpath.
    *
    * @param datasetModuleId the {@link DatasetModuleId} to add
    * @param className module class
-   * @param jarLocation location of the module jar
    * @param force if true, an update will be allowed even if there are conflicts with other
    *     modules, or if removal of a type would break other modules' dependencies.
    */
   public void addModule(final DatasetModuleId datasetModuleId, final String className,
-      final Location jarLocation,
       final boolean force)
       throws DatasetModuleConflictException {
 
-    LOG.debug("adding module: {}, className: {}, jarLocation: {}",
-        datasetModuleId, className, jarLocation == null ? "[local]" : jarLocation);
+    LOG.debug("adding module: {}, className: {}", datasetModuleId, className);
 
     try {
       TransactionRunners.run(transactionRunner, context -> {
@@ -119,40 +98,20 @@ public class DatasetTypeManager {
         DatasetModuleMeta existing = datasetTypeTable.getModule(datasetModuleId);
         DependencyTrackingRegistry reg;
 
-        // 2. unpack jar and create class loader
-        ClassLoaderFolder classLoaderFolder = null;
-        DirectoryClassLoader cl = null;
+        // 2. register the new module while tracking dependencies.
+        //    this will fail if a type exists in a different module
         try {
-          // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
-          if (jarLocation != null) {
-            classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-                jarLocation,
-                () -> Files.createTempDirectory(Files.createDirectories(systemTempPath),
-                    datasetModuleId.getEntityName()).toFile());
-            cl = new DirectoryClassLoader(classLoaderFolder.getDir(),
-                cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH),
-                FilterClassLoader.create(getClass().getClassLoader()), "lib");
-          }
-          reg = new DependencyTrackingRegistry(datasetModuleId, datasetTypeTable, cl, force);
-
-          // 3. register the new module while tracking dependencies.
-          //    this will fail if a type exists in a different module
-          DatasetDefinitionRegistries.register(className, cl, reg);
-
+          reg = new DependencyTrackingRegistry(datasetModuleId, datasetTypeTable, force);
+          DatasetDefinitionRegistries.register(className, null, reg);
         } catch (TypeConflictException e) {
           throw e; // type conflict from the registry, we want to throw that as is
         } catch (Exception e) {
-          LOG.error(
-              "Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
-              className, datasetModuleId, jarLocation);
+          LOG.error("Could not instantiate instance of dataset module class {} for module {}",
+              className, datasetModuleId);
           throw Throwables.propagate(e);
-        } finally {
-          // Close the ProgramClassLoader
-          Closeables.closeQuietly(cl);
-          Closeables.closeQuietly(classLoaderFolder);
         }
 
-        // 4. determine whether any type were removed from the module, and whether any other modules depend on them
+        // 3. determine whether any type were removed from the module, and whether any other modules depend on them
         if (existing != null) {
           Set<String> removedTypes = new HashSet<>(existing.getTypes());
           removedTypes.removeAll(reg.getTypes());
@@ -196,12 +155,11 @@ public class DatasetTypeManager {
           }
         }
 
-        URI jarURI = jarLocation == null ? null : jarLocation.toURI();
         DatasetModuleMeta moduleMeta = existing == null
-            ? new DatasetModuleMeta(datasetModuleId.getEntityName(), className, jarURI,
+            ? new DatasetModuleMeta(datasetModuleId.getEntityName(), className, null,
             reg.getTypes(),
             Lists.newArrayList(moduleDependencies))
-            : new DatasetModuleMeta(datasetModuleId.getEntityName(), className, jarURI,
+            : new DatasetModuleMeta(datasetModuleId.getEntityName(), className, null,
                 reg.getTypes(),
                 Lists.newArrayList(moduleDependencies),
                 Lists.newArrayList(existing.getUsedByModules()));
@@ -435,16 +393,13 @@ public class DatasetTypeManager {
     private final DatasetModuleId moduleBeingAdded;
     private final List<String> types = Lists.newArrayList();
     private final Set<DatasetTypeId> usedTypes = new LinkedHashSet<>();
-    private final ClassLoader classLoader;
 
     private DependencyTrackingRegistry(DatasetModuleId moduleBeingAdded,
-        DatasetTypeTable datasetTypeTable,
-        @Nullable ClassLoader classLoader, boolean tolerateConflicts) {
+        DatasetTypeTable datasetTypeTable, boolean tolerateConflicts) {
       this.moduleBeingAdded = moduleBeingAdded;
       this.datasetTypeTable = datasetTypeTable;
       this.tolerateConflicts = tolerateConflicts;
       this.registry = new InMemoryDatasetDefinitionRegistry();
-      this.classLoader = classLoader;
     }
 
     List<String> getTypes() {
@@ -515,7 +470,7 @@ public class DatasetTypeManager {
       if (!registry.hasType(datasetTypeName)) {
         for (DatasetModuleMeta moduleMeta : typeMeta.getModules()) {
           try {
-            DatasetDefinitionRegistries.register(moduleMeta.getClassName(), classLoader, registry);
+            DatasetDefinitionRegistries.register(moduleMeta.getClassName(), null, registry);
           } catch (TypeConflictException e) {
             // A type may have multiple transitive dependencies on the same module. In that case, it would be
             // better to avoid duplicate registering of the same module. However, we don't know what modules

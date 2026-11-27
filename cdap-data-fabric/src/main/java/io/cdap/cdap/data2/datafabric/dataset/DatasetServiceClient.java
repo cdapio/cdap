@@ -40,13 +40,11 @@ import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -59,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,27 +254,6 @@ public class DatasetServiceClient {
           String.format("Failed to delete instances, details: %s", response));
     }
   }
-
-  public void addModule(String moduleName, String className, Location jarLocation)
-      throws DatasetManagementException, UnauthorizedException {
-
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT,
-            "modules/" + moduleName)
-        .addHeader("X-Class-Name", className)
-        .withBody((ContentProvider<? extends InputStream>) jarLocation::getInputStream);
-    HttpResponse response = doRequest(requestBuilder);
-
-    if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
-      throw new ModuleConflictException(
-          String.format("Failed to add module %s due to conflict, details: %s",
-              moduleName, response));
-    }
-    if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(
-          String.format("Failed to add module %s, details: %s", moduleName, response));
-    }
-  }
-
 
   public void deleteModule(String moduleName)
       throws DatasetManagementException, UnauthorizedException {

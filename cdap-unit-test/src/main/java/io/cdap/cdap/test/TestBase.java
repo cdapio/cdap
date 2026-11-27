@@ -891,6 +891,7 @@ public class TestBase {
    *
    * @param datasetModuleId the module id
    * @param datasetModule module class
+   * @throws UnsupportedOperationException always, as custom dataset modules are not supported
    */
   protected static void deployDatasetModule(DatasetModuleId datasetModuleId,
       Class<? extends DatasetModule> datasetModule) throws Exception {
@@ -902,6 +903,7 @@ public class TestBase {
    *
    * @param moduleName name of the module
    * @param datasetModule module class
+   * @throws UnsupportedOperationException always, as custom dataset modules are not supported
    */
   protected static void deployDatasetModule(String moduleName,
       Class<? extends DatasetModule> datasetModule) throws Exception {

@@ -22,8 +22,11 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import io.cdap.cdap.DummyAppWithTrackingTable;
 import io.cdap.cdap.TrackingTable;
+import io.cdap.cdap.TrackingTableModule;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.ProgramController;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -79,8 +82,11 @@ public class OpenCloseDataSetTest {
 
   @BeforeClass
   public static void setup() throws Exception {
+    // the type of the datasets of the app is defined by an extension module of the dataset service
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.Extensions.MODULES, TrackingTableModule.class.getName());
     NamespacePathLocator namespacePathLocator =
-      AppFabricTestHelper.getInjector().getInstance(NamespacePathLocator.class);
+      AppFabricTestHelper.getInjector(cConf).getInstance(NamespacePathLocator.class);
     namespaceHomeLocation = namespacePathLocator.get(DefaultId.NAMESPACE);
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(DefaultId.NAMESPACE).build());

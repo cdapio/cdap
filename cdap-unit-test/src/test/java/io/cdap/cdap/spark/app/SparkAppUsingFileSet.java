@@ -22,14 +22,18 @@ import io.cdap.cdap.api.data.batch.DatasetOutputCommitter;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.dataset.DataSetException;
+import io.cdap.cdap.api.dataset.DatasetContext;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.lib.AbstractDataset;
+import io.cdap.cdap.api.dataset.lib.CompositeDatasetDefinition;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import io.cdap.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import io.cdap.cdap.api.dataset.lib.Partitioning;
 import io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet;
+import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.dataset.module.EmbeddedDataset;
 import io.cdap.cdap.spark.FileCountSparkProgram;
 import java.io.IOException;
@@ -67,7 +71,8 @@ public class SparkAppUsingFileSet extends AbstractApplication {
         .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
-      createDataset("myfs", MyFileSet.class, FileSetProperties.builder()
+      // the dataset type is defined by the MyFileSetModule, which the test registers in the dataset service
+      createDataset("myfs", MyFileSetModule.getTypeName(), FileSetProperties.builder()
         .setInputFormat(MyTextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
@@ -75,6 +80,33 @@ public class SparkAppUsingFileSet extends AbstractApplication {
       addSpark(new ScalaFileCountSparkProgram());
     } catch (Throwable t) {
       throw Throwables.propagate(t);
+    }
+  }
+
+  /**
+   * A dataset module that defines the {@link MyFileSet} dataset type. Tests register it as an extension
+   * module of the dataset service through {@code dataset.extensions.modules}.
+   */
+  public static final class MyFileSetModule implements DatasetModule {
+
+    /**
+     * Returns the name of the dataset type defined by this module.
+     */
+    public static String getTypeName() {
+      return MyFileSet.class.getName();
+    }
+
+    @Override
+    public void register(DatasetDefinitionRegistry registry) {
+      registry.add(new CompositeDatasetDefinition<MyFileSet>(getTypeName(), "files",
+                                                          registry.get("fileSet")) {
+        @Override
+        public MyFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+          FileSet embedded = getDataset(datasetContext, "files", spec, arguments, classLoader);
+          return new MyFileSet(spec, embedded);
+        }
+      });
     }
   }
 

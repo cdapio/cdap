@@ -34,8 +34,10 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.spark.app.SparkAppUsingFileSet;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.TestBase;
+import io.cdap.cdap.test.app.TransactionCapturingTable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -53,6 +55,14 @@ import org.junit.Assert;
  * TestBase for all test framework tests
  */
 public class TestFrameworkTestBase extends TestBase {
+
+  /**
+   * The dataset modules that define the types of some datasets of the test apps. They are registered as
+   * extension modules of the dataset service. Tests that run as part of the {@link TestFrameworkTestSuite}
+   * must use the same configuration as the suite.
+   */
+  public static final String DATASET_EXTENSION_MODULES =
+    TransactionCapturingTable.Module.class.getName() + "," + SparkAppUsingFileSet.MyFileSetModule.class.getName();
 
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();

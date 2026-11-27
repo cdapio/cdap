@@ -42,9 +42,9 @@ public class RouterAuditLookUpTest {
   public void testDataFabricEndpoints() throws Exception {
     // endpoints from DatasetInstanceHandler
     assertContent("/v3/namespaces/default/data/datasets/myDataset", DEFAULT_AUDIT);
-    // endpoints from DatasetTypeHandler
-    assertContent("/v3/namespaces/default/data/modules/myModule",
-                  new AuditLogConfig(HttpMethod.PUT, false, false, ImmutableList.of("X-Class-Name")));
+    // no endpoint from DatasetTypeHandler has an audit policy
+    Assert.assertNull(AUDIT_LOOK_UP.getAuditLogContent("/v3/namespaces/default/data/modules/myModule",
+                                                       HttpMethod.PUT));
   }
 
   @Test

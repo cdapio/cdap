@@ -36,6 +36,7 @@ import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.AppWithWorkflow.SampleWorkflow;
 import io.cdap.cdap.DummyAppWithTrackingTable;
 import io.cdap.cdap.SleepingWorkflowApp;
+import io.cdap.cdap.TrackingTableModule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -131,6 +132,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @BeforeClass
   public static void beforeClass() throws Throwable {
     cConf = createBasicCconf();
+    // the type of the datasets of the DummyAppWithTrackingTable is defined by an extension module
+    cConf.set(Constants.Dataset.Extensions.MODULES, TrackingTableModule.class.getName());
     initializeAndStartServices(cConf);
   }
 

@@ -110,7 +110,8 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
       for (DatasetSpecificationSummary spec : instances) {
         DatasetSpecification specification = dsFramework.getDatasetSpec(
             new DatasetId(namespace, spec.getName()));
-        if (specification.isParent(tableName)) {
+        // the specification is not available if the type of the dataset no longer exists
+        if (specification != null && specification.isParent(tableName)) {
           MetricsContext collector =
               metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
                   Constants.Metrics.Tag.DATASET, spec.getName()));

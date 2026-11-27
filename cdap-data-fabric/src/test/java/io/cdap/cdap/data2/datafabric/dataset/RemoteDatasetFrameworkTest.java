@@ -17,6 +17,7 @@
 package io.cdap.cdap.data2.datafabric.dataset;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.AbstractModule;
@@ -24,7 +25,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.dataset.DatasetDefinition;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
+import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
@@ -51,14 +56,20 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetAdminServic
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor;
+import io.cdap.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
 import io.cdap.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import io.cdap.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.SimpleKVTable;
+import io.cdap.cdap.data2.dataset2.SingleTypeModule;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
+import io.cdap.cdap.proto.DatasetModuleMeta;
+import io.cdap.cdap.proto.id.DatasetId;
+import io.cdap.cdap.proto.id.DatasetModuleId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -70,9 +81,13 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.http.HttpHandler;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
@@ -94,6 +109,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private RemoteDatasetFramework framework;
+  private TransactionRunner transactionRunner;
 
   @Before
   public void before() throws Exception {
@@ -132,7 +148,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // Tx Manager to support working with datasets
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAsync().awaitRunning();
-    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StoreDefinition.createAllTables(structuredTableAdmin);
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
@@ -147,10 +163,15 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     framework = createFramework(authenticationContext, remoteClientFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
-      new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
+      new SystemDatasetInstantiatorFactory(framework);
+
+    // dataset modules cannot be added through the remote framework, hence the modules used by the tests
+    // are registered as system modules
+    Map<String, DatasetModule> systemModules = new LinkedHashMap<>(DEFAULT_MODULES);
+    systemModules.putAll(TEST_MODULES);
 
     DatasetAdminService datasetAdminService =
-      new DatasetAdminService(framework, cConf, locationFactory, datasetInstantiatorFactory, impersonator);
+      new DatasetAdminService(framework, cConf, datasetInstantiatorFactory, impersonator, systemModules);
     ImmutableSet<HttpHandler> handlers =
       ImmutableSet.of(new DatasetAdminOpHTTPHandler(datasetAdminService));
     opExecutorService = new DatasetOpExecutorService(cConf, SConfiguration.create(),
@@ -159,12 +180,11 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     AccessEnforcer accessEnforcer = injector.getInstance(AccessEnforcer.class);
 
-    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, impersonator, transactionRunner);
+    DatasetTypeManager typeManager = new DatasetTypeManager(locationFactory, impersonator, transactionRunner);
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(transactionRunner);
-    DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(typeManager, namespaceQueryAdmin,
-                                                                         namespacePathLocator, cConf, impersonator,
+    DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(typeManager, namespaceQueryAdmin, cConf,
                                                                          txSystemClientService, transactionRunner,
-                                                                         DEFAULT_MODULES);
+                                                                         systemModules);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, accessEnforcer,
                                                                          authenticationContext);
 
@@ -217,6 +237,89 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     }
   }
 
+  @Test
+  public void testAddModuleNotSupported() throws Exception {
+    DatasetFramework framework = getFramework();
+    DatasetModuleId moduleId = NAMESPACE_ID.datasetModule("keyValue");
+    try {
+      framework.addModule(moduleId, new SingleTypeModule(SimpleKVTable.class));
+      Assert.fail("Should not be able to add a dataset module");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
+    try {
+      framework.addModule(moduleId, new SingleTypeModule(SimpleKVTable.class),
+                          locationFactory.create("keyValue.jar"));
+      Assert.fail("Should not be able to add a dataset module");
+    } catch (UnsupportedOperationException e) {
+      // expected
+    }
+    Assert.assertFalse(framework.hasType(NAMESPACE_ID.datasetType(SimpleKVTable.class.getName())));
+  }
+
+  /**
+   * Tests that a dataset cannot be instantiated if its type is defined by a module that has a jar location.
+   */
+  @Test
+  public void testCustomTypeNotSupported() throws Exception {
+    DatasetFramework framework = getFramework();
+    DatasetId datasetId = NAMESPACE_ID.dataset("customDataset");
+    // write a module with a jar location and an instance of its type to the store. The module class is not
+    // available in the classpath.
+    DatasetModuleMeta moduleMeta = new DatasetModuleMeta(
+      "customModule", "io.cdap.cdap.test.NotInClasspathModule",
+      locationFactory.create("customModule.jar").toURI(),
+      ImmutableList.of("customType"), Collections.emptyList());
+    TransactionRunners.run(transactionRunner, context -> {
+      DatasetTypeTable.create(context).writeModule(NAMESPACE_ID, moduleMeta);
+    });
+    new DatasetInstanceManager(transactionRunner)
+      .add(NAMESPACE_ID, DatasetSpecification.builder(datasetId.getDataset(), "customType").build());
+
+    // the dataset exists, but neither the dataset nor its admin can be instantiated
+    Assert.assertTrue(framework.hasInstance(datasetId));
+    Assert.assertNotNull(framework.getDatasetSpec(datasetId));
+    try {
+      framework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.fail("Should not be able to instantiate a dataset of a custom type");
+    } catch (DatasetManagementException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("custom dataset types are not supported"));
+    }
+    try {
+      framework.getAdmin(datasetId, null);
+      Assert.fail("Should not be able to instantiate the admin of a dataset of a custom type");
+    } catch (DatasetManagementException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("custom dataset types are not supported"));
+    }
+
+    // the dataset cannot be updated or truncated, and no other dataset of that type can be created
+    try {
+      framework.updateInstance(datasetId, DatasetProperties.EMPTY);
+      Assert.fail("Should not be able to update a dataset of a custom type");
+    } catch (DatasetManagementException e) {
+      // expected
+    }
+    try {
+      framework.truncateInstance(datasetId);
+      Assert.fail("Should not be able to truncate a dataset of a custom type");
+    } catch (DatasetManagementException e) {
+      // expected
+    }
+    try {
+      framework.addInstance("customType", NAMESPACE_ID.dataset("customDataset2"), DatasetProperties.EMPTY);
+      Assert.fail("Should not be able to create a dataset of a custom type");
+    } catch (DatasetManagementException e) {
+      // expected
+    }
+    Assert.assertFalse(framework.hasInstance(NAMESPACE_ID.dataset("customDataset2")));
+
+    // the dataset and the module can be deleted
+    framework.deleteInstance(datasetId);
+    Assert.assertFalse(framework.hasInstance(datasetId));
+    framework.deleteAllModules(NAMESPACE_ID);
+    Assert.assertFalse(framework.hasType(NAMESPACE_ID.datasetType("customType")));
+  }
+
   @After
   public void after() {
     Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
@@ -225,5 +328,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   @Override
   protected DatasetFramework getFramework() {
     return framework;
+  }
+
+  @Override
+  protected boolean supportsAddModule() {
+    return false;
   }
 }
