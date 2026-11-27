@@ -22,6 +22,8 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +37,7 @@ public class MacroParser {
 
   private static final Pattern ARGUMENT_DELIMITER = Pattern.compile(",");
   private static final int MAX_SUBSTITUTION_DEPTH = 10;
+  private static final String SECURE_FUNCTION = "secure";
   private static final Gson GSON = new Gson();
 
   private final MacroEvaluator macroEvaluator;
@@ -72,7 +75,7 @@ public class MacroParser {
       return null;
     }
     // final string should have escapes that are not directly embedded in macro syntax replaced
-    return replaceEscapedSyntax(parse(str, 0));
+    return replaceEscapedSyntax(parse(str, 0, false));
   }
 
   /**
@@ -81,9 +84,12 @@ public class MacroParser {
    *
    * @param str the raw string containing macro syntax
    * @param depth the current depth of expansion
+   * @param insideEnclosingMacro whether this parse invocation is expanding a macro nested inside an
+   *     enclosing {@code ${...}} expression
    * @return the parsed string
    */
-  private String parse(String str, int depth) throws InvalidMacroException {
+  private String parse(String str, int depth, boolean insideEnclosingMacro)
+      throws InvalidMacroException {
     boolean substituted = depth > 0;
     if (depth > MAX_SUBSTITUTION_DEPTH) {
       // Omit str because depth > 0 implies macro values have already been substituted into it.
@@ -92,7 +98,8 @@ public class MacroParser {
               MAX_SUBSTITUTION_DEPTH));
     }
 
-    MacroMetadata macroPosition = findRightmostMacro(str, str.length(), substituted);
+    MacroMetadata macroPosition = findRightmostMacro(str, str.length(), substituted,
+        insideEnclosingMacro);
     while (macroPosition != null) {
       // in the case that the MacroEvaluator does not internally handle unspecified macros
       if (macroPosition.substitution == null) {
@@ -107,14 +114,15 @@ public class MacroParser {
       String middle = macroPosition.substitution;
       if (macroPosition.evaluateRecursively) {
         substituted = true;
-        middle = parse(macroPosition.substitution, depth + 1);
+        boolean nested = insideEnclosingMacro || hasEnclosingMacro(str, macroPosition.startIndex);
+        middle = parse(macroPosition.substitution, depth + 1, nested);
       }
       str = left + middle + right;
       // if we need to evaluate recursively, we need to search from the end of the string
       // otherwise, we only need to start searching from where the previous macro began
       int startPos =
           macroPosition.evaluateRecursively ? str.length() : macroPosition.startIndex - 1;
-      macroPosition = findRightmostMacro(str, startPos, substituted);
+      macroPosition = findRightmostMacro(str, startPos, substituted, insideEnclosingMacro);
     }
     return str;
   }
@@ -127,11 +135,13 @@ public class MacroParser {
    * @param str the string to find a macro in
    * @param pos the position in the string to begin search for a macro.
    * @param substituted whether any macro substitution has already been applied to {@code str}
+   * @param insideEnclosingMacro whether {@code str} is already being expanded inside an outer macro
    * @return the rightmost macro and its position in the string
    * @throws InvalidMacroException if invalid macro syntax was found.
    */
   @Nullable
-  private MacroMetadata findRightmostMacro(String str, int pos, boolean substituted)
+  private MacroMetadata findRightmostMacro(String str, int pos, boolean substituted,
+      boolean insideEnclosingMacro)
       throws InvalidMacroException {
     // find opening "${" skipping escaped syntax "\${" and allowing doubly-escaping "\\${"
     int startIndex = getStartIndex(str, pos);
@@ -160,12 +170,14 @@ public class MacroParser {
     // determine whether to use a macro function or a property lookup
     if (argsStartIndex >= 0) {
       return getMacroFunctionMetadata(startIndex, endIndex, macroStr, argsStartIndex, str,
-          substituted);
+          substituted, insideEnclosingMacro);
     } else {
       macroStr = replaceEscapedSyntax(macroStr);
       if (lookupsEnabled) {
         try {
           return new MacroMetadata(macroEvaluator.lookup(macroStr), startIndex, endIndex, true);
+        } catch (NestedSecureMacroException e) {
+          throw e;
         } catch (InvalidMacroException e) {
           if (!skipInvalid) {
             if (substituted) {
@@ -193,11 +205,13 @@ public class MacroParser {
    * @param argsStartIndex the index of start parenthesis
    * @param originalString the original string
    * @param substituted whether any macro substitution has already been applied
+   * @param insideEnclosingMacro whether this invocation is inside an outer macro
    */
   private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr,
       int argsStartIndex,
       String originalString,
-      boolean substituted) {
+      boolean substituted,
+      boolean insideEnclosingMacro) {
     // check for closing ")" and allow escaping "\)" and doubly-escaping "\\)"
     int closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
 
@@ -248,6 +262,13 @@ public class MacroParser {
     // if the whitelist is empty, that means no whitelist was set, so every function should be evaluated.
     if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(
         macroFunction))) {
+      boolean isNested = insideEnclosingMacro || hasEnclosingMacro(originalString, startIndex);
+      if (SECURE_FUNCTION.equals(macroFunction) && isNested) {
+        // Reject before invoking the evaluator so secrets cannot be reflected into skipped outer
+        // macros, plugin validation errors, outbound requests, or secure-store invalid-ID logs.
+        throw new NestedSecureMacroException(
+            "Macro 'secure' cannot be nested inside another macro.");
+      }
       try {
         switch (macroEvaluator.evaluateAs(macroFunction)) {
           case STRING:
@@ -258,7 +279,8 @@ public class MacroParser {
             Map<String, String> properties = macroEvaluator.evaluateMap(macroFunction, args);
             Map<String, String> evaluated = new HashMap<>();
             properties.forEach((key, val) -> {
-              evaluated.put(key, parse(val));
+              evaluated.put(key,
+                  val == null ? null : replaceEscapedSyntax(parse(val, 0, isNested)));
             });
             return new MacroMetadata(GSON.toJson(evaluated), startIndex, endIndex, true);
           default:
@@ -267,6 +289,8 @@ public class MacroParser {
                 "Unsupported macro object type, the supported types are string and map.");
         }
 
+      } catch (NestedSecureMacroException e) {
+        throw e;
       } catch (InvalidMacroException e) {
         if (!skipInvalid || doNotSkipInvalidMacroForFunctions.contains(macroFunction)) {
           if (substituted) {
@@ -281,6 +305,33 @@ public class MacroParser {
     // return the original string with the surrounding ${},
     // and turn off recursive evaluation to prevent it from getting evaluated in an infinite loop
     return new MacroMetadata(String.format("${%s}", macroStr), startIndex, endIndex, false);
+  }
+
+  /**
+   * Returns true if {@code pos} lies inside an unclosed macro expression {@code ${...}} in
+   * {@code str}. Plain braces {@code {...}} are tracked separately so JSON around a top-level
+   * macro does not count as an enclosing macro, while braces inside an outer macro cannot close it.
+   */
+  private boolean hasEnclosingMacro(String str, int pos) {
+    Deque<Boolean> openBraces = new ArrayDeque<>();
+    int openMacros = 0;
+    for (int i = 0; i < pos; i++) {
+      char c = str.charAt(i);
+      if (c == '$' && i + 1 < pos && str.charAt(i + 1) == '{') {
+        if (!isEscaped(i, str)) {
+          openBraces.push(true);
+          openMacros++;
+        }
+        i++;
+      } else if (c == '{' && !isEscaped(i, str)) {
+        openBraces.push(false);
+      } else if (c == '}' && !isEscaped(i, str) && !openBraces.isEmpty()) {
+        if (openBraces.pop()) {
+          openMacros--;
+        }
+      }
+    }
+    return openMacros > 0;
   }
 
   /**
@@ -353,6 +404,13 @@ public class MacroParser {
       }
     }
     return syntaxRebuilder.toString();
+  }
+
+  private static final class NestedSecureMacroException extends InvalidMacroException {
+
+    private NestedSecureMacroException(String message) {
+      super(message);
+    }
   }
 
   private static final class MacroMetadata {
