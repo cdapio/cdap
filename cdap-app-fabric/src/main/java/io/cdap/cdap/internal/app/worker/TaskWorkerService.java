@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.worker;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -29,17 +31,29 @@ import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.TaskWorkerHttpHandlerInternal;
+import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.gateway.handlers.PingHandler;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.auth.AccessToken;
+import io.cdap.cdap.security.auth.InvalidTokenException;
+import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.UserIdentity;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpRequest;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -55,8 +69,23 @@ public class TaskWorkerService extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final boolean callerAuthEnabled;
+  @Nullable
+  private final TokenManager tokenManager;
+  @Nullable
+  private final Codec<AccessToken> accessTokenCodec;
   private Cancellable cancelDiscovery;
   private InetSocketAddress bindAddress;
+
+  TaskWorkerService(CConfiguration cConf,
+      SConfiguration sConf,
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+    this(cConf, sConf, discoveryService, discoveryServiceClient, metricsCollectionService,
+        commonNettyHttpServiceFactory, null, null);
+  }
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
@@ -64,8 +93,16 @@ public class TaskWorkerService extends AbstractIdleService {
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
       MetricsCollectionService metricsCollectionService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      @Nullable TokenManager tokenManager,
+      @Nullable Codec<AccessToken> accessTokenCodec) {
     this.discoveryService = discoveryService;
+    this.callerAuthEnabled = cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
+    Preconditions.checkState(!callerAuthEnabled || (tokenManager != null && accessTokenCodec != null),
+        "TokenManager and Codec<AccessToken> are required when %s is enabled",
+        Constants.Security.INTERNAL_AUTH_ENABLED);
+    this.tokenManager = tokenManager;
+    this.accessTokenCodec = accessTokenCodec;
 
     // set workdir location in cConf
     // workdir location is unique per task worker and accessible via env var
@@ -78,7 +115,7 @@ public class TaskWorkerService extends AbstractIdleService {
         new PingHandler(),
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
             discoveryServiceClient, this::stopService,
-            metricsCollectionService));
+            metricsCollectionService, this::isCallerAllowed));
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.TASK_WORKER)
@@ -104,6 +141,9 @@ public class TaskWorkerService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting TaskWorkerService");
+    if (callerAuthEnabled) {
+      Services.startAndWait(tokenManager);
+    }
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
@@ -117,6 +157,9 @@ public class TaskWorkerService extends AbstractIdleService {
     LOG.debug("Shutting down TaskWorkerService");
     httpService.stop(1, 2, TimeUnit.SECONDS);
     cancelDiscovery.cancel();
+    if (callerAuthEnabled) {
+      Services.stopAndWait(tokenManager);
+    }
     LOG.debug("Shutting down TaskWorkerService has completed");
   }
 
@@ -127,6 +170,45 @@ public class TaskWorkerService extends AbstractIdleService {
      * the service gets stopped.
      */
     stopAsync();
+  }
+
+  /**
+   * Returns whether a task request came from a CDAP system service, or if caller auth is disabled.
+   */
+  private boolean isCallerAllowed(HttpRequest request) {
+    if (!callerAuthEnabled) {
+      return true;
+    }
+    try {
+      checkCaller(request.headers().get(Constants.Security.Headers.WORKER_CALLER_TOKEN));
+      return true;
+    } catch (Exception e) {
+      LOG.warn("Rejected a task that failed the caller check: {}",
+          Throwables.getRootCause(e).toString(), e);
+      return false;
+    }
+  }
+
+  /**
+   * Checks that the caller sent an internal token of a CDAP system service.
+   */
+  private void checkCaller(@Nullable String callerToken)
+      throws IOException, InvalidTokenException {
+    String prefix = Credential.CREDENTIAL_TYPE_INTERNAL + " ";
+    if (callerToken == null || !callerToken.startsWith(prefix)) {
+      throw new UnauthorizedException("No internal caller token");
+    }
+    AccessToken accessToken = accessTokenCodec.decode(
+        Base64.getDecoder().decode(callerToken.substring(prefix.length())));
+    if (accessToken == null || accessToken.getIdentifier() == null) {
+      throw new UnauthorizedException("Invalid internal caller token");
+    }
+    tokenManager.validateSecret(accessToken);
+    UserIdentity identity = accessToken.getIdentifier();
+    if (!UserIdentity.IdentifierType.INTERNAL.equals(identity.getIdentifierType())
+        || Constants.Security.Authentication.RUNTIME_IDENTITY.equals(identity.getUsername())) {
+      throw new UnauthorizedException("Caller token is not a system service internal token");
+    }
   }
 
   @VisibleForTesting

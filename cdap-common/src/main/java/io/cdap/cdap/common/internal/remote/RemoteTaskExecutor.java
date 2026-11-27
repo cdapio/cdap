@@ -75,6 +75,7 @@ public class RemoteTaskExecutor {
   private final Predicate<Throwable> retryablePredicate;
   private final MetricsCollectionService metricsCollectionService;
   private final String workerUrl;
+  private final boolean sendCallerToken;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
       RemoteClientFactory remoteClientFactory, Type workerType) {
@@ -97,11 +98,13 @@ public class RemoteTaskExecutor {
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.TASK_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_TASK_WORKER;
+      this.sendCallerToken = cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED);
     } else {
       this.workerUrl = SYSTEM_WORKER_URL;
       this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
           Constants.Service.SYSTEM_WORKER + ".");
       this.retryablePredicate = RETRYABLE_PREDICATE_SYSTEM_WORKER;
+      this.sendCallerToken = false;
     }
   }
 
@@ -121,14 +124,7 @@ public class RemoteTaskExecutor {
     try {
       return Retries.callWithRetries((retryContext) -> {
         try {
-          HttpRequest.Builder requestBuilder = remoteClient
-              .requestBuilder(HttpMethod.POST, workerUrl)
-              .withBody(requestBody.duplicate());
-          if (compression) {
-            requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
-            requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
-          }
-          HttpRequest httpRequest = requestBuilder.build();
+          HttpRequest httpRequest = buildHttpRequest(requestBody);
 
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
@@ -161,6 +157,21 @@ public class RemoteTaskExecutor {
       emitMetrics(startTime, false, runnableTaskRequest, getAttempts(e));
       throw e;
     }
+  }
+
+  private HttpRequest buildHttpRequest(ByteBuffer requestBody) {
+    HttpRequest.Builder requestBuilder = remoteClient
+        .requestBuilder(HttpMethod.POST, workerUrl)
+        .withBody(requestBody.duplicate());
+    if (compression) {
+      requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+      requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
+    }
+    if (sendCallerToken) {
+      remoteClient.setSystemCredentialHeader(requestBuilder::addHeader,
+          Constants.Security.Headers.WORKER_CALLER_TOKEN);
+    }
+    return requestBuilder.build();
   }
 
   private Exception getTaskException(ServiceException e) {

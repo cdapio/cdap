@@ -18,12 +18,14 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.distributed.MockMasterEnvironment;
 import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -36,6 +38,17 @@ public class TaskWorkerTwillRunnableTest {
     MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
     Injector injector = TaskWorkerTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
     injector.getInstance(ArtifactManagerFactory.class).create(NamespaceId.SYSTEM, RetryStrategies.noRetry());
+  }
+
+  @Test
+  public void testTaskWorkerServiceInjection() {
+    MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
+    CConfiguration cConf = CConfiguration.create();
+    // Don't schedule the periodic restart, which exits the JVM.
+    cConf.setInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
+    cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
+    Injector injector = TaskWorkerTwillRunnable.createInjector(cConf, new Configuration());
+    Assert.assertNotNull(injector.getInstance(TaskWorkerService.class));
   }
 }
 
