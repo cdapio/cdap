@@ -14,16 +14,20 @@
 
 package io.cdap.cdap.datapipeline;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.datapipeline.oauth.OAuthAccessToken;
+import io.cdap.cdap.datapipeline.oauth.OAuthClientCredentials;
 import io.cdap.cdap.datapipeline.oauth.OAuthProvider;
 import io.cdap.cdap.datapipeline.oauth.AuthType;
 import io.cdap.cdap.datapipeline.oauth.RefreshType;
@@ -38,6 +42,7 @@ import io.cdap.cdap.spi.data.transaction.TxRunnable;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
@@ -45,7 +50,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -244,5 +251,99 @@ public class OAuthStoreTest {
 
     oauthStore.releaseLease(PROVIDER_NAME, "cred-1", "worker-1");
     verify(mockSecureStoreManager, times(1)).releaseLease(anyString(), anyString(), eq("worker-1"));
+  }
+
+  @Test
+  public void testWriteProviderReuseFailsBeforeMutatingTableWhenCredentialMissing() throws Exception {
+    OAuthProvider provider = OAuthProvider.newBuilder()
+        .withName(PROVIDER_NAME)
+        .withLoginURL(LOGIN_URL)
+        .withTokenRefreshURL(TOKEN_REFRESH_URL)
+        .withUserAgent(USER_AGENT)
+        .build();
+
+    when(mockSecureStore.getMetadata("system", "oauthclientcreds-" + PROVIDER_NAME)).thenReturn(null);
+    try {
+      oauthStore.writeProvider(provider, true);
+      fail("Expected OAuthStoreException when credential metadata is null");
+    } catch (OAuthStoreException expected) {
+      assertEquals("Client credential should be present in the secure store", expected.getMessage());
+    }
+
+    when(mockSecureStore.getMetadata("system", "oauthclientcreds-" + PROVIDER_NAME))
+        .thenThrow(new RuntimeException("not found"));
+    try {
+      oauthStore.writeProvider(provider, true);
+      fail("Expected OAuthStoreException when credential lookup fails");
+    } catch (OAuthStoreException expected) {
+      assertTrue(expected.getMessage().contains("does not exist"));
+    }
+
+    verify(mockTransactionRunner, never()).run(any(TxRunnable.class));
+    verify(mockTable, never()).upsert(any());
+  }
+
+  @Test
+  public void testWriteProviderNewFailsBeforeMutatingTableWhenSecretWriteFails() throws Exception {
+    OAuthClientCredentials creds = OAuthClientCredentials.newBuilder()
+        .withClientId("cid")
+        .withClientSecret("csecret")
+        .build();
+    OAuthProvider provider = OAuthProvider.newBuilder()
+        .withName(PROVIDER_NAME)
+        .withLoginURL(LOGIN_URL)
+        .withTokenRefreshURL(TOKEN_REFRESH_URL)
+        .withClientCredentials(creds)
+        .withUserAgent(USER_AGENT)
+        .build();
+
+    doThrow(new IOException("kms unavailable"))
+        .when(mockSecureStoreManager).put(eq("system"), anyString(), anyString(), anyString(), any());
+
+    try {
+      oauthStore.writeProvider(provider, false);
+      fail("Expected OAuthStoreException when secure store put fails");
+    } catch (OAuthStoreException expected) {
+      assertEquals("Failed to write to OAuth provider secure storage", expected.getMessage());
+    }
+
+    verify(mockTransactionRunner, never()).run(any(TxRunnable.class));
+    verify(mockTable, never()).upsert(any());
+  }
+
+  @Test
+  public void testWriteProviderChecksOrWritesSecureStoreBeforeTableUpsert() throws Exception {
+    doAnswer(invocation -> {
+      TxRunnable runnable = invocation.getArgument(0);
+      StructuredTableContext mockContext = mock(StructuredTableContext.class);
+      when(mockContext.getTable(any())).thenReturn(mockTable);
+      runnable.run(mockContext);
+      return null;
+    }).when(mockTransactionRunner).run(any(TxRunnable.class));
+
+    OAuthClientCredentials creds = OAuthClientCredentials.newBuilder()
+        .withClientId("cid")
+        .withClientSecret("csecret")
+        .build();
+    OAuthProvider provider = OAuthProvider.newBuilder()
+        .withName(PROVIDER_NAME)
+        .withLoginURL(LOGIN_URL)
+        .withTokenRefreshURL(TOKEN_REFRESH_URL)
+        .withClientCredentials(creds)
+        .withUserAgent(USER_AGENT)
+        .build();
+
+    oauthStore.writeProvider(provider, false);
+    InOrder newOrder = inOrder(mockSecureStoreManager, mockTable);
+    newOrder.verify(mockSecureStoreManager)
+        .put(eq("system"), eq("oauthclientcreds-" + PROVIDER_NAME), anyString(), anyString(), any());
+    newOrder.verify(mockTable).upsert(any());
+
+    when(mockSecureStore.getMetadata("system", "oauthclientcreds-" + PROVIDER_NAME))
+        .thenReturn(new SecureStoreMetadata("oauthclientcreds-" + PROVIDER_NAME, "desc", 0L, Collections.emptyMap()));
+    oauthStore.writeProvider(provider, true);
+    InOrder reuseOrder = inOrder(mockSecureStore, mockTable);
+    reuseOrder.verify(mockSecureStore).getMetadata("system", "oauthclientcreds-" + PROVIDER_NAME);
+    reuseOrder.verify(mockTable).upsert(any());
   }
 }
