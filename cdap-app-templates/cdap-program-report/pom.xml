@@ -119,6 +119,18 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-mapred</artifactId>
+      <exclusions>
+        <!-- avro-ipc is only needed for Avro RPC / tether jobs, which cdap-program-report does not use.
+             It brings in velocity-engine-core (commons-io 2.8.0) and, through avro-ipc-jetty, Jetty. -->
+        <exclusion>
+          <groupId>org.apache.avro</groupId>
+          <artifactId>avro-ipc</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.avro</groupId>
+          <artifactId>avro-ipc-jetty</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
