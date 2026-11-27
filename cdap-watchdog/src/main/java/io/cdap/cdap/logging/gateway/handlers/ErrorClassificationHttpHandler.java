@@ -34,7 +34,10 @@ import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.read.ReadRange;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.InstanceId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -101,6 +104,11 @@ public class ErrorClassificationHttpHandler extends AbstractLogHttpHandler {
     ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
         program);
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    if (NamespaceId.SYSTEM.equals(appId.getNamespaceId())) {
+      // Same rule as LogHttpHandler: system app logs need instance-level read access.
+      accessEnforcer.enforceOnParent(EntityType.NAMESPACE, InstanceId.SELF,
+          authenticationContext.getPrincipal(), StandardPermission.LIST);
+    }
   }
 
   /**
