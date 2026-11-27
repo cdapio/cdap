@@ -29,7 +29,6 @@ CDAP HTTP RESTful API v3
     Preferences <preferences>
     Profile <profile>
     Query <query>
-    Reports <reports>
     Security <security>
     Service <service>
     Transactions <transactions>
@@ -75,7 +74,6 @@ metadata to achieve application and data isolation. This is an inital step towar
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
 - :doc:`Dashboard: <dashboard>` check in real time status of past program runs and predict future resource usage
-- :doc:`Reports: <reports>` generate reports to understand and monitor program runs and their performance
 
 
 .. rubric:: Alphabetical List of APIs
@@ -99,7 +97,6 @@ metadata to achieve application and data isolation. This is an inital step towar
 - :doc:`Dashboard: <dashboard>` check in real time status of past program runs and predict future resource usage
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
-- :doc:`Reports: <reports>` generate reports to understand and monitor program runs and their performance
 - :doc:`Security: <security>` granting, revoking, and listing privileges, as well as adding, retrieving,
   and managing *Secure Keys*
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services

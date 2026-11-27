@@ -167,14 +167,6 @@ and their expected values:
 
           "dashboard": true
 
-   * - ``reports``
-     - Whether to show 'Reports' feature on the navigation bar.
-     - .. container:: highlight
-
-        .. parsed-literal::
-
-          "reports": true
-
    * - ``data-prep``
      - Whether to show 'Preparation' feature on the navigation bar.
      - .. container:: highlight

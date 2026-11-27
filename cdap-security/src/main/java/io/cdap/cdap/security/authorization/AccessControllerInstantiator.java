@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +75,12 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
 
   private static final Logger LOG = LoggerFactory.getLogger(AccessControllerInstantiator.class);
   private static final AccessControllerSpi NO_OP_ACCESS_CONTROLLER_V2 = new NoOpAccessControllerV2();
+  // Matches "sentry" case-insensitively (including CamelCase and all-caps variations like
+  // cdap-sentry-extension.jar, SentryAuthorizer, DummySentryAccessController, Dummysentry,
+  // and CDAPSENTRY) while avoiding false positives on separate words like "AccessEntry" or
+  // "MySEntry".
+  private static final Pattern SENTRY_NAME_PATTERN =
+      Pattern.compile("(?i:s)(?:e|E(?![a-z]))(?i:ntry)");
 
   private final CConfiguration cConf;
   private final InstantiatorFactory instantiatorFactory;
@@ -151,12 +158,18 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
       try {
         File accessControllerExtensionJar = new File(accessControllerExtensionJarPath);
         ensureValidAuthExtensionJar(accessControllerExtensionJar);
-        accessControllerClassLoader = createAccessControllerClassLoader(
+        AccessControllerClassLoader classLoader = createAccessControllerClassLoader(
             accessControllerExtensionJar,
             accessControllerExtraClasspath);
-        this.accessController = accessController = createAccessController(
-            accessControllerClassLoader);
-        return accessController;
+        try {
+          accessController = createAccessController(classLoader);
+          this.accessControllerClassLoader = classLoader;
+          this.accessController = accessController;
+          return accessController;
+        } catch (Throwable t) {
+          Closeables.closeQuietly(classLoader);
+          throw t;
+        }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
@@ -255,6 +268,11 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
       throws InvalidAccessControllerException {
 
     String accessControllerClassName = classLoader.getAccessControllerClassName();
+    if (accessControllerClassName != null && isSentryName(accessControllerClassName)) {
+      throw new InvalidAccessControllerException(
+          String.format("Apache Sentry authorization extension class %s is no longer supported.",
+              accessControllerClassName));
+    }
     Class<?> accessControllerClass;
     try {
       accessControllerClass = classLoader.loadClass(accessControllerClassName);
@@ -279,8 +297,17 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
     return accessControllerClass;
   }
 
+  private static boolean isSentryName(String name) {
+    return SENTRY_NAME_PATTERN.matcher(name).find();
+  }
+
   private void ensureValidAuthExtensionJar(File accessControllerExtensionJar)
       throws InvalidAccessControllerException {
+    if (isSentryName(accessControllerExtensionJar.getName())) {
+      throw new InvalidAccessControllerException(
+          String.format("Apache Sentry authorization extension %s is no longer supported.",
+              accessControllerExtensionJar.getName()));
+    }
     if (!accessControllerExtensionJar.exists()) {
       throw new InvalidAccessControllerException(
           String.format("Authorization extension jar %s specified as %s does not exist.",

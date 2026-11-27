@@ -60,7 +60,5 @@ extensions. To implement an authorization extension:
   ``security.authorization.extension.config.example.property`` in the ``cdap-site.xml``
   will be available as ``example.property`` in the ``Properties`` object.
 
-For an example of implementing an authorization extension, please refer to the
-:cdap-security-extn-source-github:`Apache Sentry Authorization Extension
-<cdap-sentry/cdap-sentry-extension/cdap-sentry-binding/src/main/java/io/cdap/cdap/security/authorization/sentry/binding/SentryAuthorizer.java>`
-as well as its documentation at :ref:`Integrations: Apache Sentry <apache-sentry>`.
+For an example of implementing an authorization extension, please refer to
+:ref:`Integrations: Apache Ranger <apache-ranger>`.

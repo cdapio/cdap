@@ -70,19 +70,12 @@ Integrations
 - |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
 
 
-.. rubric:: Apache Sentry
-
-.. |apache-sentry| replace:: **Integrations:**
-.. _apache-sentry: apache-sentry.html
-
-- |apache-sentry|_ Configuring and integrating CDAP with **Apache Sentry**
-
 .. rubric:: Apache Ranger
 
 .. |apache-ranger| replace:: **Integrations:**
 .. _apache-ranger: apache-ranger.html
 
-- |apache-sentry|_ Configuring and integrating CDAP with **Apache Ranger**
+- |apache-ranger|_ Configuring and integrating CDAP with **Apache Ranger**
 
 .. rubric:: Apache Hadoop Key Management Server (KMS)
 

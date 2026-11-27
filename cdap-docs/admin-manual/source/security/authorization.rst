@@ -53,7 +53,6 @@ Authorization in CDAP is implemented as :ref:`authorization extensions
 require additional properties to be configured. Please see the documentation on
 individual extensions for configuring properties specific to that extension:
 
-- :ref:`Integrations: Apache Sentry <apache-sentry>`
 - `Integrations: Apache Ranger <https://github.com/cdapio/cdap-security-extn/wiki/CDAP-Ranger-Extension>`_
 
 :ref:`Security extension properties <appendix-cdap-default-security>`, which are specified
@@ -355,97 +354,7 @@ Wildcards can be used in the entity name to grant or revoke actions on multiple 
 - ``*`` matches zero or more characters
 - ``?`` matches a single character
 
-The following sections provide examples on granting wildcard privileges.
-
-.. _security-sentry-integration:
-
-Sentry Integration
-------------------
-:ref:`CDAP CLI <cdap-cli>` can be used to grant or revoke the privileges for :ref:`Integrations: Apache Sentry <apache-sentry>`.
-Full list of commands are documented at :ref:`security commands <cli-available-commands-security>`.
-
-Sentry only allows granting privileges to roles. Roles can then be assigned to groups.
-
-- To create a new role, use::
-
-    > create role <role-name>
-
-- To grant/revoke privileges on an entity to a role, use::
-
-    > grant actions <actions> on entity <entity> to role <role-name>
-    > revoke actions <actions> on entity <entity> from role <role-name>
-
-  where:
-
-  - ``<actions>`` is a comma-separated list of privileges, any of *READ, WRITE, EXECUTE,* or *ADMIN*.
-
-  - ``<entity>`` is of the form ``<entity-type>:<entity-id>``
-
-    =====================  =============================================
-        Entity Type                 Entity Id
-    =====================  =============================================
-    ``namespace``          ``<namespace>:<namespace-id>``
-    ``application``        ``<namespace-id>.<app-id>``
-    ``program``            ``<namespace-id>.<app-id>.<program-type>.<program-id>``
-    ``dataset``            ``<namespace-id>.<dataset-id>``
-    ``stream``             ``<namespace-id>.<stream-id>``
-    ``artifact``           ``<namespace-id>.<artifact-id>``
-    ``dataset_type``       ``<namespace-id>.<dataset-type-id>``
-    ``dataset_module``     ``<namespace-id>.<dataset-module-id>``
-    ``securekey``          ``<namespace-id>.<secure-key-id>``
-    ``kerberosprincipal``  ``<kerberos-principal-id>``
-    =====================  =============================================
-
-  - ``program-type`` is one of:
-    ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``.
-
-  - Wildcards can be used in the entity name to grant privileges on multiple entities. For example,
-
-    - ``namespace:ns*`` represents all the namespaces that start with ``ns``.
-    - ``namespace:ns?`` represents all the namespaces that start with ``ns`` and followed by a single character.
-    - ``program:ns1.app1.*`` represents all the programs in the application ``app1``, in the namespace ``ns1``.
-
-- To add the role to a group, use::
-
-    > add role <role-name> to group <group-name>
-
-- To check the results, list the privileges for a principal::
-
-    > list privileges for <principal-type> <principal-name>
-
-  where ``<principal-type>`` can be ``user``, ``group`` or ``role``.
-
-**Example**
-
-To give ``alice`` (who belongs to group ``admin``), *ADMIN* privilege on namespace ``ns1``, and all the
-entities in the namespace, do the following:
-
-- create a new role ``ns1_administrator``
-
-- grant the role ``ns1_administrator`` *ADMIN* on these entities:
-
-  - ``namespace:ns1``
-  - ``application:ns1.*``
-  - ``program:ns1.*.*``
-  - ``artifact:ns1.*``
-  - ``dataset:ns1.*``
-  - ``stream:ns1.*``
-  - ``dataset_type:ns1.*``
-  - ``dataset_module:ns1.*``
-  - ``securekey:ns1.*``
-
-- add role ``ns1_administrator`` to group ``admin``
-
-**Note:**
-
-- Only users in Sentry admin group can grant/revoke the privileges. Groups can be added to or removed from the Sentry
-  admin group by updating the property ``sentry.service.admin.group`` in the Sentry configuration.
-- CDAP fetches roles/privileges from Sentry to enforce the authorization policy. Since only users in Sentry admin group
-  can fetch roles from Sentry, CDAP will need to be added as a Sentry admin. CDAP can be configured to use a different
-  group to fetch roles by changing ``security.authorization.extension.config.sentry.admin.group`` in CDAP configuration.
-- CDAP caches privileges fetched from Sentry to improve performance. Any update to the privileges will be reflected
-  in CDAP after the cache timeout. By default, the cache timeout is 10 minutes. This value can be changed by
-  modifying the value of ``security.authorization.cache.ttl.secs`` in CDAP configuration.
+The following section provides examples on granting wildcard privileges.
 
 .. _security-ranger-integration:
 

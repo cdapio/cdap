@@ -46,6 +46,8 @@ import io.cdap.cdap.security.spi.authorization.NoOpAccessController;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -307,6 +309,136 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     }
   }
 
+  @Test
+  public void testSentryAccessControllerJarRejected() throws Exception {
+    Location validJar = createValidAuthExtensionJar();
+    File sentryJar = new File(TEMP_FOLDER.newFolder(), "cdap-Sentry-extension.jar");
+    Files.copy(new File(validJar.toURI()).toPath(), sentryJar.toPath(),
+        StandardCopyOption.REPLACE_EXISTING);
+
+    assertSentryExtensionRejected(sentryJar,
+        "Apache Sentry authorization extension cdap-Sentry-extension.jar is no longer supported.");
+  }
+
+  @Test
+  public void testNonExistentSentryJarRejectedBeforeExistenceCheck() throws Exception {
+    File missingSentryJar = new File(TEMP_FOLDER.newFolder(), "cdap-sentry-extension.jar");
+    Assert.assertFalse(missingSentryJar.exists());
+
+    assertSentryExtensionRejected(missingSentryJar,
+        "Apache Sentry authorization extension cdap-sentry-extension.jar is no longer supported.");
+  }
+
+  @Test
+  public void testValidJarInSentryDirectoryAllowed() throws Exception {
+    Location validJar = createValidAuthExtensionJar();
+    File sentryDir = new File(TEMP_FOLDER.newFolder(), "sentry");
+    Assert.assertTrue(sentryDir.mkdirs());
+    File authJar = new File(sentryDir, "valid-auth.jar");
+    Files.copy(new File(validJar.toURI()).toPath(), authJar.toPath(),
+        StandardCopyOption.REPLACE_EXISTING);
+
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authJar.getAbsolutePath());
+    try (AccessControllerInstantiator instantiator =
+        new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      AccessControllerSpi accessController = instantiator.get();
+      Assert.assertEquals(ValidExternalAccessController.class.getName(),
+          accessController.getClass().getName());
+    }
+  }
+
+  @Test
+  public void testUppercaseAcronymSentryJarRejected() throws Exception {
+    for (String jarName : new String[] {
+        "CDAPSentryExtension.jar", "CDAPSENTRY.jar", "Dummysentry.jar"}) {
+      File sentryJar = new File(TEMP_FOLDER.newFolder(), jarName);
+      Assert.assertFalse(sentryJar.exists());
+
+      assertSentryExtensionRejected(sentryJar,
+          String.format("Apache Sentry authorization extension %s is no longer supported.",
+              jarName));
+    }
+  }
+
+  @Test
+  public void testNonSentryAccessEntryExtensionAllowed() throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS,
+        ValidAccessEntryAuthorizer.class.getName());
+    Location accessEntryJar = AppJarHelper.createDeploymentJar(locationFactory,
+        ValidAccessEntryAuthorizer.class, manifest);
+    File authJar = new File(TEMP_FOLDER.newFolder(), "cdap-MySEntry.jar");
+    Files.copy(new File(accessEntryJar.toURI()).toPath(), authJar.toPath(),
+        StandardCopyOption.REPLACE_EXISTING);
+
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authJar.getAbsolutePath());
+    try (AccessControllerInstantiator instantiator =
+        new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      AccessControllerSpi accessController = instantiator.get();
+      Assert.assertEquals(ValidAccessEntryAuthorizer.class.getName(),
+          accessController.getClass().getName());
+    }
+  }
+
+  @Test
+  public void testRenamedJarWithSentryMainClassRejected() throws Exception {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS,
+        DummySentryAccessController.class.getName());
+    Location sentryClassJar = AppJarHelper.createDeploymentJar(locationFactory,
+        DummySentryAccessController.class, manifest);
+    File renamedJar = new File(TEMP_FOLDER.newFolder(), "custom-auth.jar");
+    Files.copy(new File(sentryClassJar.toURI()).toPath(), renamedJar.toPath(),
+        StandardCopyOption.REPLACE_EXISTING);
+
+    File localDataDir = TEMP_FOLDER.newFolder();
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH,
+        renamedJar.getAbsolutePath());
+    String expectedMessage = "Apache Sentry authorization extension class "
+        + DummySentryAccessController.class.getName() + " is no longer supported.";
+
+    try (AccessControllerInstantiator instantiator =
+        new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      assertSentryGetThrows(instantiator, renamedJar, expectedMessage);
+      // Verify the rejected AccessControllerClassLoader cleaned up its unpacked temp directory
+      // immediately (before instantiator.close()) so repeated get() calls do not leak FDs or disk.
+      File tempDir = new File(localDataDir, cConfCopy.get(Constants.AppFabric.TEMP_DIR));
+      Assert.assertTrue("Expected temp base dir to exist: " + tempDir, tempDir.isDirectory());
+      String[] leftover = tempDir.list();
+      Assert.assertNotNull("Failed to list temp dir: " + tempDir, leftover);
+      Assert.assertEquals("Expected no leaked temp dirs after rejection, found "
+          + Arrays.toString(leftover), 0, leftover.length);
+    }
+  }
+
+  private void assertSentryExtensionRejected(File extensionJar, String expectedMessage)
+      throws IOException {
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH,
+        extensionJar.getAbsolutePath());
+    try (AccessControllerInstantiator instantiator =
+        new AccessControllerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      assertSentryGetThrows(instantiator, extensionJar, expectedMessage);
+    }
+  }
+
+  private void assertSentryGetThrows(AccessControllerInstantiator instantiator, File extensionJar,
+      String expectedMessage) {
+    try {
+      instantiator.get();
+      Assert.fail("Expected Sentry authorization extension to be rejected: " + extensionJar);
+    } catch (RuntimeException e) {
+      Throwable root = Throwables.getRootCause(e);
+      Assert.assertTrue("Expected InvalidAccessControllerException, got " + root,
+          root instanceof InvalidAccessControllerException);
+      Assert.assertEquals(expectedMessage, root.getMessage());
+    }
+  }
+
   private Location createInvalidExternalAuthJar(@Nullable Manifest manifest) throws IOException {
     String jarName = "external-accessController";
     Location externalAuthJar = locationFactory.create(jarName).getTempFile(".jar");
@@ -370,6 +502,12 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
   }
 
   // Dummy Classes to test supported spi both old and new.
+
+  public static final class DummySentryAccessController extends NoOpAccessControllerV2 {
+  }
+
+  public static final class ValidAccessEntryAuthorizer extends NoOpAccessControllerV2 {
+  }
 
   private static final class DoesNotImplementAccessController {
   }

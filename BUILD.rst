@@ -51,13 +51,13 @@ CDAP Sandbox and Distributed CDAP
 - Build CDAP Sandbox distribution ZIP::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl \
     -am -amd -DskipTests -P templates,dist,release,unit-tests
 
 - Build CDAP Sandbox distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl \
     -am -amd -DskipTests -P templates,dist,release,unit-tests \
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>
 

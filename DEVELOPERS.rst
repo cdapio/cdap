@@ -63,7 +63,7 @@ environments and build options, please see the
 - Build CDAP Sandbox distribution ZIP via mvn::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl \
     -am -amd -DskipTests -P templates,dist,release,unit-tests
 
 - Navigate to cdap-standalone subdirectory, unzip the SDK snapshot, and use the ``cdap`` binary to start the sandbox::
@@ -83,6 +83,6 @@ Note, to include additional artifacts in the CDAP sandbox, such as
 ``-Dadditional.artifacts.dir`` flag in the build step. That is::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl \
     -am -amd -DskipTests -P templates,dist,release,unit-tests
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>

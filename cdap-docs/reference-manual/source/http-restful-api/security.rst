@@ -72,8 +72,6 @@ For example, ``ns*`` represents all namespaces that starts with ``ns``.
 The ``principal`` object refers to the principal that you want to grant the privileges to.
 Principals have a ``name`` and a ``type``. The supported types are ``USER``, ``GROUP`` and ``ROLE``.
 
-**Please note that** the REST endpoints have only been created for supporting :ref:`Apache Sentry <integrations:apache-sentry>`.
-
 The ``permissions`` list contains the permissions you want to grant the ``principal`` on the
 ``entity``. The supported permission names are ``CREATE``, ``LIST``, ``GET``, ``UPDATE``, ``DELETE`` for
 the type ``STANDARD``; ``PREVIEW``, ``EXECUTE`` for type ``APPLICATION`` and ``SET_OWNER``, ``IMPERSONATE``
