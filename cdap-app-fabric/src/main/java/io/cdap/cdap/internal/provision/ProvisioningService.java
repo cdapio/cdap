@@ -789,8 +789,7 @@ public class ProvisioningService extends AbstractIdleService {
       ErrorCategory errorCategory, String errorReason, String errorMessage, ErrorType errorType,
       Exception cause) {
     ProgramFailureException ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
-        errorMessage, errorType, false, null);
-    ex.addSuppressed(cause);
+        errorMessage, errorType, false, cause);
     runWithProgramLogging(programRunId, systemArgs,
         () -> LOG.error("The run will be marked as failed.", ex));
     programStateWriter.error(programRunId, ex);

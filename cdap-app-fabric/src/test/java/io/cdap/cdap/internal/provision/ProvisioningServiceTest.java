@@ -597,6 +597,7 @@ public class ProvisioningServiceTest {
       ProgramFailureException failure = (ProgramFailureException) errorCaptor.getValue();
       Assert.assertEquals(expectedErrorType, failure.getErrorType());
       Assert.assertTrue(failure.getMessage().contains(expectedMessageSubstring));
+      Assert.assertNotNull(failure.getCause());
       Mockito.verify(notifier).deprovisioning(taskFields.programRunId);
     } finally {
       Services.stopAndWait(service);

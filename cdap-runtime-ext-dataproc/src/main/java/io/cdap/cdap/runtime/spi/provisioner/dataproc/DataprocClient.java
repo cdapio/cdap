@@ -182,8 +182,10 @@ class DataprocClient implements AutoCloseable {
               ShieldedInstanceConfig.newBuilder()
                   .setEnableSecureBoot(conf.isSecureBootEnabled())
                   .setEnableVtpm(conf.isvTpmEnabled())
-                  .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build())
-          .putAllMetadata(conf.getClusterMetaData());
+                  .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build());
+      if (conf.getClusterMetaData() != null) {
+        clusterConfig.putAllMetadata(conf.getClusterMetaData());
+      }
 
       if (conf.getServiceAccount() != null) {
         clusterConfig.setServiceAccount(conf.getServiceAccount());
