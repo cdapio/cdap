@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.deploy;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -29,7 +28,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
-import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
@@ -120,8 +118,6 @@ import org.slf4j.LoggerFactory;
  */
 public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
-  private static final String CLUSTER_SCOPE = "cluster";
-  private static final String APPLICATION_SCOPE = "app";
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryProgramRunDispatcher.class);
 
   private final CConfiguration cConf;
@@ -538,20 +534,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
           applicationClass.getClassName());
     }
 
-    // Resolves the user arguments
-    // First resolves at the cluster scope if the cluster.name is not empty
-    String clusterName = options.getArguments().getOption(Constants.CLUSTER_NAME);
-    Map<String, String> userArguments = options.getUserArguments().asMap();
-    if (!Strings.isNullOrEmpty(clusterName)) {
-      userArguments = RuntimeArguments.extractScope(CLUSTER_SCOPE, clusterName, userArguments);
-    }
-    // Then resolves at the application scope
-    userArguments = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(),
-        userArguments);
-    // Then resolves at the program level
-    userArguments =
-        RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
-            userArguments);
+    // Resolve user arguments across cluster, application, and program scopes.
+    Map<String, String> userArguments = SystemArguments.resolveScopedUserArguments(
+        programId, options.getArguments().asMap(), options.getUserArguments().asMap());
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemArguments),
         new BasicArguments(userArguments), options.isDebug());

@@ -34,9 +34,12 @@ import io.cdap.cdap.api.metrics.MetricType;
 import io.cdap.cdap.api.metrics.MetricValue;
 import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.security.AccessException;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -47,6 +50,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.io.DatumReader;
 import io.cdap.cdap.common.io.DatumWriter;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -66,21 +70,29 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.spi.authentication.UnauthenticatedException;
+import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -136,10 +148,13 @@ public class RuntimeClientServiceTest {
   private ProgramStatePublisher clientProgramStatePublisher;
 
   private AtomicBoolean runCompleted = new AtomicBoolean(false);
+  private AtomicReference<RuntimeRequestValidator> customValidatorRef;
   private Injector clientInjector;
 
   @Before
   public void beforeTest() throws Exception {
+    runCompleted = new AtomicBoolean(false);
+    customValidatorRef = new AtomicReference<>();
     CConfiguration cConf = CConfiguration.create();
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR,
@@ -171,10 +186,15 @@ public class RuntimeClientServiceTest {
           protected void bindRequestValidator() {
             bind(RuntimeRequestValidator.class).toInstance(
                 (programRunId, request) -> {
+                  RuntimeRequestValidator custom = customValidatorRef.get();
+                  if (custom != null) {
+                    return custom.validate(programRunId, request);
+                  }
                   if (runCompleted.get()) {
                     throw new GoneException();
                   }
-                  return new ProgramRunInfo(ProgramRunStatus.RUNNING);
+                  return ValidatedRuntimeRequest.legacy(
+                      new ProgramRunInfo(ProgramRunStatus.RUNNING));
                 });
           }
 
@@ -253,8 +273,14 @@ public class RuntimeClientServiceTest {
 
   @After
   public void afterTest() {
+    customValidatorRef.set(null);
+    runCompleted.set(true);
     if (runtimeClientService != null) {
-      Services.stopAndWait(runtimeClientService);
+      try {
+        Services.stopAndWait(runtimeClientService);
+      } catch (Exception e) {
+        // Ignore expected shutdown failures for tests that intentionally fail the service
+      }
     }
     runtimeClientService = null;
     if (clientMessagingService instanceof Service) {
@@ -539,6 +565,409 @@ public class RuntimeClientServiceTest {
     // Publish a program completed state, which should unblock the client service stop.
     programStateWriter.completed(PROGRAM_RUN_ID);
     stopFuture.get();
+  }
+
+  @Test(timeout = 15000L)
+  public void testNormalLoopFailsImmediatelyOnMarkedForbidden() throws Exception {
+    for (RuntimeValidationFailure failure : RuntimeValidationFailure.values()) {
+      AtomicInteger attempts = new AtomicInteger();
+      customValidatorRef.set((runId, req) -> {
+        attempts.incrementAndGet();
+        throw new RuntimeTokenRefusedException(failure, "refused: " + failure.getReason());
+      });
+
+      CConfiguration longRetryConf = CConfiguration.copy(clientCConf);
+      configureLongRetryPolicy(longRetryConf);
+      longRetryConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 50L);
+      longRetryConf.setLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, 30_000L);
+
+      runtimeClientService = createRuntimeClientService(longRetryConf,
+          clientInjector.getInstance(RuntimeClient.class));
+      Services.startAndWait(runtimeClientService);
+
+      MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
+      messagingContext.getDirectMessagePublisher().publish(
+          NamespaceId.SYSTEM.getNamespace(), nonStatusTopicNames.get(0),
+          "msg-" + failure.getReason());
+
+      Tasks.waitFor(Service.State.FAILED, () -> runtimeClientService.state(),
+          5, TimeUnit.SECONDS);
+      Throwable cause = runtimeClientService.getFailureCause();
+      Assert.assertTrue("Expected RuntimeTokenRefusedException, got " + cause,
+          cause instanceof RuntimeTokenRefusedException);
+      Assert.assertEquals(failure.getReason(), ((RuntimeTokenRefusedException) cause).getReason());
+      Assert.assertEquals(1, attempts.get());
+      runtimeClientService = null;
+    }
+  }
+
+  @Test(timeout = 10000L)
+  public void testProgramStatusHeartbeatRefusalFailsImmediately() throws Exception {
+    AtomicInteger attempts = new AtomicInteger();
+    customValidatorRef.set((runId, req) -> {
+      attempts.incrementAndGet();
+      throw new RuntimeTokenRefusedException(
+          RuntimeValidationFailure.LEGACY_TOKEN, "heartbeat refused");
+    });
+
+    CConfiguration longRetryConf = CConfiguration.copy(clientCConf);
+    configureLongRetryPolicy(longRetryConf);
+    longRetryConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 50L);
+    longRetryConf.setLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, 60_000L);
+
+    // Non-status topics are empty; only the COMPLETED status event triggers the empty heartbeat.
+    new MessagingProgramStateWriter(clientProgramStatePublisher).completed(PROGRAM_RUN_ID);
+
+    runtimeClientService = createRuntimeClientService(longRetryConf,
+        clientInjector.getInstance(RuntimeClient.class));
+    Services.startAndWait(runtimeClientService);
+
+    Tasks.waitFor(Service.State.FAILED, () -> runtimeClientService.state(), 5, TimeUnit.SECONDS);
+    Throwable cause = runtimeClientService.getFailureCause();
+    Assert.assertTrue("Expected RuntimeTokenRefusedException, got " + cause,
+        cause instanceof RuntimeTokenRefusedException);
+    Assert.assertEquals(RuntimeValidationFailure.LEGACY_TOKEN.getReason(),
+        ((RuntimeTokenRefusedException) cause).getReason());
+    Assert.assertEquals(1, attempts.get());
+  }
+
+  @Test(timeout = 10000L)
+  public void testShutdownUnmarkedForbiddenRetriesAcrossPolicyWindow() throws Exception {
+    // Pin baseline shutdown retry behavior for unmarked 403 using a short bounded retry policy.
+    AtomicBoolean rejectUnmarked = new AtomicBoolean(false);
+    AtomicInteger rejectedAttempts = new AtomicInteger();
+    customValidatorRef.set((runId, req) -> {
+      if (rejectUnmarked.get()) {
+        rejectedAttempts.incrementAndGet();
+        throw new UnauthorizedException("unmarked forbidden");
+      }
+      return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+    });
+
+    CConfiguration shortRetryConf = CConfiguration.copy(clientCConf);
+    shortRetryConf.set(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.TYPE,
+        "fixed.delay");
+    shortRetryConf.setLong(
+        Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.DELAY_BASE_MS, 20L);
+    shortRetryConf.setInt(
+        Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.MAX_RETRIES, 3);
+    shortRetryConf.setLong(
+        Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.MAX_TIME_SECS, 5L);
+    shortRetryConf.setInt(Constants.RuntimeMonitor.BATCH_SIZE, 10);
+    shortRetryConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 60_000L);
+    shortRetryConf.setLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, 60_000L);
+
+    CountDownLatch statusHeartbeatDone = new CountDownLatch(1);
+    // Publish COMPLETED before starting so the initial poll immediately buffers it without
+    // waiting for the long poll interval.
+    new MessagingProgramStateWriter(clientProgramStatePublisher).completed(PROGRAM_RUN_ID);
+
+    runtimeClientService = createRuntimeClientService(shortRetryConf,
+        createHeartbeatTrackingClient(shortRetryConf, statusHeartbeatDone));
+    Services.startAndWait(runtimeClientService);
+    Assert.assertTrue(statusHeartbeatDone.await(5, TimeUnit.SECONDS));
+    Assert.assertNotNull(runtimeClientService.getProgramCompletionDetails());
+
+    // Switch to unmarked 403 and publish an unsent non-status message before shutting down.
+    rejectUnmarked.set(true);
+    MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
+    messagingContext.getDirectMessagePublisher().publish(
+        NamespaceId.SYSTEM.getNamespace(), nonStatusTopicNames.get(0), "pending-shutdown-msg");
+
+    Services.stopAndWait(runtimeClientService);
+    Assert.assertEquals(Service.State.TERMINATED, runtimeClientService.state());
+    // 1 initial attempt + 3 retries in prepareClose() and again in close() (>= 4 attempts).
+    Assert.assertTrue("Expected multiple shutdown retry attempts for unmarked 403, got "
+        + rejectedAttempts.get(), rejectedAttempts.get() >= 4);
+  }
+
+  @Test(timeout = 10000L)
+  public void testShutdownAbortsImmediatelyOnMarkedForbiddenWithPendingTopicsAndStatus()
+      throws Exception {
+    AtomicBoolean refuse = new AtomicBoolean(false);
+    AtomicInteger refusedAttempts = new AtomicInteger();
+    customValidatorRef.set((runId, req) -> {
+      if (refuse.get()) {
+        refusedAttempts.incrementAndGet();
+        throw new RuntimeTokenRefusedException(
+            RuntimeValidationFailure.URL_MISMATCH, "token run mismatch");
+      }
+      return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+    });
+
+    CConfiguration longRetryConf = CConfiguration.copy(clientCConf);
+    configureLongRetryPolicy(longRetryConf);
+    // Long poll delay so newly published messages are flushed by doShutdown(), not runTask().
+    longRetryConf.setInt(Constants.RuntimeMonitor.BATCH_SIZE, 10);
+    longRetryConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 60_000L);
+    longRetryConf.setLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, 60_000L);
+
+    CountDownLatch statusHeartbeatDone = new CountDownLatch(1);
+    // Publish COMPLETED before starting so the initial poll buffers lastProgramStateMessages
+    // immediately without waiting for the long poll interval.
+    new MessagingProgramStateWriter(clientProgramStatePublisher).completed(PROGRAM_RUN_ID);
+
+    runtimeClientService = createRuntimeClientService(longRetryConf,
+        createHeartbeatTrackingClient(longRetryConf, statusHeartbeatDone));
+    Services.startAndWait(runtimeClientService);
+    Assert.assertTrue(statusHeartbeatDone.await(5, TimeUnit.SECONDS));
+    Assert.assertNotNull(runtimeClientService.getProgramCompletionDetails());
+
+    // Publish unsent messages across multiple non-status topics, then enable marked 403 refusal.
+    MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
+    for (String topic : nonStatusTopicNames) {
+      messagingContext.getDirectMessagePublisher().publish(
+          NamespaceId.SYSTEM.getNamespace(), topic, "unsent-" + topic);
+    }
+    refuse.set(true);
+
+    ListenableFuture<Service.State> stopFuture = Services.stop(runtimeClientService);
+    ExecutionException thrown = Assert.assertThrows(
+        ExecutionException.class, () -> stopFuture.get(5, TimeUnit.SECONDS));
+    Assert.assertTrue("Expected RuntimeTokenRefusedException, got " + thrown.getCause(),
+        thrown.getCause() instanceof RuntimeTokenRefusedException);
+    Assert.assertEquals(RuntimeValidationFailure.URL_MISMATCH.getReason(),
+        ((RuntimeTokenRefusedException) thrown.getCause()).getReason());
+    Assert.assertSame(thrown.getCause(), runtimeClientService.getFailureCause());
+    Assert.assertEquals(Service.State.FAILED, runtimeClientService.state());
+    // Must abort on the very first marked 403 without retrying or flushing remaining topics/status.
+    Assert.assertEquals(1, refusedAttempts.get());
+  }
+
+  @Test(timeout = 10000L)
+  public void testShutdownAbortsImmediatelyOnMarkedForbiddenDuringFinalStatusSend()
+      throws Exception {
+    String statusTopicPrefix = clientCConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
+    AtomicBoolean refuseStatus = new AtomicBoolean(false);
+    AtomicInteger refusedStatusAttempts = new AtomicInteger();
+    customValidatorRef.set((runId, req) -> {
+      if (refuseStatus.get() && req.uri().contains("/topics/" + statusTopicPrefix)) {
+        refusedStatusAttempts.incrementAndGet();
+        throw new RuntimeTokenRefusedException(
+            RuntimeValidationFailure.MISSING_SCOPES, "missing runtime scopes");
+      }
+      return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+    });
+
+    CConfiguration longRetryConf = CConfiguration.copy(clientCConf);
+    configureLongRetryPolicy(longRetryConf);
+    longRetryConf.setInt(Constants.RuntimeMonitor.BATCH_SIZE, 10);
+    longRetryConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 60_000L);
+    longRetryConf.setLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, 60_000L);
+
+    CountDownLatch statusHeartbeatDone = new CountDownLatch(1);
+    // Publish COMPLETED before starting so the initial poll buffers lastProgramStateMessages.
+    new MessagingProgramStateWriter(clientProgramStatePublisher).completed(PROGRAM_RUN_ID);
+
+    runtimeClientService = createRuntimeClientService(longRetryConf,
+        createHeartbeatTrackingClient(longRetryConf, statusHeartbeatDone));
+    Services.startAndWait(runtimeClientService);
+    Assert.assertTrue(statusHeartbeatDone.await(5, TimeUnit.SECONDS));
+    Assert.assertNotNull(runtimeClientService.getProgramCompletionDetails());
+
+    // Non-status topics are empty; only the final lastProgramStateMessages flush hits the server.
+    refuseStatus.set(true);
+    ListenableFuture<Service.State> stopFuture = Services.stop(runtimeClientService);
+    ExecutionException thrown = Assert.assertThrows(
+        ExecutionException.class, () -> stopFuture.get(5, TimeUnit.SECONDS));
+    Assert.assertTrue("Expected RuntimeTokenRefusedException, got " + thrown.getCause(),
+        thrown.getCause() instanceof RuntimeTokenRefusedException);
+    Assert.assertEquals(RuntimeValidationFailure.MISSING_SCOPES.getReason(),
+        ((RuntimeTokenRefusedException) thrown.getCause()).getReason());
+    Assert.assertSame(thrown.getCause(), runtimeClientService.getFailureCause());
+    Assert.assertEquals(Service.State.FAILED, runtimeClientService.state());
+    Assert.assertEquals(1, refusedStatusAttempts.get());
+  }
+
+  @Test(timeout = 15000L)
+  public void testUnmarkedForbiddenUnauthorizedAndServerErrorContinueRetrying() throws Exception {
+    List<Exception> transientErrors = Arrays.asList(
+        new UnauthorizedException("unmarked forbidden"),
+        new UnauthenticatedException("unauthenticated"),
+        new RuntimeException("internal server error"));
+    CConfiguration fastRetryConf = createFastRetryConf();
+    MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);
+    MessagingContext clientMessaging = new MultiThreadMessagingContext(clientMessagingService);
+    String topic = nonStatusTopicNames.get(0);
+
+    for (int i = 0; i < transientErrors.size(); i++) {
+      ProgramRunId subRunId = NamespaceId.DEFAULT.app("app").workflow("wf")
+          .run(RunIds.generate());
+      Exception err = transientErrors.get(i);
+      AtomicInteger failuresLeft = new AtomicInteger(2);
+      AtomicInteger attempts = new AtomicInteger();
+      customValidatorRef.set((runId, req) -> {
+        if (!subRunId.equals(runId)) {
+          return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+        }
+        attempts.incrementAndGet();
+        if (failuresLeft.getAndDecrement() > 0) {
+          if (err instanceof RuntimeException) {
+            throw (RuntimeException) err;
+          }
+          throw (AccessException) err;
+        }
+        return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+      });
+
+      String payload = "recovered-" + i;
+      clientMessaging.getDirectMessagePublisher().publish(
+          NamespaceId.SYSTEM.getNamespace(), topic, payload);
+
+      runtimeClientService = createRuntimeClientService(fastRetryConf,
+          clientInjector.getInstance(RuntimeClient.class), subRunId);
+      Services.startAndWait(runtimeClientService);
+
+      Tasks.waitFor(true, () -> fetchMessages(serverMessagingContext, topic, 50, null).stream()
+              .map(Message::getPayloadAsString)
+              .anyMatch(payload::equals),
+          5, TimeUnit.SECONDS);
+      Assert.assertTrue("Expected at least 3 attempts (2 failures + 1 success)",
+          attempts.get() >= 3);
+      Assert.assertEquals(Service.State.RUNNING, runtimeClientService.state());
+
+      new MessagingProgramStateWriter(clientProgramStatePublisher).completed(subRunId);
+      Services.stopAndWait(runtimeClientService);
+      runtimeClientService = null;
+    }
+  }
+
+  @Test(timeout = 10000L)
+  public void testMixedVersionsNewServerWithLegacyClientAndOldServerWithNewClient()
+      throws Exception {
+    CConfiguration fastRetryConf = createFastRetryConf();
+
+    // (a) New server emits marked 403 + header; legacy client ignores header (throws IOException)
+    //     and retries until server recovers.
+    ProgramRunId legacyRunId = NamespaceId.DEFAULT.app("app").workflow("wf")
+        .run(RunIds.generate());
+    AtomicInteger markedFailuresLeft = new AtomicInteger(2);
+    AtomicInteger legacyClientAttempts = new AtomicInteger();
+    customValidatorRef.set((runId, req) -> {
+      legacyClientAttempts.incrementAndGet();
+      if (markedFailuresLeft.getAndDecrement() > 0) {
+        throw new RuntimeTokenRefusedException(
+            RuntimeValidationFailure.LEGACY_TOKEN, "legacy token refused");
+      }
+      return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+    });
+    RuntimeClient legacyClient = new RuntimeClient(
+        fastRetryConf, clientInjector.getInstance(RemoteClientFactory.class)) {
+      @Override
+      public void sendMessages(ProgramRunId runId, TopicId topicId, Iterator<Message> messages)
+          throws IOException, BadRequestException, GoneException, NotFoundException {
+        try {
+          super.sendMessages(runId, topicId, messages);
+        } catch (RuntimeTokenRefusedException ignoredHeader) {
+          // Simulate pre-change RuntimeClient that ignores X-CDAP-Runtime-Token-Failure on 403.
+          throw new IOException("HTTP 403 (legacy client ignores failure header)", ignoredHeader);
+        }
+      }
+    };
+    MessagingContext clientMessaging = new MultiThreadMessagingContext(clientMessagingService);
+    String topic = nonStatusTopicNames.get(0);
+    clientMessaging.getDirectMessagePublisher().publish(
+        NamespaceId.SYSTEM.getNamespace(), topic, "mixed-legacy-client");
+    runtimeClientService = createRuntimeClientService(fastRetryConf, legacyClient, legacyRunId);
+    Services.startAndWait(runtimeClientService);
+    MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);
+    Tasks.waitFor(true, () -> fetchMessages(serverMessagingContext, topic, 50, null).stream()
+            .map(Message::getPayloadAsString)
+            .anyMatch("mixed-legacy-client"::equals),
+        5, TimeUnit.SECONDS);
+    Assert.assertTrue("Expected at least 3 attempts, got " + legacyClientAttempts.get(),
+        legacyClientAttempts.get() >= 3);
+    new MessagingProgramStateWriter(clientProgramStatePublisher).completed(legacyRunId);
+    Services.stopAndWait(runtimeClientService);
+    runtimeClientService = null;
+
+    // (b) Old server emits unmarked 403 then unmarked 500; new RuntimeClientService retries.
+    ProgramRunId oldServerRunId = NamespaceId.DEFAULT.app("app").workflow("wf")
+        .run(RunIds.generate());
+    AtomicInteger oldServerAttempt = new AtomicInteger();
+    customValidatorRef.set((runId, req) -> {
+      int n = oldServerAttempt.incrementAndGet();
+      if (n == 1) {
+        throw new UnauthorizedException("old server unmarked 403");
+      }
+      if (n == 2) {
+        throw new RuntimeException("old server unmarked 500");
+      }
+      return ValidatedRuntimeRequest.legacy(new ProgramRunInfo(ProgramRunStatus.RUNNING));
+    });
+    clientMessaging.getDirectMessagePublisher().publish(
+        NamespaceId.SYSTEM.getNamespace(), topic, "mixed-old-server");
+    runtimeClientService = createRuntimeClientService(fastRetryConf,
+        clientInjector.getInstance(RuntimeClient.class), oldServerRunId);
+    Services.startAndWait(runtimeClientService);
+    Tasks.waitFor(true, () -> fetchMessages(serverMessagingContext, topic, 50, null).stream()
+            .map(Message::getPayloadAsString)
+            .anyMatch("mixed-old-server"::equals),
+        5, TimeUnit.SECONDS);
+    Assert.assertTrue("Expected at least 3 attempts, got " + oldServerAttempt.get(),
+        oldServerAttempt.get() >= 3);
+    new MessagingProgramStateWriter(clientProgramStatePublisher).completed(oldServerRunId);
+    Services.stopAndWait(runtimeClientService);
+    runtimeClientService = null;
+  }
+
+  private CConfiguration createFastRetryConf() {
+    CConfiguration conf = CConfiguration.copy(clientCConf);
+    conf.set(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.TYPE, "fixed.delay");
+    conf.setLong(
+        Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.DELAY_BASE_MS, 20L);
+    conf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 50L);
+    conf.setLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS, 60_000L);
+    return conf;
+  }
+
+  private RuntimeClient createHeartbeatTrackingClient(CConfiguration conf,
+      CountDownLatch statusHeartbeatDone) {
+    String statusTopicPrefix = conf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
+    return new RuntimeClient(conf, clientInjector.getInstance(RemoteClientFactory.class)) {
+      @Override
+      public void sendMessages(ProgramRunId runId, TopicId topicId, Iterator<Message> messages)
+          throws IOException, BadRequestException, GoneException, NotFoundException,
+          RuntimeTokenRefusedException {
+        try {
+          super.sendMessages(runId, topicId, messages);
+        } finally {
+          if (topicId.getTopic().startsWith(statusTopicPrefix)) {
+            statusHeartbeatDone.countDown();
+          }
+        }
+      }
+    };
+  }
+
+  private RuntimeClientService createRuntimeClientService(CConfiguration conf,
+      RuntimeClient client) {
+    return createRuntimeClientService(conf, client, PROGRAM_RUN_ID);
+  }
+
+  private RuntimeClientService createRuntimeClientService(CConfiguration conf,
+      RuntimeClient client, ProgramRunId runId) {
+    return new RuntimeClientService(
+        conf,
+        clientMessagingService,
+        client,
+        runId,
+        clientInjector.getInstance(SchemaGenerator.class),
+        clientInjector.getInstance(DatumWriterFactory.class),
+        clientInjector.getInstance(DatumReaderFactory.class));
+  }
+
+  private static void configureLongRetryPolicy(CConfiguration conf) {
+    conf.set(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.TYPE,
+        "exponential.backoff");
+    conf.setLong(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.DELAY_BASE_MS,
+        50L);
+    conf.setLong(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.DELAY_MAX_MS,
+        1_000L);
+    conf.setInt(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.MAX_RETRIES,
+        Integer.MAX_VALUE);
+    conf.setLong(Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX + Constants.Retry.MAX_TIME_SECS,
+        3_600L);
   }
 
   private List<Message> fetchMessages(MessagingContext messagingContext,

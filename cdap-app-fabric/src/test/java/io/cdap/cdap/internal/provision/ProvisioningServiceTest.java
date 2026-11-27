@@ -24,6 +24,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.dataset.table.Table;
+import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -49,9 +50,11 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.security.FakeSecureStore;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -475,6 +478,64 @@ public class ProvisioningServiceTest {
     String implementedLabel = provisioningService.getTotalProcessingCpusLabel(MockProvisionerWithCpus.NAME,
                                                                               new HashMap<>());
     Assert.assertEquals(MockProvisionerWithCpus.TEST_LABEL, implementedLabel);
+  }
+
+  @Test
+  public void testCreateContextRuntimeMonitorTypeResolution() {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("myApp").workflow("myWf").run(RunIds.generate());
+    Map<String, String> baseSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        SystemArguments.PROFILE_PROVISIONER, "dataproc",
+        Constants.CLUSTER_NAME, "c1");
+    ErrorCategory errorCategory = new ErrorCategory(ErrorCategory.ErrorCategoryEnum.PROVISIONING);
+
+    // 1. Operator config omits monitor.type.<provisioner>: scoped workflow and cluster user args
+    //    are resolved before evaluating RuntimeMonitorType.
+    CConfiguration unsetConf = CConfiguration.create();
+    unsetConf.set(Constants.RuntimeMonitor.MONITOR_URL, "https://monitor.example.com");
+
+    ProgramOptions workflowScopedUrl = new SimpleProgramOptions(
+        runId.getParent(),
+        new BasicArguments(baseSysArgs),
+        new BasicArguments(Collections.singletonMap(
+            "workflow.myWf." + SystemArguments.RUNTIME_MONITOR_TYPE,
+            RuntimeMonitorType.URL.name())));
+    ProvisionerContext wfCtx = provisioningService.createContext(
+        unsetConf, workflowScopedUrl, runId, "user1", Collections.emptyMap(), null, errorCategory);
+    Assert.assertEquals(RuntimeMonitorType.URL, wfCtx.getRuntimeMonitorType());
+
+    ProgramOptions clusterScopedUrl = new SimpleProgramOptions(
+        runId.getParent(),
+        new BasicArguments(baseSysArgs),
+        new BasicArguments(Collections.singletonMap(
+            "cluster.c1." + SystemArguments.RUNTIME_MONITOR_TYPE,
+            RuntimeMonitorType.URL.name())));
+    ProvisionerContext clusterCtx = provisioningService.createContext(
+        unsetConf, clusterScopedUrl, runId, "user1", Collections.emptyMap(), null, errorCategory);
+    Assert.assertEquals(RuntimeMonitorType.URL, clusterCtx.getRuntimeMonitorType());
+
+    // 2. Operator-configured URL cannot be overridden by scoped or plain user arg SSH.
+    CConfiguration urlConf = CConfiguration.copy(unsetConf);
+    urlConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc",
+        RuntimeMonitorType.URL.name());
+    ProgramOptions scopedSsh = new SimpleProgramOptions(
+        runId.getParent(),
+        new BasicArguments(baseSysArgs),
+        new BasicArguments(ImmutableMap.of(
+            SystemArguments.RUNTIME_MONITOR_TYPE, RuntimeMonitorType.SSH.name(),
+            "workflow.myWf." + SystemArguments.RUNTIME_MONITOR_TYPE,
+            RuntimeMonitorType.SSH.name())));
+    ProvisionerContext urlCtx = provisioningService.createContext(
+        urlConf, scopedSsh, runId, "user1", Collections.emptyMap(), null, errorCategory);
+    Assert.assertEquals(RuntimeMonitorType.URL, urlCtx.getRuntimeMonitorType());
+
+    // 3. Operator-configured SSH cannot be overridden by scoped user arg URL.
+    CConfiguration sshConf = CConfiguration.copy(unsetConf);
+    sshConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc",
+        RuntimeMonitorType.SSH.name());
+    ProvisionerContext sshCtx = provisioningService.createContext(
+        sshConf, workflowScopedUrl, runId, "user1", Collections.emptyMap(), null, errorCategory);
+    Assert.assertEquals(RuntimeMonitorType.SSH, sshCtx.getRuntimeMonitorType());
   }
 
   /**

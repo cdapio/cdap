@@ -167,11 +167,14 @@ public class ProgramStatusEventPublisher extends AbstractNotificationSubscriberS
               programRunId.getNamespace(),
               programStatus,
               RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS));
-      StartMetadata startMetadata = TriggerInfos.getStartMetadata(
-          GSON.fromJson(sysArgsString, argsMapType));
+      Map<String, String> systemArgs = GSON.fromJson(sysArgsString, argsMapType);
+      if (systemArgs != null) {
+        systemArgs.remove(ProgramOptionConstants.RUNTIME_SCOPES);
+      }
+      StartMetadata startMetadata = TriggerInfos.getStartMetadata(systemArgs);
       builder = builder
           .withUserArgs(GSON.fromJson(userArgsString, argsMapType))
-          .withSystemArgs(GSON.fromJson(sysArgsString, argsMapType))
+          .withSystemArgs(systemArgs)
           .withStartMetadata(startMetadata);
       if (programRunStatus.isEndState()) {
         populateErrorDetailsAndMetrics(builder, properties, programRunStatus, programRunId);

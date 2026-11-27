@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime;
 import ch.qos.logback.classic.Level;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -28,6 +29,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -214,5 +217,175 @@ public class SystemArgumentsTest {
     expected = NamespaceId.DEFAULT.profile("MyProfile");
     args.put("system.profile.name", expected.getScopedName());
     Assert.assertEquals(expected, SystemArguments.getProfileIdFromArgs(NamespaceId.DEFAULT, args).get());
+  }
+
+  @Test
+  public void testResolveScopedUserArguments() {
+    ProgramId workflowId = NamespaceId.DEFAULT.app("myApp").workflow("myWf");
+    Map<String, String> systemArgs = Collections.singletonMap(Constants.CLUSTER_NAME, "c1");
+    Map<String, String> userArgs = ImmutableMap.<String, String>builder()
+        .put("k", "unscoped")
+        .put("cluster.c1.k", "fromCluster")
+        .put("cluster.other.k", "otherCluster")
+        .put("app.myApp.k", "fromApp")
+        .put("app.otherApp.k", "otherApp")
+        .put("workflow.myWf.k", "fromWorkflow")
+        .put("workflow.otherWf.k", "otherWorkflow")
+        .put("clusterVsApp", "unscoped")
+        .put("cluster.c1.clusterVsApp", "fromCluster")
+        .put("app.myApp.clusterVsApp", "fromApp")
+        .put("cluster.c1.app.myApp.workflow.myWf.chained", "chainedVal")
+        .put("clusterOnly", "baseCluster")
+        .put("cluster.c1.clusterOnly", "clusterOverride")
+        .put("appOnly", "baseApp")
+        .put("app.myApp.appOnly", "appOverride")
+        .put("wildWf", "baseWild")
+        .put("workflow.*.wildWf", "wildWfOverride")
+        .build();
+
+    Map<String, String> resolved =
+        SystemArguments.resolveScopedUserArguments(workflowId, systemArgs, userArgs);
+    Assert.assertEquals("fromWorkflow", resolved.get("k"));
+    Assert.assertEquals("fromApp", resolved.get("clusterVsApp"));
+    Assert.assertEquals("chainedVal", resolved.get("chained"));
+    Assert.assertEquals("clusterOverride", resolved.get("clusterOnly"));
+    Assert.assertEquals("appOverride", resolved.get("appOnly"));
+    Assert.assertEquals("wildWfOverride", resolved.get("wildWf"));
+
+    // Empty, absent, or null systemArgs skips cluster scope resolution without throwing
+    for (Map<String, String> noClusterSysArgs : Arrays.<Map<String, String>>asList(
+        Collections.singletonMap(Constants.CLUSTER_NAME, ""),
+        Collections.emptyMap(),
+        null)) {
+      Map<String, String> noClusterResolved =
+          SystemArguments.resolveScopedUserArguments(workflowId, noClusterSysArgs, userArgs);
+      Assert.assertEquals("baseCluster", noClusterResolved.get("clusterOnly"));
+      Assert.assertEquals("appOverride", noClusterResolved.get("appOnly"));
+      Assert.assertEquals("fromWorkflow", noClusterResolved.get("k"));
+    }
+
+    // Non-workflow program type resolves its own scope prefix (spark.<name>.)
+    ProgramId sparkId = NamespaceId.DEFAULT.app("myApp").spark("mySpark");
+    Map<String, String> sparkResolved = SystemArguments.resolveScopedUserArguments(
+        sparkId, Collections.emptyMap(),
+        ImmutableMap.of("p", "base", "spark.mySpark.p", "fromSpark", "workflow.mySpark.p", "wrong"));
+    Assert.assertEquals("fromSpark", sparkResolved.get("p"));
+  }
+
+  @Test
+  public void testUsesRuntimeToken() {
+    ProgramId workflowId = NamespaceId.DEFAULT.app("myApp").workflow("myWf");
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, true);
+    cConf.set(Constants.RuntimeMonitor.MONITOR_URL, "https://monitor.example.com");
+    cConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc",
+        RuntimeMonitorType.URL.name());
+
+    Map<String, String> scopedSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_PROVISIONER, "dataproc",
+        ProgramOptionConstants.RUNTIME_SCOPES, "{}");
+    ProgramOptions urlOptions = new SimpleProgramOptions(
+        workflowId, new BasicArguments(scopedSysArgs), new BasicArguments());
+
+    // Internal auth on + scopes present + URL monitor type -> true
+    Assert.assertTrue(SystemArguments.usesRuntimeToken(cConf, urlOptions));
+
+    // Internal auth off -> false
+    CConfiguration noInternalAuth = CConfiguration.copy(cConf);
+    noInternalAuth.setBoolean(Constants.Security.INTERNAL_AUTH_ENABLED, false);
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(noInternalAuth, urlOptions));
+
+    // Missing scopes -> false
+    ProgramOptions noScopes = new SimpleProgramOptions(
+        workflowId,
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.PROFILE_PROVISIONER, "dataproc")),
+        new BasicArguments());
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(cConf, noScopes));
+
+    // RUNTIME_SCOPES in user args (not system args) -> false
+    ProgramOptions userArgScopes = new SimpleProgramOptions(
+        workflowId,
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.PROFILE_PROVISIONER, "dataproc")),
+        new BasicArguments(Collections.singletonMap(
+            ProgramOptionConstants.RUNTIME_SCOPES, "{}")));
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(cConf, userArgScopes));
+
+    // User arg system.runtime.monitor.type=SSH cannot override operator-configured URL
+    ProgramOptions userArgSshOnUrlConf = new SimpleProgramOptions(
+        workflowId,
+        new BasicArguments(scopedSysArgs),
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.RUNTIME_MONITOR_TYPE, RuntimeMonitorType.SSH.name())));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(cConf, userArgSshOnUrlConf));
+    Assert.assertTrue(SystemArguments.usesRuntimeToken(cConf, userArgSshOnUrlConf));
+
+    // Operator-configured SSH cannot be overridden by user arg system.runtime.monitor.type=URL
+    CConfiguration sshOperatorConf = CConfiguration.copy(cConf);
+    sshOperatorConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc",
+        RuntimeMonitorType.SSH.name());
+    ProgramOptions userArgUrlOnSshConf = new SimpleProgramOptions(
+        workflowId,
+        new BasicArguments(scopedSysArgs),
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.RUNTIME_MONITOR_TYPE, RuntimeMonitorType.URL.name())));
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(sshOperatorConf, userArgUrlOnSshConf));
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(sshOperatorConf, userArgUrlOnSshConf));
+
+    // Only when operator config omits monitor.type.<provisioner> does user arg select URL vs SSH
+    CConfiguration unsetMonitorTypeConf = CConfiguration.copy(cConf);
+    unsetMonitorTypeConf.unset(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc");
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(unsetMonitorTypeConf, urlOptions));
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(unsetMonitorTypeConf, urlOptions));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(unsetMonitorTypeConf, userArgUrlOnSshConf));
+    Assert.assertTrue(SystemArguments.usesRuntimeToken(unsetMonitorTypeConf, userArgUrlOnSshConf));
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(unsetMonitorTypeConf, userArgSshOnUrlConf));
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(unsetMonitorTypeConf, userArgSshOnUrlConf));
+
+    // Missing or blank provisioner does not probe monitor.type.null and falls back to user arg
+    CConfiguration nullKeyConf = CConfiguration.copy(unsetMonitorTypeConf);
+    nullKeyConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "null",
+        RuntimeMonitorType.URL.name());
+    ProgramOptions missingProvisioner = new SimpleProgramOptions(
+        workflowId, new BasicArguments(), new BasicArguments());
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(nullKeyConf, missingProvisioner));
+    ProgramOptions missingProvisionerUserUrl = new SimpleProgramOptions(
+        workflowId, new BasicArguments(),
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.RUNTIME_MONITOR_TYPE, RuntimeMonitorType.URL.name())));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(unsetMonitorTypeConf, missingProvisionerUserUrl));
+    ProgramOptions blankProvisionerUserUrl = new SimpleProgramOptions(
+        workflowId,
+        new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_PROVISIONER, "")),
+        new BasicArguments(Collections.singletonMap(
+            SystemArguments.RUNTIME_MONITOR_TYPE, RuntimeMonitorType.URL.name())));
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(unsetMonitorTypeConf, blankProvisionerUserUrl));
+
+    // Invalid operator value defaults to SSH and does not fall back to user arg URL
+    CConfiguration invalidOperatorConf = CConfiguration.copy(cConf);
+    invalidOperatorConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc", "BOGUS");
+    Assert.assertEquals(RuntimeMonitorType.SSH,
+        SystemArguments.getRuntimeMonitorType(invalidOperatorConf, userArgUrlOnSshConf));
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(invalidOperatorConf, userArgUrlOnSshConf));
+
+    // Operator config with surrounding whitespace is trimmed cleanly
+    CConfiguration paddedUrlConf = CConfiguration.copy(cConf);
+    paddedUrlConf.set(Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX + "dataproc", "  url  ");
+    Assert.assertEquals(RuntimeMonitorType.URL,
+        SystemArguments.getRuntimeMonitorType(paddedUrlConf, userArgSshOnUrlConf));
+
+    // Scopes present, but MONITOR_URL unset (falls back to SSH) -> false
+    CConfiguration noMonitorUrl = CConfiguration.copy(cConf);
+    noMonitorUrl.unset(Constants.RuntimeMonitor.MONITOR_URL);
+    Assert.assertFalse(SystemArguments.usesRuntimeToken(noMonitorUrl, urlOptions));
   }
 }

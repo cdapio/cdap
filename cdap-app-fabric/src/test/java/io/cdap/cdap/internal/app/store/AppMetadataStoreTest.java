@@ -38,7 +38,10 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeScopes;
 import io.cdap.cdap.internal.app.store.plugin.Plugins;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -1988,6 +1991,456 @@ public abstract class AppMetadataStoreTest {
 
     Assert.assertEquals(appName, latestAppMeta.getId());
     Assert.assertEquals(appVersion, latestAppMeta.getSpec().getAppVersion());
+  }
+
+  @Test
+  public void testRuntimeScopesWriteOnceFromProvisioning() {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("scopesApp").workflow("wf")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    String initialScopes = new RuntimeScopes(
+        Collections.singleton("conn_a"), Collections.emptySet(),
+        Collections.singleton("secret_a"), false).toJson();
+    String replacementScopes = new RuntimeScopes(
+        Collections.singleton("*"), Collections.singleton("*/*"),
+        Collections.singleton("*"), true).toJson();
+
+    Map<String, String> initialSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        "custom.arg", "initial",
+        ProgramOptionConstants.RUNTIME_SCOPES, initialScopes);
+    Map<String, String> reprovisionSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "bob",
+        "custom.arg", "reprovisioned",
+        ProgramOptionConstants.RUNTIME_SCOPES, replacementScopes);
+    Map<String, String> noScopesSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "carol",
+        "custom.arg", "noScopes");
+    Map<String, String> startSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        "custom.arg", "started",
+        "start.only", "yes",
+        ProgramOptionConstants.RUNTIME_SCOPES, replacementScopes);
+    Map<String, String> afterSuspendSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "dave",
+        "custom.arg", "afterSuspend",
+        ProgramOptionConstants.RUNTIME_SCOPES, replacementScopes);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      // Provisioning with no existing record stores incoming scopes and system args.
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), initialSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      RunRecordDetail record = store.getRun(runId);
+      Assert.assertEquals(initialSysArgs, record.getSystemArgs());
+      Assert.assertEquals("alice", record.getPrincipal());
+
+      // Re-provisioning on PENDING updates non-scope system args while keeping stored scopes.
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), reprovisionSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "reprovisioned",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), noScopesSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "carol",
+          "custom.arg", "noScopes",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("carol", record.getPrincipal());
+
+      // Provisioned -> Starting merges incoming non-scope args and keeps stored scopes.
+      store.recordProgramProvisioned(runId, 1,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      store.recordProgramStart(runId, null, startSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "carol",
+          "custom.arg", "started",
+          "start.only", "yes",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("carol", record.getPrincipal());
+
+      store.recordProgramRunning(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 1, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      store.recordProgramSuspend(runId,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+          RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 2);
+
+      // Suspended -> Provisioning replaces non-scope args and keeps stored scopes.
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), afterSuspendSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "dave",
+          "custom.arg", "afterSuspend",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("dave", record.getPrincipal());
+
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertNull(record.getPrincipal());
+
+      // Stopping and Completed preserve stored scopes and system args.
+      store.recordProgramStopping(runId,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+          RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 3,
+          RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 4);
+      store.recordProgramStop(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 5,
+          ProgramRunStatus.COMPLETED, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes),
+          store.getRun(runId).getSystemArgs());
+    });
+  }
+
+  @Test
+  public void testRuntimeScopesAbsentStaysAbsentAcrossProvisioningAndStart() {
+    ProgramRunId runId = NamespaceId.DEFAULT.app("scopesApp").workflow("wfNoScopes")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    String incomingScopes = new RuntimeScopes(
+        Collections.singleton("conn_a"), Collections.emptySet(),
+        Collections.singleton("secret_a"), false).toJson();
+    Map<String, String> initialSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        "custom.arg", "initial");
+    Map<String, String> reprovisionWithScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "bob",
+        "custom.arg", "reprovisioned",
+        ProgramOptionConstants.RUNTIME_SCOPES, incomingScopes);
+    Map<String, String> startWithScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        "custom.arg", "started",
+        "start.only", "yes",
+        ProgramOptionConstants.RUNTIME_SCOPES, incomingScopes);
+    Map<String, String> afterSuspendWithScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "carol",
+        "custom.arg", "afterSuspend",
+        ProgramOptionConstants.RUNTIME_SCOPES, incomingScopes);
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), initialSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      RunRecordDetail record = store.getRun(runId);
+      Assert.assertEquals(initialSysArgs, record.getSystemArgs());
+      Assert.assertEquals("alice", record.getPrincipal());
+
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), reprovisionWithScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "reprovisioned"), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramProvisioned(runId, 1,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      store.recordProgramStart(runId, null, startWithScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "started",
+          "start.only", "yes"), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramRunning(runId, RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 1, null,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      store.recordProgramSuspend(runId,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()),
+          RunIds.getTime(runId.getRun(), TimeUnit.SECONDS) + 2);
+      store.recordProgramProvisioning(runId, Collections.emptyMap(), afterSuspendWithScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runId);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "carol",
+          "custom.arg", "afterSuspend"), record.getSystemArgs());
+      Assert.assertEquals("carol", record.getPrincipal());
+    });
+  }
+
+  @Test
+  public void testRuntimeScopesWriteOnceOnPendingRecord() {
+    String initialScopes = new RuntimeScopes(
+        Collections.singleton("conn_a"), Collections.emptySet(),
+        Collections.singleton("secret_a"), false).toJson();
+    String otherScopes = new RuntimeScopes(
+        Collections.singleton("*"), Collections.singleton("*/*"),
+        Collections.singleton("*"), true).toJson();
+    Map<String, String> initialSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        "custom.arg", "pending",
+        ProgramOptionConstants.RUNTIME_SCOPES, initialScopes);
+    Map<String, String> initialNoScopesArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        "custom.arg", "pending");
+    Map<String, String> provWithOtherScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "bob",
+        "custom.arg", "prov1",
+        ProgramOptionConstants.RUNTIME_SCOPES, otherScopes);
+    Map<String, String> provNoScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        "custom.arg", "prov2");
+    Map<String, String> startWithOtherScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        "custom.arg", "started",
+        "start.arg", "v",
+        ProgramOptionConstants.RUNTIME_SCOPES, otherScopes);
+
+    // Pending record WITH scopes keeps them across provisioning and start while updating other args.
+    ProgramRunId runWithScopes = NamespaceId.DEFAULT.app("scopesApp").workflow("pendingWithScopes")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramPending(runWithScopes, Collections.emptyMap(), initialSysArgs, ARTIFACT_ID);
+      store.recordProgramProvisioning(runWithScopes, Collections.emptyMap(), provWithOtherScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      RunRecordDetail record = store.getRun(runWithScopes);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "prov1",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramProvisioning(runWithScopes, Collections.emptyMap(), provNoScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(runWithScopes);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          "custom.arg", "prov2",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertNull(record.getPrincipal());
+
+      store.recordProgramProvisioned(runWithScopes, 1,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      store.recordProgramStart(runWithScopes, null, startWithOtherScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          "custom.arg", "started",
+          "start.arg", "v",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes),
+          store.getRun(runWithScopes).getSystemArgs());
+    });
+
+    // Pending record WITHOUT scopes does not gain scopes on provisioning or start.
+    ProgramRunId runWithoutScopes = NamespaceId.DEFAULT.app("scopesApp")
+        .workflow("pendingWithoutScopes")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramPending(runWithoutScopes, Collections.emptyMap(),
+          initialNoScopesArgs, ARTIFACT_ID);
+      store.recordProgramProvisioning(runWithoutScopes, Collections.emptyMap(), provWithOtherScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      RunRecordDetail record = store.getRun(runWithoutScopes);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "prov1"), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramProvisioned(runWithoutScopes, 1,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      store.recordProgramStart(runWithoutScopes, null, startWithOtherScopes,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      record = store.getRun(runWithoutScopes);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "started",
+          "start.arg", "v"), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+    });
+  }
+
+  @Test
+  public void testRuntimeScopesWriteOnceOnRejectedRecord() {
+    String initialScopes = new RuntimeScopes(
+        Collections.singleton("conn_a"), Collections.emptySet(),
+        Collections.singleton("secret_a"), false).toJson();
+    String otherScopes = new RuntimeScopes(
+        Collections.singleton("*"), Collections.singleton("*/*"),
+        Collections.singleton("*"), true).toJson();
+    Map<String, String> initialSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        "custom.arg", "initial",
+        ProgramOptionConstants.RUNTIME_SCOPES, initialScopes);
+    Map<String, String> initialNoScopesArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        "custom.arg", "initial");
+    Map<String, String> rejectedSysArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "bob",
+        "custom.arg", "rejected",
+        ProgramOptionConstants.RUNTIME_SCOPES, otherScopes);
+
+    // Pending record keeps scopes (value or absence) when rejected while applying incoming args,
+    // and direct rejection stores once.
+    ProgramRunId rejectedWithScopes = NamespaceId.DEFAULT.app("scopesApp")
+        .workflow("rejectedWithScopes")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    ProgramRunId rejectedWithScopesEmptyIncoming = NamespaceId.DEFAULT.app("scopesApp")
+        .workflow("rejectedWithScopesEmptyIncoming")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    ProgramRunId rejectedWithoutScopes = NamespaceId.DEFAULT.app("scopesApp")
+        .workflow("rejectedWithoutScopes")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    ProgramRunId rejectedNoExisting = NamespaceId.DEFAULT.app("scopesApp")
+        .workflow("rejectedNoExisting")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramPending(rejectedWithScopes, Collections.emptyMap(),
+          initialSysArgs, ARTIFACT_ID);
+      store.recordProgramRejected(rejectedWithScopes, Collections.emptyMap(), rejectedSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      RunRecordDetail record = store.getRun(rejectedWithScopes);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "rejected",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramPending(rejectedWithScopesEmptyIncoming, Collections.emptyMap(),
+          initialSysArgs, ARTIFACT_ID);
+      store.recordProgramRejected(rejectedWithScopesEmptyIncoming, Collections.emptyMap(),
+          Collections.emptyMap(),
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(rejectedWithScopesEmptyIncoming);
+      Assert.assertEquals(
+          Collections.singletonMap(ProgramOptionConstants.RUNTIME_SCOPES, initialScopes),
+          record.getSystemArgs());
+      Assert.assertNull(record.getPrincipal());
+
+      store.recordProgramPending(rejectedWithoutScopes, Collections.emptyMap(),
+          initialNoScopesArgs, ARTIFACT_ID);
+      store.recordProgramRejected(rejectedWithoutScopes, Collections.emptyMap(), rejectedSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(rejectedWithoutScopes);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "rejected"), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+
+      store.recordProgramRejected(rejectedNoExisting, Collections.emptyMap(), initialSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(rejectedNoExisting);
+      Assert.assertEquals(initialSysArgs, record.getSystemArgs());
+      Assert.assertEquals("alice", record.getPrincipal());
+
+      store.recordProgramRejected(rejectedNoExisting, Collections.emptyMap(), rejectedSysArgs,
+          AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+      record = store.getRun(rejectedNoExisting);
+      Assert.assertEquals(ImmutableMap.of(
+          SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+          ProgramOptionConstants.PRINCIPAL, "bob",
+          "custom.arg", "rejected",
+          ProgramOptionConstants.RUNTIME_SCOPES, initialScopes), record.getSystemArgs());
+      Assert.assertEquals("bob", record.getPrincipal());
+    });
+  }
+
+  @Test
+  public void testRuntimeServiceProvisioningAndStartSequencePreservesScopes() {
+    String scopesJson = new RuntimeScopes(
+        Collections.singleton("conn_a"), Collections.singleton("p/c"),
+        Collections.singleton("sec_a"), false).toJson();
+    String otherScopesJson = new RuntimeScopes(
+        Collections.singleton("*"), Collections.singleton("*/*"),
+        Collections.singleton("*"), true).toJson();
+    Map<String, String> fullSystemArgs = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.PRINCIPAL, "alice",
+        ProgramOptionConstants.RUNTIME_SCOPES, scopesJson,
+        "extra.arg", "extraValue");
+    Map<String, String> startSystemArgsWithOtherScopes = ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName(),
+        ProgramOptionConstants.RUNTIME_SCOPES, otherScopesJson,
+        "extra.arg", "extraValue");
+
+    // 1. Trimmed provisioning with scopes followed by start (full args) retains scopes and extra args.
+    ProgramRunId runId = NamespaceId.DEFAULT.app("scopesApp").workflow("runtimeSeq")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    // 2. Start omitting incoming system overrides still keeps scopes stored during provisioning.
+    ProgramRunId runEmptyStart = NamespaceId.DEFAULT.app("scopesApp").workflow("runtimeSeqEmptyStart")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+    // 3. Trimmed provisioning without scopes stays absent even if start carries scopes.
+    ProgramRunId runUnscoped = NamespaceId.DEFAULT.app("scopesApp").workflow("runtimeSeqUnscoped")
+        .run(RunIds.generate(runIdTime.incrementAndGet()));
+
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      byte[] msgSourceId = AppFabricTestHelper.createSourceId(sourceId.incrementAndGet());
+      store.recordProgramProvisioning(runId, Collections.emptyMap(),
+          RuntimeMonitors.trimSystemArgs(fullSystemArgs), msgSourceId, null);
+      store.recordProgramProvisioned(runId, 0, msgSourceId);
+      store.recordProgramStart(runId, null, startSystemArgsWithOtherScopes, msgSourceId);
+
+      RunRecordDetail record = store.getRun(runId);
+      Assert.assertNotNull(record);
+      Assert.assertEquals(ProgramRunStatus.STARTING, record.getStatus());
+      Assert.assertEquals(scopesJson,
+          record.getSystemArgs().get(ProgramOptionConstants.RUNTIME_SCOPES));
+      Assert.assertEquals("extraValue", record.getSystemArgs().get("extra.arg"));
+
+      byte[] emptyStartSourceId = AppFabricTestHelper.createSourceId(sourceId.incrementAndGet());
+      store.recordProgramProvisioning(runEmptyStart, Collections.emptyMap(),
+          RuntimeMonitors.trimSystemArgs(fullSystemArgs), emptyStartSourceId, null);
+      store.recordProgramProvisioned(runEmptyStart, 0, emptyStartSourceId);
+      store.recordProgramStart(runEmptyStart, null, Collections.emptyMap(), emptyStartSourceId);
+
+      RunRecordDetail emptyStartRecord = store.getRun(runEmptyStart);
+      Assert.assertNotNull(emptyStartRecord);
+      Assert.assertEquals(scopesJson,
+          emptyStartRecord.getSystemArgs().get(ProgramOptionConstants.RUNTIME_SCOPES));
+
+      byte[] unscopedSourceId = AppFabricTestHelper.createSourceId(sourceId.incrementAndGet());
+      store.recordProgramProvisioning(runUnscoped, Collections.emptyMap(),
+          RuntimeMonitors.trimSystemArgs(SINGLETON_PROFILE_MAP), unscopedSourceId, null);
+      store.recordProgramProvisioned(runUnscoped, 0, unscopedSourceId);
+      store.recordProgramStart(runUnscoped, null, startSystemArgsWithOtherScopes, unscopedSourceId);
+
+      RunRecordDetail unscopedRecord = store.getRun(runUnscoped);
+      Assert.assertNotNull(unscopedRecord);
+      Assert.assertFalse(unscopedRecord.getSystemArgs()
+          .containsKey(ProgramOptionConstants.RUNTIME_SCOPES));
+      Assert.assertEquals("extraValue", unscopedRecord.getSystemArgs().get("extra.arg"));
+    });
   }
 
   /**
