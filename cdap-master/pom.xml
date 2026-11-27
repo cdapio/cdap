@@ -414,26 +414,6 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-etl-tools</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.libexec.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-tools/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-tools-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-dq</id>
                 <phase>process-resources</phase>
                 <goals>
