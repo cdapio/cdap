@@ -36,7 +36,6 @@ import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.Read;
 import io.cdap.cdap.spi.metadata.ScopedName;
-import jakarta.json.JsonString;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +58,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.opensearch.client.json.JsonData;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5Transport;
 
@@ -680,15 +678,10 @@ public class MetadataIndexMigratorTest {
         Assert.assertEquals(metadata, target.read(new Read(entity)));
         Assert.assertEquals(source.getVersionInfo().getMappingsChecksum(),
             target.getVersionInfo().getMappingsChecksum());
-        Assert.assertNull(ElasticsearchMetadataStorage.getIndexMeta(realClient, sourceIndex)
-            .get(Config.MAPPING_REBUILD_REQUIRED));
-        JsonData rebuildFlag = ElasticsearchMetadataStorage.getIndexMeta(realClient, targetIndex)
-            .get(Config.MAPPING_REBUILD_REQUIRED);
-        Assert.assertNotNull(rebuildFlag);
-        Assert.assertEquals("true", ((JsonString) rebuildFlag.toJson()).getString());
-        ElasticsearchMetadataStorage.setRebuildRequired(realClient, targetIndex, false);
-        Assert.assertNull(ElasticsearchMetadataStorage.getIndexMeta(realClient, targetIndex)
-            .get(Config.MAPPING_REBUILD_REQUIRED));
+        Assert.assertFalse(source.isRebuildRequired());
+        Assert.assertTrue(target.isRebuildRequired());
+        target.markRebuilt();
+        Assert.assertFalse(target.isRebuildRequired());
         // the version info is in the same object as the rebuild marker and must stay
         Assert.assertEquals(VersionInfo.METADATA_VERSION,
             target.getVersionInfo().getMetadataVersion());

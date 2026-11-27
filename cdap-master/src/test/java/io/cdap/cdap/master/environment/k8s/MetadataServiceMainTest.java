@@ -26,13 +26,18 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.MetadataSearchResultRecord;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.twill.discovery.Discoverable;
@@ -92,5 +97,23 @@ public class MetadataServiceMainTest extends MasterServiceMainTestBase {
     // The creation time should be between the beforeCreation time and the current time
     Assert.assertTrue(creationTime >= beforeCreation);
     Assert.assertTrue(creationTime <= System.currentTimeMillis());
+
+    // The service must be able to write the system metadata again from the stores
+    String scheme = URIScheme.HTTPS.isMatch(metadataEndpoint) ? "https" : "http";
+    URL rebuildUrl = new URL(String.format("%s://%s:%d/v3/metadata-internals/rebuild",
+                                           scheme, metadataAddr.getHostName(),
+                                           metadataAddr.getPort()));
+    HttpResponse rebuildResponse = HttpRequests.execute(HttpRequest.post(rebuildUrl).build(),
+                                                        new DefaultHttpRequestConfig(false));
+    Assert.assertEquals(rebuildResponse.getResponseBodyAsString(), 200,
+                        rebuildResponse.getResponseCode());
+    String entityName = metadataClient
+      .searchMetadata(datasetId.getNamespaceId(), "*", (String) null).getResults().stream()
+      .filter(r -> datasetId.equals(r.getEntityId()))
+      .map(r -> r.getMetadata().get(MetadataScope.SYSTEM).getProperties()
+        .get(MetadataConstants.ENTITY_NAME_KEY))
+      .findFirst()
+      .orElse(null);
+    Assert.assertEquals(datasetId.getDataset(), entityName);
   }
 }

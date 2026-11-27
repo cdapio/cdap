@@ -111,6 +111,16 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   @Override
+  public boolean isRebuildRequired() throws IOException {
+    return storage.isRebuildRequired();
+  }
+
+  @Override
+  public void markRebuilt() throws IOException {
+    storage.markRebuilt();
+  }
+
+  @Override
   public MetadataChange apply(MetadataMutation mutation, MutationOptions options)
       throws IOException {
     MetadataChange change;
