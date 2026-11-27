@@ -32,6 +32,7 @@ import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
 import javax.ws.rs.core.HttpHeaders;
@@ -60,6 +61,8 @@ public final class GcpMetadataTaskContextUtil {
   /**
    * Sets the GcpMetadataTaskContext in the sidecar metadata server if NAMESPACED_SERVICE_ACCOUNTS
    * feature is enabled.
+   *
+   * @throws IOException if the request fails or the sidecar responds with a non-200 status
    */
   public static void setGcpMetadataTaskContext(NamespaceId namespaceId, CConfiguration cConf)
       throws IOException {
@@ -81,13 +84,18 @@ public final class GcpMetadataTaskContextUtil {
             .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
             .build();
     HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
-    LOG.debug("Set namespace '{}' response: {}", namespaceId.getNamespace(),
-        tokenResponse.getResponseCode());
+    int responseCode = tokenResponse.getResponseCode();
+    LOG.debug("Set namespace '{}' response: {}", namespaceId.getNamespace(), responseCode);
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      throw new IOException("Setting the metadata sidecar context returned status " + responseCode);
+    }
   }
 
   /**
    * Clears the GcpMetadataTaskContext in the sidecar metadata server if NAMESPACED_SERVICE_ACCOUNTS
    * feature is enabled.
+   *
+   * @throws IOException if the request fails or the sidecar responds with a non-200 status
    */
   public static void clearGcpMetadataTaskContext(CConfiguration cConf) throws IOException {
     FeatureFlagsProvider featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
@@ -101,6 +109,11 @@ public final class GcpMetadataTaskContextUtil {
         .addHeader(METADATA_FLAVOR_HEADER_KEY, METADATA_FLAVOR_HEADER_VALUE)
         .build();
     HttpResponse tokenResponse = HttpRequests.execute(httpRequest);
-    LOG.debug("Clear context response: {}", tokenResponse.getResponseCode());
+    int responseCode = tokenResponse.getResponseCode();
+    LOG.debug("Clear context response: {}", responseCode);
+    if (responseCode != HttpURLConnection.HTTP_OK) {
+      throw new IOException(
+          "Clearing the metadata sidecar context returned status " + responseCode);
+    }
   }
 }
