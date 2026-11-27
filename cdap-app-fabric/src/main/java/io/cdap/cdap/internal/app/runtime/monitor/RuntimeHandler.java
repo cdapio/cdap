@@ -27,13 +27,14 @@ import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Closeables;
-import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyConsumer;
@@ -147,7 +148,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
         ProgramType.valueOfCategoryName(programType, BadRequestException::new),
         program, run);
-    ProgramRunInfo programRunInfo = requestValidator.getProgramRunStatus(programRunId, request);
+    ProgramRunInfo programRunInfo =
+        requestValidator.validate(programRunId, request).getProgramRunInfo();
 
     if (!allowedTopics.contains(topic)) {
       throw new UnauthorizedException("Access denied for topic " + topic);
@@ -158,14 +160,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
       return new MessageBodyConsumer(topicId, logProcessor::process, programRunInfo);
     }
 
-    return new MessageBodyConsumer(topicId, payloads -> {
-      try {
-        messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
-            topicId.getTopic(), payloads);
-      } catch (TopicNotFoundException e) {
-        throw new BadRequestException(e);
-      }
-    }, programRunInfo);
+    return new MessageBodyConsumer(topicId, payloads -> publishAsSystem(topicId, payloads),
+        programRunInfo);
   }
 
   /**
@@ -193,7 +189,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     ProgramRunId programRunId = new ProgramRunId(appId,
         ProgramType.valueOfCategoryName(programType, BadRequestException::new),
         program, run);
-    requestValidator.getProgramRunStatus(programRunId, request);
+    requestValidator.validate(programRunId, request);
 
     Location location = eventLogsBaseLocation.append(
         String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));
@@ -235,6 +231,23 @@ public class RuntimeHandler extends AbstractHttpHandler {
         }
       }
     };
+  }
+
+  private void publishAsSystem(TopicId topicId, Iterator<byte[]> payloads)
+      throws IOException, BadRequestException, AccessException {
+    try {
+      AuthorizationUtil.<Void, Exception>callAsSystem(() -> {
+        messagingContext.getDirectMessagePublisher().publish(
+            topicId.getNamespace(), topicId.getTopic(), payloads);
+        return null;
+      });
+    } catch (TopicNotFoundException e) {
+      throw new BadRequestException(e);
+    } catch (IOException | RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   /**

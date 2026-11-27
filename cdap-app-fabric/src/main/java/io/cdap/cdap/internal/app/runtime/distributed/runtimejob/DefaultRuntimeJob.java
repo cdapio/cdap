@@ -142,6 +142,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -251,6 +252,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
+      verifyCoreServicesRunning(programId, coreServices);
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class)
           .create(programId.getType());
 
@@ -258,6 +260,10 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+
+        controller.addListener(
+            new ProgramStateListener(programCompletion, programStateWriter,
+                programRunId), Threads.SAME_THREAD_EXECUTOR);
 
         monitorServicesHealth(programRunId, coreServices, programStateWriter,
             programCompletion, controller);
@@ -279,10 +285,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
             controller.stop(timeout, TimeUnit.MILLISECONDS);
           }
         });
-
-        controller.addListener(
-            new ProgramStateListener(programCompletion, programStateWriter,
-                programRunId), Threads.SAME_THREAD_EXECUTOR);
 
         if (stopRequested) {
           controller.stop();
@@ -316,7 +318,10 @@ public class DefaultRuntimeJob implements RuntimeJob {
       runCompletedLatch.countDown();
     }
 
-    verifySuccessfulProgramCompletion(programId, runtimeClientService::getProgramCompletionDetails);
+    verifySuccessfulProgramCompletion(programId,
+        runtimeClientService::getProgramCompletionDetails,
+        runtimeClientService.state(),
+        runtimeClientService.getFailureCause());
   }
 
   @Override
@@ -614,38 +619,75 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   /**
-   * Failure of any core service can leave the program in an orphaned state One
-   * example is RuntimeClientService failure when CDAP instance is deleted In
+   * Failure of any core service can leave the program in an orphaned state. One
+   * example is RuntimeClientService failure when CDAP instance is deleted. In
    * such situations runtime job should be stopped to free up resources
-   * (CDAP-20216)
+   * (CDAP-20216).
    */
-  private void monitorServicesHealth(ProgramRunId programRunId,
+  @VisibleForTesting
+  void monitorServicesHealth(ProgramRunId programRunId,
       Deque<Service> services, ProgramStateWriter programStateWriter,
       CompletableFuture<State> programCompletion,
       ProgramController controller) {
 
     for (Service service : services) {
+      AtomicBoolean failureHandled = new AtomicBoolean(false);
       service.addListener(new ServiceListenerAdapter() {
         @Override
         public void failed(Service.State from, Throwable failure) {
-          LOG.error(
-              "Core service {} failed, prev state {}, terminating program run",
-              service, from, failure);
-          try {
-            LOG.error("Forcefully terminating program run {}", programRunId);
-            controller.kill();
-          } catch (Exception e) {
-            LOG.error("Error in terminating program run", e);
-            // Fallback in case controller could not be stopped
-            try {
-              programStateWriter.error(programRunId, failure);
-            } catch (Exception ex) {
-              LOG.error("Error in updating program state to error", ex);
-            }
-            programCompletion.completeExceptionally(failure);
+          if (failureHandled.compareAndSet(false, true)) {
+            handleCoreServiceFailure(programRunId, service, from, failure,
+                programStateWriter, programCompletion, controller);
           }
         }
       }, Threads.SAME_THREAD_EXECUTOR);
+      // Guava 13.0.1 silently ignores listeners added after a service already reached FAILED.
+      if (service.state() == Service.State.FAILED && failureHandled.compareAndSet(false, true)) {
+        Throwable failure = service instanceof RuntimeClientService
+            ? ((RuntimeClientService) service).getFailureCause() : null;
+        handleCoreServiceFailure(programRunId, service, Service.State.FAILED, failure,
+            programStateWriter, programCompletion, controller);
+      }
+    }
+  }
+
+  private void handleCoreServiceFailure(ProgramRunId programRunId, Service service,
+      Service.State from, @Nullable Throwable failure, ProgramStateWriter programStateWriter,
+      CompletableFuture<State> programCompletion, ProgramController controller) {
+    LOG.error(
+        "Core service {} failed, prev state {}, terminating program run",
+        service, from, failure);
+    try {
+      LOG.error("Forcefully terminating program run {}", programRunId);
+      controller.kill();
+    } catch (Exception e) {
+      LOG.error("Error in terminating program run", e);
+      Throwable cause = failure != null ? failure
+          : new IllegalStateException("Core service " + service + " failed", e);
+      // Fallback in case controller could not be stopped
+      try {
+        programStateWriter.error(programRunId, cause);
+      } catch (Exception ex) {
+        LOG.error("Error in updating program state to error", ex);
+      }
+      programCompletion.completeExceptionally(cause);
+    }
+  }
+
+  @VisibleForTesting
+  void verifyCoreServicesRunning(ProgramId programId, Deque<Service> services) {
+    for (Service service : services) {
+      if (service.state() == Service.State.FAILED) {
+        ProgramRunFailureException failure = new ProgramRunFailureException(
+            String.format("Program %s aborted because core service %s failed before program launch",
+                programId, service));
+        Throwable cause = service instanceof RuntimeClientService
+            ? ((RuntimeClientService) service).getFailureCause() : null;
+        if (cause != null) {
+          failure.initCause(cause);
+        }
+        throw failure;
+      }
     }
   }
 
@@ -690,15 +732,32 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   void verifySuccessfulProgramCompletion(ProgramId programId,
-      Supplier<ProgramRunCompletionDetails> completionDetailsSupplier) {
-    final ProgramRunCompletionDetails completionInfo = completionDetailsSupplier.get();
+      Supplier<ProgramRunCompletionDetails> completionDetailsSupplier,
+      Service.State runtimeClientState,
+      @Nullable Throwable runtimeClientFailure) {
+    ProgramRunCompletionDetails completionInfo = completionDetailsSupplier.get();
+    boolean serviceFailed = runtimeClientState == Service.State.FAILED;
+    Throwable serviceFailure = serviceFailed ? runtimeClientFailure : null;
+    if (completionInfo != null && completionInfo.getEndStatus().isUnsuccessful()) {
+      ProgramRunFailureException failure = new ProgramRunFailureException(
+          String.format("Program %s finished with unsuccessful status %s",
+              programId, completionInfo.getEndStatus().name()));
+      if (serviceFailure != null) {
+        failure.initCause(serviceFailure);
+      }
+      throw failure;
+    }
+    if (serviceFailed) {
+      ProgramRunFailureException failure = new ProgramRunFailureException(
+          String.format("Program %s failed because runtime client service failed", programId));
+      if (serviceFailure != null) {
+        failure.initCause(serviceFailure);
+      }
+      throw failure;
+    }
     if (completionInfo == null) {
       LOG.warn(
           "RuntimeClientService returned null ProgramRunCompletionDetails even after program completion.");
-    } else if (completionInfo.getEndStatus().isUnsuccessful()) {
-      throw new ProgramRunFailureException(
-          String.format("Program %s finished with unsuccessful status %s",
-              programId, completionInfo.getEndStatus().name()));
     }
   }
 

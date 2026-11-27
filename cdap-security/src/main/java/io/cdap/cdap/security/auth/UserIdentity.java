@@ -64,8 +64,9 @@ public class UserIdentity {
 
   /**
    * Identifies the type of {@link UserIdentity}. This is used to distinguish between access tokens
-   * generated for the external authentication server and the access tokens generated for use by
-   * internal services.
+   * generated for the external authentication server, access tokens generated for use by internal
+   * services, and access tokens scoped to a single remote program run. Constants are serialized by
+   * declaration order in {@link Schemas}, so new values must only be appended at the end.
    */
   public enum IdentifierType {
     /**
@@ -83,7 +84,13 @@ public class UserIdentity {
      * have higher-privileged access and are checked by the
      * {@link io.cdap.cdap.security.authorization.InternalAccessEnforcer}.
      */
-    INTERNAL
+    INTERNAL,
+    /**
+     * RUNTIME represents access tokens scoped to a single remote program run. Runtime access
+     * tokens are accepted only by the runtime service and are rejected by user and internal
+     * access checks.
+     */
+    RUNTIME
   }
 
   private final String username;
