@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
@@ -56,7 +57,7 @@ public class ConfigHandler extends AbstractHttpHandler {
   public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request,
       HttpResponder responder,
       @DefaultValue("json") @QueryParam("format") String format) throws IOException {
-    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
+    enforceInstanceRead();
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getCConf()));
     } else if ("xml".equals(format)) {
@@ -73,7 +74,7 @@ public class ConfigHandler extends AbstractHttpHandler {
   public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request,
       HttpResponder responder,
       @DefaultValue("json") @QueryParam("format") String format) throws IOException {
-    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
+    enforceInstanceRead();
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getHConf()));
     } else if ("xml".equals(format)) {
@@ -83,5 +84,16 @@ public class ConfigHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
           "Invalid format: " + format + ". Valid formats: json, xml");
     }
+  }
+
+  /**
+   * GET on the instance alone is not enough, because some authorizers grant it to callers that
+   * may only reach the instance and have no namespace access. Also require LIST on the instance's
+   * namespaces, which instance-level readers and admins hold.
+   */
+  private void enforceInstanceRead() {
+    contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
+    contextAccessEnforcer.enforceOnParent(EntityType.NAMESPACE, InstanceId.SELF,
+        StandardPermission.LIST);
   }
 }

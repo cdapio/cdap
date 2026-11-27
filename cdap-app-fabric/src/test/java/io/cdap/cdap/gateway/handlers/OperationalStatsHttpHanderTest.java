@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import static org.mockito.Mockito.mock;
+
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.operations.OperationalStatsUtils;
+import io.cdap.cdap.security.spi.authorization.ContextAccessEnforcer;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -32,7 +36,8 @@ import org.junit.Test;
  */
 public class OperationalStatsHttpHanderTest {
 
-  private final  OperationalStatsHttpHandler handler = new OperationalStatsHttpHandler();
+  private final  OperationalStatsHttpHandler handler =
+      new OperationalStatsHttpHandler(mock(ContextAccessEnforcer.class), mock(NamespaceQueryAdmin.class));
 
   @BeforeClass
   public static void setup() throws Exception {

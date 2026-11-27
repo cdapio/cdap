@@ -18,6 +18,7 @@ package io.cdap.cdap.gateway.handlers;
 
 import static org.mockito.Mockito.mock;
 
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.Principal;
@@ -42,6 +43,9 @@ public class ConfigHandlerAuthorizationTest {
   private static final Principal MASTER_PRINCIPAL = new Principal("master", Principal.PrincipalType.USER);
   private static final Principal UNPRIVILEGED_PRINCIPAL = new Principal("unprivileged",
                                                                         Principal.PrincipalType.USER);
+  // Holds GET on the instance only, with no namespace access.
+  private static final Principal ACCESSOR_PRINCIPAL = new Principal("accessor",
+                                                                    Principal.PrincipalType.USER);
 
   private static ConfigHandler configHandler;
 
@@ -56,6 +60,10 @@ public class ConfigHandlerAuthorizationTest {
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), MASTER_PRINCIPAL,
                                    Collections.unmodifiableSet(new HashSet<>(Arrays.asList(requiredPermissions))));
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF, EntityType.NAMESPACE),
+                                   MASTER_PRINCIPAL, Collections.singleton(StandardPermission.LIST));
+    inMemoryAccessController.grant(Authorizable.fromEntityId(InstanceId.SELF), ACCESSOR_PRINCIPAL,
+                                   Collections.singleton(StandardPermission.GET));
     AuthenticationContext authenticationContext = new AuthenticationTestContext();
     DefaultContextAccessEnforcer contextAccessEnforcer = new DefaultContextAccessEnforcer(authenticationContext,
                                                                                           inMemoryAccessController);
@@ -114,5 +122,27 @@ public class ConfigHandlerAuthorizationTest {
       exceptionThrown = e;
     }
     Assert.assertNull(exceptionThrown);
+  }
+
+  @Test
+  public void testConfigCdapDeniedForInstanceAccessOnly() throws IOException {
+    AuthenticationTestContext.actAsPrincipal(ACCESSOR_PRINCIPAL);
+    try {
+      configHandler.configCDAP(request, responder, "json");
+    } catch (UnauthorizedException e) {
+      exceptionThrown = e;
+    }
+    Assert.assertNotNull(exceptionThrown);
+  }
+
+  @Test
+  public void testConfigHadoopDeniedForInstanceAccessOnly() throws IOException {
+    AuthenticationTestContext.actAsPrincipal(ACCESSOR_PRINCIPAL);
+    try {
+      configHandler.configHadoop(request, responder, "json");
+    } catch (UnauthorizedException e) {
+      exceptionThrown = e;
+    }
+    Assert.assertNotNull(exceptionThrown);
   }
 }

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.tethering;
 
+import static org.mockito.Mockito.mock;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -47,6 +49,7 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.metrics.NoOpMetricsSystemClient;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -63,6 +66,7 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
@@ -75,6 +79,7 @@ import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.InstancePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
+import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
@@ -200,12 +205,16 @@ public class TetheringServerHandlerTest {
     cConf.setBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED, true);
     cConf.setInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS, 1);
 
-    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER);
+    List<Permission> tetheringPermissions = Arrays.asList(InstancePermission.TETHER, StandardPermission.UPDATE);
     InMemoryAccessController inMemoryAccessController = new InMemoryAccessController();
     inMemoryAccessController.grant(
         Authorizable.fromEntityId(InstanceId.SELF),
         MASTER_PRINCIPAL,
         Collections.unmodifiableSet(new HashSet<>(tetheringPermissions)));
+    inMemoryAccessController.grant(
+        Authorizable.fromEntityId(InstanceId.SELF, EntityType.NAMESPACE),
+        MASTER_PRINCIPAL,
+        Collections.singleton(StandardPermission.LIST));
     ContextAccessEnforcer contextAccessEnforcer =
         new DefaultContextAccessEnforcer(new AuthenticationTestContext(), inMemoryAccessController);
     AuthenticationTestContext.actAsPrincipal(MASTER_PRINCIPAL);
@@ -224,7 +233,8 @@ public class TetheringServerHandlerTest {
                     messagingService,
                     contextAccessEnforcer,
                     messagingProgramStatePublisher),
-                new TetheringHandler(cConf, tetheringStore, messagingService, profileService))
+                new TetheringHandler(cConf, tetheringStore, messagingService, profileService,
+                    contextAccessEnforcer, mock(NamespaceQueryAdmin.class)))
             .build();
     service.start();
     config =

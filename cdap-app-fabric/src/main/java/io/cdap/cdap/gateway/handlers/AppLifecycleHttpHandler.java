@@ -69,6 +69,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -250,6 +251,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @QueryParam("sortCreationTime") Boolean sortCreationTime,
       @QueryParam("enableDefaultPagination") @DefaultValue("false") boolean enableDefaultPagination)
       throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
 
     validateNamespace(namespaceId);
 
@@ -350,6 +352,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getAppInfo(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
@@ -365,6 +368,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void listAppVersions(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     validateApplicationId(namespaceId, appName);
     // enforce GET privileges on the app
     accessEnforcer.enforce(new ApplicationId(namespaceId, appName), authenticationContext.getPrincipal(),
@@ -387,6 +391,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       @PathParam("app-id") final String appId,
       @PathParam("version-id") final String versionId)
       throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
     ApplicationDetail appDetail = ApplicationId.DEFAULT_VERSION.equals(versionId)
@@ -403,6 +408,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   public void getPluginsInfo(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     // The version of the validated applicationId is ignored. We only use the method to validate the input.
     validateApplicationId(namespaceId, appName);
     responder.sendJson(HttpResponseStatus.OK,
@@ -507,6 +513,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   @Path("/apps/count")
   public void getAppsCount(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId) throws Exception {
+    enforceSystemNamespaceRead(namespaceId);
     NamespaceId namespace = validateNamespace(namespaceId);
     long count = applicationLifecycleService.getApplicationsCount(namespace);
     responder.sendString(HttpResponseStatus.OK, String.valueOf(count));
@@ -666,6 +673,7 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
   @Path("/appdetail")
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace) throws Exception {
+    enforceSystemNamespaceRead(namespace);
 
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace),
         request);
@@ -894,6 +902,18 @@ public class AppLifecycleHttpHandler extends AbstractAppLifecycleHttpHandler {
       throw new BadRequestException(String.format(
           "Invalid value '%s' for query parameter 'deployStrategy'. Allowed values are: %s",
           strategy, AppDeployStrategy.getAllowedValues()));
+    }
+  }
+
+  /**
+   * Reads in the system namespace are allowed for every caller by some authorizers. Also require
+   * that the caller can see at least one namespace. Every real user can, since the UI loads the
+   * system apps (such as Wrangler and Connections) from any namespace.
+   */
+  private void enforceSystemNamespaceRead(String namespace) throws Exception {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+          authenticationContext);
     }
   }
 }

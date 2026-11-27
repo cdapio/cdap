@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.SecureKeyId;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -70,6 +71,11 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
     accessEnforcer.enforceOnParent(EntityType.SECUREKEY, new NamespaceId(namespace),
         authenticationContext.getPrincipal(), StandardPermission.LIST);
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      // Some authorizers allow system namespace reads for every caller. Listing system keys is an
+      // instance-level read; users list keys in their own namespace.
+      AuthorizationUtil.enforceInstanceLevelRead(accessEnforcer, authenticationContext);
+    }
     Principal principal = authenticationContext.getPrincipal();
     return secureStoreService.list(namespace);
   }

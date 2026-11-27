@@ -23,6 +23,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
 import io.cdap.cdap.config.PreferencesService;
@@ -34,6 +35,7 @@ import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.store.NamespaceStore;
@@ -62,17 +64,19 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesService preferencesService;
   private final Store store;
   private final NamespaceStore nsStore;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   PreferencesHttpHandler(AccessEnforcer accessEnforcer,
       AuthenticationContext authenticationContext,
       PreferencesService preferencesService,
-      Store store, NamespaceStore nsStore) {
+      Store store, NamespaceStore nsStore, NamespaceQueryAdmin namespaceQueryAdmin) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.preferencesService = preferencesService;
     this.store = store;
     this.nsStore = nsStore;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   //Instance Level Properties
@@ -82,6 +86,8 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
     InstanceId instanceId = new InstanceId("");
     accessEnforcer.enforce(instanceId, authenticationContext.getPrincipal(),
         StandardPermission.GET);
+    AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+        authenticationContext);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(preferencesService.getProperties()));
   }
 
@@ -118,6 +124,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved)
       throws Exception {
+    enforceSystemNamespaceRead(namespace);
     NamespaceId namespaceId = new NamespaceId(namespace);
     accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
         StandardPermission.GET);
@@ -181,6 +188,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
       @QueryParam("resolved") boolean resolved) throws Exception {
+    enforceSystemNamespaceRead(namespace);
     ApplicationId applicationId = new ApplicationId(namespace, appId,
         getLatestAppVersion(new NamespaceId(namespace), appId));
     accessEnforcer.enforce(applicationId, authenticationContext.getPrincipal(),
@@ -253,6 +261,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
       @PathParam("program-type") String programType, @PathParam("program-id") String programId,
       @QueryParam("resolved") boolean resolved) throws Exception {
+    enforceSystemNamespaceRead(namespace);
     ApplicationId applicationId = new ApplicationId(namespace, appId,
         getLatestAppVersion(new NamespaceId(namespace), appId));
     ProgramId program = new ProgramId(applicationId, getProgramType(programType), programId);
@@ -332,5 +341,16 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       throw new ApplicationNotFoundException(new ApplicationId(namespaceId.getNamespace(), appId));
     }
     return latestApplicationMeta.getSpec().getAppVersion();
+  }
+
+  /**
+   * Reads in the system namespace are allowed for every caller by some authorizers. Also require
+   * that the caller can see at least one namespace.
+   */
+  private void enforceSystemNamespaceRead(String namespace) throws Exception {
+    if (NamespaceId.SYSTEM.getNamespace().equals(namespace)) {
+      AuthorizationUtil.enforceAnyNamespaceAccess(namespaceQueryAdmin, accessEnforcer,
+          authenticationContext);
+    }
   }
 }

@@ -27,7 +27,9 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramReference;
@@ -216,6 +218,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       @QueryParam("suppress") List<String> suppress) throws Exception {
     accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
         StandardPermission.GET);
+    ensureInstanceLevelRead();
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
         Id.Namespace.SYSTEM.getId(), componentId,
         serviceId);
@@ -236,6 +239,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       @QueryParam("suppress") List<String> suppress) throws Exception {
     accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
         StandardPermission.GET);
+    ensureInstanceLevelRead();
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
         Id.Namespace.SYSTEM.getId(), componentId,
         serviceId);
@@ -256,6 +260,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       @QueryParam("suppress") List<String> suppress) throws Exception {
     accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
         StandardPermission.GET);
+    ensureInstanceLevelRead();
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
         Id.Namespace.SYSTEM.getId(), componentId,
         serviceId);
@@ -280,5 +285,18 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
     ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
         program);
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
+    if (NamespaceId.SYSTEM.equals(appId.getNamespaceId())) {
+      ensureInstanceLevelRead();
+    }
+  }
+
+  /**
+   * Logs of system services and system apps (such as Studio and Wrangler) cover every namespace.
+   * Also require LIST on the instance's namespaces, which instance-level readers and admins hold
+   * but callers that may only reach the instance do not.
+   */
+  private void ensureInstanceLevelRead() {
+    accessEnforcer.enforceOnParent(EntityType.NAMESPACE, InstanceId.SELF,
+        authenticationContext.getPrincipal(), StandardPermission.LIST);
   }
 }

@@ -151,6 +151,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     // Ensure the user is authorized to list support bundle statuses
     contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF,
         StandardPermission.LIST);
+    enforceInstanceRead();
 
     List<SupportBundleOperationStatus> bundleOperationStatusList = bundleGenerator.getAllBundleStatus();
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatusList));
@@ -169,6 +170,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       throws IOException, NotFoundException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
+    enforceInstanceRead();
     SupportBundleOperationStatus bundleOperationStatus = bundleGenerator.getBundle(uuid);
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatus));
   }
@@ -203,6 +205,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       throws BadRequestException, IOException, NotFoundException, NoSuchAlgorithmException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
+    enforceInstanceRead();
     String requestContent = request.content().toString(StandardCharsets.UTF_8);
     File tempDir = new File(
         cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();
@@ -232,5 +235,15 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     } finally {
       Files.deleteIfExists(tmpPath);
     }
+  }
+
+  /**
+   * Bundles hold system logs and pipeline logs from every namespace. Also require LIST on the
+   * instance's namespaces, which instance-level readers and admins hold but callers that may
+   * only reach the instance do not.
+   */
+  private void enforceInstanceRead() {
+    contextAccessEnforcer.enforceOnParent(EntityType.NAMESPACE, InstanceId.SELF,
+        StandardPermission.LIST);
   }
 }
