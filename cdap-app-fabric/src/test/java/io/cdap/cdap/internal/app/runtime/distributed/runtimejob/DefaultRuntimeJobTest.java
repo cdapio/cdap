@@ -16,13 +16,18 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
@@ -43,13 +48,17 @@ import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunFailureException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * Unit test for {@link DefaultRuntimeJob}.
@@ -73,33 +82,146 @@ public class DefaultRuntimeJobTest {
   public void testVerifySuccessfulProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-      () -> new ProgramRunCompletionDetails(1234,
-                                            ProgramRunStatus.COMPLETED));
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.COMPLETED),
+        Service.State.TERMINATED, null);
   }
 
   @Test(expected = ProgramRunFailureException.class)
   public void testVerifyKilledProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-      () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.KILLED));
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.KILLED),
+        Service.State.TERMINATED, null);
   }
 
   @Test
   public void testVerifyNullProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-      () -> null);
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> null,
+        Service.State.TERMINATED, null);
   }
 
   @Test(expected = ProgramRunFailureException.class)
   public void testVerifyFailedProgramCompletion() {
     DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
     runtimeJob.verifySuccessfulProgramCompletion(
-      new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
-      () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.FAILED));
+        new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+        () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.FAILED),
+        Service.State.TERMINATED, null);
+  }
+
+  @Test
+  public void testVerifyCompletedProgramFailsWhenRuntimeClientServiceFailed() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    Throwable cause = new IOException("runtime token refused");
+    ProgramRunFailureException thrown = Assert.assertThrows(
+        ProgramRunFailureException.class,
+        () -> runtimeJob.verifySuccessfulProgramCompletion(
+            new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+            () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.COMPLETED),
+            Service.State.FAILED, cause));
+    Assert.assertTrue("Unexpected message: " + thrown.getMessage(),
+        thrown.getMessage().contains("runtime client service failed"));
+    Assert.assertSame(cause, thrown.getCause());
+  }
+
+  @Test
+  public void testVerifyNullCompletionFailsWhenRuntimeClientServiceFailed() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    Throwable cause = new IOException("runtime token refused");
+    ProgramRunFailureException thrown = Assert.assertThrows(
+        ProgramRunFailureException.class,
+        () -> runtimeJob.verifySuccessfulProgramCompletion(
+            new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+            () -> null,
+            Service.State.FAILED, cause));
+    Assert.assertTrue("Unexpected message: " + thrown.getMessage(),
+        thrown.getMessage().contains("runtime client service failed"));
+    Assert.assertSame(cause, thrown.getCause());
+  }
+
+  @Test
+  public void testVerifyFailedCompletionPreservesRuntimeClientServiceCause() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    Throwable cause = new IOException("runtime token refused");
+    ProgramRunFailureException thrown = Assert.assertThrows(
+        ProgramRunFailureException.class,
+        () -> runtimeJob.verifySuccessfulProgramCompletion(
+            new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+            () -> new ProgramRunCompletionDetails(1234, ProgramRunStatus.FAILED),
+            Service.State.FAILED, cause));
+    Assert.assertTrue("Unexpected message: " + thrown.getMessage(),
+        thrown.getMessage().contains("unsuccessful status FAILED"));
+    Assert.assertSame(cause, thrown.getCause());
+  }
+
+  @Test
+  public void testVerifyCoreServicesRunningFailsWhenServiceAlreadyFailed() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    Service failedService = createFailedService();
+    ProgramRunFailureException thrown = Assert.assertThrows(
+        ProgramRunFailureException.class,
+        () -> runtimeJob.verifyCoreServicesRunning(
+            new ProgramId("ns1", "app-id", ProgramType.WORKFLOW, "program"),
+            new LinkedList<>(Collections.singletonList(failedService))));
+    Assert.assertTrue("Unexpected message: " + thrown.getMessage(),
+        thrown.getMessage().contains("failed before program launch"));
+  }
+
+  @Test
+  public void testMonitorServicesHealthKillsControllerWhenServiceAlreadyFailed() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app").workflow("wf").run(RunIds.generate());
+    Service failedService = createFailedService();
+
+    ProgramController controller = Mockito.mock(ProgramController.class);
+    ProgramStateWriter stateWriter = Mockito.mock(ProgramStateWriter.class);
+    CompletableFuture<ProgramController.State> completion = new CompletableFuture<>();
+
+    runtimeJob.monitorServicesHealth(
+        runId, new LinkedList<>(Collections.singletonList(failedService)),
+        stateWriter, completion, controller);
+
+    Mockito.verify(controller).kill();
+  }
+
+  @Test
+  public void testMonitorServicesHealthFallbackHandlesNullFailureCause() {
+    DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app").workflow("wf").run(RunIds.generate());
+    Service failedService = createFailedService();
+
+    ProgramController controller = Mockito.mock(ProgramController.class);
+    Mockito.doThrow(new RuntimeException("kill failed")).when(controller).kill();
+    ProgramStateWriter stateWriter = Mockito.mock(ProgramStateWriter.class);
+    CompletableFuture<ProgramController.State> completion = new CompletableFuture<>();
+
+    runtimeJob.monitorServicesHealth(
+        runId, new LinkedList<>(Collections.singletonList(failedService)),
+        stateWriter, completion, controller);
+
+    Mockito.verify(stateWriter).error(Mockito.eq(runId), Mockito.any(IllegalStateException.class));
+    Assert.assertTrue(completion.isCompletedExceptionally());
+  }
+
+  private static Service createFailedService() {
+    Service failedService = new AbstractIdleService() {
+      @Override
+      protected void startUp() {
+        throw new RuntimeException("core service failed");
+      }
+
+      @Override
+      protected void shutDown() {
+      }
+    };
+    Assert.assertThrows(RuntimeException.class, () -> Services.startAndWait(failedService));
+    Assert.assertEquals(Service.State.FAILED, failedService.state());
+    return failedService;
   }
 
   private void testInjector(LaunchMode launchMode) throws IOException {
