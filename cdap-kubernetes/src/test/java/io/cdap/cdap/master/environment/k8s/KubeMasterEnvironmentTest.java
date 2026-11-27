@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import io.cdap.cdap.k8s.common.TemporaryLocalFileProvider;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
+import io.cdap.cdap.k8s.discovery.KubeEndpointsDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.k8s.util.WorkloadIdentityUtil;
 import io.cdap.cdap.master.spi.environment.spark.SparkConfig;
@@ -484,6 +485,11 @@ public class KubeMasterEnvironmentTest {
     Field discoveryField = KubeMasterEnvironment.class.getDeclaredField("discoveryService");
     discoveryField.setAccessible(true);
     discoveryField.set(kubeMasterEnvironment, mock(KubeDiscoveryService.class));
+    Field endpointsDiscoveryField =
+        KubeMasterEnvironment.class.getDeclaredField("endpointsDiscoveryService");
+    endpointsDiscoveryField.setAccessible(true);
+    endpointsDiscoveryField.set(kubeMasterEnvironment,
+        new KubeEndpointsDiscoveryService("default", "cdap-test-", mock(ApiClientFactory.class)));
     kubeMasterEnvironment.destroy();
     verify(deleteCmReq).execute();
   }
