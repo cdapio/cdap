@@ -199,6 +199,40 @@ public class InternalAccessEnforcerTest {
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
   }
 
+  @Test
+  public void testInternalAccessEnforceRuntimeTokenType() throws IOException {
+    NamespaceId ns = new NamespaceId("namespace");
+    Principal principal = createSignedPrincipal(UserIdentity.IdentifierType.RUNTIME);
+    try {
+      internalAccessEnforcer.enforce(ns, principal, StandardPermission.GET);
+      Assert.fail("Expected AccessException for RUNTIME token");
+    } catch (AccessException e) {
+      Assert.assertTrue("Unexpected exception message: " + e.getMessage(),
+          e.getMessage().contains(UserIdentity.IdentifierType.RUNTIME.name()));
+    }
+  }
+
+  @Test
+  public void testInternalAccessEnforceOnParentRuntimeTokenType() throws IOException {
+    NamespaceId ns = new NamespaceId("namespace");
+    Principal principal = createSignedPrincipal(UserIdentity.IdentifierType.RUNTIME);
+    try {
+      internalAccessEnforcer.enforceOnParent(EntityType.APPLICATION, ns, principal, StandardPermission.GET);
+      Assert.fail("Expected AccessException for RUNTIME token");
+    } catch (AccessException e) {
+      Assert.assertTrue("Unexpected exception message: " + e.getMessage(),
+          e.getMessage().contains(UserIdentity.IdentifierType.RUNTIME.name()));
+    }
+  }
+
+  @Test
+  public void testInternalAccessIsVisibleRuntimeTokenType() throws IOException {
+    NamespaceId ns = new NamespaceId("namespace");
+    Set<EntityId> entities = Collections.singleton(ns);
+    Principal principal = createSignedPrincipal(UserIdentity.IdentifierType.RUNTIME);
+    Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testInternalAccessEnforceNullCredential() throws IOException {
     NamespaceId ns = new NamespaceId("namespace");
@@ -287,5 +321,16 @@ public class InternalAccessEnforcerTest {
     Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
     Principal principal = new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
     Assert.assertEquals(Collections.emptySet(), internalAccessEnforcer.isVisible(entities, principal));
+  }
+
+  private Principal createSignedPrincipal(UserIdentity.IdentifierType identifierType) throws IOException {
+    long currentTime = System.currentTimeMillis();
+    UserIdentity userIdentity = new UserIdentity(SYSTEM_PRINCIPAL, identifierType,
+                                                 Collections.emptyList(), currentTime,
+                                                 currentTime + 5 * MINUTE_MILLIS);
+    String encodedIdentity = Base64.getEncoder()
+      .encodeToString(accessTokenCodec.encode(tokenManager.signIdentifier(userIdentity)));
+    Credential credential = new Credential(encodedIdentity, Credential.CredentialType.INTERNAL);
+    return new Principal(SYSTEM_PRINCIPAL, Principal.PrincipalType.USER, null, credential);
   }
 }

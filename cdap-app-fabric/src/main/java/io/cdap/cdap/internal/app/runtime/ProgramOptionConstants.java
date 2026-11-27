@@ -194,4 +194,9 @@ public final class ProgramOptionConstants {
    * Option for the {@link io.cdap.cdap.runtime.spi.runtimejob.LaunchMode} for the run.
    */
   public static final String LAUNCH_MODE = "launchMode";
+
+  /**
+   * Option for JSON-serialized resource scopes allowed for a remote program run.
+   */
+  public static final String RUNTIME_SCOPES = "runtime.scopes";
 }

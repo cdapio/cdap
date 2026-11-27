@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -30,9 +32,13 @@ import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
+import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.Set;
 import org.apache.twill.common.Cancellable;
@@ -60,6 +66,7 @@ public class RuntimeServer extends AbstractIdleService {
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.RUNTIME)
         .setHttpHandlers(handlers)
+        .setExceptionHandler(new RuntimeHttpExceptionHandler())
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
           @Override
           public void modify(ChannelPipeline pipeline) {
@@ -109,5 +116,30 @@ public class RuntimeServer extends AbstractIdleService {
   protected void shutDown() throws Exception {
     cancelDiscovery.cancel();
     httpService.stop();
+  }
+
+  /**
+   * {@link HttpExceptionHandler} that attaches {@link Constants.Security.Headers#RUNTIME_TOKEN_FAILURE}
+   * on HTTP 403 responses caused by {@link RuntimeTokenRefusedException}.
+   */
+  static final class RuntimeHttpExceptionHandler extends HttpExceptionHandler {
+
+    @Override
+    public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
+      for (Throwable cause : Throwables.getCausalChain(t)) {
+        if (cause instanceof RuntimeTokenRefusedException) {
+          RuntimeTokenRefusedException refused = (RuntimeTokenRefusedException) cause;
+          LOG.trace("Runtime token refused for request={} {} reason={}:",
+              request.method().name(), request.uri(), refused.getReason(), refused);
+          responder.sendString(
+              HttpResponseStatus.FORBIDDEN,
+              refused.getMessage() != null ? refused.getMessage() : "",
+              new DefaultHttpHeaders().set(
+                  Constants.Security.Headers.RUNTIME_TOKEN_FAILURE, refused.getReason()));
+          return;
+        }
+      }
+      super.handle(t, request, responder);
+    }
   }
 }
