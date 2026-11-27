@@ -75,11 +75,12 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
 
   private static final Logger LOG = LoggerFactory.getLogger(AccessControllerInstantiator.class);
   private static final AccessControllerSpi NO_OP_ACCESS_CONTROLLER_V2 = new NoOpAccessControllerV2();
-  // Matches "sentry" at non-letter boundaries (case-insensitive) or CamelCase boundaries
-  // (e.g. cdap-sentry-extension.jar, SentryAuthorizer, DummySentryAccessController,
-  // CDAPSentryAuthorizer) without matching substrings like "AccessEntry" or "MySEntry".
+  // Matches "sentry" case-insensitively (including CamelCase and all-caps variations like
+  // cdap-sentry-extension.jar, SentryAuthorizer, DummySentryAccessController, Dummysentry,
+  // and CDAPSENTRY) while avoiding false positives on separate words like "AccessEntry" or
+  // "MySEntry".
   private static final Pattern SENTRY_NAME_PATTERN =
-      Pattern.compile("(?<![a-zA-Z])(?i:sentry)|Sentry|(?<=[a-z])SENTRY");
+      Pattern.compile("(?i:s)(?:e|E(?![a-z]))(?i:ntry)");
 
   private final CConfiguration cConf;
   private final InstantiatorFactory instantiatorFactory;

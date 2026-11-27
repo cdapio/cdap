@@ -350,11 +350,15 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
 
   @Test
   public void testUppercaseAcronymSentryJarRejected() throws Exception {
-    File acronymSentryJar = new File(TEMP_FOLDER.newFolder(), "CDAPSentryExtension.jar");
-    Assert.assertFalse(acronymSentryJar.exists());
+    for (String jarName : new String[] {
+        "CDAPSentryExtension.jar", "CDAPSENTRY.jar", "Dummysentry.jar"}) {
+      File sentryJar = new File(TEMP_FOLDER.newFolder(), jarName);
+      Assert.assertFalse(sentryJar.exists());
 
-    assertSentryExtensionRejected(acronymSentryJar,
-        "Apache Sentry authorization extension CDAPSentryExtension.jar is no longer supported.");
+      assertSentryExtensionRejected(sentryJar,
+          String.format("Apache Sentry authorization extension %s is no longer supported.",
+              jarName));
+    }
   }
 
   @Test
