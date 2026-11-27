@@ -27,6 +27,7 @@ import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.proto.PluginInstanceDetail;
@@ -107,7 +108,7 @@ public class ApplicationLifecycleServiceAuthorizationTest {
     ApplicationLifecycleService service = new ApplicationLifecycleService(
         CConfiguration.create(), store, null, null, null, null, null, null, null, null,
         accessController, authenticationContext, null, null, null,
-        new NoOpMetricsCollectionService());
+        new NoOpMetricsCollectionService(), Mockito.mock(RemoteClientFactory.class), null);
 
     // Principal with namespace GET and GET on app1 (not app2 or missingApp) is rejected before
     // consulting the store, preventing both property disclosure and app existence probing.

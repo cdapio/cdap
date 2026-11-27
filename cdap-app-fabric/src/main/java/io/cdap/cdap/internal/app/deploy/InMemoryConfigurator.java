@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -36,7 +35,6 @@ import io.cdap.cdap.app.DefaultAppRuntimeConfigurer;
 import io.cdap.cdap.app.DefaultApplicationContext;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
-import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
@@ -141,14 +139,7 @@ public final class InMemoryConfigurator implements Configurator {
             classLoaderImpersonator)) {
       SettableFuture<ConfigResponse> result = SettableFuture.create();
 
-      Object appMain = classLoader.loadClass(appClassName).newInstance();
-      if (!(appMain instanceof Application)) {
-        throw new IllegalStateException(
-            String.format("Application main class is of invalid type: %s",
-                appMain.getClass().getName()));
-      }
-
-      Application<?> app = (Application<?>) appMain;
+      Application<?> app = Artifacts.instantiateApplication(classLoader, appClassName);
       ConfigResponse response = createResponse(app, classLoader);
       result.set(response);
 
@@ -207,38 +198,7 @@ public final class InMemoryConfigurator implements Configurator {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       } catch (Throwable t) {
-        Throwable rootCause = Throwables.getRootCause(t);
-        if (rootCause instanceof ClassNotFoundException) {
-          // Heuristic to provide better error message
-          String missingClass = rootCause.getMessage();
-
-          // If the missing class has "spark" in the name, try to see if Spark is available
-          if (missingClass.startsWith("org.apache.spark.") || missingClass.startsWith(
-              "io.cdap.cdap.api.spark.")) {
-            // Try to load the SparkContext class, which should be available if Spark is available in the platform
-            try {
-              artifactClassLoader.loadClass("org.apache.spark.SparkContext");
-            } catch (ClassNotFoundException e) {
-              // Spark is not available, it is most likely caused by missing Spark in the platform
-              throw new IllegalStateException(
-                  "Missing Spark related class " + missingClass
-                      + ". It may be caused by unavailability of Spark. "
-                      + "Please verify environment variable " + Constants.SPARK_HOME
-                      + " is set correctly", t);
-            }
-
-            // Spark is available, can be caused by incompatible Spark version
-            throw new InvalidArtifactException(
-                "Missing Spark related class " + missingClass
-                    + ". Configured to use Spark located at " + System.getenv(Constants.SPARK_HOME)
-                    + ", which may be incompatible with the one required by the application", t);
-          }
-          // If Spark is available or the missing class is not a spark related class,
-          // then the missing class is most likely due to some missing library in the artifact jar
-          throw new InvalidArtifactException(
-              "Missing class " + missingClass
-                  + ". It may be caused by missing dependency jar(s) in the artifact jar.", t);
-        }
+        Artifacts.throwIfMissingDependency(t, artifactClassLoader);
         throw t;
       }
     } finally {

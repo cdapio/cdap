@@ -16,14 +16,20 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import com.google.common.base.Predicate;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.ArtifactId;
+import io.cdap.cdap.proto.id.NamespaceId;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.SortedMap;
+import javax.annotation.Nullable;
 
 /**
  * Interface to fetch artifact metadata
@@ -63,4 +69,26 @@ public interface ArtifactRepositoryReader {
    */
   List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order)
       throws Exception;
+
+  /**
+   * Returns a {@link SortedMap} of plugin artifact to plugin available for the given artifact. The
+   * keys are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins
+   * available to the given artifact.
+   *
+   * @param namespace the namespace to get plugins from
+   * @param artifactId the id of the artifact to get plugins for
+   * @param pluginType the type of plugins to get
+   * @param pluginName the name of plugins to get
+   * @param pluginPredicate the predicate for the plugin
+   * @param limit the limit number of the result
+   * @param order the order of the result
+   * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
+   * @throws NotFoundException if the namespace, parent artifact, or matching plugins do not exist
+   * @throws IOException if there was an exception reading plugin metadata from the artifact
+   *     store
+   */
+  SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
+      NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
+      @Nullable Predicate<ArtifactId> pluginPredicate, int limit, ArtifactSortOrder order)
+      throws IOException, NotFoundException;
 }
