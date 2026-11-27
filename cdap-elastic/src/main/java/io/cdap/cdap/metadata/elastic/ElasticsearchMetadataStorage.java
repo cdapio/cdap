@@ -341,6 +341,26 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
+  @Override
+  public boolean isRebuildRequired() throws IOException {
+    createIndex();
+    JsonData required = getIndexMeta(getClients().client, indexName)
+        .get(Config.MAPPING_REBUILD_REQUIRED);
+    if (required == null) {
+      return false;
+    }
+    JsonValue json = required.toJson();
+    return json == JsonValue.TRUE
+        || (json.getValueType() == JsonValue.ValueType.STRING
+            && Boolean.parseBoolean(((JsonString) json).getString()));
+  }
+
+  @Override
+  public void markRebuilt() throws IOException {
+    createIndex();
+    setRebuildRequired(getClients().client, indexName, false);
+  }
+
   static Map<String, JsonData> getIndexMeta(OpenSearchClient client, String indexName)
       throws IOException {
     IndexMappingRecord record;
