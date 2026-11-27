@@ -43,8 +43,14 @@ import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -153,6 +159,51 @@ public class ArtifactLocalizerServiceTest extends AppFabricTestBase {
     // Assert that the old cache directory is deleted after we run cleanup
     this.localizerService.forceCleanup();
     Assert.assertFalse(unpackedDir.exists());
+  }
+
+  @Test
+  public void testConcurrentUnpackArtifact() throws Exception {
+    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    ArtifactLocalizerClient client = new ArtifactLocalizerClient(
+        cConf, new NoOpInternalAuthenticator());
+
+    Id.Artifact artifactId = Id.Artifact.from(
+        Id.Namespace.DEFAULT, "concurrent-task", "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(
+        locationFactory, TaskWorkerServiceTest.TestRunnableClass.class);
+    File appJarFile = new File(TEMP_FOLDER.newFolder(),
+        String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Locations.linkOrCopy(appJar, appJarFile);
+    appJar.delete();
+    artifactRepository.addArtifact(artifactId, appJarFile);
+
+    int threadCount = 10;
+    CyclicBarrier startBarrier = new CyclicBarrier(threadCount);
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    try {
+      List<Future<File>> futures = new ArrayList<>(threadCount);
+      for (int i = 0; i < threadCount; i++) {
+        futures.add(executor.submit(() -> {
+          startBarrier.await(10, TimeUnit.SECONDS);
+          return client.getUnpackedArtifactLocation(artifactId.toEntityId());
+        }));
+      }
+
+      File expectedDir = null;
+      for (Future<File> future : futures) {
+        File unpackedDir = future.get(30, TimeUnit.SECONDS);
+        if (expectedDir == null) {
+          expectedDir = unpackedDir;
+        } else {
+          Assert.assertEquals(expectedDir, unpackedDir);
+        }
+      }
+      Assert.assertNotNull(expectedDir);
+      validateUnpackDir(expectedDir);
+    } finally {
+      executor.shutdownNow();
+    }
   }
 
   private void validateUnpackDir(File unpackedFile) {
