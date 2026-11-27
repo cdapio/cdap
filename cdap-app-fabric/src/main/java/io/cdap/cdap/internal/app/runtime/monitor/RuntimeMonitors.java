@@ -29,6 +29,11 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import java.net.Authenticator;
@@ -38,9 +43,11 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +57,8 @@ import org.slf4j.LoggerFactory;
 public final class RuntimeMonitors {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitors.class);
+  // Number of 100-ns intervals from UUID epoch (1582-10-15) to Unix epoch (1970-01-01).
+  private static final long UUID_EPOCH_OFFSET_100NS = 0x01b21dd213814000L;
 
   /**
    * Creates a properly ordered list of TMS topic names based on the list of topic configuration
@@ -142,7 +151,77 @@ public final class RuntimeMonitors {
     if (args.containsKey(ProgramOptionConstants.PRINCIPAL)) {
       trimmed.put(ProgramOptionConstants.PRINCIPAL, args.get(ProgramOptionConstants.PRINCIPAL));
     }
+    if (args.containsKey(ProgramOptionConstants.RUNTIME_SCOPES)) {
+      trimmed.put(ProgramOptionConstants.RUNTIME_SCOPES, args.get(ProgramOptionConstants.RUNTIME_SCOPES));
+    }
     return trimmed;
+  }
+
+  /**
+   * Returns {@code true} if {@code id} is non-null, matches its declared {@link EntityType},
+   * round-trips through {@link EntityType#fromIdParts(Iterable)} (executing constructor validation),
+   * enforces version and program name identifier rules on application/program entities, and—when
+   * {@code id} is a {@link ProgramRunId}—carries a canonical, non-negative time-based UUID.
+   */
+  static boolean isWellFormed(@Nullable EntityId id) {
+    if (id == null) {
+      return false;
+    }
+    try {
+      EntityType type = id.getEntityType();
+      if (type == null || !type.getIdClass().isInstance(id)) {
+        return false;
+      }
+      // Gson bypasses constructors; round-trip via fromIdParts to run constructor validation
+      // and check symmetric equality against partially initialized or mismatched instances.
+      EntityId rebuilt = type.fromIdParts(id.toIdParts());
+      if (!id.equals(rebuilt) || !rebuilt.equals(id)) {
+        return false;
+      }
+      // ApplicationId/ProgramId/ProgramReference/ProgramRunId constructors only null-check
+      // version and program, so validate their identifier characters explicitly.
+      if (id instanceof ApplicationId) {
+        return isValidAppVersion(((ApplicationId) id).getVersion());
+      }
+      if (id instanceof ProgramId) {
+        ProgramId programId = (ProgramId) id;
+        return isValidAppVersion(programId.getVersion())
+            && EntityId.isValidId(programId.getProgram());
+      }
+      if (id instanceof ProgramReference) {
+        return EntityId.isValidId(((ProgramReference) id).getProgram());
+      }
+      if (id instanceof ProgramRunId) {
+        ProgramRunId runId = (ProgramRunId) id;
+        return isValidAppVersion(runId.getVersion())
+            && EntityId.isValidId(runId.getProgram())
+            && isCanonicalTimeBasedUuid(runId.getRun());
+      }
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  private static boolean isValidAppVersion(@Nullable String version) {
+    // EntityId.isValidVersionId allows '.', so explicitly reject '.' and '..' path segments.
+    return version != null
+        && !".".equals(version)
+        && !"..".equals(version)
+        && EntityId.isValidVersionId(version);
+  }
+
+  private static boolean isCanonicalTimeBasedUuid(@Nullable String run) {
+    if (run == null) {
+      return false;
+    }
+    UUID uuid = UUID.fromString(run);
+    if (!uuid.toString().equals(run)) {
+      return false;
+    }
+    return uuid.version() == 1
+        && uuid.variant() == 2
+        && uuid.timestamp() >= UUID_EPOCH_OFFSET_100NS;
   }
 
   private RuntimeMonitors() {

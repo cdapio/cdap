@@ -20,11 +20,14 @@ import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.InMemoryOwnerStore;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import java.io.IOException;
 import java.net.InetAddress;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
@@ -84,6 +87,58 @@ public class AuthorizationUtilTest {
                                                                           applicationId, null));
     // clean up
     namespaceClient.delete(namespaceId);
+  }
+
+  @Test
+  public void testCallAsSystemClearsAndRestoresContext() throws Exception {
+    Credential callerCred = new Credential("caller-token", Credential.CredentialType.INTERNAL);
+    SecurityRequestContext.reset();
+    SecurityRequestContext.setUserId("alice");
+    SecurityRequestContext.setUserIp("10.0.0.1");
+    SecurityRequestContext.setUserCredential(callerCred);
+    try {
+      String result = AuthorizationUtil.callAsSystem(() -> {
+        Assert.assertNull(SecurityRequestContext.getUserId());
+        Assert.assertNull(SecurityRequestContext.getUserIp());
+        Assert.assertNull(SecurityRequestContext.getUserCredential());
+        // Mutate inside call to verify finally overwrites before restoring
+        SecurityRequestContext.setUserId("temp");
+        SecurityRequestContext.setUserIp("127.0.0.1");
+        SecurityRequestContext.setUserCredential(
+            new Credential("temp-cred", Credential.CredentialType.EXTERNAL));
+        return "ok";
+      });
+      Assert.assertEquals("ok", result);
+      Assert.assertEquals("alice", SecurityRequestContext.getUserId());
+      Assert.assertEquals("10.0.0.1", SecurityRequestContext.getUserIp());
+      Assert.assertEquals(callerCred, SecurityRequestContext.getUserCredential());
+    } finally {
+      SecurityRequestContext.reset();
+    }
+  }
+
+  @Test
+  public void testCallAsSystemRestoresPartialContextAndOnException() {
+    SecurityRequestContext.reset();
+    SecurityRequestContext.setUserId("bob");
+    // userIp and credential intentionally null
+    try {
+      try {
+        AuthorizationUtil.<Void, IOException>callAsSystem(() -> {
+          Assert.assertNull(SecurityRequestContext.getUserId());
+          SecurityRequestContext.setUserIp("192.168.1.1");
+          throw new IOException("boom");
+        });
+        Assert.fail("Expected IOException");
+      } catch (IOException e) {
+        Assert.assertEquals("boom", e.getMessage());
+      }
+      Assert.assertEquals("bob", SecurityRequestContext.getUserId());
+      Assert.assertNull(SecurityRequestContext.getUserIp());
+      Assert.assertNull(SecurityRequestContext.getUserCredential());
+    } finally {
+      SecurityRequestContext.reset();
+    }
   }
 
   private OwnerAdmin getOwnerAdmin() {

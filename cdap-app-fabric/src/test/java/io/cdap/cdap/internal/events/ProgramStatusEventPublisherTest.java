@@ -16,18 +16,29 @@
 
 package io.cdap.cdap.internal.events;
 
+import com.google.gson.JsonObject;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriter;
 import io.cdap.cdap.internal.events.dummy.DummyEventWriterExtensionProvider;
 import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.ProgramRunStatus;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.spi.events.Event;
 import io.cdap.cdap.spi.events.EventWriter;
+import io.cdap.cdap.spi.events.EventWriterContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +93,64 @@ public class ProgramStatusEventPublisherTest extends AppFabricTestBase {
       Assert.fail("Error during message process");
     }
 
+  }
+
+  @Test
+  public void testRuntimeScopesStrippedFromSystemArgs() {
+    ProgramStatusEventPublisher publisher =
+        getInjector().getInstance(ProgramStatusEventPublisher.class);
+    List<Event<?>> captured = new ArrayList<>();
+    EventWriter capturingWriter = new EventWriter() {
+      @Override
+      public String getID() {
+        return "capturing-test-writer";
+      }
+
+      @Override
+      public void initialize(EventWriterContext eventWriterContext) {
+      }
+
+      @Override
+      public void write(Collection<? extends Event<?>> events) {
+        captured.addAll(events);
+      }
+
+      @Override
+      public void close() {
+      }
+    };
+    publisher.initialize(Collections.singletonList(capturingWriter));
+
+    ProgramRunId runId = NamespaceId.DEFAULT.app("app1").workflow("wf1").run(RunIds.generate());
+    Map<String, String> systemOverrides = new HashMap<>();
+    systemOverrides.put(ProgramOptionConstants.RUNTIME_SCOPES, "{\"connections\":[\"c1\"]}");
+    systemOverrides.put("other.key", "other-value");
+    Map<String, String> propsWithOverrides = new HashMap<>();
+    propsWithOverrides.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runId));
+    propsWithOverrides.put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name());
+    propsWithOverrides.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemOverrides));
+    Notification withOverrides =
+        new Notification(Notification.Type.PROGRAM_STATUS, propsWithOverrides);
+    publisher.processMessages(null,
+        Collections.singletonList(new ImmutablePair<>("msg-1", withOverrides)).iterator());
+
+    Assert.assertEquals(1, captured.size());
+    JsonObject detailsJson = GSON.toJsonTree(captured.get(0).getEventDetails()).getAsJsonObject();
+    JsonObject systemArgs = detailsJson.getAsJsonObject("systemArgs");
+    Assert.assertNotNull(systemArgs);
+    Assert.assertEquals("other-value", systemArgs.get("other.key").getAsString());
+    Assert.assertFalse(systemArgs.has(ProgramOptionConstants.RUNTIME_SCOPES));
+
+    Map<String, String> propsWithoutOverrides = new HashMap<>();
+    propsWithoutOverrides.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runId));
+    propsWithoutOverrides.put(ProgramOptionConstants.PROGRAM_STATUS,
+        ProgramRunStatus.STARTING.name());
+    Notification withoutOverrides =
+        new Notification(Notification.Type.PROGRAM_STATUS, propsWithoutOverrides);
+    publisher.processMessages(null,
+        Collections.singletonList(new ImmutablePair<>("msg-2", withoutOverrides)).iterator());
+
+    Assert.assertEquals(2, captured.size());
   }
 
   private Iterator<ImmutablePair<String, Notification>> provideMockedMessages() {

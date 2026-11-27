@@ -50,7 +50,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,6 +66,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
+import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,6 +92,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   private final RuntimeClient runtimeClient;
   private final int fetchLimit;
   private final AtomicReference<ProgramRunCompletionDetails> completionDetails;
+  private final AtomicReference<Throwable> failureCause;
 
   @Inject
   RuntimeClientService(CConfiguration cConf,
@@ -110,76 +112,121 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     this.runtimeClient = runtimeClient;
     this.fetchLimit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.completionDetails = new AtomicReference<>(null);
+    this.failureCause = new AtomicReference<>(null);
     this.topicRelayers = RuntimeMonitors.createTopicNameList(cConf)
         .stream()
         .map(name -> createTopicRelayer(cConf, name, schemaGenerator,
             writerFactory, readerFactory))
         .collect(Collectors.toList());
+    addListener(new ServiceListenerAdapter() {
+      @Override
+      public void failed(State from, Throwable failure) {
+        failureCause.compareAndSet(null, failure);
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
   }
 
   @Override
   protected long runTask() throws Exception {
-    long nextPollDelay = pollTimeMillis;
-    for (TopicRelayer topicRelayer : topicRelayers) {
-      nextPollDelay = Math.min(nextPollDelay, topicRelayer.publishMessages());
-    }
-
-    // If we got the program finished state, determine when to shut down.
-    if (getProgramCompletionDetails() != null) {
-      // Gives half the time of the graceful shutdown time to allow empty fetches
-      // Essentially is the wait time for any unpublished events on the remote runtime to publish
-      // E.g. Metrics from the remote runtime process might have some delay after the program state changed,
-      // even though we explicitly flush the metrics on program completion.
-      // If the nextPollDelay returned by all topicRelays equals to the pollTimeMillis,
-      // that means all of them fetched till the end of the corresponding topic in the latest fetch.
-      long now = System.currentTimeMillis();
-      if ((nextPollDelay == pollTimeMillis
-           && now - (gracefulShutdownMillis >> 1)
-              > getProgramCompletionDetails().getEndTimestamp())
-          || (now - gracefulShutdownMillis
-              > getProgramCompletionDetails().getEndTimestamp())) {
-        LOG.debug(
-            "Program {} terminated. Shutting down runtime client service.",
-            programRunId);
-        stopAsync();
+    try {
+      long nextPollDelay = pollTimeMillis;
+      for (TopicRelayer topicRelayer : topicRelayers) {
+        nextPollDelay = Math.min(nextPollDelay, topicRelayer.publishMessages());
       }
-    }
 
-    return nextPollDelay;
+      // If we got the program finished state, determine when to shut down.
+      if (getProgramCompletionDetails() != null) {
+        // Gives half the time of the graceful shutdown time to allow empty fetches
+        // Essentially is the wait time for any unpublished events on the remote runtime to publish
+        // E.g. Metrics from the remote runtime process might have some delay after the program state changed,
+        // even though we explicitly flush the metrics on program completion.
+        // If the nextPollDelay returned by all topicRelays equals to the pollTimeMillis,
+        // that means all of them fetched till the end of the corresponding topic in the latest fetch.
+        long now = System.currentTimeMillis();
+        if ((nextPollDelay == pollTimeMillis
+             && now - (gracefulShutdownMillis >> 1)
+                > getProgramCompletionDetails().getEndTimestamp())
+            || (now - gracefulShutdownMillis
+                > getProgramCompletionDetails().getEndTimestamp())) {
+          LOG.debug(
+              "Program {} terminated. Shutting down runtime client service.",
+              programRunId);
+          stopAsync();
+        }
+      }
+
+      return nextPollDelay;
+    } catch (Error e) {
+      failureCause.compareAndSet(null, e);
+      throw e;
+    }
   }
 
   @Override
   protected boolean shouldRetry(Exception e) {
+    if (e instanceof RuntimeTokenRefusedException) {
+      RuntimeTokenRefusedException refused = (RuntimeTokenRefusedException) e;
+      failureCause.compareAndSet(null, refused);
+      LOG.error(
+          "Runtime token refused for program run {} (reason={}); stopping runtime client service",
+          programRunId, refused.getReason(), refused);
+      return false;
+    }
     OUTAGE_LOG.warn("Failed to send runtime status. Will be retried.", e);
     return true;
   }
 
   @Override
+  protected long handleRetriesExhausted(Exception e) throws Exception {
+    failureCause.compareAndSet(null, e);
+    return super.handleRetriesExhausted(e);
+  }
+
+  @Override
   protected void doShutdown() throws Exception {
+    Throwable priorFailure = failureCause.get();
+    if (priorFailure instanceof RuntimeTokenRefusedException) {
+      LOG.debug(
+          "Skipping runtime client shutdown flush for program run {} because runtime token was refused (reason={})",
+          programRunId, ((RuntimeTokenRefusedException) priorFailure).getReason());
+      return;
+    }
+
     // Keep polling until it sees the program completion
     RetryStrategy retryStrategy = RetryStrategies.timeLimit(
         gracefulShutdownMillis,
         TimeUnit.MILLISECONDS,
         getRetryStrategy()); //we are passing in constru...SUPER  ...exponential
 
-    Retries.runWithRetries(() -> {
-          for (TopicRelayer topicRelayer : topicRelayers) {
-            topicRelayer.prepareClose();
-          }
-          if (getProgramCompletionDetails() == null) {
-            throw new RetryableException("Program completion is not yet observed");
-          }
-        }, retryStrategy,
-        t -> t instanceof IOException || t instanceof RetryableException);
-
-    // Close all the TopicRelay, which will flush out all pending messages
-    for (TopicRelayer topicRelayer : topicRelayers) {
-      Retries.callWithRetries((Retries.Callable<Void, IOException>) () -> {
-            topicRelayer.close();
-            return null;
-          }, getRetryStrategy(),
+    try {
+      Retries.runWithRetries(() -> {
+            for (TopicRelayer topicRelayer : topicRelayers) {
+              topicRelayer.prepareClose();
+            }
+            if (getProgramCompletionDetails() == null) {
+              throw new RetryableException("Program completion is not yet observed");
+            }
+          }, retryStrategy,
           t -> t instanceof IOException || t instanceof RetryableException);
+
+      // Close all the TopicRelayers, which will flush out all pending messages
+      for (TopicRelayer topicRelayer : topicRelayers) {
+        Retries.runWithRetries(topicRelayer::close, getRetryStrategy(),
+            t -> t instanceof IOException || t instanceof RetryableException);
+      }
+    } catch (Throwable t) {
+      failureCause.compareAndSet(null, t);
+      throw t;
     }
+  }
+
+  /**
+   * Returns the failure cause if this service transitioned to {@link State#FAILED}, or
+   * {@code null} otherwise.
+   */
+  @Nullable
+  public Throwable getFailureCause() {
+    return failureCause.get();
   }
 
   /**
@@ -247,7 +294,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   /**
    * Helper class to fetch and publish messages from one topic.
    */
-  private class TopicRelayer implements Closeable {
+  private class TopicRelayer {
 
     private final Logger progressLog = Loggers.sampling(LOG,
         LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
@@ -282,7 +329,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * @throws GoneException          if run already finished
      */
     long publishMessages()
-        throws TopicNotFoundException, IOException, BadRequestException, GoneException, NotFoundException {
+        throws TopicNotFoundException, IOException, BadRequestException, GoneException,
+        NotFoundException, RuntimeTokenRefusedException {
       long currentTimeMillis = System.currentTimeMillis();
 
       // Not to publish more than necessary in one topic.
@@ -340,7 +388,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * through the {@link RuntimeClient}.
      */
     protected void processMessages(Iterator<Message> iterator)
-        throws IOException, BadRequestException, GoneException, NotFoundException {
+        throws IOException, BadRequestException, GoneException, NotFoundException,
+        RuntimeTokenRefusedException {
       runtimeClient.sendMessages(programRunId, topicId, iterator);
     }
 
@@ -348,28 +397,35 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * Prepare to close by sending out all messages except final program
      * status.
      */
-    public void prepareClose() {
+    public void prepareClose() throws RuntimeTokenRefusedException {
       forcePoll();
     }
 
-    @Override
-    public void close() throws IOException {
+    /**
+     * Flushes any pending messages before shutdown, propagating terminal runtime token refusals
+     * instead of swallowing them.
+     */
+    void close() throws RuntimeTokenRefusedException {
       forcePoll();
     }
 
-    protected void forcePoll() {
+    protected void forcePoll() throws RuntimeTokenRefusedException {
       LOG.trace("Sending final messages for {}", topicId.getTopic());
       try {
         // Force one extra poll with retry
         nextPublishTimeMillis = 0L;
-        // Retry on all errors
+        // Retry on all errors except terminal ones
         Retries.runWithRetries(() -> {
           while (publishMessages() == 0) {
             LOG.trace("Continue processing final messages for {}",
                 topicId.getTopic());
           }
         }, getRetryStrategy(), t -> !(t instanceof GoneException || t instanceof NotFoundException
-          || t instanceof BadRequestException));
+            || t instanceof BadRequestException || t instanceof RuntimeTokenRefusedException));
+      } catch (RuntimeTokenRefusedException e) {
+        LOG.error("Runtime token refused while flushing messages on close for topic {} (reason={})",
+            topicId, e.getReason(), e);
+        throw e;
       } catch (TopicNotFoundException | BadRequestException e) {
         // This shouldn't happen. If it does, it must be some bug in the system and there is no way to recover from it.
         // So just log the cause for debugging.
@@ -414,7 +470,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
     @Override
     protected void processMessages(Iterator<Message> iterator)
-        throws IOException, BadRequestException, GoneException, NotFoundException {
+        throws IOException, BadRequestException, GoneException, NotFoundException,
+        RuntimeTokenRefusedException {
       List<Message> message = StreamSupport.stream(
               Spliterators.spliteratorUnknownSize(iterator, 0),
               false)
@@ -441,6 +498,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         // Send an empty iterator to serve as the heartbeat.
         try {
           super.processMessages(Collections.emptyIterator());
+        } catch (RuntimeTokenRefusedException e) {
+          throw e;
         } catch (Exception e) {
           //Don't pop this up to prevent retries and lastProgramStateMessages duplication
           LOG.debug("Error sending topic heartbeat messages in {}", topicId, e);
@@ -452,7 +511,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     @Override
-    public void close() throws IOException {
+    void close() throws RuntimeTokenRefusedException {
       super.close();
       if (!lastProgramStateMessages.isEmpty()) {
         try {
@@ -462,6 +521,11 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
               () -> super.processMessages(lastProgramStateMessages.iterator()),
               getRetryStrategy(),
               t -> t instanceof IOException || t instanceof RetryableException);
+        } catch (RuntimeTokenRefusedException e) {
+          LOG.error(
+              "Runtime token refused while sending program state messages for {} (reason={})",
+              programRunId, e.getReason(), e);
+          throw e;
         } catch (BadRequestException e) {
           // This shouldn't happen. If it does, that means the server thinks this program is no longer running.
           // The best we can do is to log here, even the log won't be collected by CDAP, but it will be retained
@@ -477,8 +541,9 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           LOG.error(
               "Failed to send program state messages to runtime server: {}",
               lastProgramStateMessages, e);
+        } finally {
+          lastProgramStateMessages.clear();
         }
-        lastProgramStateMessages.clear();
       }
     }
 

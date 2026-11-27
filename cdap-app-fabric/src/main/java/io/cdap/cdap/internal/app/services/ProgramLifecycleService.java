@@ -25,6 +25,7 @@ import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -44,9 +45,11 @@ import io.cdap.cdap.common.TooManyRequestsException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.feature.DefaultFeatureFlagsProvider;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.features.Feature;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -54,6 +57,10 @@ import io.cdap.cdap.internal.app.runtime.ProgramStartRequest;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeScopes;
+import io.cdap.cdap.internal.app.runtime.plugin.ConnectionPropertiesFetcher;
+import io.cdap.cdap.internal.app.runtime.plugin.RuntimeScopesExtractor;
+import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerMappedArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -62,6 +69,7 @@ import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningService;
+import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.proto.ProgramHistory;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -84,7 +92,9 @@ import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -137,6 +147,9 @@ public class ProgramLifecycleService {
   private final ArtifactRepository artifactRepository;
   private final ProfileService profileService;
   private final PreferencesService preferencesService;
+  private final CConfiguration cConf;
+  private final FeatureFlagsProvider featureFlagsProvider;
+  private final ConnectionPropertiesFetcher connectionPropertiesFetcher;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
   private final FlowControlService flowControlService;
@@ -156,7 +169,11 @@ public class ProgramLifecycleService {
       ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
       ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
       ArtifactRepository artifactRepository,
-      FlowControlService flowControlService) {
+      FlowControlService flowControlService,
+      ConnectionPropertiesFetcher connectionPropertiesFetcher) {
+    this.cConf = cConf;
+    this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
+    this.connectionPropertiesFetcher = connectionPropertiesFetcher;
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.accessEnforcer = accessEnforcer;
@@ -638,13 +655,14 @@ public class ProgramLifecycleService {
   public RunId runInternal(ProgramId programId, Map<String, String> userArgs,
       Map<String, String> sysArgs,
       boolean debug) throws Exception {
-    RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     String userId = SecurityRequestContext.getUserId();
     userId = userId == null ? "" : userId;
 
     checkCapability(programDescriptor);
+    programOptions = maybeAddRuntimeScopes(programId, programOptions, programDescriptor);
+    RunId runId = RunIds.generate();
     ProgramRunId programRunId = programId.run(runId);
     FlowControlService.Counter counter = flowControlService.addRequestAndGetCounter(
         programRunId, programOptions, programDescriptor);
@@ -715,6 +733,8 @@ public class ProgramLifecycleService {
     }
     // get and add any user overrides for profile properties
     Map<String, String> systemArgs = new HashMap<>(sysArgs);
+    // Ensure runtime scopes can only be populated by maybeAddRuntimeScopes for this launch.
+    systemArgs.remove(ProgramOptionConstants.RUNTIME_SCOPES);
     // add profile properties to the system arguments
     SystemArguments.addProfileArgs(systemArgs, profile);
 
@@ -734,6 +754,46 @@ public class ProgramLifecycleService {
         GSON.toJson(getPluginRequirements(programSpecification)));
     return new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
         new BasicArguments(userArgs), debug);
+  }
+
+  private ProgramOptions maybeAddRuntimeScopes(ProgramId programId, ProgramOptions programOptions,
+      ProgramDescriptor programDescriptor) {
+    if (!cConf.getBoolean(Constants.RuntimeMonitor.RUNTIME_TOKEN_ENABLED, true)
+        || !SecurityUtil.isInternalAuthEnabled(cConf)) {
+      return programOptions;
+    }
+    Map<String, String> systemArgs = programOptions.getArguments().asMap();
+    Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(
+        programId.getNamespaceId(), systemArgs);
+    if (!profileId.isPresent() || ProfileId.NATIVE.equals(profileId.get())) {
+      return programOptions;
+    }
+    String provisionerName = SystemArguments.getProfileProvisioner(systemArgs);
+    if (TetheringProvisioner.TETHERING_NAME.equals(provisionerName)) {
+      return programOptions;
+    }
+    Map<String, String> resolvedUserArgs = SystemArguments.resolveScopedUserArguments(
+        programId, systemArgs, programOptions.getUserArguments().asMap());
+    if (SystemArguments.getRuntimeMonitorType(cConf, systemArgs, resolvedUserArgs)
+        != RuntimeMonitorType.URL) {
+      return programOptions;
+    }
+    boolean compositeTriggersEnabled =
+        Feature.PIPELINE_COMPOSITE_TRIGGERS.isEnabled(featureFlagsProvider);
+    TriggerMappedArguments.Result triggerMappedArgs =
+        TriggerMappedArguments.extract(systemArgs, compositeTriggersEnabled);
+    RuntimeScopes scopes = RuntimeScopesExtractor.extract(
+        programDescriptor.getApplicationSpecification(),
+        programId,
+        resolvedUserArgs,
+        triggerMappedArgs,
+        connectionPropertiesFetcher.forNamespace(programId.getNamespace()));
+    Map<String, String> updatedSystemArgs = new HashMap<>(systemArgs);
+    updatedSystemArgs.put(ProgramOptionConstants.RUNTIME_SCOPES, scopes.toJson());
+    return new SimpleProgramOptions(programOptions.getProgramId(),
+        new BasicArguments(updatedSystemArgs),
+        programOptions.getUserArguments(),
+        programOptions.isDebug());
   }
 
   /**

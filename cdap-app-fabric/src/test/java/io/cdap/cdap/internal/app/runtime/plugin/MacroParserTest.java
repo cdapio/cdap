@@ -17,11 +17,13 @@
 package io.cdap.cdap.internal.app.runtime.plugin;
 
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
+import io.cdap.cdap.api.macro.MacroObjectType;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import java.util.Collections;
 import java.util.HashMap;
@@ -585,5 +587,112 @@ public class MacroParserTest {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);
+  }
+
+  @Test
+  public void testEvaluationBudgetBoundariesAndEscapedLinearScan() throws InvalidMacroException {
+    MacroEvaluator mapLookup = new MacroEvaluator() {
+      @Override
+      public String lookup(String property) {
+        if ("a".equals(property)) {
+          return "12345";
+        }
+        if ("big".equals(property)) {
+          return Strings.repeat("x", 15);
+        }
+        return "";
+      }
+
+      @Override
+      public String evaluate(String macroFunction, String... arguments) {
+        return "";
+      }
+
+      @Override
+      public MacroObjectType evaluateAs(String macroFunction) {
+        return "mapfn".equals(macroFunction) ? MacroObjectType.MAP : MacroObjectType.STRING;
+      }
+
+      @Override
+      public Map<String, String> evaluateMap(String macroFunction, String... arguments) {
+        return ImmutableMap.of("k1", "${a}", "k2", "${a}");
+      }
+    };
+
+    // 1. parse(null) returns null with non-null budget
+    MacroParser nullParser = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(0, 0, 0L));
+    Assert.assertNull(nullParser.parse(null));
+
+    // 2. Exact substitution boundary: max=2 passes, max=2 with 3 macros throws
+    MacroParser subOk = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(2, 100, 1000L));
+    Assert.assertEquals("12345-12345", subOk.parse("${a}-${a}"));
+
+    MacroParser subFail = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(2, 100, 1000L));
+    try {
+      subFail.parse("${a}-${a}-${a}");
+      Assert.fail("Expected BudgetExceededException for 3 substitutions when max=2");
+    } catch (MacroParser.BudgetExceededException expected) {
+      // expected
+    }
+
+    // 3. Exact expanded-growth boundary: "${big}" (len 6) + growth 9 = 15 passes; growth 8 fails
+    MacroParser growthOk = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 9, 1000L));
+    Assert.assertEquals(Strings.repeat("x", 15), growthOk.parse("${big}"));
+
+    MacroParser growthFail = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 8, 1000L));
+    try {
+      growthFail.parse("${big}");
+      Assert.fail("Expected BudgetExceededException when growth exceeds maxExpandedGrowth");
+    } catch (MacroParser.BudgetExceededException expected) {
+      // expected
+    }
+
+    MacroParser combinedGrowthOk = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 9, 1000L));
+    Assert.assertEquals(Strings.repeat("x", 15) + "-12345",
+        combinedGrowthOk.parse("${big}-12345"));
+    MacroParser combinedGrowthFail = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 8, 1000L));
+    try {
+      combinedGrowthFail.parse("${big}-12345");
+      Assert.fail("Expected BudgetExceededException when resultingLength exceeds the limit");
+    } catch (MacroParser.BudgetExceededException expected) {
+      // expected
+    }
+
+    // 4. Exact cumulative copied-chars boundary: "${a}-${a}" copies 10 + 11 = 21 chars
+    MacroParser charsOk = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 100, 21L));
+    Assert.assertEquals("12345-12345", charsOk.parse("${a}-${a}"));
+
+    MacroParser charsFail = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 100, 20L));
+    try {
+      charsFail.parse("${a}-${a}");
+      Assert.fail("Expected BudgetExceededException when totalCharsCopied exceeds limit");
+    } catch (MacroParser.BudgetExceededException expected) {
+      // expected
+    }
+
+    // 5. MAP macro shares EvaluationBudget across map value parses and does not swallow overflow
+    MacroParser mapFail = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(1, 100, 1000L));
+    try {
+      mapFail.parse("${mapfn(x)}");
+      Assert.fail("Expected BudgetExceededException from MAP macro exceeding substitution cap");
+    } catch (MacroParser.BudgetExceededException expected) {
+      // expected
+    }
+
+    // 6. Many escaped "${" sequences scan linearly without quadratic substring copying
+    String escaped = Strings.repeat("\\${", 50_000);
+    MacroParser escapedParser = new MacroParser(mapLookup, MacroParserOptions.DEFAULT,
+        new MacroParser.EvaluationBudget(10, 100, 1000L));
+    Assert.assertEquals(Strings.repeat("${", 50_000), escapedParser.parse(escaped));
   }
 }

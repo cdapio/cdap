@@ -1325,6 +1325,17 @@ public final class Constants {
     }
 
     /**
+     * Runtime token validation metrics.
+     */
+    public static final class RuntimeToken {
+
+      public static final String VALIDATION_FAILURE_PREFIX = "runtime.token.validation.failure.";
+      public static final String DYNAMIC_SECRET_READ = "runtime.token.dynamic.secret.read";
+      public static final String WILDCARD_CONNECTION_READ = "runtime.token.wildcard.connection.read";
+      public static final String WILDCARD_OAUTH_READ = "runtime.token.wildcard.oauth.read";
+    }
+
+    /**
      * Scheduled job metrics.
      */
     public static final class ScheduledJob {
@@ -1507,6 +1518,11 @@ public final class Constants {
         "app.program.runtime.monitor.url.authenticator.name.";
     public static final String MONITOR_AUDIT_LOG_ENABLED = "app.program.runtime.monitor.audit.log.enabled";
     public static final String MONITOR_AUDIT_LOGGER_NAME = "http-access";
+    public static final String RUNTIME_TOKEN_ENABLED = "app.program.runtime.token.enabled";
+    public static final String RUNTIME_TOKEN_VALIDATION_ENABLED =
+        "app.program.runtime.token.validation.enabled";
+    public static final String RUNTIME_TOKEN_ALLOWLIST_EXTRA_RULES =
+        "app.program.runtime.token.allowlist.extra.rules";
 
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
@@ -1880,6 +1896,10 @@ public final class Constants {
        * token to authorize runtime service calls.
        */
       public static final String RUNTIME_TOKEN = "X-CDAP-Runtime-Token";
+      /**
+       * Response header indicating a terminal runtime token validation failure reason.
+       */
+      public static final String RUNTIME_TOKEN_FAILURE = "X-CDAP-Runtime-Token-Failure";
     }
 
     /**

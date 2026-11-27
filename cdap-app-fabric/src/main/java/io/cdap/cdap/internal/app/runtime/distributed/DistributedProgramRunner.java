@@ -206,8 +206,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       addAdditionalLogAppenderJars(cConf, tempDir, localizeResources,
           SystemArguments.getProfileProvisioner(oldOptions.getArguments().asMap()));
 
-      localizeConfigs(createContainerCConf(cConf), createContainerHConf(this.hConf), tempDir,
-          localizeResources);
+      localizeConfigs(createContainerCConf(cConf, oldOptions), createContainerHConf(this.hConf),
+          tempDir, localizeResources);
 
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
@@ -550,7 +550,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   /**
    * Creates the {@link CConfiguration} to be used in the program container.
    */
-  private CConfiguration createContainerCConf(CConfiguration cConf) {
+  @VisibleForTesting
+  protected final CConfiguration createContainerCConf(CConfiguration cConf,
+      ProgramOptions programOptions) {
     CConfiguration result = CConfiguration.copy(cConf);
     // don't have tephra retry in order to give CDAP more control over when to retry and how.
     result.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
@@ -580,6 +582,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       // Disable transaction support
       result.setBoolean(Constants.Transaction.TX_ENABLED, false);
+
+      // Disable remote authorization enforcement in the container when using a run-scoped
+      // runtime token.
+      if (SystemArguments.usesRuntimeToken(cConf, programOptions)) {
+        result.setBoolean(Constants.Security.Authorization.ENABLED, false);
+      }
 
       // Always use NoSQL as storage
       result.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION,
