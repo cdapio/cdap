@@ -20,6 +20,7 @@ import static io.cdap.cdap.k8s.runtime.KubeTwillPreparer.filterAndRemoveKeyPrefi
 import static org.mockito.Mockito.mock;
 
 import com.sun.net.httpserver.HttpServer;
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.MasterOptionConstants;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -27,6 +28,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.master.spi.twill.StatefulDisk;
 import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1Job;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1OwnerReference;
@@ -434,6 +436,87 @@ public class KubeTwillPreparerTest {
     Assert.assertEquals("The filtered map should contain the correct entries with prefixes removed.", expected, actual);
   }
 
+
+  @Test
+  public void testBuildDeploymentKeepsKubernetesDefaults() throws Exception {
+    V1Deployment deployment = buildDeployment(createSystemNamespacePreparer());
+
+    // Other workloads rely on the RollingUpdate default.
+    Assert.assertNull(deployment.getSpec().getStrategy());
+  }
+
+  @Test
+  public void testBuildDeploymentWithRecreateStrategy() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(
+        Collections.singletonMap(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY, "Recreate"));
+
+    V1Deployment deployment = buildDeployment(preparer);
+
+    Assert.assertNotNull(deployment.getSpec().getStrategy());
+    Assert.assertEquals("Recreate", deployment.getSpec().getStrategy().getType());
+  }
+
+  @Test
+  public void testRollingUpdateStrategyOverridesRecreate() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(
+        Collections.singletonMap(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY, "Recreate"));
+    preparer.withConfiguration(
+        Collections.singletonMap(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY, "RollingUpdate"));
+
+    Assert.assertEquals("RollingUpdate",
+        buildDeployment(preparer).getSpec().getStrategy().getType());
+  }
+
+  @Test
+  public void testConfigurationWithoutStrategyKeepsRecreate() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    preparer.withConfiguration(
+        Collections.singletonMap(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY, "Recreate"));
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+
+    Assert.assertEquals("Recreate", buildDeployment(preparer).getSpec().getStrategy().getType());
+  }
+
+  @Test
+  public void testInvalidDeploymentStrategyIsRejected() throws Exception {
+    KubeTwillPreparer preparer = createSystemNamespacePreparer();
+    try {
+      preparer.withConfiguration(
+          Collections.singletonMap(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY, "recreate"));
+      Assert.fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      Assert.assertThat(e.getMessage(),
+          CoreMatchers.containsString(KubeMasterEnvironment.K8S_DEPLOYMENT_STRATEGY));
+    }
+    // A rejected value leaves the default strategy in place.
+    Assert.assertNull(buildDeployment(preparer).getSpec().getStrategy());
+  }
+
+  private KubeTwillPreparer createSystemNamespacePreparer() throws Exception {
+    KubeTwillPreparer preparer = new KubeTwillPreparer(createMasterEnvironmentContext(),
+        null, "default", createPodInfo(), createTwillSpecification(), createRunId("abc-123"),
+        null, null, null, null);
+    preparer.withConfiguration(
+        Collections.singletonMap(MasterOptionConstants.RUNTIME_NAMESPACE, "system"));
+    return preparer;
+  }
+
+  private V1Deployment buildDeployment(KubeTwillPreparer preparer) throws Exception {
+    // A single instance mirrors the task worker manager proxy, which is the only caller that opts into
+    // the Recreate strategy.
+    RuntimeSpecification runtimeSpec = new DefaultRuntimeSpecification(
+        MainRunnable.class.getSimpleName(), null,
+        new DefaultResourceSpecification(1, 100, 1, 1, 1), Collections.emptyList());
+    V1ObjectMeta metadata = preparer.createResourceMetadata(V1Deployment.class,
+        MainRunnable.class.getSimpleName(), 0, false);
+
+    return preparer.buildDeployment(metadata,
+        Collections.singletonMap(MainRunnable.class.getSimpleName(), runtimeSpec),
+        new LocalLocationFactory().create("yes"));
+  }
 
   private static Map<String, String> getTwillConfigs() {
     HashMap<String, String> cConf = new HashMap<>();
