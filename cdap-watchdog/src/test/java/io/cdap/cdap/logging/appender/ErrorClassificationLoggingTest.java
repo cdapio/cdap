@@ -37,7 +37,6 @@ import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.ReadRange;
 import java.util.Map;
 import org.apache.tephra.TransactionManager;
-import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -88,7 +87,7 @@ public class ErrorClassificationLoggingTest {
 
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     Filter filter = FilterParser.parse("");
-    ReadRange readRange = new ReadRange(fromTimeMillis, new DateTime().getMillis(),
+    ReadRange readRange = new ReadRange(fromTimeMillis, System.currentTimeMillis(),
         LogOffset.INVALID_KAFKA_OFFSET);
 
     CloseableIterator<LogEvent> logIter = logReader.getLog(context, readRange.getFromMillis(),
@@ -129,7 +128,7 @@ public class ErrorClassificationLoggingTest {
 
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     Filter filter = FilterParser.parse("");
-    ReadRange readRange = new ReadRange(fromTimeMillis, new DateTime().getMillis(),
+    ReadRange readRange = new ReadRange(fromTimeMillis, System.currentTimeMillis(),
         LogOffset.INVALID_KAFKA_OFFSET);
 
     CloseableIterator<LogEvent> logIter = logReader.getLog(context, readRange.getFromMillis(),
