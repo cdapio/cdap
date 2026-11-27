@@ -37,6 +37,7 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.guice.NoOpAuditLogModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
+import io.cdap.cdap.common.http.AuthenticationChannelHandler;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.service.Services;
@@ -46,7 +47,9 @@ import io.cdap.cdap.messaging.DefaultTopicMetadata;
 import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.client.AbstractClientMessagingService;
 import io.cdap.cdap.messaging.client.DefaultClientMessagingService;
+import io.cdap.cdap.messaging.client.PreviewRunnerClientMessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
+import io.cdap.cdap.messaging.client.TaskWorkerClientMessagingService;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.spi.MessagingService;
 import io.cdap.cdap.messaging.spi.RawMessage;
@@ -130,11 +133,10 @@ public class StoreAndFetchHandlerAuthorizationTest {
   private static final NamespaceId ALPHA = new NamespaceId("alpha");
   private static final NamespaceId BETA = new NamespaceId("beta");
   private static final String TOPIC = "t1";
-  // Placeholder credentials set by WorkerAuthenticationContext and AuthenticationChannelHandler.
+  // Placeholder identities set by WorkerAuthenticationContext and AuthenticationChannelHandler.
   private static final String EMPTY_WORKER_USER_ID = "empty-worker-user-id";
   private static final String EMPTY_WORKER_CREDENTIAL = "empty-worker-user-credential";
   private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
-  private static final String EMPTY_USER_CREDENTIAL = "CDAP-empty-user-credential";
 
   private static final Principal END_USER = new Principal("alice", Principal.PrincipalType.USER,
       new Credential("user-token", Credential.CredentialType.EXTERNAL));
@@ -145,8 +147,7 @@ public class StoreAndFetchHandlerAuthorizationTest {
       Principal.PrincipalType.USER,
       new Credential(EMPTY_WORKER_CREDENTIAL, Credential.CredentialType.INTERNAL));
   private static final Principal EMPTY_USER_PRINCIPAL = new Principal(EMPTY_USER_ID,
-      Principal.PrincipalType.USER,
-      new Credential(EMPTY_USER_CREDENTIAL, Credential.CredentialType.INTERNAL));
+      Principal.PrincipalType.USER, AuthenticationChannelHandler.EMPTY_USER_CREDENTIAL);
 
   private final RecordingAccessEnforcer accessEnforcer = new RecordingAccessEnforcer();
   private final AtomicReference<Principal> currentPrincipal = new AtomicReference<>(END_USER);
@@ -328,7 +329,7 @@ public class StoreAndFetchHandlerAuthorizationTest {
   @Test
   public void testSystemNamespaceRejectsCredentialsThatAreNotInternal() throws Exception {
     startService(true);
-    for (String topic : Arrays.asList(TOPIC, "metrics0", "programstatusevent", "previewlog0")) {
+    for (String topic : Arrays.asList(TOPIC, "preview", "metrics0", "programstatusevent", "previewlog0")) {
       createTopicDirectly(NamespaceId.SYSTEM.topic(topic));
     }
     accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
@@ -341,54 +342,16 @@ public class StoreAndFetchHandlerAuthorizationTest {
         currentPrincipal.set(
             new Principal("system", Principal.PrincipalType.USER, new Credential(value, type)));
 
-        for (String topic : Arrays.asList(TOPIC, "metrics0", "programstatusevent", "previewlog0")) {
+        for (String topic : Arrays.asList(TOPIC, "preview", "metrics0", "programstatusevent", "previewlog0")) {
           assertAllEndpoints(403, NamespaceId.SYSTEM, topic);
         }
       }
     }
 
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    for (String topic : Arrays.asList(TOPIC, "metrics0", "programstatusevent", "previewlog0")) {
+    for (String topic : Arrays.asList(TOPIC, "preview", "metrics0", "programstatusevent", "previewlog0")) {
       Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(topic)).isEmpty());
     }
-    assertNoTempFilesCreated();
-  }
-
-  @Test
-  public void testUserCredentialCanPublishToPreviewTopicOnlyInSystemNamespace() throws Exception {
-    startService(true);
-    TopicId previewTopicId = NamespaceId.SYSTEM.topic("preview");
-    createTopicDirectly(previewTopicId);
-    for (String otherTopic : Arrays.asList("metrics0", "programstatusevent", "previewlog0")) {
-      createTopicDirectly(NamespaceId.SYSTEM.topic(otherTopic));
-    }
-    currentPrincipal.set(END_USER);
-    // The enforcer grants nothing; preview publish must succeed without calling the enforcer.
-
-    assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "preview"));
-    Assert.assertTrue(accessEnforcer.checks().isEmpty());
-    Assert.assertEquals(Collections.singletonList("msg"), fetchDirectly(previewTopicId));
-
-    // Even if the enforcer granted SYSTEM permissions, non-internal credentials cannot publish to
-    // other system topics and cannot store, rollback, poll, or administer system:preview.
-    accessEnforcer.grant(NamespaceId.SYSTEM, StandardPermission.UPDATE, StandardPermission.GET);
-    for (String otherTopic : Arrays.asList("metrics0", "programstatusevent", "previewlog0")) {
-      HttpResponse response = send(Endpoint.PUBLISH, NamespaceId.SYSTEM, otherTopic);
-      assertStatus(403, response);
-      Assert.assertTrue(response.getResponseBodyAsString().contains(
-          "Only internal services can access topics of the system namespace."));
-      Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(otherTopic)).isEmpty());
-    }
-    for (Endpoint endpoint : Arrays.asList(Endpoint.STORE, Endpoint.ROLLBACK, Endpoint.POLL)) {
-      HttpResponse response = send(endpoint, NamespaceId.SYSTEM, "preview");
-      assertStatus(403, response);
-      Assert.assertTrue(response.getResponseBodyAsString().contains(
-          "Only internal services can access topics of the system namespace."));
-    }
-    assertStatus(403, sendTopicAdmin(HttpMethod.GET, "system", "preview"));
-    assertStatus(403, sendTopicAdmin(HttpMethod.PUT, "system", "preview"));
-    assertStatus(403, sendTopicAdmin(HttpMethod.DELETE, "system", "preview"));
-    Assert.assertTrue(accessEnforcer.checks().isEmpty());
     assertNoTempFilesCreated();
   }
 
@@ -407,7 +370,11 @@ public class StoreAndFetchHandlerAuthorizationTest {
         new Principal("alice", Principal.PrincipalType.USER,
             new Credential(null, Credential.CredentialType.EXTERNAL)),
         new Principal("alice", Principal.PrincipalType.USER,
-            new Credential("user-token", null)));
+            new Credential("user-token", null)),
+        new Principal("system", Principal.PrincipalType.USER,
+            new Credential("", Credential.CredentialType.INTERNAL)),
+        new Principal("system", Principal.PrincipalType.USER,
+            new Credential(null, Credential.CredentialType.INTERNAL)));
 
     for (Principal principal : invalidPrincipals) {
       currentPrincipal.set(principal);
@@ -517,11 +484,6 @@ public class StoreAndFetchHandlerAuthorizationTest {
       assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, rejected));
       Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(rejected)).isEmpty());
     }
-
-    // Non-internal user credential follows the configured preview topic as well.
-    currentPrincipal.set(END_USER);
-    assertStatus(200, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "custompreview"));
-    assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "preview"));
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
     assertNoTempFilesCreated();
   }
@@ -546,11 +508,6 @@ public class StoreAndFetchHandlerAuthorizationTest {
       assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, rejected));
       Assert.assertTrue(fetchDirectly(NamespaceId.SYSTEM.topic(rejected)).isEmpty());
     }
-
-    currentPrincipal.set(END_USER);
-    for (String rejected : Arrays.asList("preview", "previewlog0")) {
-      assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, rejected));
-    }
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
 
     // Unset preview topic and topic prefixes.
@@ -569,8 +526,6 @@ public class StoreAndFetchHandlerAuthorizationTest {
     for (String rejected : Arrays.asList("preview", "metrics0", "auditlogevent0")) {
       assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, rejected));
     }
-    currentPrincipal.set(END_USER);
-    assertStatus(403, send(Endpoint.PUBLISH, NamespaceId.SYSTEM, "preview"));
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
   }
 
@@ -605,16 +560,13 @@ public class StoreAndFetchHandlerAuthorizationTest {
       accessEnforcer.grant(mixedNs, StandardPermission.UPDATE, StandardPermission.GET);
     }
 
-    // Non-internal credentials are rejected on non-preview topics and on non-publish endpoints
-    // across all mixed-case spellings without calling the enforcer.
+    // Non-internal credentials are rejected across all mixed-case spellings without calling the
+    // enforcer.
     currentPrincipal.set(END_USER);
     for (NamespaceId mixedNs : mixedCaseSystemNamespaces) {
       assertAllEndpoints(403, mixedNs, TOPIC);
+      assertAllEndpoints(403, mixedNs, "preview");
       assertAllEndpoints(403, mixedNs, "metrics0");
-      for (Endpoint endpoint : Arrays.asList(Endpoint.STORE, Endpoint.ROLLBACK, Endpoint.POLL)) {
-        assertStatus(403, send(endpoint, mixedNs, "preview"));
-      }
-      assertStatus(200, send(Endpoint.PUBLISH, mixedNs, "preview"));
     }
     Assert.assertTrue(accessEnforcer.checks().isEmpty());
 
@@ -734,32 +686,6 @@ public class StoreAndFetchHandlerAuthorizationTest {
     SecurityRequestContext.setUserCredential(END_USER.getFullCredential());
     SecurityRequestContext.setUserIp("10.1.2.3");
 
-    // A client that does not clear SecurityRequestContext forwards the user's credential.
-    RemoteClientFactory remoteClientFactory =
-        injectorRef.get().getInstance(RemoteClientFactory.class);
-    AbstractClientMessagingService rawClient =
-        new DirectClientMessagingService(remoteClientFactory);
-    try {
-      rawClient.publish(StoreRequestBuilder.of(systemTopic).addPayload("blocked").build());
-      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
-    try {
-      rawClient.storePayload(
-          StoreRequestBuilder.of(systemTopic).setTransaction(99L).addPayload("blocked").build());
-      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
-    try {
-      rawClient.fetch(new DefaultMessageFetchRequest.Builder().setTopicId(systemTopic).build());
-      Assert.fail("Expected IOException on 403 from direct AbstractClientMessagingService.fetch");
-    } catch (IOException expected) {
-      Assert.assertTrue(expected.getMessage().contains(
-          "Only internal services can access topics of the system namespace."));
-    }
-
     client.publish(StoreRequestBuilder.of(systemTopic).addPayload("status-event").build());
     assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
 
@@ -843,16 +769,21 @@ public class StoreAndFetchHandlerAuthorizationTest {
   }
 
   @Test
-  public void testDefaultClientMessagingServiceWithWorkerAuthContextUsesWorkerIdentityWhenUserContextIsSet()
-      throws Exception {
-    // When messaging.service.enabled=true (Cloud SQL), PreviewRunnerMessagingClientModule and
-    // TaskWorkerMessagingClientModule bind MessagingService to DefaultClientMessagingService
-    // paired with AuthenticationContextModules().getMasterWorkerModule() (WorkerAuthenticationContext).
-    final DefaultClientMessagingService client =
+  public void testWorkerClientsUseWorkerIdentityWhenUserContextIsSet() throws Exception {
+    // Task workers and preview runners authenticate with WorkerAuthenticationContext, which sends
+    // the worker placeholder credential when SecurityRequestContext has no user.
+    final DefaultClientMessagingService defaultClient =
         startServiceWithInternalAuth(new AuthenticationContextModules().getMasterWorkerModule());
-    final TopicId previewTopic = NamespaceId.SYSTEM.topic("preview");
-    final TopicId metricsTopic = NamespaceId.SYSTEM.topic("metrics0");
-    final TopicId statusTopic = NamespaceId.SYSTEM.topic("programstatusevent");
+    Injector injector = injectorRef.get();
+    DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
+    for (String service : Arrays.asList(
+        Constants.Service.PREVIEW_HTTP, Constants.Service.APP_FABRIC_HTTP)) {
+      discoveryService.register(new Discoverable(
+          service, messagingServer.getSocketAddress(), messagingServer.getPayload()));
+    }
+    TopicId previewTopic = NamespaceId.SYSTEM.topic("preview");
+    TopicId metricsTopic = NamespaceId.SYSTEM.topic("metrics0");
+    TopicId statusTopic = NamespaceId.SYSTEM.topic("programstatusevent");
     createTopicDirectly(previewTopic);
     createTopicDirectly(metricsTopic);
     createTopicDirectly(statusTopic);
@@ -861,42 +792,36 @@ public class StoreAndFetchHandlerAuthorizationTest {
     SecurityRequestContext.setUserCredential(END_USER.getFullCredential());
     SecurityRequestContext.setUserIp("10.1.2.3");
 
-    // A client that does not clear SecurityRequestContext forwards the user's credential.
-    AbstractClientMessagingService rawWorkerClient =
-        new DirectClientMessagingService(injectorRef.get().getInstance(RemoteClientFactory.class));
-    try {
-      rawWorkerClient.publish(StoreRequestBuilder.of(metricsTopic).addPayload("m-blocked").build());
-      Assert.fail("Expected UnauthorizedException from direct AbstractClientMessagingService");
-    } catch (UnauthorizedException expected) {
-      // expected
+    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
+    List<AbstractClientMessagingService> clients = Arrays.asList(defaultClient,
+        new PreviewRunnerClientMessagingService(
+            injector.getInstance(CConfiguration.class), remoteClientFactory),
+        new TaskWorkerClientMessagingService(remoteClientFactory));
+    List<String> clientNames = new ArrayList<>();
+    for (AbstractClientMessagingService client : clients) {
+      String clientName = client.getClass().getSimpleName();
+      clientNames.add(clientName);
+
+      client.publish(StoreRequestBuilder.of(previewTopic).addPayload(clientName).build());
+      assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+      client.publish(StoreRequestBuilder.of(metricsTopic).addPayload(clientName).build());
+      assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
+
+      try {
+        client.publish(StoreRequestBuilder.of(statusTopic).addPayload(clientName).build());
+        Assert.fail(clientName + " published to a system topic that is not a worker topic");
+      } catch (UnauthorizedException expected) {
+        Assert.assertTrue(clientName + ": " + expected.getMessage(), expected.getMessage()
+            .contains("Workers can only publish to their own topics of the system namespace."));
+      }
+      assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
     }
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
 
-    // DefaultClientMessagingService authenticates as the worker placeholder instead.
-    client.publish(StoreRequestBuilder.of(previewTopic).addPayload("p-msg").build());
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    client.publish(StoreRequestBuilder.of(metricsTopic).addPayload("m-msg").build());
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-
-    Assert.assertEquals(Collections.singletonList("p-msg"), fetchDirectly(previewTopic));
-    Assert.assertEquals(Collections.singletonList("m-msg"), fetchDirectly(metricsTopic));
-
-    try {
-      client.publish(StoreRequestBuilder.of(statusTopic).addPayload("s-blocked").build());
-      Assert.fail("Expected UnauthorizedException on non-allowlisted system topic");
-    } catch (UnauthorizedException expected) {
-      // expected
-    }
-    assertUserContextPreserved(END_USER.getName(), END_USER.getFullCredential(), "10.1.2.3");
-  }
-
-  private static final class DirectClientMessagingService extends AbstractClientMessagingService {
-
-    DirectClientMessagingService(RemoteClientFactory remoteClientFactory) {
-      super(remoteClientFactory.createRemoteClient(
-          Constants.Service.MESSAGING_SERVICE, HTTP_REQUEST_CONFIG, "/v1/namespaces/"), false);
-    }
+    Assert.assertEquals(clientNames, fetchDirectly(previewTopic));
+    Assert.assertEquals(clientNames, fetchDirectly(metricsTopic));
+    Assert.assertTrue(fetchDirectly(statusTopic).isEmpty());
+    Assert.assertTrue(accessEnforcer.checks().isEmpty());
   }
 
   private static void assertUserContextPreserved(@Nullable String expectedUserId,

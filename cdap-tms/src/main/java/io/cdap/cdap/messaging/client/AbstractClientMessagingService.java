@@ -32,6 +32,7 @@ import io.cdap.cdap.api.service.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.internal.io.ExposedByteArrayOutputStream;
 import io.cdap.cdap.messaging.Schemas;
 import io.cdap.cdap.messaging.spi.MessageFetchRequest;
@@ -43,6 +44,8 @@ import io.cdap.cdap.messaging.spi.StoreRequest;
 import io.cdap.cdap.messaging.spi.TopicMetadata;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.proto.security.Credential;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
@@ -506,20 +509,43 @@ public abstract class AbstractClientMessagingService implements MessagingService
     };
   }
 
-  /**
-   * Executes the given {@link HttpRequest} using the underlying {@link RemoteClient}.
-   */
-  protected HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
-    return remoteClient.execute(request);
+  private HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    return executeWithoutUserDetails(() -> remoteClient.execute(request));
+  }
+
+  private HttpURLConnection openConnection(HttpMethod method, String resource)
+      throws IOException {
+    return executeWithoutUserDetails(() -> remoteClient.openConnection(method, resource));
   }
 
   /**
-   * Opens an {@link HttpURLConnection} for the given method and resource using the underlying
-   * {@link RemoteClient}.
+   * Runs a call to the messaging service as this service rather than as the user on the current
+   * thread, and restores the user details afterwards.
+   *
+   * <p>On a thread serving a user request, {@link SecurityRequestContext} holds the user's
+   * credential, and the authentication context would send that credential with this call. The
+   * messaging service only accepts internal credentials for system topics, so internal publishes
+   * made while serving a user request, such as program status events, would be rejected.
    */
-  protected HttpURLConnection openConnection(HttpMethod method, String resource)
+  private static <T> T executeWithoutUserDetails(Retries.Callable<T, IOException> callable)
       throws IOException {
-    return remoteClient.openConnection(method, resource);
+    String oldUserId = SecurityRequestContext.getUserId();
+    Credential oldUserCredential = SecurityRequestContext.getUserCredential();
+    String oldUserIp = SecurityRequestContext.getUserIp();
+    SecurityRequestContext.resetUserDetails();
+    try {
+      return callable.call();
+    } finally {
+      if (oldUserId != null) {
+        SecurityRequestContext.setUserId(oldUserId);
+      }
+      if (oldUserCredential != null) {
+        SecurityRequestContext.setUserCredential(oldUserCredential);
+      }
+      if (oldUserIp != null) {
+        SecurityRequestContext.setUserIp(oldUserIp);
+      }
+    }
   }
 
   /**
