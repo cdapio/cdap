@@ -52,7 +52,6 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final ProgramRun programRun;
   private final ProgramRunInfo programRunInfo;
   private final Map<String, String> properties;
-  private final SSHContext sshContext;
   private final SparkCompat sparkCompat;
   private final VersionInfo cdapVersion;
   @Nullable
@@ -68,7 +67,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName,
       Map<String, String> properties,
-      SparkCompat sparkCompat, @Nullable SSHContext sshContext,
+      SparkCompat sparkCompat,
       @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
       RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
       @Nullable String profileName, Executor executor,
@@ -84,7 +83,6 @@ public class DefaultProvisionerContext implements ProvisionerContext {
         .setRun(programRunId.getRun())
         .build();
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
-    this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
     this.appCDAPVersion = appCDAPVersion;
     this.locationFactory = locationFactory;
@@ -118,10 +116,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     return sparkCompat;
   }
 
+  @Deprecated
   @Override
   @Nullable
   public SSHContext getSSHContext() {
-    return sshContext;
+    return null;
   }
 
   @Override

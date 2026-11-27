@@ -16,17 +16,16 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
-import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,6 +33,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -44,11 +44,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A discovery service implementation used in remote runtime execution. It has a fixed list of
- * services that will go through {@link ServiceSocksProxy}, hence won't resolve the service name to
- * an actual address. It also use the {@link CConfiguration} as the backing store for service
- * announcements, which is suitable for the current remote runtime that has some "mini" system
- * services running in the {@link DefaultRuntimeJob}.
+ * A discovery service implementation used in remote runtime execution. It uses {@link
+ * CConfiguration} as the backing store for service announcements, which is suitable for the
+ * current remote runtime that has some "mini" system services running in the {@link
+ * DefaultRuntimeJob}.
  */
 public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, DiscoveryService {
 
@@ -56,13 +55,14 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
   private final CConfiguration cConf;
   private final Map<String, DefaultServiceDiscovered> services;
+  @Nullable
   private final Discoverable runtimeMonitorDiscoverable;
 
   @Inject
-  RemoteExecutionDiscoveryService(CConfiguration cConf, RuntimeMonitorType monitorType) {
+  RemoteExecutionDiscoveryService(CConfiguration cConf) {
     this.cConf = cConf;
     this.services = new ConcurrentHashMap<>();
-    this.runtimeMonitorDiscoverable = createMonitorDiscoverable(cConf, monitorType);
+    this.runtimeMonitorDiscoverable = createMonitorDiscoverable(cConf);
   }
 
   @Override
@@ -128,12 +128,15 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     if (discoverables.isEmpty()) {
       Discoverable discoverable;
 
-      if (name.equals(runtimeMonitorDiscoverable.getName())) {
+      if (Constants.Service.RUNTIME.equals(name)) {
+        if (runtimeMonitorDiscoverable == null) {
+          throw new IllegalStateException(
+              "Missing configuration " + Constants.RuntimeMonitor.MONITOR_URL);
+        }
         discoverable = runtimeMonitorDiscoverable;
       } else {
-        // If there is no address from the configuration, assuming it is using the service proxy,
-        // hence the discovery name is the hostname. Also use port == 0 so that the RemoteExecutionProxySelector
-        // knows that it need to use service proxy.
+        // If there is no address from the configuration, return a placeholder discoverable with
+        // port == 0 so RemoteClient can rewrite the service URL via the runtime routing base URI.
         URIScheme scheme =
             cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS
                 : URIScheme.HTTP;
@@ -154,25 +157,19 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   }
 
   /**
-   * Creates a {@link Discoverable} for the runtime monitor service.
+   * Creates a {@link Discoverable} for the runtime monitor service, or {@code null} if the monitor
+   * URL is not configured.
    */
-  private static Discoverable createMonitorDiscoverable(CConfiguration cConf,
-      RuntimeMonitorType monitorType) {
-    if (monitorType == RuntimeMonitorType.URL) {
-      // For monitor type URL, the monitor url is always set
-      String url = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
-      try {
-        return URIScheme.createDiscoverable(Constants.Service.RUNTIME, new URL(url));
-      } catch (MalformedURLException e) {
-        throw new IllegalArgumentException("Invalid monitor URL " + url, e);
-      }
+  @Nullable
+  private static Discoverable createMonitorDiscoverable(CConfiguration cConf) {
+    String url = cConf.getTrimmed(Constants.RuntimeMonitor.MONITOR_URL);
+    if (Strings.isNullOrEmpty(url)) {
+      return null;
     }
-
-    // If there is no runtime monitor URL, default to the service socks proxy mechanism, in which the
-    // hostname is the service name with port == 0.
-    URIScheme scheme =
-        cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
-    return scheme.createDiscoverable(Constants.Service.RUNTIME,
-        InetSocketAddress.createUnresolved(Constants.Service.RUNTIME, 0));
+    try {
+      return URIScheme.createDiscoverable(Constants.Service.RUNTIME, new URL(url));
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException("Invalid monitor URL " + url, e);
+    }
   }
 }

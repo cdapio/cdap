@@ -18,11 +18,7 @@ package io.cdap.cdap.app.guice;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionAuthenticator;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionDiscoveryService;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
-import java.net.Authenticator;
-import java.net.ProxySelector;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -33,12 +29,6 @@ public class RemoteExecutionDiscoveryModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(ProxySelector.class).to(RemoteExecutionProxySelector.class).in(Scopes.SINGLETON);
-    expose(ProxySelector.class);
-
-    bind(Authenticator.class).to(RemoteExecutionAuthenticator.class).in(Scopes.SINGLETON);
-    expose(Authenticator.class);
-
     bind(RemoteExecutionDiscoveryService.class).in(Scopes.SINGLETON);
     bind(DiscoveryService.class).to(RemoteExecutionDiscoveryService.class);
     bind(DiscoveryServiceClient.class).to(RemoteExecutionDiscoveryService.class);

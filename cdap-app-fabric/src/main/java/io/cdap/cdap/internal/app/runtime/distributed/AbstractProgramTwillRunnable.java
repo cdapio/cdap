@@ -70,7 +70,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.Security;
@@ -127,7 +126,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private LogAppenderInitializer logAppenderInitializer;
   private ProgramOptions programOptions;
   private Deque<Service> coreServices;
-  private ProxySelector oldProxySelector;
   private T programRunner;
   private Program program;
   private ProgramRunId programRunId;
@@ -234,8 +232,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     logAppenderInitializer.initialize();
     SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
-    // Setup the proxy selector for in active monitoring mode
-    oldProxySelector = ProxySelector.getDefault();
     if (clusterMode == ClusterMode.ISOLATED) {
       RuntimeMonitors.setupMonitoring(injector, programOptions);
     }
@@ -370,7 +366,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void destroy() {
-    ProxySelector.setDefault(oldProxySelector);
+    // no-op
   }
 
   /**

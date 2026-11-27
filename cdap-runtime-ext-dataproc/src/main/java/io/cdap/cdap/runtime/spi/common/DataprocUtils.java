@@ -57,7 +57,6 @@ import java.util.Map;
 import java.util.SplittableRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,13 +263,6 @@ public final class DataprocUtils {
       validLabels.put(key, val);
     }
     return validLabels;
-  }
-
-  /**
-   * Parses the given list of IP CIDR blocks into list of {@link IPRange}.
-   */
-  public static List<IPRange> parseIpRanges(List<String> ranges) {
-    return ranges.stream().map(IPRange::new).collect(Collectors.toList());
   }
 
   /**

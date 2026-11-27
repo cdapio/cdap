@@ -97,11 +97,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.ProxySelector;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -224,7 +222,6 @@ public final class SparkRuntimeContextProvider {
 
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
-      ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
         RuntimeMonitors.setupMonitoring(injector, programOptions);
       }
@@ -264,8 +261,6 @@ public final class SparkRuntimeContextProvider {
             LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
           }
         }
-        Authenticator.setDefault(null);
-        ProxySelector.setDefault(oldProxySelector);
         LOG.debug("Spark runtime services shutdown completed");
       };
 

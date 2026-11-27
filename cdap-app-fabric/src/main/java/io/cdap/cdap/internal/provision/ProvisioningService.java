@@ -34,6 +34,7 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.NotFoundException;
@@ -47,10 +48,11 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
@@ -67,18 +69,13 @@ import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.VersionInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
-import io.cdap.cdap.runtime.spi.provisioner.Cluster;
-import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
-import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
-import io.cdap.cdap.runtime.spi.ssh.SSHContext;
-import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -198,51 +195,6 @@ public class ProvisioningService extends AbstractIdleService {
 
     contextExecutor.shutdownNow();
     LOG.info("Stopped {}", getClass().getSimpleName());
-  }
-
-  /**
-   * Returns the {@link ClusterStatus} for the cluster being used to execute the given program run.
-   *
-   * @param programRunId   the program run id for checking the cluster status
-   * @param programOptions the program options for the given run
-   * @param cluster        the {@link Cluster} information for the given run
-   * @param userId         the user id to use for {@link SecureStore} operation.
-   * @return the {@link ClusterStatus}
-   * @throws Exception if non-retryable exception is encountered when querying cluster status
-   */
-  public ClusterStatus getClusterStatus(ProgramRunId programRunId, ProgramOptions programOptions,
-      Cluster cluster, String userId) throws Exception {
-    Map<String, String> systemArgs = programOptions.getArguments().asMap();
-    String name = SystemArguments.getProfileProvisioner(systemArgs);
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
-
-    // If there is no provisioner available, we can't do anything further, hence returning NOT_EXISTS
-    if (provisioner == null) {
-      return ClusterStatus.NOT_EXISTS;
-    }
-
-    Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
-
-    // Create the ProvisionerContext and query the cluster status using the provisioner
-    ProvisionerContext context;
-    try {
-      DefaultSSHContext defaultSSHContext = null;
-      if (!getRuntimeJobManager(programRunId, programOptions).isPresent()) {
-        defaultSSHContext = new DefaultSSHContext(
-            Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
-      }
-      context = createContext(cConf, programOptions, programRunId, userId, properties,
-          defaultSSHContext, new ErrorCategory(ErrorCategoryEnum.OTHERS));
-    } catch (InvalidMacroException e) {
-      // This shouldn't happen
-      runWithProgramLogging(programRunId, systemArgs,
-          () -> LOG.error("Could not evaluate macros while checking cluster status.", e));
-      return ClusterStatus.NOT_EXISTS;
-    }
-
-    return Retries.callWithRetries(() -> provisioner.getClusterStatus(context, cluster),
-        RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
-        RetryableProvisionException.class::isInstance);
   }
 
   @Nullable
@@ -435,10 +387,15 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    if (provisioner == null) {
+      return Optional.empty();
+    }
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
-    ProvisionerContext context = createContext(cConf, programOptions, programRunId, user,
-        properties, null, new ErrorCategory(ErrorCategoryEnum.OTHERS));
+    RuntimeMonitorType runtimeMonitorType = resolveRuntimeMonitorTypeOrDefault(
+        cConf, programOptions, programRunId);
+    ProvisionerContext context = createContext(programOptions, programRunId, user,
+        properties, runtimeMonitorType, new ErrorCategory(ErrorCategoryEnum.OTHERS));
     return provisioner.getRuntimeJobManager(context)
         .map(manager ->
             new RuntimeJobManagerCallWrapper(provisioner.getClass().getClassLoader(), manager));
@@ -675,39 +632,34 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramOptions programOptions = taskInfo.getProgramOptions();
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     ErrorCategory errorCategory = new ErrorCategory(ErrorCategoryEnum.PROVISIONING);
+    RuntimeMonitorType runtimeMonitorType;
+    try {
+      runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOptions);
+      // Tethered client runs receive app.program.runtime.monitor.url via cdap-tether.xml
+      // rather than the client's local cConf.
+      if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ISOLATED
+          && !programOptions.getArguments().hasOption(ProgramOptionConstants.PEER_NAME)) {
+        RuntimeMonitors.requireMonitorUrl(cConf, programOptions);
+      }
+    } catch (IllegalArgumentException | UnsupportedOperationException e) {
+      return failProvisionTask(programRunId, systemArgs, errorCategory,
+          "Invalid runtime monitor configuration while provisioning.",
+          e.getMessage(), ErrorType.USER, e);
+    } catch (IllegalStateException e) {
+      return failProvisionTask(programRunId, systemArgs, errorCategory,
+          "Missing runtime monitor configuration while provisioning.",
+          e.getMessage(), ErrorType.SYSTEM, e);
+    }
+
     ProvisionerContext context;
     try {
-      SSHContext sshContext = new DefaultSSHContext(
-          Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-          locationFactory.create(taskInfo.getSecureKeysDir()),
-          createSSHKeyPair(taskInfo));
-      context = createContext(cConf, programOptions, programRunId, taskInfo.getUser(),
-          taskInfo.getProvisionerProperties(), sshContext, errorCategory);
-    } catch (IOException e) {
-      String errorReason = "Failed to load ssh key.";
-      String errorMessage =
-          String.format("Failed to load ssh key with message: %s", e.getMessage());
-      Exception ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
-          errorMessage, ErrorType.SYSTEM, false, e);
-      runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
-          () -> LOG.error("The run will be marked as failed.", ex));
-      programStateWriter.error(programRunId, ex);
-      provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
-      return () -> {
-      };
+      context = createContext(programOptions, programRunId, taskInfo.getUser(),
+          taskInfo.getProvisionerProperties(), runtimeMonitorType, errorCategory);
     } catch (InvalidMacroException e) {
-      String errorReason = "Could not evaluate macros while provisioning.";
-      String errorMessage = String.format("Could not evaluate macros with message: %s",
-          e.getMessage());
-      ProgramFailureException ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
-          errorMessage, ErrorType.USER, false, null);
-      ex.addSuppressed(e);
-      runWithProgramLogging(programRunId, systemArgs,
-          () -> LOG.error("The run will be marked as failed.", ex));
-      programStateWriter.error(programRunId, ex);
-      provisionerNotifier.deprovisioning(taskInfo.getProgramRunId());
-      return () -> {
-      };
+      return failProvisionTask(programRunId, systemArgs, errorCategory,
+          "Could not evaluate macros while provisioning.",
+          String.format("Could not evaluate macros with message: %s", e.getMessage()),
+          ErrorType.USER, e);
     }
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
@@ -736,28 +688,14 @@ public class ProvisioningService extends AbstractIdleService {
     ErrorCategory errorCategory = new ErrorCategory(ErrorCategoryEnum.DEPROVISIONING);
     ProvisionerContext context;
 
-    SSHKeyPair sshKeyPair = null;
-    try {
-      sshKeyPair = createSSHKeyPair(taskInfo);
-    } catch (IOException e) {
-      String errorReason = "Failed to load ssh key.";
-      String errorMessage =
-          String.format("Failed to load ssh key with message: %s", e.getMessage());
-      Exception ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
-          errorMessage, ErrorType.SYSTEM, false, e);
-      LOG.warn("Failed to load ssh key. No SSH key will be available for the deprovision task",
-          ex);
-    }
-
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
 
     try {
-      SSHContext sshContext = new DefaultSSHContext(
-          Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-          null, sshKeyPair);
-      context = createContext(cConf, taskInfo.getProgramOptions(), programRunId, taskInfo.getUser(),
-          properties, sshContext, errorCategory);
+      RuntimeMonitorType runtimeMonitorType = resolveRuntimeMonitorTypeOrDefault(
+          cConf, taskInfo.getProgramOptions(), programRunId);
+      context = createContext(taskInfo.getProgramOptions(), programRunId, taskInfo.getUser(),
+          properties, runtimeMonitorType, errorCategory);
     } catch (InvalidMacroException e) {
       String errorReason = "Could not evaluate macros while deprovisioning.";
       String errorMessage = String.format("Could not evaluate macros with message: %s",
@@ -826,37 +764,6 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Creates a {@link SSHKeyPair} based on the given {@link ProvisioningTaskInfo}.
-   *
-   * @param taskInfo the task info containing information about the ssh keys
-   * @return a {@link SSHKeyPair} or {@code null} if ssh key information are not present in the task
-   *     info
-   */
-  @Nullable
-  private SSHKeyPair createSSHKeyPair(ProvisioningTaskInfo taskInfo) throws IOException {
-    // Check if there is ssh user property in the Cluster
-    String sshUser = Optional.ofNullable(taskInfo.getCluster())
-        .map(Cluster::getProperties)
-        .map(p -> p.get(Constants.RuntimeMonitor.SSH_USER))
-        .orElse(null);
-
-    if (sshUser == null) {
-      return null;
-    }
-
-    Location keysDir = locationFactory.create(taskInfo.getSecureKeysDir());
-
-    Location publicKeyLocation = keysDir.append(Constants.RuntimeMonitor.PUBLIC_KEY);
-    Location privateKeyLocation = keysDir.append(Constants.RuntimeMonitor.PRIVATE_KEY);
-
-    if (!publicKeyLocation.exists() || !privateKeyLocation.exists()) {
-      return null;
-    }
-
-    return new LocationBasedSSHKeyPair(keysDir, sshUser);
-  }
-
-  /**
    * Creates a {@link Location} representing a directory for storing secure keys for the given
    * program run.
    *
@@ -878,11 +785,33 @@ public class ProvisioningService extends AbstractIdleService {
     }
   }
 
-  private ProvisionerContext createContext(CConfiguration cConf, ProgramOptions programOptions,
+  private Runnable failProvisionTask(ProgramRunId programRunId, Map<String, String> systemArgs,
+      ErrorCategory errorCategory, String errorReason, String errorMessage, ErrorType errorType,
+      Exception cause) {
+    ProgramFailureException ex = ErrorUtils.getProgramFailureException(errorCategory, errorReason,
+        errorMessage, errorType, false, cause);
+    runWithProgramLogging(programRunId, systemArgs,
+        () -> LOG.error("The run will be marked as failed.", ex));
+    programStateWriter.error(programRunId, ex);
+    provisionerNotifier.deprovisioning(programRunId);
+    return () -> {
+    };
+  }
+
+  private static RuntimeMonitorType resolveRuntimeMonitorTypeOrDefault(CConfiguration cConf,
+      ProgramOptions programOptions, ProgramRunId programRunId) {
+    try {
+      return SystemArguments.getRuntimeMonitorType(cConf, programOptions);
+    } catch (IllegalArgumentException e) {
+      LOG.warn("Invalid runtime monitor type for program run {}; defaulting to URL.",
+          programRunId, e);
+      return RuntimeMonitorType.URL;
+    }
+  }
+
+  private ProvisionerContext createContext(ProgramOptions programOptions,
       ProgramRunId programRunId, String userId, Map<String, String> properties,
-      @Nullable SSHContext sshContext, ErrorCategory errorCategory) {
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
-        programOptions);
+      RuntimeMonitorType runtimeMonitorType, ErrorCategory errorCategory) {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String provisionerName = SystemArguments.getProfileProvisioner(systemArgs);
     String profileName = SystemArguments
@@ -894,7 +823,7 @@ public class ProvisioningService extends AbstractIdleService {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
         systemArgs);
     return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat,
-        sshContext, appCDAPVersion, locationFactory, runtimeMonitorType, metricsCollectionService,
+        appCDAPVersion, locationFactory, runtimeMonitorType, metricsCollectionService,
         profileName, contextExecutor, loggingContext, errorCategory);
   }
 

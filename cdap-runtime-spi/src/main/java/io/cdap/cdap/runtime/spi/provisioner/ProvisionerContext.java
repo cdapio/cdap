@@ -58,9 +58,14 @@ public interface ProvisionerContext {
   Map<String, String> getProperties();
 
   /**
-   * Returns the {@link SSHContext} for performing ssh operations. The context will be null if
-   * RunimeJobManager is used to submit and monitor job.
+   * Returns the {@link SSHContext} for performing SSH operations. Always returns {@code null}
+   * because SSH-based runtime execution and monitoring are no longer supported.
+   *
+   * @deprecated SSH-based runtime execution and monitoring are no longer supported; implement
+   *     {@link Provisioner#getRuntimeJobManager(ProvisionerContext)} and use
+   *     {@link RuntimeMonitorType#URL} instead.
    */
+  @Deprecated
   @Nullable
   SSHContext getSSHContext();
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.ssh;
 
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,7 +26,11 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Represents a process launched via the {@link SSHSession#execute(String...)} method.
+ *
+ * @deprecated SSH-based runtime execution and monitoring are no longer supported; use
+ *     {@link RuntimeJobManager} and {@link RuntimeMonitorType#URL} instead.
  */
+@Deprecated
 public interface SSHProcess {
 
   /**

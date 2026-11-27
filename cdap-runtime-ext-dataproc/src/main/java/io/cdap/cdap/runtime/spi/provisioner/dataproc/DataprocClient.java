@@ -46,6 +46,7 @@ import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.ShieldedInstanceConfig;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.cloud.dataproc.v1.UpdateClusterRequest;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -65,7 +66,6 @@ import io.cdap.cdap.api.exception.ErrorUtils.ActionErrorPair;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
@@ -97,7 +97,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-abstract class DataprocClient implements AutoCloseable {
+class DataprocClient implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   private static final int MIN_DEFAULT_CONCURRENCY = 32;
@@ -108,13 +108,12 @@ abstract class DataprocClient implements AutoCloseable {
       "rateLimitExceeded",
       "resourceQuotaExceeded");
   private static final String CONFIGURATION = "Configuration";
-  protected final DataprocConf conf;
+  private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final ComputeFactory computeFactory;
-  private Compute compute;
-  protected final ErrorCategory errorCategory;
+  private final ErrorCategory errorCategory;
 
-  protected DataprocClient(DataprocConf conf, ClusterControllerClient client,
+  DataprocClient(DataprocConf conf, ClusterControllerClient client,
       ComputeFactory computeFactory, ErrorCategory errorCategory) {
     this.conf = conf;
     this.client = client;
@@ -157,19 +156,6 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Extracts and returns the zone name from the given full zone URI.
-   */
-  private static String getZone(String zoneUri, ErrorCategory errorCategory) {
-    int idx = zoneUri.lastIndexOf("/");
-    if (idx <= 0) {
-      String errorMessage = String.format("Invalid zone uri %s", zoneUri);
-      throw getDataprocRuntimeException(new ErrorCategory(errorCategory.getParentCategory(),
-              CONFIGURATION), errorMessage, errorMessage, true, null, ErrorType.USER, null);
-    }
-    return zoneUri.substring(idx + 1);
-  }
-
-  /**
    * Create a cluster. This will return after the initial request to create the cluster is
    * completed. At this point, the cluster is likely not yet running, but in a provisioning state.
    *
@@ -177,7 +163,6 @@ abstract class DataprocClient implements AutoCloseable {
    * @param imageVersion the image version for the cluster
    * @param labels labels to set on the cluster
    * @param privateInstance {@code true} to indicate using private instance
-   * @param publicKey the public key to set for cluster nodes if SSH access is required
    * @return create operation metadata
    * @throws InterruptedException if the thread was interrupted while waiting for the initial
    *     request to complete
@@ -186,31 +171,21 @@ abstract class DataprocClient implements AutoCloseable {
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   ClusterOperationMetadata createCluster(String name, String imageVersion,
-      Map<String, String> labels, boolean privateInstance, @Nullable SSHPublicKey publicKey)
+      Map<String, String> labels, boolean privateInstance)
       throws RetryableProvisionException, InterruptedException, IOException {
 
     String operationId = null;
     try {
-      Map<String, String> metadata = new HashMap<>();
-      if (publicKey != null) {
-        // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
-        metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
-        // override any os-login that may be set on the project-level metadata
-        // this metadata is only needed if ssh is being used to launch the jobs - CDAP-15369
-        metadata.put("enable-oslogin", "false");
-      }
-
-      //Check if ClusterMetaData is provided and add them.
-      metadata.putAll(conf.getClusterMetaData());
-
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
           .addAllServiceAccountScopes(conf.getScopes())
           .setShieldedInstanceConfig(
               ShieldedInstanceConfig.newBuilder()
                   .setEnableSecureBoot(conf.isSecureBootEnabled())
                   .setEnableVtpm(conf.isvTpmEnabled())
-                  .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build())
-          .putAllMetadata(metadata);
+                  .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build());
+      if (conf.getClusterMetaData() != null) {
+        clusterConfig.putAllMetadata(conf.getClusterMetaData());
+      }
 
       if (conf.getServiceAccount() != null) {
         clusterConfig.setServiceAccount(conf.getServiceAccount());
@@ -220,7 +195,7 @@ abstract class DataprocClient implements AutoCloseable {
         clusterConfig.setZoneUri(conf.getZone());
       }
 
-      Compute compute = getOrCreateCompute();
+      Compute compute = createCompute();
       setNetworkConfigs(compute, clusterConfig, privateInstance);
 
       Map<String, String> clusterProperties = new HashMap<>(conf.getClusterProperties());
@@ -423,8 +398,9 @@ abstract class DataprocClient implements AutoCloseable {
         .build();
   }
 
-  protected void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
-      boolean privateInstance) throws RetryableProvisionException, IOException {
+  @VisibleForTesting
+  void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
+      boolean privateInstance) throws RetryableProvisionException {
     String network = conf.getNetwork();
     String systemNetwork = null;
     ErrorCategory category = new ErrorCategory(errorCategory.getParentCategory(), CONFIGURATION);
@@ -497,16 +473,7 @@ abstract class DataprocClient implements AutoCloseable {
     clusterConfig.addAllTags(conf.getNetworkTags());
     boolean isInternalIpOnly = isInternalIpOnly(networkInfo, privateInstance);
     clusterConfig.setInternalIpOnly(isInternalIpOnly);
-    addNetworkTags(clusterConfig, networkInfo, isInternalIpOnly);
   }
-
-  protected void addNetworkTags(GceClusterConfig.Builder clusterConfig, Network network,
-      boolean internalIpOnly)
-      throws RetryableProvisionException, IOException {
-    // no-op
-  }
-
-  protected abstract Node getNode(Node.Type type, String zone, String nodeName) throws IOException;
 
   private static boolean subnetExists(List<String> subnets, String subnet) {
     // subnets are of the form
@@ -594,9 +561,7 @@ abstract class DataprocClient implements AutoCloseable {
       return false;
     }
 
-    // If it is forced to be private instance or
-    // if CDAP runs in GCP project and runtime job manager is used and monitoring is not done through SSH,
-    // then we don't need to validate network connectivity
+    // If it is forced to be a private instance, we don't need to validate network connectivity.
     if (privateInstance) {
       return true;
     }
@@ -606,8 +571,7 @@ abstract class DataprocClient implements AutoCloseable {
       return true;
     }
 
-    // SSH will be used for job launching and/or monitoring, we need to validate network connectivity
-    // CDAP and Dataproc are in the same network, should be able to use private IP only cluster
+    // CDAP and Dataproc are in the same network, should be able to use private IP only cluster.
     if (systemProjectId.equals(conf.getNetworkHostProjectId()) && systemNetwork.equals(
         network.getName())) {
       return true;
@@ -920,14 +884,8 @@ abstract class DataprocClient implements AutoCloseable {
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
-      throws RetryableProvisionException, IOException {
-    Optional<Cluster> clusterOptional = getDataprocCluster(name);
-    if (!clusterOptional.isPresent()) {
-      return Optional.empty();
-    }
-
-    Cluster cluster = clusterOptional.get();
-    return Optional.of(convertCluster(cluster));
+      throws RetryableProvisionException {
+    return getDataprocCluster(name).map(this::convertCluster);
   }
 
   /**
@@ -951,45 +909,22 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Converts dataproc cluster object into provisioner one. This version does not throw checked
-   * exceptions and can be used as a {@link java.util.function.Function}.
-   *
-   * @param cluster dataproc cluster object
-   * @return provisioner cluster object
-   * @throws DataprocRuntimeException if there was an error
-   */
-  private io.cdap.cdap.runtime.spi.provisioner.Cluster convertClusterUnchecked(Cluster cluster) {
-    try {
-      return convertCluster(cluster);
-    } catch (IOException e) {
-      String errorReason = "Unable to convert dataproc cluster object into provisioner one.";
-      throw getDataprocRuntimeException(errorCategory, errorReason, e.getMessage(), false,
-          null, ErrorType.SYSTEM, e);
-    }
-  }
-
-  /**
    * Converts dataproc cluster object into provisioner one.
    *
    * @param cluster dataproc cluster object
    * @return provisioner cluster object
-   * @throws IOException if there was an error
    */
-  private io.cdap.cdap.runtime.spi.provisioner.Cluster convertCluster(Cluster cluster)
-      throws IOException {
-    String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri(), errorCategory);
-
+  private io.cdap.cdap.runtime.spi.provisioner.Cluster convertCluster(Cluster cluster) {
     List<Node> nodes = new ArrayList<>();
     for (String masterName : cluster.getConfig().getMasterConfig().getInstanceNamesList()) {
-      nodes.add(getNode(Node.Type.MASTER, zone, masterName));
+      nodes.add(new Node(masterName, Node.Type.MASTER, null, 0, Collections.emptyMap()));
     }
     for (String workerName : cluster.getConfig().getWorkerConfig().getInstanceNamesList()) {
-      nodes.add(getNode(Node.Type.WORKER, zone, workerName));
+      nodes.add(new Node(workerName, Node.Type.WORKER, null, 0, Collections.emptyMap()));
     }
-    io.cdap.cdap.runtime.spi.provisioner.Cluster c = new io.cdap.cdap.runtime.spi.provisioner.Cluster(
+    return new io.cdap.cdap.runtime.spi.provisioner.Cluster(
         cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes,
         Collections.emptyMap());
-    return c;
   }
 
   private Optional<Cluster> getDataprocCluster(String name) throws RetryableProvisionException {
@@ -1051,7 +986,7 @@ abstract class DataprocClient implements AutoCloseable {
       return StreamSupport.stream(
               client.listClusters(builder.build()).iterateAll().spliterator(), false)
           .filter(postFilter)
-          .map(this::convertClusterUnchecked);
+          .map(this::convertCluster);
     } catch (ApiException e) {
       String errorReason = "Dataproc clusters list operation failed.";
       throw DataprocUtils.handleApiException(null, e, errorReason, errorCategory);
@@ -1080,15 +1015,12 @@ abstract class DataprocClient implements AutoCloseable {
     }
   }
 
-  protected Compute getOrCreateCompute() throws IOException {
-    if (compute == null) {
-      try {
-        compute = computeFactory.createCompute(conf);
-      } catch (GeneralSecurityException e) {
-        throw new IOException("Unable to load compute credentials: " + e.getMessage(), e);
-      }
+  private Compute createCompute() throws IOException {
+    try {
+      return computeFactory.createCompute(conf);
+    } catch (GeneralSecurityException e) {
+      throw new IOException("Unable to load compute credentials: " + e.getMessage(), e);
     }
-    return compute;
   }
 
   @Override
@@ -1118,7 +1050,7 @@ abstract class DataprocClient implements AutoCloseable {
         .build();
   }
 
-  protected static DataprocRuntimeException handleGoogleJsonResponseException(
+  private static DataprocRuntimeException handleGoogleJsonResponseException(
       GoogleJsonResponseException e, String errorReason, ErrorCategory errorCategory) {
     ErrorUtils.ActionErrorPair pair = ErrorUtils.getActionErrorByStatusCode(e.getStatusCode());
 
@@ -1142,7 +1074,7 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   //Throws retryable Exception for the cases that are transient in nature
-  protected static void handleRetryableExceptions(Exception e) throws RetryableProvisionException {
+  private static void handleRetryableExceptions(Exception e) throws RetryableProvisionException {
     // if there was an SocketTimeoutException ( read time out ) , we can just try again
     if (e instanceof SocketTimeoutException) {
       throw new RetryableProvisionException(e);

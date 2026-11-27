@@ -23,8 +23,8 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
@@ -42,8 +42,7 @@ public class RemoteExecutionDiscoveryServiceTest {
   @Test
   public void testDiscovery() {
     CConfiguration cConf = CConfiguration.create();
-    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RuntimeMonitorType.SSH);
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
 
     // Without registering, the service discovered should contain one
     // entry with the host name the same as the service name
@@ -74,8 +73,7 @@ public class RemoteExecutionDiscoveryServiceTest {
   public void testWithSSL() {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
-    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RuntimeMonitorType.SSH);
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
 
     // Without registering, the service discovered should contain one entry, with the payload indicating HTTPS.
     ServiceDiscovered serviceDiscovered = discoveryService.discover("test");
@@ -103,15 +101,14 @@ public class RemoteExecutionDiscoveryServiceTest {
   @Test
   public void testExplicitConf() {
     CConfiguration cConf = CConfiguration.create();
-    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RuntimeMonitorType.SSH);
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
 
     // Register, an entry should be added to the cConf
     discoveryService.register(new Discoverable("test", InetSocketAddress.createUnresolved("xyz.invalid.", 12345)));
     Assert.assertNotNull(cConf.get(Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + "test"));
 
     // Create a new discoveryService from the same config, discover() should return the address from the config
-    ServiceDiscovered serviceDiscovered = new RemoteExecutionDiscoveryService(cConf, RuntimeMonitorType.SSH)
+    ServiceDiscovered serviceDiscovered = new RemoteExecutionDiscoveryService(cConf)
       .discover("test");
     Assert.assertTrue(
       StreamSupport.stream(serviceDiscovered.spliterator(), false)
@@ -123,8 +120,7 @@ public class RemoteExecutionDiscoveryServiceTest {
   @Test
   public void testAppDisabled() {
     CConfiguration cConf = CConfiguration.create();
-    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RuntimeMonitorType.SSH);
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
 
     // Discovery of app is disabled. It always return a ServiceDiscovered without endpoint in it
     String name = ServiceDiscoverable.getName(NamespaceId.DEFAULT.app("test").service("service"));
@@ -132,5 +128,43 @@ public class RemoteExecutionDiscoveryServiceTest {
       .pick(1, TimeUnit.SECONDS);
 
     Assert.assertNull(discoverable);
+  }
+
+  @Test
+  public void testRuntimeMonitorDiscovery() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.RuntimeMonitor.MONITOR_URL, "https://monitor.example.com:8443");
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
+
+    List<Discoverable> discoverables = Lists.newArrayList(
+        discoveryService.discover(Constants.Service.RUNTIME));
+    Assert.assertEquals(1, discoverables.size());
+    Assert.assertEquals(URIScheme.HTTPS, URIScheme.getScheme(discoverables.get(0)));
+    Assert.assertEquals(InetSocketAddress.createUnresolved("monitor.example.com", 8443),
+        discoverables.get(0).getSocketAddress());
+  }
+
+  @Test
+  public void testRuntimeMonitorMissingEmptyAndWhitespaceUrlThrowsOnDiscover() {
+    for (String url : new String[]{null, "", "   "}) {
+      CConfiguration cConf = CConfiguration.create();
+      if (url != null) {
+        cConf.set(Constants.RuntimeMonitor.MONITOR_URL, url);
+      }
+      RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
+      IllegalStateException e = Assert.assertThrows(IllegalStateException.class,
+          () -> discoveryService.discover(Constants.Service.RUNTIME));
+      Assert.assertTrue(e.getMessage().contains(Constants.RuntimeMonitor.MONITOR_URL));
+    }
+  }
+
+  @Test
+  public void testRuntimeMonitorInvalidUrlThrows() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.RuntimeMonitor.MONITOR_URL, "not-a-valid-url");
+    IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+        () -> new RemoteExecutionDiscoveryService(cConf));
+    Assert.assertTrue(e.getMessage().contains("not-a-valid-url"));
+    Assert.assertTrue(e.getCause() instanceof MalformedURLException);
   }
 }

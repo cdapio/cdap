@@ -20,23 +20,16 @@ import com.google.api.services.compute.Compute;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import io.cdap.cdap.api.exception.ErrorCategory;
-import io.cdap.cdap.runtime.spi.provisioner.Node;
-import java.util.Collections;
 
 public class MockDataprocClient extends DataprocClient {
   public MockDataprocClient(DataprocConf conf, ClusterControllerClient client,
-      ComputeFactory computeFactory,ErrorCategory errorCategory) {
+      ComputeFactory computeFactory, ErrorCategory errorCategory) {
     super(conf, client, computeFactory, errorCategory);
   }
 
   @Override
-  protected void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
-                                   boolean privateInstance) {
+  void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
+      boolean privateInstance) {
     // no-op
-  }
-
-  @Override
-  protected Node getNode(Node.Type type, String zone, String nodeName) {
-    return new Node("", type, null, 0, Collections.emptyMap());
   }
 }

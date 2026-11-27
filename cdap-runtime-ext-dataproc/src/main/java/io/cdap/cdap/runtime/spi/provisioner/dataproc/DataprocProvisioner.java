@@ -29,7 +29,6 @@ import com.google.protobuf.util.Timestamps;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorType;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.common.DataprocMetric;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
@@ -40,9 +39,6 @@ import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
-import io.cdap.cdap.runtime.spi.ssh.SSHContext;
-import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import io.grpc.Status;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -180,6 +176,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
+    rejectSshMonitorType(context);
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     if (!isAutoscalingFieldsValid(conf, createContextProperties(context))) {
       LOG.warn("The configs : {}, {}, {} will not be considered when {} is enabled ",
@@ -188,23 +185,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
           DataprocConf.PREDEFINED_AUTOSCALE_ENABLED);
     }
 
-    SSHPublicKey sshPublicKey = null;
-    if (shouldUseSsh(context, conf)) {
-      // Generates and set the ssh key if it does not have one.
-      // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
-      SSHContext sshContext = context.getSSHContext();
-      if (sshContext != null) {
-        SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
-        if (sshKeyPair == null) {
-          sshKeyPair = sshContext.generate("cdap");
-          sshContext.setSSHKeyPair(sshKeyPair);
-        }
-        sshPublicKey = sshKeyPair.getPublicKey();
-      }
-    }
-
-    try (DataprocClient client = clientFactory.create(conf, sshPublicKey != null,
-        context.getErrorCategory())) {
+    try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
       Cluster reused = tryReuseCluster(client, context, conf);
       if (reused != null) {
         DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
@@ -263,7 +244,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       boolean privateInstance = Boolean.parseBoolean(
           getSystemContext().getProperties().get(PRIVATE_INSTANCE));
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion,
-          labels, privateInstance, sshPublicKey);
+          labels, privateInstance);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
         LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
@@ -619,8 +600,7 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = cluster.getName();
-    try (DataprocClient client = clientFactory.create(conf, shouldUseSsh(context, conf),
-        context.getErrorCategory())) {
+    try (DataprocClient client = clientFactory.create(conf, context.getErrorCategory())) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(), getImageVersion(context, conf),
           "provisioner.clusterDetail.response.count");
@@ -766,11 +746,6 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
-  }
-
-  private boolean shouldUseSsh(ProvisionerContext context, DataprocConf conf) {
-    return context.getRuntimeMonitorType() == RuntimeMonitorType.SSH
-        || !conf.isRuntimeJobManagerEnabled();
   }
 
   private boolean isAutoscalingFieldsValid(DataprocConf conf, Map<String, String> properties) {

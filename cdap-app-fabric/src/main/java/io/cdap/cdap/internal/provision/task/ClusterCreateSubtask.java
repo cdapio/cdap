@@ -17,14 +17,10 @@
 
 package io.cdap.cdap.internal.provision.task;
 
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
-import io.cdap.cdap.runtime.spi.ssh.SSHContext;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -40,20 +36,6 @@ public class ClusterCreateSubtask extends ProvisioningSubtask {
 
   @Override
   public Cluster execute(Cluster cluster) throws Exception {
-    Cluster nextCluster = provisioner.createCluster(provisionerContext);
-    SSHContext sshContext = provisionerContext.getSSHContext();
-    // ssh context can be null if ssh is not being used to submit job
-    if (sshContext == null) {
-      return new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(),
-          nextCluster.getProperties());
-    }
-
-    Map<String, String> properties = new HashMap<>(nextCluster.getProperties());
-    // Set the SSH user if the provisioner sets it.
-    provisionerContext.getSSHContext().getSSHKeyPair().ifPresent(sshKeyPair -> {
-      properties.put(Constants.RuntimeMonitor.SSH_USER, sshKeyPair.getPublicKey().getUser());
-    });
-    return new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(),
-        properties);
+    return provisioner.createCluster(provisionerContext);
   }
 }

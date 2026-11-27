@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.runtime.spi.ssh;
 
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import java.io.IOException;
 import java.security.KeyException;
 import java.util.Collections;
@@ -28,7 +30,11 @@ import java.util.function.Supplier;
 /**
  * This context provides ssh keys and access to {@link SSHSession} for interacting with remote
  * hosts.
+ *
+ * @deprecated SSH-based runtime execution and monitoring are no longer supported; use
+ *     {@link RuntimeJobManager} and {@link RuntimeMonitorType#URL} instead.
  */
+@Deprecated
 public interface SSHContext {
 
   /**

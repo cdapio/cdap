@@ -46,6 +46,7 @@ public class MockProvisionerContext implements ProvisionerContext {
   private String cdapVersion;
   private String profileName;
   private ErrorCategory errorCategory;
+  private RuntimeMonitorType runtimeMonitorType;
 
   public MockProvisionerContext() {
     this(null);
@@ -83,6 +84,7 @@ public class MockProvisionerContext implements ProvisionerContext {
     properties.clear();
   }
 
+  @Deprecated
   @Nullable
   @Override
   public SSHContext getSSHContext() {
@@ -132,7 +134,11 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   @Override
   public RuntimeMonitorType getRuntimeMonitorType() {
-    return null;
+    return runtimeMonitorType;
+  }
+
+  public void setRuntimeMonitorType(RuntimeMonitorType runtimeMonitorType) {
+    this.runtimeMonitorType = runtimeMonitorType;
   }
 
   @Override

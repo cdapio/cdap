@@ -21,6 +21,12 @@ package io.cdap.cdap.runtime.spi;
  */
 public enum RuntimeMonitorType {
 
+  /**
+   * Monitors remote runtimes over an SSH tunnel.
+   *
+   * @deprecated SSH runtime monitoring is no longer supported; use {@link #URL} instead.
+   */
+  @Deprecated
   SSH,
   URL
 }

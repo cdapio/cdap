@@ -141,31 +141,6 @@
           }
         }
       ]
-    },
-    {
-      "label": "Monitoring",
-      "properties": [
-        {
-          "widget-type": "textbox",
-          "label": "SSH User",
-          "name": "sshUser",
-          "required": false,
-          "description": "The user to SSH to the cluster for monitoring.",
-          "widget-attributes": {
-            "placeholder": "Specify the SSH user"
-          }
-        },
-        {
-          "widget-type": "securekey-textarea",
-          "label": "SSH Private Key",
-          "name": "sshKey",
-          "required": false,
-          "description": "The SSH private key for the user that will connect to the cluster for monitoring.",
-          "widget-attributes": {
-            "placeholder": "Specify the private key for SSH"
-          }
-        }
-      ]
     }
   ],
   "filters": [

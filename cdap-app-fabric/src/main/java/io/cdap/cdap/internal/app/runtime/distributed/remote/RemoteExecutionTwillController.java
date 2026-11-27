@@ -52,8 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link TwillController} that uses {@link RemoteProcessController} to control a
- * running program.
+ * Implementation of {@link TwillController} that uses {@link RuntimeJobRemoteProcessController} to
+ * control a running program.
  */
 class RemoteExecutionTwillController implements TwillController {
 
@@ -64,7 +64,7 @@ class RemoteExecutionTwillController implements TwillController {
   private final CompletionStage<TwillController> started;
   private final CompletableFuture<TwillController> completion;
   private final ScheduledExecutorService scheduler;
-  private final RemoteProcessController remoteProcessController;
+  private final RuntimeJobRemoteProcessController remoteProcessController;
   private final RemoteExecutionService executionService;
   private final long pollCompletedMillis;
   private final long stopDelayMillis;
@@ -73,7 +73,7 @@ class RemoteExecutionTwillController implements TwillController {
 
   RemoteExecutionTwillController(CConfiguration cConf, ProgramRunId programRunId,
       CompletionStage<?> startupCompletionStage,
-      RemoteProcessController remoteProcessController,
+      RuntimeJobRemoteProcessController remoteProcessController,
       ScheduledExecutorService scheduler, RemoteExecutionService service,
       boolean terminateWithController) {
     this.programRunId = programRunId;
@@ -133,7 +133,8 @@ class RemoteExecutionTwillController implements TwillController {
       // early while the job is finishing, it can transition the Dataproc job to an ERROR state .
       long startTime = System.currentTimeMillis();
       while ((status = Retries.callWithRetries(
-          remoteProcessController::getStatus, retryStrategy, Exception.class::isInstance))
+          remoteProcessController::getStatus, retryStrategy,
+          e -> e instanceof Exception && !(e instanceof UnsupportedOperationException)))
           == RuntimeJobStatus.RUNNING) {
         if (System.currentTimeMillis() - startTime >= stopDelayMillis) {
           throw new IllegalStateException(
@@ -142,6 +143,9 @@ class RemoteExecutionTwillController implements TwillController {
         TimeUnit.SECONDS.sleep(1);
       }
       remoteProcessController.kill(status);
+    } catch (UnsupportedOperationException e) {
+      LOG.warn("Cannot complete remote process for program run {}: {}",
+          programRunId, e.getMessage());
     } catch (Exception e) {
       // If there is exception, use the remote execution controller to try killing the remote process
       try {

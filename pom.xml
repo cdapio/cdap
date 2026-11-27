@@ -165,7 +165,6 @@
     <snakeyaml.version>2.5</snakeyaml.version>
     <spark3.artifacts.dir>spark3_2.12</spark3.artifacts.dir>
     <spark3.version>3.5.8</spark3.version>
-    <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.15.0-incubating</tephra.version>
     <!-- Tephra classes copied into cdap-data-fabric and compiled with Guava 32. Removed from the staged tephra-core jar. -->
     <tephra.forked.class.excludes>co/cask/tephra/persist/TransactionEdit.class,co/cask/tephra/persist/TransactionEdit$*.class,org/apache/tephra/DefaultTransactionExecutor.class,org/apache/tephra/DefaultTransactionExecutor$*.class,org/apache/tephra/TransactionAdmin.class,org/apache/tephra/TransactionAdmin$*.class,org/apache/tephra/TransactionManager.class,org/apache/tephra/TransactionManager$*.class,org/apache/tephra/TransactionServiceMain.class,org/apache/tephra/TransactionServiceMain$*.class,org/apache/tephra/coprocessor/ReferenceCountedSupplier.class,org/apache/tephra/coprocessor/ReferenceCountedSupplier$*.class,org/apache/tephra/coprocessor/TransactionStateCache.class,org/apache/tephra/coprocessor/TransactionStateCache$*.class,org/apache/tephra/distributed/TransactionService.class,org/apache/tephra/distributed/TransactionService$*.class,org/apache/tephra/distributed/TransactionServiceClient.class,org/apache/tephra/distributed/TransactionServiceClient$*.class,org/apache/tephra/distributed/TransactionServiceThriftHandler.class,org/apache/tephra/distributed/TransactionServiceThriftHandler$*.class,org/apache/tephra/inmemory/InMemoryTransactionService.class,org/apache/tephra/inmemory/InMemoryTransactionService$*.class,org/apache/tephra/persist/AbstractTransactionLog.class,org/apache/tephra/persist/AbstractTransactionLog$*.class,org/apache/tephra/persist/HDFSTransactionStateStorage.class,org/apache/tephra/persist/HDFSTransactionStateStorage$*.class,org/apache/tephra/persist/LocalFileTransactionStateStorage.class,org/apache/tephra/persist/LocalFileTransactionStateStorage$*.class,org/apache/tephra/persist/TransactionEdit.class,org/apache/tephra/persist/TransactionEdit$*.class,org/apache/tephra/persist/TransactionSnapshot.class,org/apache/tephra/persist/TransactionSnapshot$*.class,org/apache/tephra/runtime/DiscoveryModules.class,org/apache/tephra/runtime/DiscoveryModules$*.class,org/apache/tephra/visibility/DefaultFenceWait.class,org/apache/tephra/visibility/DefaultFenceWait$*.class,org/apache/tephra/zookeeper/TephraZKClientService.class,org/apache/tephra/zookeeper/TephraZKClientService$*.class</tephra.forked.class.excludes>
@@ -1560,12 +1559,6 @@
         <groupId>org.mockftpserver</groupId>
         <artifactId>MockFtpServer</artifactId>
         <version>${mockftp.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.sshd</groupId>
-        <artifactId>sshd-core</artifactId>
-        <version>${sshd.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>

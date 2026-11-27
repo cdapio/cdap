@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -25,7 +24,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -55,19 +53,15 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeProvider.Mode;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.io.Closeables;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
-import io.cdap.cdap.common.logging.LogSamplers;
-import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.service.Services;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ImmutablePair;
-import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.ConfiguratorFactory;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -96,8 +90,6 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramR
 import io.cdap.cdap.internal.app.runtime.monitor.ProgramRunCompletionDetails;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
-import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
-import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -110,7 +102,6 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunFailureException;
@@ -122,10 +113,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.Authenticator;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -163,8 +151,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 public class DefaultRuntimeJob implements RuntimeJob {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultRuntimeJob.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG,
-      LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
   private static final long STOP_PROPAGATION_DELAY_SECS = 30L;
 
   private static final Gson GSON =
@@ -220,7 +206,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     // Create injector and get program runner
     Injector injector = Guice.createInjector(
-        createModules(runtimeJobEnv, createCconf(runtimeJobEnv, programOpts),
+        createModules(runtimeJobEnv, createCconf(runtimeJobEnv),
             programRunId, programOpts));
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
@@ -230,7 +216,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
     logAppenderInitializer.initialize();
     SystemArguments.setLogLevel(programOpts.getUserArguments(), logAppenderInitializer);
 
-    ProxySelector oldProxySelector = ProxySelector.getDefault();
     RuntimeMonitors.setupMonitoring(injector, programOpts);
 
     Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
@@ -311,8 +296,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
       throw t;
     } finally {
       stopCoreServices(coreServices, logAppenderInitializer);
-      ProxySelector.setDefault(oldProxySelector);
-      Authenticator.setDefault(null);
       runCompletedLatch.countDown();
     }
 
@@ -340,8 +323,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * by the {@link RuntimeJobEnvironment#getProperties()} will be set into the returned {@link
    * CConfiguration} instance.
    */
-  private CConfiguration createCconf(RuntimeJobEnvironment runtimeJobEnv,
-      ProgramOptions programOpts) throws IOException {
+  private CConfiguration createCconf(RuntimeJobEnvironment runtimeJobEnv) throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
     cConf.addResource(new File(DistributedProgramRunner.CDAP_CONF_FILE_NAME).toURI().toURL());
@@ -352,16 +334,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     String hostName = InetAddress.getLocalHost().getCanonicalHostName();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);
-
-    // If using SSH for monitoring and if the service proxy password file exists,
-    // set the password into the cConf so that it can be used in the distributed jobs launched by this process.
-    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RuntimeMonitorType.SSH) {
-      Path serviceProxySecretFile = Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
-      if (Files.exists(serviceProxySecretFile)) {
-        cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD,
-            new String(Files.readAllBytes(serviceProxySecretFile), StandardCharsets.UTF_8));
-      }
-    }
 
     // Pass runtime token to distributed jobs
     Path tokenFile = Paths.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
@@ -506,10 +478,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
         MetricsCollectionService.class);
     services.add(metricsCollectionService);
 
-    // Starts the traffic relay if monitoring is done through SSH tunnel
-    if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
-      services.add(injector.getInstance(TrafficRelayService.class));
-    }
     runtimeClientService = injector.getInstance(RuntimeClientService.class);
     services.add(runtimeClientService);
 
@@ -699,61 +667,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
       throw new ProgramRunFailureException(
           String.format("Program %s finished with unsuccessful status %s",
               programId, completionInfo.getEndStatus().name()));
-    }
-  }
-
-  /**
-   * A service wrapper around {@link TrafficRelayServer} for setting address
-   * configurations after starting the relay server.
-   */
-  private static final class TrafficRelayService extends AbstractIdleService {
-
-    private final CConfiguration cConf;
-    private final ProgramRunId programRunId;
-    private TrafficRelayServer relayServer;
-
-    @Inject
-    TrafficRelayService(CConfiguration cConf, ProgramRunId programRunId) {
-      this.cConf = cConf;
-      this.programRunId = programRunId;
-    }
-
-    @Override
-    protected void startUp() throws Exception {
-      // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
-      relayServer = new TrafficRelayServer(InetAddress.getLocalHost(), this::getTrafficRelayTarget);
-      Services.startAndWait(relayServer);
-
-      // Set the traffic relay service address to cConf. It will be used as the proxy address for all worker processes
-      Networks.setAddress(cConf, Constants.RuntimeMonitor.SERVICE_PROXY_ADDRESS,
-          ResolvingDiscoverable.resolve(relayServer.getBindAddress()));
-
-      LOG.info("Runtime traffic relay server started on {}", relayServer.getBindAddress());
-    }
-
-    @Override
-    protected void shutDown() {
-      Services.stopAndWait(relayServer);
-      getServiceProxyFile().delete();
-    }
-
-    @Nullable
-    private InetSocketAddress getTrafficRelayTarget() {
-      File serviceProxyFile = getServiceProxyFile();
-      try (Reader reader = Files.newBufferedReader(serviceProxyFile.toPath(),
-          StandardCharsets.UTF_8)) {
-        int port = GSON.fromJson(reader, ServiceSocksProxyInfo.class).getPort();
-        return port == 0 ? null : new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
-      } catch (Exception e) {
-        OUTAGE_LOG.warn("Failed to open service proxy file {}",
-            serviceProxyFile, e);
-        return null;
-      }
-    }
-
-    private File getServiceProxyFile() {
-      return new File("/tmp", Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-"
-                              + programRunId.getRun() + ".json");
     }
   }
 

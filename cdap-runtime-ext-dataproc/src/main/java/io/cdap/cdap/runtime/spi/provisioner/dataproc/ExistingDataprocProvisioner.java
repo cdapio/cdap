@@ -19,7 +19,6 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.exception.ErrorCategory;
 import io.cdap.cdap.api.exception.ErrorType;
-import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocImageVersion;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -27,9 +26,6 @@ import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
-import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -49,8 +45,6 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
   // Keys for looking up system properties
 
   private static final String CLUSTER_NAME = "clusterName";
-  private static final String SSH_USER = "sshUser";
-  private static final String SSH_KEY = "sshKey";
   private static final DataprocClientFactory CLIENT_FACTORY = new DefaultDataprocClientFactory();
 
   public ExistingDataprocProvisioner() {
@@ -76,27 +70,9 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
+    rejectSshMonitorType(context);
     Map<String, String> contextProperties = createContextProperties(context);
     DataprocConf conf = DataprocConf.create(contextProperties);
-
-    if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH) {
-      String sshUser = contextProperties.get(SSH_USER);
-      String sshKey = contextProperties.get(SSH_KEY);
-      if (Strings.isNullOrEmpty(sshUser) || Strings.isNullOrEmpty(sshKey)) {
-        String errorMessage = "SSH User and key are required for monitoring through SSH.";
-        throw new DataprocRuntimeException.Builder()
-            .withErrorCategory(context.getErrorCategory())
-            .withErrorReason(errorMessage)
-            .withErrorMessage(errorMessage)
-            .withErrorType(ErrorType.USER)
-            .build();
-      }
-
-      SSHKeyPair sshKeyPair = new SSHKeyPair(new SSHPublicKey(sshUser, ""),
-          () -> sshKey.getBytes(StandardCharsets.UTF_8));
-      // The ssh context shouldn't be null, but protect it in case there is platform bug
-      Optional.ofNullable(context.getSSHContext()).ifPresent(c -> c.setSSHKeyPair(sshKeyPair));
-    }
 
     String clusterName = contextProperties.get(CLUSTER_NAME);
     try (DataprocClient client = CLIENT_FACTORY.create(conf, context.getErrorCategory())) {
